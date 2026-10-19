@@ -5,7 +5,7 @@ This repository collects **short concept documents** for potential TrainerOS Cra
 ## Catalog
 
 - [Games](games/) — [24 competitive mini-games](games/competitive-minigames/) and [interactive game shows](games/game-shows/).
-- [Widgets](widgets/) — Start Dashboard widgets, including [music-service widgets](widgets/music-service-widgets/).
+- [Widgets](widgets/) — Start Dashboard widgets, including [Music Radio](widgets/music-radio/).
 - [Apps](apps/) — standalone applications.
 - [Extensions](extensions/) — optional integrations and features, including [Ghost Racing](extensions/ghost-racing/).
 - [Game Tools](game-tools/) — [Speedrun Timer](game-tools/speedrun-timer/) and [deferred ideas](game-tools/ideas-for-later.md).
