@@ -31,6 +31,12 @@ Availability of audio, liked tracks, private playlists and recommendations depen
 - Distinguish plain track-list M3U8 from adaptive HLS manifests. A live stream plays continuously; it cannot shuffle its contents at individual song level.
 - Never treat a SoundCloud web-page URL inside an M3U as direct playable audio that bypasses SoundCloud restrictions.
 
+## Runtime / shared audio integration
+
+**Required behavior:** playback survives hiding the widget and running games. Music Radio registers as a background media source with [TrainerOS Media Session #242](https://github.com/EriArk/TrainerOS/issues/242). Volume separation (game / radio / Fluxer voice / apps) and mute are the responsibilities of the [TrainerOS system mixer #245](https://github.com/EriArk/TrainerOS/issues/245), which uses supported host Linux sound-stack streams. Do not ship a second mixer or audio daemon solely for the widget.
+
+The SoundCloud playback method (embedded player or another approved backend) must be evaluated for stable background audio behavior on ArmadaOS, not merely as a working foreground screen.
+
 ## Proposed sequence
 
 1. Build the smallest M3U shuffle player with mpv/libmpv; verify on ArmadaOS ARM64 and background audio coexistence.

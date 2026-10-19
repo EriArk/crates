@@ -10,6 +10,15 @@ Per-game performance/system profiles should belong in TrainerOS proper, using th
 
 Gamepad/handheld gyroscope integration, mappings and relevant settings belong to TrainerOS core input handling. Detailed supported sensors and behavior remain to be discussed.
 
+## System Audio Mixer & Background Media
+
+**Core TrainerOS capability, not an installable Music Radio feature.** Dedicated issue: [#245 — System Audio Mixer](https://github.com/EriArk/TrainerOS/issues/245), working with [Media Session SDK #242](https://github.com/EriArk/TrainerOS/issues/242) and [Start v2 #233](https://github.com/EriArk/TrainerOS/issues/233).
+
+- Independent volume for active game, background music, incoming Fluxer voice, UI sounds and other identifiable output streams where supported by the underlying Linux audio stack.
+- Accessible through Start → QuickActions → Volume, including the in-game Home → Game Options → Start route.
+- Background media playback must remain active across navigation/game launches while technically available; closing Music Radio's widget doesn't stop the actual player.
+- No parallel audio server, fake sliders, or duplicate call mixer; optional Audio Profiles Crate may save presets using the core mixer.
+
 ## Challenge Cards
 
 **Approved as a built-in TrainerOS Social/game capability, not a separate Fluxer Activity app.**

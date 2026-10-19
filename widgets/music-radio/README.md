@@ -16,6 +16,14 @@ Music Radio is **one lightweight radio widget**, using **only SoundCloud and imp
 
 Play/Pause, Previous, Next, source selection, and track information where supported. Ideally playback continues in the background through the existing/planned TrainerOS Media Session, without interfering with game or voice audio.
 
+## Background playback and sound mixing
+
+- **Background playback is a requirement, not just a nice-to-have.** The audio source continues playing when the Start widget closes, the user navigates TrainerOS, and a game starts or runs (subject to actual device/audio capabilities and explicit user actions).
+- The widget is a controller for a small, separately managed playback session; it must not need to stay visually open.
+- **Independent music/game/Fluxer voice/application volume belongs to TrainerOS core [System Audio Mixer #245](https://github.com/EriArk/TrainerOS/issues/245)** and the host's [Media Session #242](https://github.com/EriArk/TrainerOS/issues/242), not to a new audio engine inside Music Radio.
+- Music Radio exposes a controllable media session and respects system audio focus and the user's per-source levels. Don't unexpectedly pause music or a Fluxer call when games launch.
+- Optional [Audio Profiles](../../extensions/audio-profiles/) are presets for the host mixer, not another mixer.
+
 ## M3U specifics
 
 Resolve relative file paths from the imported playlist's directory. Differentiate ordinary UTF-8 M3U8 track lists from HLS streaming manifests with the same extension; HLS needs actual backend support. Report missing files, dead URLs and unsupported streams. No automatic downloads or bypass of restricted music-service access.

@@ -12,7 +12,7 @@ Optional presets for balancing game, background music and voice chat.
 
 ## Integration notes
 
-Use built-in audio and Media Session handling; no replacement mixer or call service.
+Use built-in audio and Media Session handling; **[TrainerOS #245](https://github.com/EriArk/TrainerOS/issues/245) owns the actual system mixer** and **[#242](https://github.com/EriArk/TrainerOS/issues/242) owns media sessions/background playback**. This optional Crate can only add presets for those existing capabilities. No replacement mixer or call service.
 
 **Next:** Discuss detailed UI, technical approach and scope later.
 
