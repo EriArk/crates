@@ -1,43 +1,29 @@
 # Music Radio
 
-**Category:** TrainerOS Widgets  
-**Status:** Updated concept; no implementation yet.
+**Type:** TrainerOS Start → Extensions widget
+**Status:** Concept approved; not implemented.
 
-A **single universal radio-style music widget** for TrainerOS. Instead of a separate mini-client for each music service, the widget lets the user pick a service and turn one of its music collections into a shuffle-based radio experience.
+Music Radio is **one lightweight radio widget**, using **only SoundCloud and imported M3U/M3U8 playlists**. No other commercial music-service integrations are planned.
 
-## Main flow
+## What the user can play
 
-1. Choose a connected music service **or** an imported local playlist.
-2. Choose a source from that service (or the imported playlist):
-   - **Liked tracks** (all available liked/favorited songs).
-   - **Existing playlist** chosen from the user's playlists.
-   - **Auto-playlist / recommendation radio** offered by that service, based on listening history or related music.
-   - **Imported M3U/M3U8 playlist** with playable tracks or stream URLs, without requiring an account.
-3. Start listening with **random/shuffle playback** wherever the selected provider or source supports it.
-4. Keep essential controls close at hand: play/pause, next, previous and current track information where available.
+- **SoundCloud liked tracks:** listen to likes in randomized order (playback only; **no like/unlike buttons**).
+- **SoundCloud playlists:** select an existing accessible playlist and shuffle it.
+- **SoundCloud auto-radio/recommendations:** select music recommended by SoundCloud itself, if an authorized service interface actually provides it. Do not invent a recommendation engine.
+- **M3U/M3U8 playlist:** import via TrainerOS Files, then play and shuffle a supported list of local audio files and/or playable direct HTTP(S) streams. A single uninterrupted live radio stream cannot shuffle individual songs.
 
-The service's **own recommendations** power the auto-playlists. This is not a new recommendation engine implemented by TrainerOS.
+## Widget controls
 
-## Product principles
+Play/Pause, Previous, Next, source selection, and track information where supported. Ideally playback continues in the background through the existing/planned TrainerOS Media Session, without interfering with game or voice audio.
 
-- One widget, consistent controls, one selected source at a time; not one separately installed player for each provider.
-- **Liked tracks are a playback source only.** The widget does **not** offer like/unlike controls or manage a service's liked library.
-- Designed as a simple personal radio, **not a full streaming service UI**: searching a vast music catalog, editing playlists and account management are not core goals.
-- Ideally play in the background while browsing or gaming, through TrainerOS's shared media/audio-session capabilities.
-- Internally, individual service connectors may be required, but they are implementation components of the **one unified widget**.
-- Only show providers and sources that are actually accessible through supported authorization and provider APIs. A service-generated radio may not expose a list or custom shuffle control; show the real supported behavior instead of inventing one.
+## M3U specifics
 
-## M3U / M3U8 playlist import
+Resolve relative file paths from the imported playlist's directory. Differentiate ordinary UTF-8 M3U8 track lists from HLS streaming manifests with the same extension; HLS needs actual backend support. Report missing files, dead URLs and unsupported streams. No automatic downloads or bypass of restricted music-service access.
 
-- Choose a local `.m3u` or `.m3u8` file through TrainerOS Files and add it as a reusable source in Music Radio.
-- Support ordinary M3U playlists pointing to local audio files and permitted HTTP(S) audio/radio streams; handle relative file paths relative to the playlist's location, not the widget's working directory.
-- Differentiate plain UTF-8 `.m3u8` track playlists from HLS adaptive-stream manifests (also `.m3u8`); delegate HLS decoding to a capable media backend only when actually supported.
-- Shuffle finite track lists where possible; a single live radio stream generally cannot shuffle its underlying songs.
-- Show missing files, dead URLs, unsupported formats and unavailable credentials honestly; an M3U containing music-service web page links does not grant playback access to restricted streams.
-- No automatic media downloads or blanket access to other users' folders.
+## Project limits
 
-## Still open
+Only **SoundCloud + M3U/M3U8**. No Spotify, YouTube Music, Navidrome or other providers; no full streaming UI, playlist editor or cross-service mixer. Keep it simple.
 
-Which services to support first, provider authorization/playback capabilities and restrictions, shuffle/recommendation semantics, M3U media formats/backend, widgets' exact controls/layout, background playback and capability-based fallback.
+**Implementation still needs verification:** supported SoundCloud authentication and playback, whether likes and personalized recommendations are accessible through permitted APIs, and ARM64 performance. Evaluate mpv/libmpv for local playlist playback and official SoundCloud player/REST APIs for SoundCloud.
 
-See [idea notes](docs/idea.md) and [service/player research](docs/service-integrations.md) (19 October 2026).
+See [idea](docs/idea.md) and [integration notes](docs/service-integrations.md).

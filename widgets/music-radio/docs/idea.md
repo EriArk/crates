@@ -1,31 +1,25 @@
-# Music Radio — Refined Concept
+# Music Radio — Agreed Concept
 
-## Current idea
+One compact TrainerOS radio widget with **two kinds of sources: SoundCloud and imported M3U/M3U8 files**.
 
-**Universal radio widget for music services.** Choose a service, then select one of:
-- The user's liked music.
-- An existing playlist.
-- A service-generated auto-playlist / radio of music similar to what the user listens to.
-- An imported local `.m3u` or `.m3u8` playlist of audio tracks or supported streams, independent of a music-service account.
+## SoundCloud
 
-Hit play and listen in randomized order if that source/service permits it. A single live radio-stream URL may not offer track-level shuffle.
+- Play liked tracks on shuffle (likes are a **source**, not editable from the widget).
+- Choose an existing playlist.
+- Choose a SoundCloud-generated auto-radio/recommendation source when genuinely available.
+- Minimal player controls only.
 
-**Scope clarification:** liked tracks remain a radio source. The user does **not** want controls to add or remove likes from within this widget.
+## M3U/M3U8
 
-**Important:** auto-playlists here specifically mean *recommendations made by the original music service*. The widget does not need to train its own recommender or merge libraries across services.
+- Import playlists with the normal TrainerOS file picker.
+- Play user-owned local audio files or authorized direct audio URLs.
+- Randomize a finite track list, but not the individual songs inside a live stream.
+- Treat HLS M3U8 manifests distinctly from song playlists.
 
-## What changed
+## Scope clarification
 
-The earlier concept was **one separate miniature player per service**. It has been superseded: now it is **one common widget with service connectors** and a simple radio-like user experience.
+Earlier concepts included separate player clients and later a multi-service provider platform. **Both are superseded.** SoundCloud and M3U/M3U8 alone are sufficient; do not implement other music services. No like/unlike controls, proprietary recommendation engine, playlist editor, or full music browsing client.
 
-Selection is per service/source. Cross-service mixing, custom playlists and full client features are **not required** in the current concept.
+## Next design work
 
-## M3U import specifics
-
-Use the shared TrainerOS file picker to import regular M3U or UTF-8 M3U8 playlist files. Resolve relative local paths from the playlist's directory; URLs require a working, supported media source. Do not mistake HLS `.m3u8` transport manifests for an ordinary list of songs: those need proper stream playback support. Import is local user content, not a Spotify/SoundCloud streaming bypass.
-
-## Implementation constraints for later
-
-Use the existing TrainerOS Media Session and Start → Extensions model if and when implemented. Do not assume every service exposes liked tracks, algorithmic radio or unrestricted playback through its API. Confirm each integration and its allowed player behavior separately. No provider support or technical route has been verified by this concept document.
-
-Detailed UX and technical design will be discussed later.
+Verify SoundCloud service APIs and playback restrictions, authorization, recommendation source accessibility and background audio behavior; test the minimal playlist player on ARM64. One widget, as few moving parts as practical.

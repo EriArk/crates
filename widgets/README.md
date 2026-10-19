@@ -12,4 +12,4 @@ Small Start → Extensions contributions for TrainerOS. Each approved concept ha
 - [Session Timer](session-timer/) — A simple gaming-session timer and optional break reminder.
 - [Screenshot Frame](screenshot-frame/) — A rotating picture-frame widget for the user's own game screenshots.
 - [Backlog Dice](backlog-dice/) — A random picker for the user's personal 'play later' list.
-- [Music Radio](music-radio/) — one universal radio-style widget for likes, playlists and service-generated recommendations across connected music services.
+- [Music Radio](music-radio/) — a compact radio widget for SoundCloud likes/playlists/recommendations and imported M3U/M3U8 playlists.
