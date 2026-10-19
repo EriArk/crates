@@ -12,6 +12,13 @@ Any existing Fluxer community should be able to **opt into supporting these game
 - Discover and display only the communities in which that user is actually authorized to participate.
 - A community opt-in does not mean public access to private data or automatic administration rights.
 
+
+## Possible future clan competitions (concept only)
+
+Fluxer-based clans and battles between them have been proposed as a further use of communities. Opted-in communities could challenge one another in compatible mini-games and share standings across matches using the existing Lobby/results systems. How clan membership, challenges and scoring work is **not decided**.
+
+See [Fluxer Clans & Clan Battles](../../../concepts/clan-battles/).
+
 ## To decide later
 
 - Whether support is enabled globally for the collection, per game, or both.

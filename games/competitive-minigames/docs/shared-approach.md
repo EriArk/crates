@@ -19,6 +19,11 @@ A player should be able to use the official/default game community or choose ano
 
 The exact channel template, whether enablement is per-game or collection-wide, and local/global leaderboard scope remain open. See [Optional Fluxer Community Support](community-support.md).
 
+
+## Future clan battles (idea only)
+
+Clans using Fluxer communities may someday challenge each other through the common mini-game/lobby/results integration. Clan membership rules, eligibility and scoring are not defined yet. See [Fluxer Clans & Clan Battles](../../../concepts/clan-battles/).
+
 ## Agreed simple results and ratings
 
 The same result handling should serve all games. Once a match finishes, the game submits a small result record containing its game/match identity and stable participant IDs (not display names). Results are intended for a dedicated destination connected to the game/community, ideally using a permitted Fluxer route.
