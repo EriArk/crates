@@ -14,7 +14,7 @@ A family of compact competitive multiplayer games for TrainerOS, closely integra
 
 **Detailed common architecture is deliberately postponed.** Fluxer integration does not yet determine gameplay networking, competitive rules, or whether all features apply to every game.
 
-See [Shared Approach (to be defined)](docs/shared-approach.md).
+See [Shared Approach](docs/shared-approach.md) and the agreed [Results & Ratings](docs/ratings.md) concept.
 
 ## First six ideas
 
