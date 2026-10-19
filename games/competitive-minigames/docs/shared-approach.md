@@ -6,12 +6,18 @@
 
 ## Intent captured so far
 
-- Individual community per game.
+- A default community per game, plus optional support inside other Fluxer communities enabled by their authorized admins (see [community support](community-support.md)).
 - Automatic pre-fill of lobbies when context permits.
 - Use Fluxer for relevant communication/data exchange wherever practical.
 - In-game visibility of important social and competitive information, with no need to repeatedly open Social.
 - Shared ability to support invitations, short matches, rematches, results, tournaments, rankings and leaderboards as relevant.
 - Possibility of asynchronous competitions for games where that makes sense.
+
+## Community choice and opt-in
+
+A player should be able to use the official/default game community or choose another participating Fluxer community. A community can enable support for the competitive games; suitable supporting subchannels/categories are then created **only with valid community permissions**, reusing the same TrainerOS Lobby and competition foundations.
+
+The exact channel template, whether enablement is per-game or collection-wide, and local/global leaderboard scope remain open. See [Optional Fluxer Community Support](community-support.md).
 
 ## Agreed simple results and ratings
 

@@ -6,7 +6,7 @@ A family of compact competitive multiplayer games for TrainerOS, closely integra
 
 **All games in this collection should work through one common integration approach.** Each game can keep its own gameplay while reusing consistent ways of joining, inviting friends, forming communities, displaying social activity inside the game, and participating in competitions.
 
-- Each game has its own community.
+- Each game has a default community; other Fluxer communities can optionally enable support and be selected for relevant game activities.
 - Pre-fill lobbies automatically whenever possible.
 - Exchange supported community, lobby, session, and other game-related information using Fluxer where practical.
 - Show useful social, lobby, and competition information in-game rather than requiring regular trips to Social.
@@ -14,7 +14,7 @@ A family of compact competitive multiplayer games for TrainerOS, closely integra
 
 **Detailed common architecture is deliberately postponed.** Fluxer integration does not yet determine gameplay networking, competitive rules, or whether all features apply to every game.
 
-See [Shared Approach](docs/shared-approach.md) and the agreed [Results & Ratings](docs/ratings.md) concept.
+See [Shared Approach](docs/shared-approach.md), [Results & Ratings](docs/ratings.md), and [Optional Fluxer Community Support](docs/community-support.md).
 
 ## First six ideas
 
