@@ -40,4 +40,4 @@ The service's **own recommendations** power the auto-playlists. This is not a ne
 
 Which services to support first, provider authorization/playback capabilities and restrictions, shuffle/recommendation semantics, M3U media formats/backend, widgets' exact controls/layout, background playback and capability-based fallback.
 
-See [idea notes](docs/idea.md).
+See [idea notes](docs/idea.md) and [service/player research](docs/service-integrations.md) (19 October 2026).
