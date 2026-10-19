@@ -2,7 +2,7 @@
 
 Small Start → Extensions contributions for TrainerOS. Each approved concept has its own folder.
 
-- [Game Roulette](game-roulette/) — A small Dashboard widget that picks a random game from the user's installed library.
+- [Game Roulette](game-roulette/) — one big “Surprise Me!” button, a brief cover roulette, and a random launchable game from the TrainerOS library.
 - [Friend Radar](friend-radar/) — A compact view of friends' current game activity and potential multiplayer opportunities.
 - [Arcade Today](arcade-today/) — A Dashboard card featuring a daily challenge from the competitive mini-games collection.
 - [Tournament Live](tournament-live/) — A compact view of active game tournaments.
