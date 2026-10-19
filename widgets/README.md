@@ -3,7 +3,7 @@
 Small Start → Extensions contributions for TrainerOS. Each approved concept has its own folder.
 
 - [Game Roulette](game-roulette/) — one big “Surprise Me!” button, a brief cover roulette, and a random launchable game from the TrainerOS library.
-- [Friend Radar](friend-radar/) — A compact view of friends' current game activity and potential multiplayer opportunities.
+- [Friend Radar](friend-radar/) — on-demand animated radar for Fluxer friends and discoverable nearby TrainerOS users, with game titles and a Nearby scanning toggle.
 - [Arcade Today](arcade-today/) — A Dashboard card featuring a daily challenge from the competitive mini-games collection.
 - [Tournament Live](tournament-live/) — A compact view of active game tournaments.
 - [Quick Notes](quick-notes/) — A tiny notepad available in Start → Extensions.
