@@ -20,6 +20,7 @@ The service's **own recommendations** power the auto-playlists. This is not a ne
 ## Product principles
 
 - One widget, consistent controls, one selected source at a time; not one separately installed player for each provider.
+- **Liked tracks are a playback source only.** The widget does **not** offer like/unlike controls or manage a service's liked library.
 - Designed as a simple personal radio, **not a full streaming service UI**: searching a vast music catalog, editing playlists and account management are not core goals.
 - Ideally play in the background while browsing or gaming, through TrainerOS's shared media/audio-session capabilities.
 - Internally, individual service connectors may be required, but they are implementation components of the **one unified widget**.

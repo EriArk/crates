@@ -9,6 +9,8 @@
 
 Hit play and listen in randomized order if that source/service permits it.
 
+**Scope clarification:** liked tracks remain a radio source. The user does **not** want controls to add or remove likes from within this widget.
+
 **Important:** auto-playlists here specifically mean *recommendations made by the original music service*. The widget does not need to train its own recommender or merge libraries across services.
 
 ## What changed
