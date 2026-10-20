@@ -4,6 +4,8 @@
 
 The **canonical technical plan is in the main TrainerOS repository**:
 
+- [TrainerOS Account, economy and exclusives](https://github.com/EriArk/TrainerOS/blob/main/docs/TRAINEROS_ACCOUNT_ECONOMY_RU.md) (owner-approved TARGET, 20 October 2026)
+- [Crates ecosystem rules](traineros-ecosystem.md)
 - [TrainerOS Backend — shared server plan](https://github.com/EriArk/TrainerOS/blob/main/docs/TRAINEROS_BACKEND_PLAN_RU.md)
 - [Crates — VPS data, install recipes and artifact hosting](https://github.com/EriArk/TrainerOS/blob/main/docs/CRATES_SERVER_STORAGE_RU.md)
 - Existing Crates owners: [#144](https://github.com/EriArk/TrainerOS/issues/144), [#146](https://github.com/EriArk/TrainerOS/issues/146), [#147](https://github.com/EriArk/TrainerOS/issues/147), [#148](https://github.com/EriArk/TrainerOS/issues/148)
@@ -14,6 +16,10 @@ The **canonical technical plan is in the main TrainerOS repository**:
 - **Verified declarative installation recipes**, dependencies and bounded compatible configuration/profile files — no automatic execution of arbitrary network-supplied shell scripts.
 - **GitHub Releases** for downloading executable archives, games, applications and large assets. Server catalogs link to verified allowed artifacts rather than mirroring binaries.
 - Shared official game results, rankings, tournaments, Arcade Today, clans and possible prize metadata **only if/when those features are separately designed and implemented**. Do not send live gameplay frames through this server.
+
+## Shared identity and cosmetic economy (new approved concept)
+
+The Backend's persistent **TrainerOS ID** is distinct from Fluxer login and the existing offline local Trainer. It owns one coin ledger, verified rewards, purchase/entitlement records and Patreon/Ko-fi membership multipliers up to ×3. The **cosmetic shop is open to everyone**; purchased items and coins persist after a supporter subscription ends. The higher-tier dev/beta access idea remains subject to specific release policies. No artificial DRM is needed for first-party exclusivity: the games depend on common TrainerOS platform functions. Rates, pricing, account recovery and APIs are deferred. See [TrainerOS Ecosystem](traineros-ecosystem.md).
 
 ## Gameplay boundary
 
