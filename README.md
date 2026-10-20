@@ -17,7 +17,8 @@ This repository collects **short concept documents** for potential TrainerOS Cra
 - [Competitive mini-game results & ratings](games/competitive-minigames/docs/ratings.md)
 - [Opt-in support in other Fluxer communities](games/competitive-minigames/docs/community-support.md), including a future [clan-battle concept](concepts/clan-battles/)
 - [Selected TrainerOS core ideas (not Crates)](docs/traineros-core-proposals.md)
-- [TrainerOS Backend integration](docs/backend-integration.md) — hosting boundaries, trusted match results and official Crates metadata/install recipe policy.
+- [TrainerOS ecosystem: first-party exclusives, account & monetization](docs/traineros-ecosystem.md) — AbyssTail games rely on common TrainerOS services, one shared coin economy, open cosmetics shop, Patreon/Ko-fi earnings multiplier up to ×3 and optional dev/beta access; **concept, not shipped**.
+- [TrainerOS Backend integration](docs/backend-integration.md) — hosting boundaries, trusted match results, shared wallet/identity and official Crates metadata/install recipe policy.
 
 Not all brainstormed ideas are accepted; only explicitly selected projects are recorded here. There are **no approved game addon projects yet**, and proposed author-creation tools from the initial brainstorm have not been selected.
 
