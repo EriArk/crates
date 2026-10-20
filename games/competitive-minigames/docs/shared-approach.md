@@ -32,6 +32,18 @@ Track **total matches**, **all wins**, **all losses**, and **distinct opponents 
 
 See [Results & Ratings](ratings.md) for the agreed example and open details.
 
+## Optional shared Backend for official scores (planned)
+
+The [TrainerOS Backend plan](https://github.com/EriArk/TrainerOS/blob/main/docs/TRAINEROS_BACKEND_PLAN_RU.md) describes a small authenticated results service that **may eventually** compute official standings, daily competitions, tournament results, clan rankings and prizes for compatible games.
+
+- Games still run on user devices through suitable P2P/LAN/approved transport; **the VPS is not a mandatory realtime game relay**.
+- Only checked match outcomes and small event metadata belong on the Backend; no video, arbitrary game state stream, ROMs or saves.
+- Do not treat a client-submitted winner ID as proof. Result verification, rewards and the exact rank/status formula remain to be designed.
+- Offline/local games and supported peer sessions should continue independently when the Backend is unavailable.
+- Shared Backend proposals are **not implemented platform capabilities** nor requirements for every small game.
+
+See also [Backend integration summary](../../../docs/backend-integration.md).
+
 ## Deferred decisions
 
 Architecture and APIs, division of responsibilities between TrainerOS / Fluxer / games, real-time P2P versus relayed networking, game states, persistence, result verification, precise rating/status formula, tournament structure, layouts, cross-device support and any common SDK are **not specified yet**.

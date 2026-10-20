@@ -17,6 +17,7 @@ This repository collects **short concept documents** for potential TrainerOS Cra
 - [Competitive mini-game results & ratings](games/competitive-minigames/docs/ratings.md)
 - [Opt-in support in other Fluxer communities](games/competitive-minigames/docs/community-support.md), including a future [clan-battle concept](concepts/clan-battles/)
 - [Selected TrainerOS core ideas (not Crates)](docs/traineros-core-proposals.md)
+- [TrainerOS Backend integration](docs/backend-integration.md) — hosting boundaries, trusted match results and official Crates metadata/install recipe policy.
 
 Not all brainstormed ideas are accepted; only explicitly selected projects are recorded here. There are **no approved game addon projects yet**, and proposed author-creation tools from the initial brainstorm have not been selected.
 
