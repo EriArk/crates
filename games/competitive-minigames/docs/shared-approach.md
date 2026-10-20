@@ -4,6 +4,8 @@
 
 **All competitive mini-games should use a common approach and compatible TrainerOS / Fluxer integration.** Avoid designing each game as an unrelated one-off solution.
 
+First-party AbyssTail games are designed as **TrainerOS-integrated exclusives**, relying on shared Social, Lobby, account/economy and SDK services rather than artificial DRM; individual games implement only what they actually need. This is an approved **direction**, not a finished dependency/API. See [TrainerOS Ecosystem](../../../docs/traineros-ecosystem.md). Verified competitive results and currency rewards are separate from the rank/status formula; supporter earning multipliers must not alter match results.
+
 ## Intent captured so far
 
 - A default community per game, plus optional support inside other Fluxer communities enabled by their authorized admins (see [community support](community-support.md)).
