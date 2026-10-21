@@ -12,7 +12,7 @@ class HostTests final:public QObject {
     Q_OBJECT
 private slots:
     void matchLifecycle_data(){QTest::addColumn<int>("kind");QTest::newRow("pong")<<0;QTest::newRow("snake")<<1;QTest::newRow("cycles")<<2;
-        QTest::newRow("blocks")<<3;QTest::newRow("mines")<<4;QTest::newRow("chain")<<5;}
+        QTest::newRow("blocks")<<3;QTest::newRow("mines")<<4;QTest::newRow("chain")<<5;QTest::newRow("racing")<<6;QTest::newRow("tanks")<<7;}
     void matchLifecycle(){
         QFETCH(int,kind);const auto python=qEnvironmentVariable("TRAINEROS_TEST_RECORD_PYTHON");QVERIFY(!python.isEmpty());
         QTemporaryDir dir;QSettings::setDefaultFormat(QSettings::IniFormat);QSettings::setPath(QSettings::IniFormat,QSettings::UserScope,dir.path());
@@ -34,15 +34,23 @@ private slots:
         auto launch=[&]{return a.selectGame({activity["id"].toString(),activity["title"].toString(),activity["platform"].toString(),activity["mode"].toString(),2,QJsonObject::fromVariantMap(activity["runtime"].toMap())})&&ar.prepare()&&br.prepare()&&a.ready(true)&&b.ready(true)&&a.start();};
         QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"play",30000);QTRY_COMPARE(gb.phase(),"play");
         QCOMPARE(ga.seat(),0);QCOMPARE(gb.seat(),1);
-        ga.control(0,0);gb.control(0,2); // Input from both sides traverses the game contract.
+        ga.control(0,kind==7?1:0);gb.control(0,kind==7?3:2); // Input from both sides traverses the game contract.
         QTRY_VERIFY_WITH_TIMEOUT(gb.scene()["tick"].toInt()>66,5000);
         if(kind==0){QVERIFY(ga.scene()["p0"].toInt()<270);QVERIFY(ga.scene()["p1"].toInt()>270);}
         QTimer drive;int target=0;
         if(kind>=3){
             ga.neutral();gb.neutral();
+            if(kind==6){ga.control(0,0);gb.control(0,0);}
             connect(&drive,&QTimer::timeout,&gb,[&]{
                 if(gb.phase()!="play")return;
-                if(kind!=4){ga.action(0,1);gb.action(0,1);return;}
+                if(kind==7){
+                    auto guest=gb.scene()["players"].toList()[1].toMap();int x=guest["x"].toInt(),y=guest["y"].toInt();
+                    int hostX=ga.scene()["players"].toList()[0].toMap()["x"].toInt();
+                    if(target==0){ga.action(0,0);gb.control(0,0);if(y==2)target=1;}
+                    if(target==1){if(std::abs(x-hostX)<=1)target=2;else gb.control(0,x>hostX?3:1);}
+                    if(target==2){gb.control(0,std::abs(x-hostX)>1?(x>hostX?3:1):2);gb.action(0,0);}return;
+                }
+                if(kind!=4){ga.action(0,kind>=6?0:1);gb.action(0,kind>=6?0:1);return;}
                 // Guest walks/reveals the board through actual ordered SDK action records.
                 const auto player=gb.scene()["players"].toList()[1].toMap();const int cursor=player["cursor"].toInt();
                 if(cursor==target){gb.neutral();gb.action(0,0);target=(target+1)%81;}

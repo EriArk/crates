@@ -50,7 +50,11 @@ See [Shared Approach](docs/shared-approach.md), [Results & Ratings](docs/ratings
 
 **Status:** [Pocket Artillery](pocket-artillery/), [Pong](pong/),
 [Snake Arena](snake-arena/), [Light Cycles](light-cycles/), [Falling Blocks](falling-blocks/),
-[Minesweeper Race](minesweeper-race/) and [Chain Reaction](chain-reaction/) have experimental
-two-player implementations. Six games share [controls and SDK integration](arcade-common/).
+[Minesweeper Race](minesweeper-race/), [Chain Reaction](chain-reaction/),
+[Brick Racing](mini-racing/) and [Brick Tanks](tanks/) have experimental
+two-player implementations. Eight games share [controls and SDK integration](arcade-common/).
 The puzzle trio is [prepared for publication and further acceptance](docs/puzzle-trio-preparation.md).
 Other entries remain concepts. See [original idea](docs/idea.md) for the starting vision.
+
+[The Brick Game duo](docs/brick-duo-preparation.md) is prepared in a separate branch
+on top of the puzzle trio; its public release and device checks remain with the main workflow.

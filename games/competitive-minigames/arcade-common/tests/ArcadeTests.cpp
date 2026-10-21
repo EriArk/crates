@@ -15,6 +15,8 @@
 #include "falling-blocks/src/BlocksRules.h"
 #include "minesweeper-race/src/MinesRules.h"
 #include "chain-reaction/src/ChainRules.h"
+#include "mini-racing/src/RacingRules.h"
+#include "tanks/src/TanksRules.h"
 using namespace arcade;
 QQuickItem* item(QQuickItem* root,const QString& name){
     if(root->objectName()==name)return root;
@@ -24,6 +26,42 @@ QQuickItem* item(QQuickItem* root,const QString& name){
 class ArcadeTests final:public QObject {
     Q_OBJECT
 private slots:
+    void racingSharedCourseDraftContactRecoveryAndFinish(){
+        RacingRules g;g.reset(7);g.tick=60;g.cars[0].distance=40;g.cars[1].distance=80;g.cars[0].lane=g.cars[1].lane=1;
+        g.cars[0].cooldown=100;g.cars[1].cooldown=100;QVERIFY(g.drafting(0));QVERIFY(!g.drafting(1));g.step();
+        QCOMPARE(g.cars[0].cooldown,98);QCOMPARE(g.cars[1].cooldown,99);
+        g.cars[0].distance=6;g.cars[1].distance=30;g.input(0,0);g.input(1,2);g.step();QCOMPARE(g.cars[1].distance-g.cars[0].distance,24);
+        g.cars[0].lane=0;g.cars[1].lane=2;g.cars[0].distance=g.cars[1].distance=40;g.input(0,1);g.input(1,3);g.step();
+        QCOMPARE(g.cars[0].lane,0);QCOMPARE(g.cars[1].lane,2);
+        g.reset(1);g.tick=60;g.course.fill(1);g.cars[0].distance=101;g.step();QCOMPARE(g.cars[0].crashes,1);QCOMPARE(g.cars[0].crash,30);
+        int before=g.cars[0].distance;for(int i=0;i<30;++i)g.step();QCOMPARE(g.cars[0].distance,before);QCOMPARE(g.cars[0].crashes,1);
+        g.step();QVERIFY(g.cars[0].distance>before);QCOMPARE(g.cars[0].crashes,1);
+        g.reset(1);g.tick=60;g.cars[0].passable=true;g.cars[0].crash=1;g.cars[0].distance=g.cars[1].distance=40;g.cars[1].lane=0;
+        g.step();QVERIFY(g.cars[0].passable);g.input(0,1);g.step();QVERIFY(!g.cars[0].passable);QCOMPARE(g.cars[0].lane,1);
+        g.reset(1);g.tick=60;g.cars[0].distance=1999;g.cars[1].distance=1998;g.input(0,2);g.input(1,0);g.step();QCOMPARE(g.winner,1);
+        g.reset(1);g.tick=60;g.cars[0].distance=g.cars[1].distance=1999;g.step();QCOMPARE(g.winner,2);
+    }
+    void tanksCoverMuzzleCollisionShieldsAndSimultaneousHits(){
+        TanksRules g;g.reset(1);g.tick=61;g.tanks[0].pos={4,9};g.tanks[0].face=1;g.cells[9*25+6]=1;
+        g.action(0,0);g.action(0,0);g.step();QCOMPARE(g.cells[9*25+6],0);QVERIFY(g.bullets.isEmpty());QCOMPARE(g.tanks[0].cooldown,12);
+        g.cells[9*25+6]=2;g.tanks[0].cooldown=0;g.action(0,0);g.step();g.step();QCOMPARE(g.cells[9*25+6],2);QVERIFY(g.bullets.isEmpty());
+        g.reset(1);g.tick=63;g.tanks[0].pos={10,2};g.tanks[1].pos={13,2};g.input(0,1);g.input(1,3);g.step();QCOMPARE(g.tanks[0].pos,QPoint(10,2));QCOMPARE(g.tanks[1].pos,QPoint(13,2));
+        g.reset(1);g.tick=61;g.tanks[1].shield=20;g.bullets.append({g.tanks[1].pos-QPoint(1,0),1,0});g.step();QCOMPARE(g.scores[0],0);
+        g.tanks[1].shield=0;g.bullets.append({g.tanks[1].pos-QPoint(1,0),1,0});g.step();g.step();QCOMPARE(g.scores[0],1);QCOMPARE(g.tanks[1].shield,45);
+        g.action(1,0);g.tanks[1].cooldown=0;g.step();QCOMPARE(g.tanks[1].shield,0);
+        g.reset(1);g.tick=61;g.scores={2,2};g.tanks[0].shield=g.tanks[1].shield=0;
+        g.bullets.append({g.tanks[1].pos-QPoint(1,0),1,0});g.bullets.append({g.tanks[0].pos+QPoint(1,0),3,1});g.step();QCOMPARE(g.winner,2);
+        g.reset(1);g.tick=61;g.bullets={{{10,2},1,0},{{11,2},3,1}};g.step();QVERIFY(g.bullets.isEmpty());
+    }
+    void tanksFlanksStayOpenAndPracticeBotCanEngage(){
+        for(quint32 seed:{1u,7u,4242u}){
+            TanksRules g;g.reset(seed);
+            for(int x=2;x<=22;++x){QVERIFY(g.clear({x,2}));QVERIFY(g.clear({x,16}));}
+            for(int y=0;y<19;++y)for(int x=0;x<25;++x)QCOMPARE(g.cells[y*25+x],g.cells[y*25+24-x]);
+            for(int t=0;t<2400&&g.winner<0;++t){g.input(1,g.bot(1));g.action(1,g.botAction(1));g.step();}
+            QCOMPARE(g.scores[1],3);QCOMPARE(g.winner,1);
+        }
+    }
     void blocksLinesRotationAndQueue(){
         BlocksRules g;g.reset(1);g.tick=60;auto& p=g.players[0];p.cells.fill(0);p.type=0;p.rotation=0;p.x=3;p.y=0;
         for(int x=0;x<10;++x)if(x<3||x>6)p.cells[150+x]=2;
@@ -109,7 +147,7 @@ private slots:
         game.reset(2);game.tick=63;game.cells[game.head[0]+1]=2;game.step();QCOMPARE(game.winner,1);
     }
     void seededMatchesAndSnapshotValidation(){
-        for(auto kind:{Kind::Pong,Kind::Snake,Kind::Cycles,Kind::Blocks,Kind::Mines,Kind::Chain})for(quint32 seed:{1u,7u,4242u}){
+        for(auto kind:{Kind::Pong,Kind::Snake,Kind::Cycles,Kind::Blocks,Kind::Mines,Kind::Chain,Kind::Racing,Kind::Tanks})for(quint32 seed:{1u,7u,4242u}){
             auto a=makeRules(kind),b=makeRules(kind);a->reset(seed);b->reset(seed);
             for(int t=0;t<6000&&a->view()["winner"]==-1;++t){
                 for(int p=0;p<2;++p){int d=a->bot(p),action=a->botAction(p);a->input(p,d);b->input(p,d);a->action(p,action);b->action(p,action);}
@@ -119,13 +157,16 @@ private slots:
             auto invalid=a->view();invalid["winner"]=99;QVERIFY(!a->validView(invalid));
             invalid=a->view();invalid["tick"]=1.5;QVERIFY(!a->validView(invalid));
             QVERIFY(QJsonDocument(a->view()).toJson(QJsonDocument::Compact).size()<15000);
-            if(int(kind)>=3){invalid=a->view();auto players=invalid["players"].toArray();auto p=players[0].toObject();p["cells"]=QJsonArray{999};players[0]=p;invalid["players"]=players;QVERIFY(!a->validView(invalid));}
+            if(int(kind)>=3&&int(kind)<=5){invalid=a->view();auto players=invalid["players"].toArray();auto p=players[0].toObject();p["cells"]=QJsonArray{999};players[0]=p;invalid["players"]=players;QVERIFY(!a->validView(invalid));}
+            if(kind==Kind::Racing){invalid=a->view();invalid["course"]=QJsonArray{7};QVERIFY(!a->validView(invalid));}
+            if(kind==Kind::Tanks){invalid=a->view();invalid["bullets"]=QJsonArray{QJsonObject{{"x",999}}};QVERIFY(!a->validView(invalid));}
             qInfo().noquote()<<identity(kind).id<<seed<<QCryptographicHash::hash(QJsonDocument(a->view()).toJson(QJsonDocument::Compact),QCryptographicHash::Sha256).toHex();
         }
     }
     void uiAndLocalLifecycle_data(){
         QTest::addColumn<int>("kind");QTest::newRow("pong")<<0;QTest::newRow("snake")<<1;QTest::newRow("cycles")<<2;
         QTest::newRow("blocks")<<3;QTest::newRow("mines")<<4;QTest::newRow("chain")<<5;
+        QTest::newRow("racing")<<6;QTest::newRow("tanks")<<7;
     }
     void uiAndLocalLifecycle(){
         QFETCH(int,kind);QTemporaryDir directory;ArcadeGame game(Kind(kind),directory.filePath("missing.json"));
@@ -137,7 +178,7 @@ private slots:
         QTest::keyClick(window,Qt::Key_Down);QTest::keyClick(window,Qt::Key_Return);
         QCOMPARE(game.phase(),"play");QVERIFY(game.couch());
         QTest::qWait(2100);
-        if(kind>=3){
+        if(kind>=3&&kind<=5){
             if(kind==4){
                 const auto cells=game.scene()["players"].toList()[0].toMap()["cells"].toList();int target=0;while(cells[target].toInt()!=-1)++target;
                 for(int p=0;p<2;++p)for(int n=0;n<20;++n){
@@ -155,6 +196,14 @@ private slots:
             if(kind==4){QCOMPARE(first["flags"].toInt(),1);QCOMPARE(second["flags"].toInt(),1);}
             if(kind==5){QVERIFY(first["cells"]!=before["players"].toList()[0].toMap()["cells"]);QCOMPARE(first["cells"],second["cells"]);}
             QTest::keyClick(window,Qt::Key_F);QTest::keyClick(window,Qt::Key_Return);QTest::qWait(50);
+        }
+        if(kind>=6){
+            auto* secondary=item(window->contentItem(),"action0-1");QVERIFY(secondary);QVERIFY(!secondary->isVisible());
+            auto* a=item(window->contentItem(),"action0-0");auto* b=item(window->contentItem(),"action1-0");QVERIFY(a&&b);
+            auto ap=a->mapToScene(QPointF(a->width()/2,a->height()/2)).toPoint(),bp=b->mapToScene(QPointF(b->width()/2,b->height()/2)).toPoint();
+            auto* device=QTest::createTouchDevice();QTest::touchEvent(window,device).press(0,ap,window).press(1,bp,window).commit();QTest::qWait(30);
+            QTest::touchEvent(window,device).release(0,ap,window).release(1,bp,window).commit();QTest::qWait(70);
+            for(auto player:game.scene()["players"].toList())QVERIFY(player.toMap()["cooldown"].toInt()>0);
         }
         auto* up=item(window->contentItem(),"control0-0");QVERIFY(up);QVERIFY(up->isEnabled());
         auto pos=up->mapToScene(QPointF(up->width()/2,up->height()/2)).toPoint();

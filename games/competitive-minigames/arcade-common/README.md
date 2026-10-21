@@ -1,7 +1,7 @@
 # Crates arcade integration
 
 Shared support for **Pong**, **Snake Arena**, **Light Cycles**, **Falling Blocks**,
-**Minesweeper Race** and **Chain Reaction**. Each game owns
+**Minesweeper Race**, **Chain Reaction**, **Brick Racing** and **Brick Tanks**. Each game owns
 its rules in `src/`, its board in `ui/`, and its own icon and package. The common
 code supplies the menu, two-player controls, SDK connection and match lifecycle.
 Pocket Artillery remains unchanged; `ArcadeBridge` reuses its GPL SDK client with
@@ -35,7 +35,7 @@ pointer/touch checks do not establish physical controller or handheld acceptance
 
 Requires SDK v1 `lobby.activity` and `network.records`. App IDs are
 `art.abysstail.<game-id>` and protocols `<game-id>.1`; game IDs are `pong`,
-`snake-arena`, `light-cycles`, `falling-blocks`, `minesweeper-race`, `chain-reaction`. Missing capabilities return to the menu with a
+`snake-arena`, `light-cycles`, `falling-blocks`, `minesweeper-race`, `chain-reaction`, `mini-racing`, `tanks`. Missing capabilities return to the menu with a
 readable explanation and leave offline modes available.
 
 The organizer computes the authoritative match at approximately 30 ticks/second.
@@ -77,7 +77,7 @@ python3 games/competitive-minigames/arcade-common/package.py pong build/arcade/p
 
 Repeat packaging with the desired game ID. Each package contains a
 separate executable, icon, instructions and screenshot. The matching source archive
-contains the common code plus all six rule implementations and can be rebuilt
+contains the common code plus all eight rule implementations and can be rebuilt
 with `cmake -S arcade -B build -DARCADE_GAMES=pong` (or another game ID). Native Linux
 ELF x86_64/aarch64 is supported by the packager; it does not cross-compile or certify ARM.
 Packages reuse host Qt/SDL. `Experimental` / `untested` records contain future release
@@ -137,3 +137,10 @@ Original code and SVG/canvas artwork: GPL-3.0-or-later. See [LICENSE](LICENSE).
 The next three games and the preparation/publication split are recorded in
 [the handoff document](../docs/puzzle-trio-preparation.md). This adds application-side
 actions to the existing channel; no TrainerOS runtime changes or new transport.
+
+## Brick-game preparation
+
+[Brick Racing and Brick Tanks](../docs/brick-duo-preparation.md) add a shared-road
+race with drafting/overtaking and a shared destructible-cover duel. Both retain
+practice, couch and Lobby modes. Only their primary action is shown; older puzzle
+games retain both actions. Publication and installed acceptance remain separate.

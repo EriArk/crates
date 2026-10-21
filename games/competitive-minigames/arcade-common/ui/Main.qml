@@ -12,6 +12,7 @@ Window {
     property bool menu: game.phase === "menu"
     property bool waiting: game.phase === "waiting"
     property bool puzzle: game.primaryAction.length > 0
+    property bool secondary: game.secondaryAction.length > 0
     property bool modal: menu || waiting || game.phase === "result" || game.phase === "paused" || asking
     Connections {target:game;function onChanged(){if(game.phase==="menu")window.asking=false}}
     function back() {
@@ -94,8 +95,8 @@ Window {
     }
     Rectangle {
         x:16;anchors.bottom:parent.bottom;anchors.bottomMargin:12;width:parent.width-32;height:92;radius:16;color:"#fcf9f1"
-        Text {x:14;y:8;text:game.couch?(puzzle?"MINT · WASD + F / G":"MINT · W A S D / PAD 1"):(puzzle?"YOU · ARROWS + ENTER / SHIFT":"YOU · ARROWS / PAD 1");font.pixelSize:11;color:"#54745e";font.bold:true}
-        Text {anchors.right:parent.right;anchors.rightMargin:14;y:8;text:game.couch?(puzzle?"CORAL · ARROWS + ENTER / SHIFT":"CORAL · ARROWS / PAD 2"):game.online?"FRIEND · "+(game.seat===0?"CORAL":"MINT"):"CORAL · BOT";font.pixelSize:11;color:"#9c6958";font.bold:true}
+        Text {x:14;y:8;text:game.couch?(puzzle?(secondary?"MINT · WASD + F / G":"MINT · WASD + F"):"MINT · W A S D / PAD 1"):(puzzle?(secondary?"YOU · ARROWS + ENTER / SHIFT":"YOU · ARROWS + ENTER"):"YOU · ARROWS / PAD 1");font.pixelSize:11;color:"#54745e";font.bold:true}
+        Text {anchors.right:parent.right;anchors.rightMargin:14;y:8;text:game.couch?(puzzle?(secondary?"CORAL · ARROWS + ENTER / SHIFT":"CORAL · ARROWS + ENTER"):"CORAL · ARROWS / PAD 2"):game.online?"FRIEND · "+(game.seat===0?"CORAL":"MINT"):"CORAL · BOT";font.pixelSize:11;color:"#9c6958";font.bold:true}
         Row {
             x:8;y:30;spacing:puzzle?4:6
             Repeater {
@@ -109,7 +110,7 @@ Window {
                 }
             }
             Button {objectName:"action0-0";visible:puzzle;width:58;height:48;label:game.primaryAction;enabled:!window.modal;onActivated:game.action(0,0)}
-            Button {objectName:"action0-1";visible:puzzle;width:58;height:48;label:game.secondaryAction;enabled:!window.modal;onActivated:game.action(0,1)}
+            Button {objectName:"action0-1";visible:secondary;width:58;height:48;label:game.secondaryAction;enabled:!window.modal;onActivated:game.action(0,1)}
         }
         Row {
             visible:game.couch;anchors.right:parent.right;anchors.rightMargin:8;y:30;spacing:puzzle?4:6
@@ -124,9 +125,9 @@ Window {
                 }
             }
             Button {objectName:"action1-0";visible:puzzle;width:58;height:48;label:game.primaryAction;tint:"#eed0bd";enabled:!window.modal;onActivated:game.action(1,0)}
-            Button {objectName:"action1-1";visible:puzzle;width:58;height:48;label:game.secondaryAction;tint:"#eed0bd";enabled:!window.modal;onActivated:game.action(1,1)}
+            Button {objectName:"action1-1";visible:secondary;width:58;height:48;label:game.secondaryAction;tint:"#eed0bd";enabled:!window.modal;onActivated:game.action(1,1)}
         }
-        Text {visible:!game.couch;anchors.right:parent.right;anchors.rightMargin:18;y:37;text:puzzle?"PAD: A · "+game.primaryAction+" / X · "+game.secondaryAction:game.slug==="pong"?"FIRST TO 5":game.slug==="snake-arena"?"GROW · TURN · SURVIVE":"TURN · TRAP · SURVIVE";font.pixelSize:12;font.bold:true;color:"#697b6a"}
+        Text {visible:!game.couch;anchors.right:parent.right;anchors.rightMargin:18;y:37;text:puzzle?"PAD: A · "+game.primaryAction+(secondary?" / X · "+game.secondaryAction:""):game.slug==="pong"?"FIRST TO 5":game.slug==="snake-arena"?"GROW · TURN · SURVIVE":"TURN · TRAP · SURVIVE";font.pixelSize:12;font.bold:true;color:"#697b6a"}
     }
     Rectangle {
         visible:window.modal;x:field.x;y:field.y;width:field.width;height:field.height;radius:18;color:"#88354a43"

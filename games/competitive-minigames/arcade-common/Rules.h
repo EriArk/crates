@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace arcade {
-enum class Kind { Pong, Snake, Cycles, Blocks, Mines, Chain };
+enum class Kind { Pong, Snake, Cycles, Blocks, Mines, Chain, Racing, Tanks };
 struct Identity { QString id, title, subtitle, instructions; Kind kind; QString primary, secondary; };
 Identity identity(Kind kind);
 // Directions: -1 neutral, 0 up, 1 right, 2 down, 3 left.

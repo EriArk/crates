@@ -14,16 +14,18 @@ add_library(arcade STATIC
     ${COMMON}/PuzzleRules.h
     falling-blocks/src/BlocksRules.h falling-blocks/src/BlocksRules.cpp
     minesweeper-race/src/MinesRules.h minesweeper-race/src/MinesRules.cpp
-    chain-reaction/src/ChainRules.h chain-reaction/src/ChainRules.cpp)
+    chain-reaction/src/ChainRules.h chain-reaction/src/ChainRules.cpp
+    mini-racing/src/RacingRules.h mini-racing/src/RacingRules.cpp
+    tanks/src/TanksRules.h tanks/src/TanksRules.cpp)
 target_include_directories(arcade PUBLIC ${COMMON} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(arcade PUBLIC Qt6::Quick Qt6::Network)
 set_source_files_properties(${COMMON}/ui/Main.qml PROPERTIES QT_RESOURCE_ALIAS ui/Main.qml)
 set(ARCADE_RESOURCES ${COMMON}/ui/Main.qml)
-foreach(slug pong snake-arena light-cycles falling-blocks minesweeper-race chain-reaction)
+foreach(slug pong snake-arena light-cycles falling-blocks minesweeper-race chain-reaction mini-racing tanks)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/${slug}/ui/Board.qml PROPERTIES QT_RESOURCE_ALIAS boards/${slug}.qml)
     list(APPEND ARCADE_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${slug}/ui/Board.qml)
 endforeach()
-set(ARCADE_GAMES "pong;snake-arena;light-cycles;falling-blocks;minesweeper-race;chain-reaction" CACHE STRING "Games to build")
+set(ARCADE_GAMES "pong;snake-arena;light-cycles;falling-blocks;minesweeper-race;chain-reaction;mini-racing;tanks" CACHE STRING "Games to build")
 foreach(slug IN LISTS ARCADE_GAMES)
     if(slug STREQUAL "pong")
         set(kind 0)
@@ -37,6 +39,10 @@ foreach(slug IN LISTS ARCADE_GAMES)
         set(kind 4)
     elseif(slug STREQUAL "chain-reaction")
         set(kind 5)
+    elseif(slug STREQUAL "mini-racing")
+        set(kind 6)
+    elseif(slug STREQUAL "tanks")
+        set(kind 7)
     else()
         message(FATAL_ERROR "Unknown arcade game: ${slug}")
     endif()

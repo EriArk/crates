@@ -1,13 +1,60 @@
-# Mini Racing
+# Brick Racing
 
-Small-scale competitive racing.
+Shared-road racing on a monochrome block display.
 
-Part of the [Competitive Mini-Games](../) collection for TrainerOS.
+![Actual Linux gameplay](docs/play.png)
 
-The plan is for this game to have its **own Fluxer-connected community**, auto-filled lobby information where possible, and access to relevant multiplayer/social information in the game itself.
+## Multiplayer design
 
-Tournaments, rankings, and ratings are potential future ecosystem features.
+Both drivers occupy **one road and one generated obstacle course**. Two scrolling
+views keep each player's car visible even after an accident; the rival in either
+view is the same live car, not a ghost or an independent race.
 
-**Status:** Initial idea; detailed gameplay and implementation will be discussed later.
+- Left/right changes lanes; Up accelerates, Down brakes.
+- **Boost** gives a short burst, then recharges. Following the other car in the
+  same lane at a safe distance recharges it twice as fast: drafting sets up a pass.
+- A car behind another is limited by its speed until it passes. Side changes
+  cannot overlap the rival; crashing cars become passable during recovery.
+- Obstacles cost a one-second stop, not elimination. Both players stay involved.
+- First to 2000 distance units wins. When both cross in the same tick, the fraction
+  of the final movement decides; exact equality draws. After two minutes, the
+  greater distance wins. Rematch generates a new shared course.
 
-See [docs/idea.md](docs/idea.md).
+A training bot follows the same visible road and uses the same controls. No
+rubber-band teleporting, weapons, ranked results or automatic reward submission.
+
+## Modes and controls
+
+**Two on this device** uses simultaneous independent controls; **Play with a
+friend** uses the existing TrainerOS GameHub Lobby/SDK channel. Both players must
+agree to an online rematch. Exit ends the round and keeps the Lobby; rejoin starts
+a fresh round. **Practice with bot** remains available for learning the controls.
+
+| Player / input | Directions | Boost |
+| --- | --- | --- |
+| Local Mint / P1 | WASD | F or Space |
+| Local Coral / P2 | Arrows | Enter |
+| Solo or online | Arrows or WASD | Enter, Space or F |
+| Each controller | D-pad | SDL Confirm / A mapping |
+| Touch | Labelled arrows | Visible Boost button |
+
+Back/Escape or controller Back/Start opens the exit confirmation. Local play pauses
+on focus loss; an online match continues with held directions released. Actions
+are discrete taps. P1 uses solid LCD blocks and P2 outlines. These fixed labels do
+not claim physical device-specific controller glyph support.
+
+## Build and package
+
+```sh
+cmake -S games/competitive-minigames -B build/brick -DCMAKE_BUILD_TYPE=Release -DARCADE_GAMES=mini-racing
+cmake --build build/brick --parallel 3
+./build/brick/mini-racing --windowed
+python3 games/competitive-minigames/arcade-common/package.py mini-racing build/brick/mini-racing dist/mini-racing
+```
+
+C++20, Qt 6.4+ Quick/Network and SDL2. Original SVG/Canvas art and code are
+GPL-3.0-or-later; [LICENSE](LICENSE). No borrowed ROMs, sprites or sounds.
+Prepared for Experimental 0.1.0; publication and device acceptance belong to the
+main workflow. [Preparation handoff](../docs/brick-duo-preparation.md) records scope
+and checks; [shared integration](../arcade-common/README.md) documents SDK limits.
+The [initial concept](docs/idea.md) remains as history.

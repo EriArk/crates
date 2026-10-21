@@ -12,7 +12,8 @@ import tarfile
 
 base = Path(__file__).resolve().parent.parent
 titles = {'pong': 'Pong', 'snake-arena': 'Snake Arena', 'light-cycles': 'Light Cycles',
-          'falling-blocks': 'Falling Blocks', 'minesweeper-race': 'Minesweeper Race', 'chain-reaction': 'Chain Reaction'}
+          'falling-blocks': 'Falling Blocks', 'minesweeper-race': 'Minesweeper Race', 'chain-reaction': 'Chain Reaction',
+          'mini-racing': 'Brick Racing', 'tanks': 'Brick Tanks'}
 p = argparse.ArgumentParser()
 p.add_argument('game', choices=titles)
 p.add_argument('executable', type=Path)
