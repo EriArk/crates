@@ -3,9 +3,15 @@
 Games, apps, widgets and extensions for TrainerOS. Most entries are currently
 concepts; implementation and verification are recorded per project.
 
-**First implementation:** [Session Timer](widgets/session-timer/) — a session
-stopwatch, Start widget and optional break reminders. Experimental desktop build;
-handheld acceptance remains open. **Next requested project:** [Pocket Artillery](games/competitive-minigames/pocket-artillery/).
+**Implemented projects:**
+
+- [Session Timer](widgets/session-timer/) — a session stopwatch, Start widget and
+  optional break reminders.
+- [Pocket Artillery](games/competitive-minigames/pocket-artillery/) — a two-player
+  duel with destructible terrain, local pass-controller play and optional TrainerOS Lobby integration.
+
+Both are experimental desktop builds; handheld acceptance and public catalogue
+publication remain open. Pocket Artillery's live internet checks are also pending.
 
 ## Catalog
 

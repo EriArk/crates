@@ -1,5 +1,9 @@
 # Pocket Artillery — Idea Notes
 
+Historical concept. The first implementation is a two-player duel; see the
+[current game, controls and verification](../README.md). Larger groups,
+communities, rankings and tournaments remain future work.
+
 Two or more players choose firing angle and power, then shoot across destructible terrain. Turn-based gameplay could need relatively little real-time synchronization.
 
 ## Planned context

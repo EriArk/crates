@@ -48,4 +48,6 @@ See [Shared Approach](docs/shared-approach.md), [Results & Ratings](docs/ratings
 
 **24 game ideas total** (6 initial + 18 additional). Names are working titles, not final product or brand names. Games may later merge, split, or move into standalone Crates.
 
-**Status:** Concept catalog only. See [original idea](docs/idea.md) for the starting vision.
+**Status:** [Pocket Artillery](pocket-artillery/) now has an experimental two-player
+implementation. Other entries remain concepts. See [original idea](docs/idea.md)
+for the starting vision.
