@@ -99,7 +99,12 @@ Original code/art: GPL-3.0-or-later; see [LICENSE](LICENSE). Original concept: [
   Public catalogue revision 6 selected the ARM build; the external process found
   the real SDK host and counted time through its widget. The same public cycle
   passed on x86_64. ARM assets have separate records and `SHA256SUMS-aarch64`.
-- The app window was rendered and inspected on desktop. Physical buttons/touch,
-  handheld graphics/performance and suspend remain untested. The current SDK itself
-  still needs handheld delivery; existing installed TrainerOS builds must not be
-  assumed to expose this API.
+- Subsequently installed through normal Crates Download on Odin/Flip with the
+  current SDK. Both windows rendered and connected; Flip's Start widget counted
+  after system Home → Minimize and paused through its callback. Reopening returned
+  the same timer state. Physical buttons/touch, sustained performance and suspend
+  remain untested. The widget is available while the app runs; no autostart is supplied.
+- **Known Gamescope issue:** the app's own Back to TrainerOS / Escape uses Qt
+  `showMinimized()` and does not return focus to the shell on the tested handhelds.
+  Use the system **Home → Minimize** instead; the timer continues there. This needs
+  a shared application-to-shell return contract, not a title-specific process rule.

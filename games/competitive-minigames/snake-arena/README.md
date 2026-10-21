@@ -5,7 +5,9 @@ The last survivor wins; simultaneous crashes draw. After two minutes, the longer
 
 Part of the [Competitive Mini-Games](../) collection for TrainerOS.
 
-**Status:** 0.1.0 experimental desktop implementation; ARM and live internet acceptance pending.
+**Status:** [0.1.0 experimental release](https://github.com/EriArk/crates/releases/tag/snake-arena-v0.1.0)
+for Linux x86_64/ARM64, installed through Crates on Odin/Flip. Bot play and Home/Exit
+checked remotely on Odin; physical controls and live internet acceptance pending.
 
 ![Snake Arena desktop game](docs/play.png)
 

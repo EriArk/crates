@@ -5,7 +5,9 @@ survive. Hitting a wall or any trail loses; simultaneous crashes draw.
 
 Part of the [Competitive Mini-Games](../) collection for TrainerOS.
 
-**Status:** 0.1.0 experimental desktop implementation; ARM and live internet acceptance pending.
+**Status:** [0.1.0 experimental release](https://github.com/EriArk/crates/releases/tag/light-cycles-v0.1.0)
+for Linux x86_64/ARM64, installed through Crates on Odin/Flip. Bot match result and
+Home/Exit checked remotely on Flip; physical controls and live internet acceptance pending.
 
 ![Light Cycles desktop game](docs/play.png)
 

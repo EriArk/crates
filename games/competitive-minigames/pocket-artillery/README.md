@@ -115,5 +115,8 @@ The [original idea](docs/idea.md) retains the wider concept.
   the same 0.1.0 release with its own record and `SHA256SUMS-aarch64`, reusing the
   original source archive. Public catalogue revision 6 selected the correct build
   and completed the package cycle on both x86_64 and emulated ARM.
-- Handheld deployment, physical controls/performance, live Fluxer invitation,
-  internet/NAT acceptance and official scoring remain unverified or unfinished.
+- Subsequently installed through normal Crates Download on Odin/Flip with the
+  required shell/SDK. On Flip the actual local duel rendered, a shot caused damage
+  and passed the turn, and system Home/Exit returned to Crates. Input was synthetic.
+  Physical controls/sustained performance, live Fluxer invitation, paired internet/
+  NAT acceptance and official scoring remain unverified or unfinished.

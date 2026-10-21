@@ -119,7 +119,12 @@ Original code and SVG/canvas artwork: GPL-3.0-or-later. See [LICENSE](LICENSE).
 - Each Linux Release package passed actual installation, managed launch, busy
   removal protection, termination, removal and data-preserving reinstallation in
   disposable storage. Host libraries are required; packages are not portable AppImages.
-- No ARM binary or handheld deployment was produced. Physical controllers/touch,
-  end-to-end shell focus/Home behavior, live accounts, internet latency/NAT and
-  catalogue publication of these three games remain open. Existing installed
-  TrainerOS builds must not be assumed to supply the SDK used in these tests.
+- Subsequent native ARM64 build on Odin (Fedora 44 / Qt 6.11.2 / GCC 16.2.1) and
+  CTest passed. All three 0.1.0 releases now contain x86_64/aarch64 packages from
+  `68e0943`, source archives, records and checksums. Signed catalogue revision 9
+  serves them; six public binary downloads matched their recorded sizes/hashes.
+- All three installed through normal Crates Download on both Odin and Flip with
+  the updated shell/SDK. Pong and Snake bot games rendered on Odin; Light Cycles
+  reached a result on Flip. System Home/Exit returned to Crates for each, using
+  remote synthetic input. Physical controllers/touch, live account invitation,
+  paired internet play, latency/NAT and full-session acceptance remain open.
