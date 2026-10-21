@@ -1,5 +1,8 @@
 # Snake Arena
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 Two snakes share a garden. Eat fruit, grow longer and avoid walls and bodies.
 The last survivor wins; simultaneous crashes draw. After two minutes, the longer snake wins.
 

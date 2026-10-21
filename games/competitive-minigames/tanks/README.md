@@ -1,5 +1,8 @@
 # Brick Tanks
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 A two-player tank duel on a shared monochrome brick arena.
 
 ![Actual Linux gameplay](docs/play.png)

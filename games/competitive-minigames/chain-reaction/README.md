@@ -1,5 +1,8 @@
 # Chain Reaction
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 Swap coloured tiles, build cascades and send blocks to your rival.
 
 ![Actual desktop gameplay](docs/play.png)

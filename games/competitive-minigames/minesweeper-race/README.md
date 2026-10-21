@@ -1,5 +1,8 @@
 # Minesweeper Race
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 Race to open the safe squares on identical minefields.
 
 ![Actual desktop gameplay](docs/play.png)

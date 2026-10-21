@@ -1,5 +1,8 @@
 # Brick Racing
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 Shared-road racing on a monochrome block display.
 
 ![Actual Linux gameplay](docs/play.png)

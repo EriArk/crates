@@ -1,5 +1,8 @@
 # Falling Blocks
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 A two-player falling-block race. Clear 12 lines before your rival.
 
 ![Actual desktop gameplay](docs/play.png)

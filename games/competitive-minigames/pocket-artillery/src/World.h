@@ -36,8 +36,8 @@ struct World {
         constexpr int sin5[]{0,872,1736,2588,3420,4226,5000,5736,6428,7071,7660,8192,8660,9063,9397,9659,9848,9962,10000};
         const int direction=turn==0?1:-1;
         const int sx=sin5[(90-angle)/5],sy=sin5[angle/5];
-        int px=x(turn)*1000+direction*24*sx/10;
-        int py=(floor(x(turn))-15)*1000-24*sy/10;
+        int px=x(turn)*1000+direction*43*sx/10;
+        int py=(floor(x(turn))-25)*1000-43*sy/10;
         const int vx=direction*power*180*sx/10000;
         int vy=-power*180*sy/10000;
         // Substeps prevent fast shells tunnelling through tank bodies or slopes.
@@ -47,7 +47,7 @@ struct World {
                 const QPoint point(px/1000,py/1000);
                 if(point.x()<0||point.x()>=Width||point.y()>Height){step=600;break;}
                 bool tank=false;
-                for(int p=0;p<2;++p)if(std::abs(point.x()-x(p))<=15&&std::abs(point.y()-(floor(x(p))-8))<=10)tank=true;
+                for(int p=0;p<2;++p)if(std::abs(point.x()-x(p))<=31&&std::abs(point.y()-(floor(x(p))-21))<=21)tank=true;
                 if(point.y()>=floor(point.x())||tank){result.hit=true;result.impact=point;result.path.append(point);break;}
             }
             if(step<600&&!result.hit)result.path.append({px/1000,py/1000});
@@ -57,7 +57,7 @@ struct World {
             const auto impact=result.impact;
             std::array<int,2> oldFloor{floor(x(0)),floor(x(1))};
             for(int p=0;p<2;++p){
-                const int dx=x(p)-impact.x(),dy=oldFloor[p]-8-impact.y();
+                const int dx=x(p)-impact.x(),dy=oldFloor[p]-21-impact.y();
                 const int distance=sqrtInt(dx*dx+dy*dy);
                 hp[p]-=std::max(0,72-distance);
             }

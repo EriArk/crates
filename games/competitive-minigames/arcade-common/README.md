@@ -1,10 +1,16 @@
 # Crates arcade integration
 
+Prepared **0.1.1** repair: [controls, presentation and handoff](../docs/controls-and-presentation.md).
+All eight arcade games and Pocket Artillery use `ControllerInput.h`: left stick,
+D-pad, semantic actions, focus neutralisation and stable controller seats.
+The touch panel is optional and returns on touch; hardware input hides it.
+Virtual SDL-device tests exercise this path; physical handheld acceptance remains separate.
+
 Shared support for **Pong**, **Snake Arena**, **Light Cycles**, **Falling Blocks**,
 **Minesweeper Race**, **Chain Reaction**, **Brick Racing** and **Brick Tanks**. Each game owns
 its rules in `src/`, its board in `ui/`, and its own icon and package. The common
 code supplies the menu, two-player controls, SDK connection and match lifecycle.
-Pocket Artillery remains unchanged; `ArcadeBridge` reuses its GPL SDK client with
+Pocket Artillery retains its own rules and SDK client; `ArcadeBridge` reuses its GPL SDK client with
 parameterized game identity. This is application-side support, not a new TrainerOS API.
 
 ## Player journey

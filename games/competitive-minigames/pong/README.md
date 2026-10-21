@@ -1,5 +1,8 @@
 # Pong
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 A two-player paddle game. Keep the ball in play, change its angle with the edge
 of your paddle, and reach five points. At the three-minute limit, the higher score wins.
 

@@ -2,6 +2,14 @@
 
 A family of compact competitive multiplayer games for TrainerOS, closely integrated with Fluxer and Social.
 
+## Implemented games
+
+Nine games now have native implementations: Pocket Artillery, Pong, Snake Arena,
+Light Cycles, Falling Blocks, Minesweeper Race, Chain Reaction, Brick Racing and
+Brick Tanks. The [prepared 0.1.1 repair](docs/controls-and-presentation.md) improves
+controller input, scale and effects; publication and physical acceptance remain separate.
+Other entries below are design ideas.
+
 ## The shared foundation
 
 **All games in this collection should work through one common integration approach.** Each game can keep its own gameplay while reusing consistent ways of joining, inviting friends, forming communities, displaying social activity inside the game, and participating in competitions.

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <QtTest>
+#include <QFont>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -17,6 +18,7 @@
 #include "chain-reaction/src/ChainRules.h"
 #include "mini-racing/src/RacingRules.h"
 #include "tanks/src/TanksRules.h"
+#include "VirtualPad.h"
 using namespace arcade;
 QQuickItem* item(QQuickItem* root,const QString& name){
     if(root->objectName()==name)return root;
@@ -26,6 +28,39 @@ QQuickItem* item(QQuickItem* root,const QString& name){
 class ArcadeTests final:public QObject {
     Q_OBJECT
 private slots:
+    void controllerBackend_data(){uiAndLocalLifecycle_data();}
+    void controllerBackend(){
+        QFETCH(int,kind);ArcadeGame game{Kind(kind)};
+        QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        ControllerInput input(window);VirtualPad first;VirtualPad second;
+        QVERIFY(first.joystick&&second.joystick);window->requestActivate();QTRY_VERIFY(window->isActive());
+        QTRY_COMPARE(window->property("padCount").toInt(),2);QVERIFY(!window->property("touchControls").toBool());
+        QTest::qWait(70);first.axis(0,24000);first.axis(0,0);QCOMPARE(window->property("selected").toInt(),1);
+        first.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"play");QVERIFY(game.couch());
+        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["tick"].toInt()>=65,6000);first.axis(0,-26000);second.axis(0,26000);QTest::qWait(180);
+        first.axis(0,0);second.axis(0,0);
+        if(kind==0){QVERIFY(game.scene()["p0"].toInt()<270);QVERIFY(game.scene()["p1"].toInt()>270);const int y=game.scene()["p0"].toInt();first.axis(8000,8000);QTest::qWait(120);QCOMPARE(game.scene()["p0"].toInt(),y);first.axis(0,0);}
+        if(kind!=4){first.tap(SDL_CONTROLLER_BUTTON_A);second.tap(SDL_CONTROLLER_BUTTON_A);}
+        first.tap(SDL_CONTROLLER_BUTTON_X);second.tap(SDL_CONTROLLER_BUTTON_X);
+        first.tap(SDL_CONTROLLER_BUTTON_START);QCOMPARE(game.phase(),"paused");
+        const auto paused=game.scene();second.axis(0,26000);second.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.scene(),paused);
+        second.axis(0,0);first.tap(SDL_CONTROLLER_BUTTON_B);QCOMPARE(game.phase(),"play");
+        window->resize(640,480);QTest::qWait(80);QVERIFY(window->grabWindow().save(game.slug()+"-pad-640.png"));
+        window->resize(1280,720);QTest::qWait(80);QVERIFY(window->grabWindow().save(game.slug()+"-pad-1280.png"));
+        first.tap(SDL_CONTROLLER_BUTTON_B);first.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"menu");
+    }
+    void controllerFocusAndHotplug(){
+        ArcadeGame game{Kind::Pong};QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());ControllerInput input(window);
+        auto first=std::make_unique<VirtualPad>();VirtualPad second;window->requestActivate();QTRY_VERIFY(window->isActive());QTRY_COMPARE(window->property("padCount").toInt(),2);
+        game.local(true);QTRY_VERIFY_WITH_TIMEOUT(game.scene()["tick"].toInt()>=65,6000);first->axis(0,-26000);
+        QQuickWindow other;other.show();other.requestActivate();QTRY_VERIFY(!window->isActive());QCOMPARE(game.phase(),"paused");
+        window->requestActivate();QTRY_VERIFY(window->isActive());game.pause(false);int y=game.scene()["p0"].toInt();QTest::qWait(100);QCOMPARE(game.scene()["p0"].toInt(),y);
+        first->axis(0,0);first->axis(0,26000);QTest::qWait(100);QVERIFY(game.scene()["p0"].toInt()>y);
+        first.reset();QTRY_COMPARE(window->property("padCount").toInt(),1);QCOMPARE(game.phase(),"paused");
+        second.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"play");int before=game.scene()["p1"].toInt();second.axis(0,26000);QTest::qWait(100);QVERIFY(game.scene()["p1"].toInt()>before);second.axis(0,0);
+    }
     void racingSharedCourseDraftContactRecoveryAndFinish(){
         RacingRules g;g.reset(7);g.tick=60;g.cars[0].distance=40;g.cars[1].distance=80;g.cars[0].lane=g.cars[1].lane=1;
         g.cars[0].cooldown=100;g.cars[1].cooldown=100;QVERIFY(g.drafting(0));QVERIFY(!g.drafting(1));g.step();
@@ -177,7 +212,7 @@ private slots:
         // Navigate the real menu into couch play, then exercise both control owners.
         QTest::keyClick(window,Qt::Key_Down);QTest::keyClick(window,Qt::Key_Return);
         QCOMPARE(game.phase(),"play");QVERIFY(game.couch());
-        QTest::qWait(2100);
+        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["tick"].toInt()>=65,6000);
         if(kind>=3&&kind<=5){
             if(kind==4){
                 const auto cells=game.scene()["players"].toList()[0].toMap()["cells"].toList();int target=0;while(cells[target].toInt()!=-1)++target;
@@ -207,17 +242,22 @@ private slots:
         }
         auto* up=item(window->contentItem(),"control0-0");QVERIFY(up);QVERIFY(up->isEnabled());
         auto pos=up->mapToScene(QPointF(up->width()/2,up->height()/2)).toPoint();
-        QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,pos);QTest::qWait(80);QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,pos);
-        QTest::keyPress(window,Qt::Key_Down);QTest::qWait(80);QTest::keyRelease(window,Qt::Key_Down);
+        QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,pos);
+        if(kind==0){QTRY_VERIFY_WITH_TIMEOUT(game.scene()["p0"].toInt()<270,1500);}else QTest::qWait(80);
+        QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,pos);
+        QTest::keyPress(window,Qt::Key_Down);
+        if(kind==0){QTRY_VERIFY_WITH_TIMEOUT(game.scene()["p1"].toInt()>270,1500);}else QTest::qWait(80);
+        QTest::keyRelease(window,Qt::Key_Down);
         if(kind==0){QVERIFY(game.scene()["p0"].toInt()<270);QVERIFY(game.scene()["p1"].toInt()>270);}
         if(kind==0){
-            auto* down=item(window->contentItem(),"control1-2");QVERIFY(down);
-            const auto other=down->mapToScene(QPointF(down->width()/2,down->height()/2)).toPoint();
+            auto* down=item(window->contentItem(),"control0-2");auto* otherUp=item(window->contentItem(),"control1-0");QVERIFY(down&&otherUp);
+            const auto touchFirst=down->mapToScene(QPointF(down->width()/2,down->height()/2)).toPoint();
+            const auto other=otherUp->mapToScene(QPointF(otherUp->width()/2,otherUp->height()/2)).toPoint();
             const int first=game.scene()["p0"].toInt(),second=game.scene()["p1"].toInt();
             auto* device=QTest::createTouchDevice();
-            QTest::touchEvent(window,device).press(0,pos,window).press(1,other,window).commit();QTest::qWait(100);
-            QTest::touchEvent(window,device).release(0,pos,window).release(1,other,window).commit();
-            QVERIFY(game.scene()["p0"].toInt()<first);QVERIFY(game.scene()["p1"].toInt()>second);
+            QTest::touchEvent(window,device).press(0,touchFirst,window).press(1,other,window).commit();
+            QTRY_VERIFY_WITH_TIMEOUT(game.scene()["p0"].toInt()>first&&game.scene()["p1"].toInt()<second,1500);
+            QTest::touchEvent(window,device).release(0,touchFirst,window).release(1,other,window).commit();
         }
         QTest::keyClick(window,Qt::Key_Escape);QCOMPARE(game.phase(),"paused");const auto paused=game.scene();QTest::qWait(100);QCOMPARE(game.scene(),paused);
         QTest::keyClick(window,Qt::Key_Escape);QCOMPARE(game.phase(),"play");
@@ -227,5 +267,11 @@ private slots:
         game.local();QVERIFY(!game.couch());QCOMPARE(game.phase(),"play");game.leave();
     }
 };
-int main(int argc,char** argv){QGuiApplication app(argc,argv);ArcadeTests test;return QTest::qExec(&test,argc,argv);}
+int main(int argc,char** argv){QGuiApplication app(argc,argv);
+#ifdef Q_OS_WIN
+app.setFont(QFont("Segoe UI"));
+#else
+app.setFont(QFont("DejaVu Sans"));
+#endif
+ArcadeTests test;return QTest::qExec(&test,argc,argv);}
 #include "ArcadeTests.moc"

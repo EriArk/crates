@@ -13,8 +13,8 @@ Game::Game(QString endpoint,QObject* parent):QObject(parent),bridge_(endpoint){
     connect(&bridge_,&Bridge::record,this,&Game::receive);
     handshake_.setSingleShot(true);handshake_.setInterval(10000);
     connect(&handshake_,&QTimer::timeout,this,[this]{bridge_.closeChannel();connection_="The other game did not finish connecting. Start again from Lobby.";phase_="menu";online_=false;emit changed();});
-    flight_.setInterval(16);
-    connect(&flight_,&QTimer::timeout,this,[this]{frame_+=2;if(frame_>=shot_.path.size())finishFlight();else emit changed();});
+    flight_.setInterval(24);
+    connect(&flight_,&QTimer::timeout,this,[this]{++frame_;if(frame_>=shot_.path.size()+24)finishFlight();else emit changed();});
 }
 QString Game::message() const{
     if(phase_=="menu")return "Small tanks. Big craters.";
@@ -32,9 +32,10 @@ QVariantMap Game::scene() const{
     const int count=phase_=="flight"?std::min(frame_+1,int(shot_.path.size())):int(shot_.path.size());
     for(int i=0;i<count;i+=2)trail.append(QVariantMap{{"x",shot_.path[i].x()},{"y",shot_.path[i].y()}});
     const QPoint shell=shot_.path.isEmpty()?QPoint(-100,-100):shot_.path[std::min(frame_,int(shot_.path.size())-1)];
+    int arcTop=-20;for(const auto& point:shot_.path)arcTop=std::min(arcTop,point.y()-35);
     return {{"terrain",terrain},{"hp0",w.hp[0]},{"hp1",w.hp[1]},{"y0",w.floor(120)},{"y1",w.floor(840)},
         {"turn",world_.turn},{"ply",world_.ply},{"trail",trail},{"shellX",shell.x()},{"shellY",shell.y()},
-        {"impactX",shot_.impact.x()},{"impactY",shot_.impact.y()},{"hit",shot_.hit},{"round",round_}};
+        {"arcTop",arcTop},{"impactX",shot_.impact.x()},{"impactY",shot_.impact.y()},{"hit",shot_.hit},{"round",round_},{"impactAge",phase_=="flight"?std::max(-1,frame_-int(shot_.path.size())):-1}};
 }
 void Game::local(){bridge_.disconnectHost();online_=false;round_=0;startRound(QRandomGenerator::global()->generate());}
 void Game::join(){if(phase_!="menu"&&phase_!="waiting")return;online_=true;phase_="waiting";bridge_.connectHost();emit changed();}

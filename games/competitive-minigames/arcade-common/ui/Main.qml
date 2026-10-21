@@ -6,6 +6,33 @@ Window {
     id: window
     width: 960; height: 640; minimumWidth: 640; minimumHeight: 480
     visible: true; title: game.title; color: "#f4f0e6"
+    property bool touchControls: true
+    property int padCount: 0
+    property string primaryGlyph: "A"
+    property string secondaryGlyph: "X"
+    property string backGlyph: "B"
+    function padDirection(player, direction) {
+        if(!game.couch && padCount===1)player=0
+        if (direction < 0) { game.control(player, -1); return }
+        if (menu && (player === 0 || padCount === 1)) selected = (selected + (direction === 0 || direction === 3 ? 2 : 1)) % 3
+        else if (!modal) game.control(player, direction)
+    }
+    function padRepeat(player, direction) { if(menu) padDirection(player, direction) }
+    function padActionRepeat(player, action) { if(!game.couch && padCount===1)player=0;if(!modal && game.slug==="tanks") game.action(player,action) }
+    function padButton(player, action) {
+        if(!game.couch && padCount===1)player=0
+        if (action >= 2) { window.back(); return }
+        if (modal) { if(action === 0 && (player === 0 || padCount === 1)) window.primary() }
+        else game.action(player, action)
+    }
+    function padLost(player, unused) { game.neutral(); game.pause(true) }
+    property var heldKeys: [[],[]]
+    function keyDirection(player, direction, down) {
+        var keys=heldKeys[player].filter(function(d){return d!==direction})
+        if(down) keys.push(direction)
+        heldKeys[player]=keys;game.control(player,keys.length?keys[keys.length-1]:-1)
+    }
+    onModalChanged: { heldKeys=[[],[]];game.neutral() }
     property bool asking: false
     property int selected: 0
     property var sceneData: game.scene
@@ -47,14 +74,14 @@ Window {
             var arrows=[Qt.Key_Up,Qt.Key_Right,Qt.Key_Down,Qt.Key_Left]
             var wasd=[Qt.Key_W,Qt.Key_D,Qt.Key_S,Qt.Key_A]
             var d=arrows.indexOf(event.key)
-            if(d>=0){game.control(game.couch?1:0,d);event.accepted=true;return}
+            if(d>=0){window.keyDirection(game.couch?1:0,d,true);event.accepted=true;return}
             d=wasd.indexOf(event.key)
-            if(d>=0){game.control(0,d);event.accepted=true}
+            if(d>=0){window.keyDirection(0,d,true);event.accepted=true}
         }
         Keys.onReleased: function(event) {
             if(event.isAutoRepeat)return
-            if([Qt.Key_Up,Qt.Key_Right,Qt.Key_Down,Qt.Key_Left].indexOf(event.key)>=0){game.control(game.couch?1:0,-1);event.accepted=true}
-            if([Qt.Key_W,Qt.Key_D,Qt.Key_S,Qt.Key_A].indexOf(event.key)>=0){game.control(0,-1);event.accepted=true}
+            if([Qt.Key_Up,Qt.Key_Right,Qt.Key_Down,Qt.Key_Left].indexOf(event.key)>=0){window.keyDirection(game.couch?1:0,[Qt.Key_Up,Qt.Key_Right,Qt.Key_Down,Qt.Key_Left].indexOf(event.key),false);event.accepted=true}
+            if([Qt.Key_W,Qt.Key_D,Qt.Key_S,Qt.Key_A].indexOf(event.key)>=0){window.keyDirection(0,[Qt.Key_W,Qt.Key_D,Qt.Key_S,Qt.Key_A].indexOf(event.key),false);event.accepted=true}
         }
     }
     component Button: Rectangle {
@@ -74,16 +101,16 @@ Window {
         }
     }
     Rectangle {
-        width:parent.width;height:76;color:"#fcf9f1"
-        Text {x:20;y:13;text:game.title;font.pixelSize:24;font.bold:true;color:"#2e4c40"}
-        Text {x:21;y:45;text:game.online?"FRIEND MATCH · YOU ARE "+(game.seat===0?"MINT":"CORAL"):game.couch?"TWO PLAYERS · TWO CONTROLS":"PRACTICE · YOU AND A BOT";font.pixelSize:11;font.letterSpacing:0.6;color:"#65766a"}
-        Button {anchors.right:parent.right;anchors.rightMargin:16;y:16;width:90;height:43;label:menu?"Exit":"Menu";onActivated:window.back()}
+        width:parent.width;height:58;color:"#fcf9f1"
+        Text {x:16;y:6;text:game.title;font.pixelSize:22;font.bold:true;color:"#2e4c40"}
+        Text {x:17;y:34;text:game.online?"FRIEND MATCH · YOU ARE "+(game.seat===0?"MINT":"CORAL"):game.couch?"TWO PLAYERS · TWO CONTROLS":"PRACTICE · YOU AND A BOT";font.pixelSize:11;font.letterSpacing:0.6;color:"#65766a"}
+        Button {anchors.right:parent.right;anchors.rightMargin:12;y:8;width:76;height:40;label:menu?"Exit":"Menu";onActivated:window.back()}
     }
     Rectangle {
         id:field
-        x:16;y:84;width:parent.width-32;height:parent.height-196;radius:18;color:game.slug==="light-cycles"?"#172e37":"#e0e9dc"
+        objectName:"playfield";x:8;y:64;width:parent.width-16;height:parent.height-y-(touchControls?108:36);radius:18;color:game.slug==="light-cycles"?"#172e37":"#e0e9dc"
         Loader {
-            id:board;anchors.fill:parent;anchors.margins:10
+            id:board;anchors.fill:parent;anchors.margins:4
             source:"qrc:/boards/"+game.slug+".qml"
             onLoaded:item.sceneData=Qt.binding(function(){return window.sceneData})
         }
@@ -94,7 +121,7 @@ Window {
         }
     }
     Rectangle {
-        x:16;anchors.bottom:parent.bottom;anchors.bottomMargin:12;width:parent.width-32;height:92;radius:16;color:"#fcf9f1"
+        visible:touchControls;x:8;anchors.bottom:parent.bottom;anchors.bottomMargin:8;width:parent.width-16;height:92;radius:16;color:"#fcf9f1"
         Text {x:14;y:8;text:game.couch?(puzzle?(secondary?"MINT · WASD + F / G":"MINT · WASD + F"):"MINT · W A S D / PAD 1"):(puzzle?(secondary?"YOU · ARROWS + ENTER / SHIFT":"YOU · ARROWS + ENTER"):"YOU · ARROWS / PAD 1");font.pixelSize:11;color:"#54745e";font.bold:true}
         Text {anchors.right:parent.right;anchors.rightMargin:14;y:8;text:game.couch?(puzzle?(secondary?"CORAL · ARROWS + ENTER / SHIFT":"CORAL · ARROWS + ENTER"):"CORAL · ARROWS / PAD 2"):game.online?"FRIEND · "+(game.seat===0?"CORAL":"MINT"):"CORAL · BOT";font.pixelSize:11;color:"#9c6958";font.bold:true}
         Row {
@@ -129,6 +156,10 @@ Window {
         }
         Text {visible:!game.couch;anchors.right:parent.right;anchors.rightMargin:18;y:37;text:puzzle?"PAD: A · "+game.primaryAction+(secondary?" / X · "+game.secondaryAction:""):game.slug==="pong"?"FIRST TO 5":game.slug==="snake-arena"?"GROW · TURN · SURVIVE":"TURN · TRAP · SURVIVE";font.pixelSize:12;font.bold:true;color:"#697b6a"}
     }
+    Button { anchors.right:parent.right;anchors.rightMargin:96;y:8;width:74;height:40;label:touchControls?"Hide pad":"Touch";onActivated:{game.neutral();touchControls=!touchControls} }
+    Text { visible:!touchControls;anchors.bottom:parent.bottom;anchors.bottomMargin:9;anchors.horizontalCenter:parent.horizontalCenter
+        text:padCount>0?"D-pad / stick"+(puzzle?"   "+primaryGlyph+" "+game.primaryAction+(secondary?"   "+secondaryGlyph+" "+game.secondaryAction:""):"")+"   "+backGlyph+" / Start Menu":game.couch?"P1 WASD + F / G     P2 Arrows + Enter / Shift     Esc Menu":"Arrows / WASD"+(puzzle?"   Enter "+game.primaryAction+(secondary?"   Shift "+game.secondaryAction:""):"")+"   Esc Menu"
+        color:"#4a6657";font.pixelSize:window.width<800?13:16;font.bold:true }
     Rectangle {
         visible:window.modal;x:field.x;y:field.y;width:field.width;height:field.height;radius:18;color:"#88354a43"
         MouseArea {anchors.fill:parent}

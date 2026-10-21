@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick
+import "../ui"
 Item {
     id:board;property var sceneData: ({})
-    onSceneDataChanged:canvas.requestPaint()
+    property var previous: ({})
+    onSceneDataChanged:{
+        var s=sceneData,old=previous
+        if(old.players&&s.tick>old.tick){for(var p=0;p<2;p++){var v=s.players[p],before=old.players[p];if((p===0?s.s1:s.s0)>(p===0?old.s1:old.s0))fx.burst((135+(before.x+0.5)*18)/720,(53+(before.y+0.5)*18)/400,"#f0efbd",36);if(v.cooldown>before.cooldown)fx.burst((135+(v.x+0.5)*18)/720,(53+(v.y+0.5)*18)/400,"#f0efbd",7)}for(var i=0;i<s.cells.length;i++)if(old.cells[i]===1&&s.cells[i]===0)fx.burst((135+(i%25+0.5)*18)/720,(53+(Math.floor(i/25)+0.5)*18)/400,"#34432c",10)}
+        previous=s;canvas.requestPaint()
+    }
     Canvas {
         id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*1.8);height:width/1.8
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
@@ -10,8 +16,8 @@ Item {
             var s=board.sceneData;if(!s.players)return
             var c=getContext("2d");c.reset();c.scale(width/720,height/400)
             c.fillStyle="#adb991";c.fillRect(0,0,720,400);c.fillStyle="#34432c";c.textAlign="center"
-            c.font="bold 19px monospace";c.fillText("BRICK TANKS",360,24)
-            c.font="14px monospace";c.fillText(Math.max(0,120-Math.floor(Math.max(0,s.tick-60)/30))+"s",360,47)
+            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillText("BRICK TANKS",360,24)
+            c.font="19px \""+Qt.application.font.family+"\"";c.fillText(Math.max(0,120-Math.floor(Math.max(0,s.tick-60)/30))+"s",360,47)
             var ox=135,oy=53,z=18
             function cell(x,y,style){
                 var px=ox+x*z,py=oy+y*z;c.lineWidth=1;c.strokeStyle=style===0?"#94a27e":"#34432c";c.strokeRect(px+1,py+1,z-2,z-2)
@@ -31,14 +37,15 @@ Item {
                 }
                 c.strokeStyle="#34432c";c.lineWidth=2
                 if(v.shield&&s.tick%8<4)c.strokeRect(ox+(v.x-1)*z-2,oy+(v.y-1)*z-2,z*3+4,z*3+4)
-                var hx=p===0?65:655;c.fillStyle="#34432c";c.font="bold 20px monospace";c.fillText("P"+(p+1),hx,90)
-                c.font="14px monospace";c.fillText(p===0?"MINT":"CORAL",hx,112);c.font="bold 24px monospace";c.fillText((p===0?s.s0:s.s1)+" / 3",hx,155)
-                c.font="12px monospace";c.fillText(v.shield?"SHIELD":v.cooldown?"RELOAD":"READY",hx,191)
+                var hx=p===0?65:655;c.fillStyle="#34432c";c.font="bold 20px \""+Qt.application.font.family+"\"";c.fillText("P"+(p+1),hx,90)
+                c.font="19px \""+Qt.application.font.family+"\"";c.fillText(p===0?"MINT":"CORAL",hx,112);c.font="bold 24px \""+Qt.application.font.family+"\"";c.fillText((p===0?s.s0:s.s1)+" / 3",hx,155)
+                c.font="19px \""+Qt.application.font.family+"\"";c.fillText(v.shield?"SHIELD":v.cooldown?"RELOAD":"READY",hx,191)
                 // A fixed silhouette key distinguishes players on the monochrome screen.
                 c.strokeStyle="#34432c";c.lineWidth=2;c.strokeRect(hx-14,212,28,28);if(p===0)c.fillRect(hx-9,217,18,18)
-                c.font="11px monospace";c.fillText(p===0?"SOLID":"OUTLINE",hx,263)
+                c.font="19px \""+Qt.application.font.family+"\"";c.fillText(p===0?"SOLID":"OUTLINE",hx,263)
             }
             for(var b=0;b<s.bullets.length;b++){var shot=s.bullets[b];c.fillStyle="#34432c";c.fillRect(ox+shot.x*z+6,oy+shot.y*z+6,6,6)}
         }
     }
+    ImpactFx { id:fx;anchors.fill:canvas }
 }

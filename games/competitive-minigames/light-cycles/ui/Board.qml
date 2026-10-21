@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick
+import "../ui"
 Item {
     id:board;property var sceneData: ({})
-    onSceneDataChanged:canvas.requestPaint()
+    property var previous: ({})
+    onSceneDataChanged:{
+        var s=sceneData,old=previous
+        if(old.tick!==undefined&&s.tick>old.tick&&s.winner>=0&&old.winner<0){fx.burst((s.h0%28+0.5)/28,(Math.floor(s.h0/28)+0.5)/19,"#83efc6",36);fx.burst((s.h1%28+0.5)/28,(Math.floor(s.h1/28)+0.5)/19,"#ffad9b",36)}
+        previous=s;canvas.requestPaint()
+    }
     Canvas {
         id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*28/19);height:width*19/28
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
@@ -16,10 +22,11 @@ Item {
             for(var i=0;i<s.cells.length;i++)if(s.cells[i]){c.fillStyle=s.cells[i]===1?"#70cda6":"#e8a188";c.fillRect((i%28)*25+4,Math.floor(i/28)*25+4,17,17)}
             for(var p=0;p<2;p++){
                 var h=p===0?s.h0:s.h1,hx=(h%28)*25+12.5,hy=Math.floor(h/28)*25+12.5,d=p===0?s.d0:s.d1
-                c.save();c.translate(hx,hy);c.rotate(d*Math.PI/2);c.fillStyle="#fff4ce";c.beginPath();c.moveTo(0,-10);c.lineTo(8,7);c.lineTo(-8,7);c.closePath();c.fill();c.restore()
+                c.save();c.shadowColor=p===0?"#7affce":"#ffa78e";c.shadowBlur=18;c.translate(hx,hy);c.rotate(d*Math.PI/2);c.fillStyle="#fff4ce";c.beginPath();c.moveTo(0,-10);c.lineTo(8,7);c.lineTo(-8,7);c.closePath();c.fill();c.restore()
             }
-            c.font="bold 19px sans-serif";c.fillStyle="#91debb";c.textAlign="left";c.fillText("MINT  "+s.s0+" TILES",8,471);c.textAlign="right";c.fillStyle="#f1bca5";c.fillText("CORAL  "+s.s1+" TILES",692,471)
+            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillStyle="#91debb";c.textAlign="left";c.fillText("MINT  "+s.s0+" TILES",8,471);c.textAlign="right";c.fillStyle="#f1bca5";c.fillText("CORAL  "+s.s1+" TILES",692,471)
             c.textAlign="center";c.fillStyle="#c2d5c9";c.fillText("LAST RIDER WINS",350,471)
         }
     }
+    ImpactFx { id:fx;anchors.fill:canvas }
 }

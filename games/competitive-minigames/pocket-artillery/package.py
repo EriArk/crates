@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser()
 parser.add_argument('executable', type=Path)
 parser.add_argument('output', type=Path)
-parser.add_argument('--version', default='0.1.0')
+parser.add_argument('--version', default='0.1.1')
 args = parser.parse_args()
 import re
 if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?', args.version):
@@ -51,13 +51,15 @@ record = dict(id='pocket-artillery', title='Pocket Artillery', kind='game', vers
               notes='Two-player artillery with destructible terrain. Requires Qt Quick, Qt Network and SDL2.',
               url=f'https://github.com/EriArk/crates/releases/download/pocket-artillery-v{args.version}/{name}')
 try:
-    if not subprocess.check_output(['git','-C',str(root),'status','--porcelain','--','.'], text=True).strip():
+    if not subprocess.check_output(['git','-C',str(root),'status','--porcelain','--','.', '../arcade-common/ControllerInput.h', '../arcade-common/tests/VirtualPad.h'], text=True).strip():
         record['revision']=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'], text=True).strip()
 except (OSError,subprocess.CalledProcessError):
     pass  # A distributed source archive is also a valid build input.
 (args.output / f'pocket-artillery-{arch}-record.json').write_text(json.dumps(record, indent=2)+'\n', encoding='utf-8')
 source = args.output / f'pocket-artillery-{args.version}-source.tar.gz'
 with tarfile.open(source, 'w:gz') as tar:
+    tar.add(root.parent/'arcade-common/ControllerInput.h', arcname='arcade-common/ControllerInput.h')
+    tar.add(root.parent/'arcade-common/tests/VirtualPad.h', arcname='arcade-common/tests/VirtualPad.h')
     for path in sorted(root.rglob('*')):
         if path.is_file() and '__pycache__' not in path.parts:
             tar.add(path, arcname=Path('pocket-artillery') / path.relative_to(root))

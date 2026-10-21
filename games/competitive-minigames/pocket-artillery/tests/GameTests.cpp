@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <QtTest>
+#include <QFont>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -13,10 +14,28 @@ QQuickItem* visualItem(QQuickItem* parent,const QString& name){
     return nullptr;
 }
 #include "Game.h"
+#include "../../arcade-common/tests/VirtualPad.h"
 
 class GameTests final:public QObject {
     Q_OBJECT
 private slots:
+    void controllerAndReadableFlight(){
+        Game game;QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());ControllerInput input(window);VirtualPad pad;
+        QVERIFY(pad.joystick);window->requestActivate();QTRY_VERIFY(window->isActive());QTRY_COMPARE(window->property("padCount").toInt(),1);
+        QTest::qWait(70);pad.tap(SDL_CONTROLLER_BUTTON_A);pad.tap(SDL_CONTROLLER_BUTTON_A);QVERIFY(game.canFire());
+        pad.axis(-25000,0);pad.axis(0,0);QCOMPARE(game.angle(),40);
+        pad.button(SDL_CONTROLLER_BUTTON_DPAD_UP,true);pad.button(SDL_CONTROLLER_BUTTON_DPAD_UP,false);QCOMPARE(game.power(),90);
+        window->resize(640,480);QTest::qWait(80);QVERIFY(window->grabWindow().save("artillery-pad-640.png"));
+        window->resize(1280,720);QTest::qWait(80);QVERIFY(window->grabWindow().save("artillery-pad-1280.png"));
+        int best=-1,angle=45,power=85;
+        for(int a=10;a<=80;a+=5)for(int p=20;p<=100;p+=5){auto world=game.world();auto shot=world.fire(a,p);const int damage=game.world().hp[1]-world.hp[1];if(shot.hit&&damage>best){best=damage;angle=a;power=p;}}
+        QVERIFY(best>0);game.aim((angle-game.angle())/5);game.charge((power-game.power())/5);
+        pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"flight");QTest::qWait(650);QCOMPARE(game.phase(),"flight");
+        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["impactAge"].toInt()>=0,8000);QVERIFY(game.scene()["hit"].toBool());QTest::qWait(180);QVERIFY(window->grabWindow().save("artillery-impact.png"));
+        QTRY_COMPARE_WITH_TIMEOUT(game.phase(),"handoff",1000);
+        pad.tap(SDL_CONTROLLER_BUTTON_START);QVERIFY(window->property("asking").toBool());pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"menu");
+    }
     void unavailableHostReturnsToLocalPlay(){
         QTemporaryDir directory;
         Game game(directory.filePath("missing.json"));
@@ -85,5 +104,11 @@ private slots:
         QVERIFY(!game.canFire());
     }
 };
-int main(int argc,char** argv){QGuiApplication app(argc,argv);GameTests tests;return QTest::qExec(&tests,argc,argv);}
+int main(int argc,char** argv){QGuiApplication app(argc,argv);
+#ifdef Q_OS_WIN
+app.setFont(QFont("Segoe UI"));
+#else
+app.setFont(QFont("DejaVu Sans"));
+#endif
+GameTests tests;return QTest::qExec(&tests,argc,argv);}
 #include "GameTests.moc"

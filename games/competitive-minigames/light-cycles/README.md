@@ -1,5 +1,8 @@
 # Light Cycles
 
+**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
+[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+
 Two riders leave permanent walls. Turn into open space, trap your rival and
 survive. Hitting a wall or any trail loses; simultaneous crashes draw.
 

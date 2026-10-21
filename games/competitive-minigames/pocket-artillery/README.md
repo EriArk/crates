@@ -4,8 +4,9 @@ A two-player artillery duel: aim, set the power and fire across destructible hil
 Shells carve craters; explosions and falls damage the tanks. The last surviving
 tank wins. A round ends in a draw after 60 shots if both tanks survive.
 
-**Status:** 0.1.0 experimental implementation. Desktop verification is recorded
-below; ARM handheld and internet acceptance remain open.
+**Prepared update:** 0.1.1 fixes controller input, scale and flight presentation.
+This is not a published or installed update. See the
+[repair evidence and handoff](../docs/controls-and-presentation.md).
 
 ![Local duel in the Linux desktop build](docs/duel.png)
 
@@ -18,8 +19,9 @@ below; ARM handheld and internet acceptance remain open.
   prepare, mark both players Ready, then the organizer presses Start. Invitations
   and membership belong to TrainerOS; the game does not create a second room system.
 - Left/right changes angle; up/down changes power. Confirm/Enter/Space fires.
-  Back/Escape opens the leave confirmation. All actions also have visible touch/mouse
-  buttons. SDL2 handles a connected controller while the game window has focus.
+  Back/Escape or Start opens the leave confirmation. The D-pad or left stick aims;
+  hold a direction to repeat adjustments. Touch restores the optional screen controls;
+  hardware input hides them. SDL2 handles connected controllers while Qt has focus.
 - After the result, **Play again** creates new terrain and alternates the starting
   player. In a friend duel, both players must request the rematch.
 - Leaving or losing a connection ends the round, preserving persistent Lobby
@@ -33,7 +35,9 @@ The wider [collection plans](../docs/shared-approach.md) remain targets.
 ## TrainerOS integration
 
 Optional Platform SDK v1 capabilities: `lobby.activity: 1` and `network.records: 1`.
-App ID: `art.abysstail.pocket-artillery`; game protocol: `pocket-artillery.1`.
+App ID: `art.abysstail.pocket-artillery`; game protocol: `pocket-artillery.2`.
+Both participants must update: the enlarged tanks have matching hit areas and
+cannot share a match with the previous `.1` rules.
 See the [SDK network contract](https://github.com/EriArk/TrainerOS/blob/codex/platform-sdk-foundation/sdk/NETWORK.md).
 
 The SDK discovers/authenticates the local host and supplies its existing two-peer
