@@ -1,5 +1,8 @@
 # Snake Arena — Idea Notes
 
+Historical concept. See the [implemented game](../README.md) for the current
+two-player rules and the remaining platform acceptance.
+
 Several snakes compete for pickups and space, can cut off opponents, and may compete for territory.
 
 ## Planned context

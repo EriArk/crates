@@ -15,6 +15,13 @@ catalogue (revision 4). Public download, installation and managed launch passed 
 Linux x86_64 with updated TrainerOS helpers/SDK. Handheld acceptance and Pocket
 Artillery's live internet checks remain open.
 
+**New experimental desktop games:** [Pong](games/competitive-minigames/pong/),
+[Snake Arena](games/competitive-minigames/snake-arena/) and
+[Light Cycles](games/competitive-minigames/light-cycles/) add bot practice,
+simultaneous local controls and matches through TrainerOS Lobby. Their separate
+Linux packages are prepared; public catalogue publication, ARM and live internet
+acceptance remain open.
+
 **Experimental Linux x86_64 downloads:**
 [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
 and [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0).

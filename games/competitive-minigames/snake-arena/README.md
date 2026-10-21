@@ -1,17 +1,35 @@
 # Snake Arena
 
-Multiplayer snake battles on one shared field.
+Two snakes share a garden. Eat fruit, grow longer and avoid walls and bodies.
+The last survivor wins; simultaneous crashes draw. After two minutes, the longer snake wins.
 
 Part of the [Competitive Mini-Games](../) collection for TrainerOS.
 
-## Concept
+**Status:** 0.1.0 experimental desktop implementation; ARM and live internet acceptance pending.
 
-Several snakes compete for pickups and space, can cut off opponents, and may compete for territory.
+![Snake Arena desktop game](docs/play.png)
+
+## Play
+
+Choose **Practice with bot**, **Two on this device**, or **Play with a friend**.
+Turn with four directions; direct reversal is disallowed. Couch players use
+WASD and arrows, two controllers, or their separate touch controls. Back opens
+the leave confirmation. Local play pauses for the menu; online play continues.
+
+For friend play, both open Snake Arena and use TrainerOS **GameHub → Lobby**,
+select the game, prepare, both Ready, then organizer Start. A rematch requires
+both players. Exit or disconnection ends the round, preserving the room; rejoin
+starts fresh. No game state is saved.
 
 ## Shared integration
 
-This game will follow the [common approach](../docs/shared-approach.md) planned for the collection. It is intended to have its own Fluxer-connected community, auto-filled lobby information where possible, and relevant multiplayer/social information inside the game, with a shared path toward rankings and tournaments.
+[Build, packaging, controls and SDK contract](../arcade-common/README.md).
+The organizer computes simultaneous movement and sends snapshots through the
+existing SDK. Guest turns depend on network latency. Live internet play and
+physical controls remain unverified; this is not competitive-ranking certification.
 
-**Status:** Initial idea only. Specific mechanics and technology will be discussed later.
+The [wider collection plans](../docs/shared-approach.md), including communities,
+rankings and tournaments, remain targets. This version supports two players.
+Original code and vector/canvas art: [GPL-3.0-or-later](LICENSE).
 
 See [idea notes](docs/idea.md).

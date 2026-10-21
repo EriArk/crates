@@ -2,6 +2,17 @@
 
 ## 21 октября 2026
 
+- Реализованы выбранные владельцем [Pong](games/competitive-minigames/pong/),
+  [Snake Arena](games/competitive-minigames/snake-arena/) и
+  [Light Cycles](games/competitive-minigames/light-cycles/): тренировка с ботом,
+  одновременная локальная пара, независимое управление и сетевой матч через Lobby.
+  Добавлены взаимный реванш, выход/повторный вход и отдельные Linux x86_64 пакеты.
+- [Проверки аркад](games/competitive-minigames/arcade-common/README.md#verification--21-october-2026)
+  прошли на Windows/Linux, а сетевой цикл каждой игры — через настоящие SDK/TLS.
+  Исправлены запоздавшие ответы закрытого канала и завершение игры через managed
+  launcher. Проверены установка, запуск и переустановка всех трёх пакетов.
+  Публикация новых игр, ARM, физические контроллеры/touch и интернет остаются открытыми.
+
 - Session Timer и Pocket Artillery включены в подписанный каталог TrainerOS,
   ревизия 4: Workshop и тематические ящики, настоящие скриншоты. Linux x86_64
   проверка использовала публичный каталог, опубликованные пакеты и настоящий

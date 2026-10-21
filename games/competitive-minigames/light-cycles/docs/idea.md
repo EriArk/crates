@@ -1,5 +1,8 @@
 # Light Cycles — Idea Notes
 
+Historical concept. See the [implemented game](../README.md) for the current
+two-player rules. Larger groups remain future work.
+
 Bikes or vehicles leave walls behind them; players avoid trails and trap opponents. Fast matches, potentially for 4–8 players.
 
 ## Planned context
