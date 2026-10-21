@@ -80,7 +80,8 @@ For isolated Linux package checks:
 python3 widgets/session-timer/tests/verify_package.py TRAINEROS_CHECKOUT RECORD_JSON PACKAGE_TAR_GZ
 ```
 
-No public catalogue installation or ARM handheld delivery is claimed by these instructions.
+The published 0.1.0 packages are in the signed Crates catalogue; handheld delivery
+of the required TrainerOS SDK remains separate from these build instructions.
 Original code/art: GPL-3.0-or-later; see [LICENSE](LICENSE). Original concept: [idea notes](docs/idea.md).
 
 ## Verification — 21 October 2026
@@ -93,8 +94,12 @@ Original code/art: GPL-3.0-or-later; see [LICENSE](LICENSE). Original concept: [
   install, launch, live-package lock, removal and data-preserving reinstall in a
   disposable container. Eight existing installer regressions and two SDK-launch/
   release-source tests passed. No personal data or running desktop was used.
-- The app window was rendered and inspected. Desktop evidence does not establish
-  ARM performance, physical buttons/touch, suspend or a public catalogue release.
-- No ARM64 binary has been built in this delivery. The current SDK itself still
-  needs handheld delivery; existing installed TrainerOS builds must not be assumed
-  to expose this API.
+- ARM64 / Fedora 44 / Qt 6.11.2: built from the same published source archive,
+  model tests and real package install/launch/remove/reinstall passed under QEMU.
+  Public catalogue revision 6 selected the ARM build; the external process found
+  the real SDK host and counted time through its widget. The same public cycle
+  passed on x86_64. ARM assets have separate records and `SHA256SUMS-aarch64`.
+- The app window was rendered and inspected on desktop. Physical buttons/touch,
+  handheld graphics/performance and suspend remain untested. The current SDK itself
+  still needs handheld delivery; existing installed TrainerOS builds must not be
+  assumed to expose this API.

@@ -97,7 +97,8 @@ The [original idea](docs/idea.md) retains the wider concept.
   display, keyboard aiming, pointer firing and leave/cancel confirmation passed.
 - The same fixed-seed rule sequence produced SHA256
   `317f2be64027c4b589715cc6ca2a7828d3eb0c460660fafb5b29e34ddd908865`
-  on both builds. This is bounded cross-platform determinism evidence, not an ARM check.
+  on both builds, and subsequently on the ARM64 / Qt 6.11.2 build under QEMU.
+  This is bounded evidence for that rule sequence, not internet gameplay acceptance.
 - Windows real-host test: two game clients, two PlatformHosts and separate secure
   helper processes over loopback TLS; complete duel with equal state after every
   shot, mutual rematch/alternating starter, exit, retained room, rejoin and profile
@@ -109,5 +110,10 @@ The [original idea](docs/idea.md) retains the wider concept.
 - Rendered menu and duel were inspected at 640×440, plus the desktop menu at
   960×600 logical pixels. Physical controllers/touch and ARM performance remain untested.
 - Existing installed TrainerOS builds must not be assumed to include this SDK.
-  No ARM binary, handheld deployment, public catalogue entry, live Fluxer invitation,
-  internet/NAT acceptance or official scoring is claimed by this delivery.
+- ARM64 / Fedora 44 / Qt 6.11.2: Release build, rules/QML tests and real package
+  install/launch/remove/reinstall passed under QEMU. The ARM package is added to
+  the same 0.1.0 release with its own record and `SHA256SUMS-aarch64`, reusing the
+  original source archive. Public catalogue revision 6 selected the correct build
+  and completed the package cycle on both x86_64 and emulated ARM.
+- Handheld deployment, physical controls/performance, live Fluxer invitation,
+  internet/NAT acceptance and official scoring remain unverified or unfinished.

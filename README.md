@@ -10,9 +10,9 @@ concepts; implementation and verification are recorded per project.
 - [Pocket Artillery](games/competitive-minigames/pocket-artillery/) — a two-player
   duel with destructible terrain, local pass-controller play and optional TrainerOS Lobby integration.
 
-Both are experimental desktop builds and are listed in the signed TrainerOS
-catalogue (revision 4). Public download, installation and managed launch passed on
-Linux x86_64 with updated TrainerOS helpers/SDK. Handheld acceptance and Pocket
+Both have experimental x86_64 and ARM64 builds in the signed TrainerOS
+catalogue (revision 6). Public download, installation and managed launch passed on
+Linux x86_64 and emulated ARM64 with updated TrainerOS helpers/SDK. Handheld acceptance and Pocket
 Artillery's live internet checks remain open.
 
 **New experimental desktop games:** [Pong](games/competitive-minigames/pong/),
@@ -22,12 +22,14 @@ simultaneous local controls and matches through TrainerOS Lobby. Their separate
 Linux packages are prepared; public catalogue publication, ARM and live internet
 acceptance remain open.
 
-**Experimental Linux x86_64 downloads:**
+**Experimental Linux x86_64 / ARM64 downloads:**
 [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
 and [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0).
-Each release includes a binary package, matching source archive, installer record
-and SHA256SUMS. Qt 6.4+ and SDL2 are required; TrainerOS integration requires a
-compatible Platform SDK v1. ARM builds are not available yet.
+Each release includes architecture-specific packages/installer records and the same
+matching source archive. ARM additions use `SHA256SUMS-aarch64`; earlier x86_64
+assets and `SHA256SUMS` remain unchanged. The x86_64 baseline uses Qt 6.4;
+ARM64 targets Fedora 44 / Qt 6.11.2 with the host SDL2 runtime. TrainerOS integration
+requires a compatible Platform SDK v1 and architecture-aware Crates helpers.
 
 ## Catalog
 
