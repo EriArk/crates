@@ -10,8 +10,10 @@ concepts; implementation and verification are recorded per project.
 - [Pocket Artillery](games/competitive-minigames/pocket-artillery/) — a two-player
   duel with destructible terrain, local pass-controller play and optional TrainerOS Lobby integration.
 
-Both are experimental desktop builds; handheld acceptance and public catalogue
-publication remain open. Pocket Artillery's live internet checks are also pending.
+Both are experimental desktop builds and are listed in the signed TrainerOS
+catalogue (revision 4). Public download, installation and managed launch passed on
+Linux x86_64 with updated TrainerOS helpers/SDK. Handheld acceptance and Pocket
+Artillery's live internet checks remain open.
 
 **Experimental Linux x86_64 downloads:**
 [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)

@@ -2,6 +2,13 @@
 
 ## 21 октября 2026
 
+- Session Timer и Pocket Artillery включены в подписанный каталог TrainerOS,
+  ревизия 4: Workshop и тематические ящики, настоящие скриншоты. Linux x86_64
+  проверка использовала публичный каталог, опубликованные пакеты и настоящий
+  CratesController: Download/установка/managed launch, busy lease и remove/reinstall
+  с сохранением данных. Timer зарегистрировал виджет в настоящем SDK-хосте и считал
+  время. Требуются обновлённые helpers/SDK; ARM и полный аппаратный цикл остаются открытыми.
+
 - Опубликованы Experimental-релизы [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
   и [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0)
   для Linux x86_64, из коммитов `6f8930b` и `abfe3b4`. В каждом — пакет, исходники,
