@@ -1,6 +1,11 @@
-# Crates — TrainerOS Concepts
+# Crates — Games and Apps for TrainerOS
 
-This repository collects **short concept documents** for potential TrainerOS Crates games, apps, widgets and extensions. Every selected idea gets its own folder, with a small `README.md` and `docs/idea.md`. Detailed design and implementation come later.
+Games, apps, widgets and extensions for TrainerOS. Most entries are currently
+concepts; implementation and verification are recorded per project.
+
+**First implementation:** [Session Timer](widgets/session-timer/) — a session
+stopwatch, Start widget and optional break reminders. Experimental desktop build;
+handheld acceptance remains open. **Next requested project:** [Pocket Artillery](games/competitive-minigames/pocket-artillery/).
 
 ## Catalog
 

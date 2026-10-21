@@ -1,5 +1,8 @@
 # Session Timer — Idea
 
+Historical concept. The implemented 0.1.0 scope, controls and remaining acceptance
+are now in [the project README](../README.md).
+
 A simple gaming-session timer and optional break reminder.
 
 - Track the current session duration.
