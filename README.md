@@ -13,6 +13,13 @@ concepts; implementation and verification are recorded per project.
 Both are experimental desktop builds; handheld acceptance and public catalogue
 publication remain open. Pocket Artillery's live internet checks are also pending.
 
+**Experimental Linux x86_64 downloads:**
+[Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
+and [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0).
+Each release includes a binary package, matching source archive, installer record
+and SHA256SUMS. Qt 6.4+ and SDL2 are required; TrainerOS integration requires a
+compatible Platform SDK v1. ARM builds are not available yet.
+
 ## Catalog
 
 - [Games](games/) — [24 competitive mini-games](games/competitive-minigames/) and [interactive game shows](games/game-shows/).
