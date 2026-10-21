@@ -1,5 +1,17 @@
 # История Crates
 
+## 21 октября 2026 — подготовка следующей тройки
+
+- Реализованы [Falling Blocks](games/competitive-minigames/falling-blocks/),
+  [Minesweeper Race](games/competitive-minigames/minesweeper-race/) и
+  [Chain Reaction](games/competitive-minigames/chain-reaction/): линии, одинаковые
+  минные поля и цветные каскады с атаками соответственно. Во всех — бот, локальная
+  пара, Lobby и взаимный реванш; общие кнопки действий работают через существующий SDK.
+- Подготовлены x86_64 пакеты, исходники, SVG-иконки и настоящие скриншоты.
+  Пройдены Windows/Linux, SDK/TLS и изолированная установка/запуск/переустановка.
+  [Передача основному чату](games/competitive-minigames/docs/puzzle-trio-preparation.md)
+  отделяет подготовку от публикации, ARM и аппаратной/интернет-приёмки.
+
 ## 21 октября 2026 — аркадные релизы и доставка на портативки
 
 - Pong, Snake Arena и Light Cycles 0.1.0 опубликованы для x86_64/ARM64 из `68e0943`;

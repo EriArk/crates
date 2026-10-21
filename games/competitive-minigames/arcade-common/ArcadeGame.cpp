@@ -69,7 +69,7 @@ void ArcadeGame::begin(){
 }
 void ArcadeGame::tick(){
     if(phase_!="play")return;
-    if(!online_&&!couch_)rules_->input(1,rules_->bot(1));
+    if(!online_&&!couch_){rules_->input(1,rules_->bot(1));rules_->action(1,rules_->botAction(1));}
     rules_->step();view_=rules_->view();
     const bool ended=view_["winner"].toInt()!=-1;
     if(online_&&(view_["tick"].toInt()%2==0||ended)){
@@ -91,6 +91,12 @@ void ArcadeGame::control(int player,int direction){
     else if(couch_)input(1,direction);
 }
 void ArcadeGame::neutral(){control(0,-1);control(1,-1);}
+void ArcadeGame::action(int player,int action){
+    if(phase_!="play"||identity_.primary.isEmpty()||action<0||action>1||player<0||player>1||(!couch_&&player!=0))return;
+    if(!online_){rules_->action(player,action);return;}
+    if(host_)rules_->action(0,action);
+    else send({{"type","action"},{"seq",inputSeq_++},{"action",action}});
+}
 void ArcadeGame::pause(bool paused){
     neutral();
     if(online_)return;
@@ -126,6 +132,10 @@ void ArcadeGame::receive(const QJsonObject& p){
     if(type=="input"&&host_&&(phase_=="play"||phase_=="result")){
         if(p["seq"]!=peerSeq_++||!integer(p["direction"],-1,3)){invalid();return;}
         if(phase_=="play")rules_->input(1,p["direction"].toInt());return;
+    }
+    if(type=="action"&&host_&&(phase_=="play"||phase_=="result")&&!identity_.primary.isEmpty()){
+        if(p["seq"]!=peerSeq_++||!integer(p["action"],0,1)){invalid();return;}
+        if(phase_=="play")rules_->action(1,p["action"].toInt());return;
     }
     if(type=="state"&&!host_&&phase_=="play"){
         const auto next=p["state"].toObject();

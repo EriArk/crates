@@ -49,6 +49,8 @@ See [Shared Approach](docs/shared-approach.md), [Results & Ratings](docs/ratings
 **24 game ideas total** (6 initial + 18 additional). Names are working titles, not final product or brand names. Games may later merge, split, or move into standalone Crates.
 
 **Status:** [Pocket Artillery](pocket-artillery/), [Pong](pong/),
-[Snake Arena](snake-arena/) and [Light Cycles](light-cycles/) have experimental
-two-player implementations. The three arcades share [controls and SDK integration](arcade-common/).
+[Snake Arena](snake-arena/), [Light Cycles](light-cycles/), [Falling Blocks](falling-blocks/),
+[Minesweeper Race](minesweeper-race/) and [Chain Reaction](chain-reaction/) have experimental
+two-player implementations. Six games share [controls and SDK integration](arcade-common/).
+The puzzle trio is [prepared for publication and further acceptance](docs/puzzle-trio-preparation.md).
 Other entries remain concepts. See [original idea](docs/idea.md) for the starting vision.

@@ -6,8 +6,8 @@
 #include <memory>
 
 namespace arcade {
-enum class Kind { Pong, Snake, Cycles };
-struct Identity { QString id, title, subtitle, instructions; Kind kind; };
+enum class Kind { Pong, Snake, Cycles, Blocks, Mines, Chain };
+struct Identity { QString id, title, subtitle, instructions; Kind kind; QString primary, secondary; };
 Identity identity(Kind kind);
 // Directions: -1 neutral, 0 up, 1 right, 2 down, 3 left.
 class Rules {
@@ -17,6 +17,8 @@ public:
     virtual void input(int player, int direction) = 0;
     virtual void step() = 0;
     virtual int bot(int player) const = 0;
+    virtual void action(int, int) {}
+    virtual int botAction(int) const { return -1; }
     virtual QJsonObject view() const = 0;
     virtual bool validView(const QJsonObject& state) const = 0;
 };

@@ -22,6 +22,12 @@ simultaneous local controls and matches through TrainerOS Lobby. Their separate
 Linux packages are prepared; public catalogue publication, ARM and live internet
 acceptance remain open.
 
+**Next games prepared:** [Falling Blocks](games/competitive-minigames/falling-blocks/),
+[Minesweeper Race](games/competitive-minigames/minesweeper-race/) and
+[Chain Reaction](games/competitive-minigames/chain-reaction/). Preparation happens in
+a separate branch; publication and installed acceptance belong to the main workflow.
+See [the handoff](games/competitive-minigames/docs/puzzle-trio-preparation.md).
+
 **Experimental Linux x86_64 / ARM64 downloads:**
 [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
 and [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0).

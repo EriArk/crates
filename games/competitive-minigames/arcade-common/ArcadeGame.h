@@ -10,6 +10,8 @@ class ArcadeGame final : public QObject {
     Q_PROPERTY(QString slug READ slug CONSTANT)
     Q_PROPERTY(QString subtitle READ subtitle CONSTANT)
     Q_PROPERTY(QString instructions READ instructions CONSTANT)
+    Q_PROPERTY(QString primaryAction READ primaryAction CONSTANT)
+    Q_PROPERTY(QString secondaryAction READ secondaryAction CONSTANT)
     Q_PROPERTY(QString phase READ phase NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(QVariantMap scene READ scene NOTIFY changed)
@@ -25,6 +27,8 @@ public:
     QString slug() const{return identity_.id;}
     QString subtitle() const{return identity_.subtitle;}
     QString instructions() const{return identity_.instructions;}
+    QString primaryAction() const{return identity_.primary;}
+    QString secondaryAction() const{return identity_.secondary;}
     QString phase() const{return phase_;}
     QString status() const{return status_;}
     QVariantMap scene() const{return view_.toVariantMap();}
@@ -43,6 +47,7 @@ public:
     Q_INVOKABLE void pause(bool paused);
     // Device-facing input path: pad 0 owns the local seat; pad 1 is couch only.
     Q_INVOKABLE void control(int localPlayer,int direction);
+    Q_INVOKABLE void action(int localPlayer,int action);
 signals:
     void changed();
 private:

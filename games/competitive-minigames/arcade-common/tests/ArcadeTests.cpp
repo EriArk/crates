@@ -12,6 +12,9 @@
 #include "pong/src/PongRules.h"
 #include "snake-arena/src/SnakeRules.h"
 #include "light-cycles/src/CyclesRules.h"
+#include "falling-blocks/src/BlocksRules.h"
+#include "minesweeper-race/src/MinesRules.h"
+#include "chain-reaction/src/ChainRules.h"
 using namespace arcade;
 QQuickItem* item(QQuickItem* root,const QString& name){
     if(root->objectName()==name)return root;
@@ -21,6 +24,41 @@ QQuickItem* item(QQuickItem* root,const QString& name){
 class ArcadeTests final:public QObject {
     Q_OBJECT
 private slots:
+    void blocksLinesRotationAndQueue(){
+        BlocksRules g;g.reset(1);g.tick=60;auto& p=g.players[0];p.cells.fill(0);p.type=0;p.rotation=0;p.x=3;p.y=0;
+        for(int x=0;x<10;++x)if(x<3||x>6)p.cells[150+x]=2;
+        g.action(0,1);g.action(0,1);g.step();QCOMPARE(g.score[0],1);QVERIFY(!g.lost[0]);
+        for(int c:p.cells)QCOMPARE(c,0); // A burst of drops consumed only one piece.
+        p.type=0;p.rotation=1;p.x=-2;p.y=0;QVERIFY(g.fits(p,p.x,p.y,p.rotation));
+        for(int i=0;i<6;++i)g.step();g.action(0,0);g.step();QVERIFY(g.fits(p,p.x,p.y,p.rotation));QCOMPARE(p.rotation,2);
+        g.reset(1);g.action(0,1);g.step();QVERIFY(g.players[0].cells==QVector<int>(160));
+        g.tick=60;g.score={11,11};
+        for(auto& s:g.players){s.cells.fill(0);s.type=0;s.rotation=0;s.x=3;s.y=0;for(int x=0;x<10;++x)if(x<3||x>6)s.cells[150+x]=2;}
+        g.action(0,1);g.action(1,1);g.step();QCOMPARE(g.winner,2);
+    }
+    void minesFairOpeningFlagsFloodAndBot(){
+        MinesRules g;g.reset(7);QCOMPARE(g.visible[0],g.visible[1]);QCOMPARE(g.mines.count(1),12);QCOMPARE(g.numbers[40],0);QVERIFY(g.score[0]>0);
+        int mine=g.mines.indexOf(1);g.tick=60;g.cursor[0]=mine;g.action(0,1);g.step();QCOMPARE(g.visible[0][mine],-2);
+        for(int i=0;i<6;++i)g.step();g.action(0,0);g.step();QVERIFY(!g.lost[0]);
+        // Changing hidden information must not change the bot's observable decisions.
+        MinesRules b=g;b.mines.fill(0);b.numbers.fill(8);g.tick=b.tick=120;
+        QCOMPARE(g.bot(1),b.bot(1));QCOMPARE(g.botAction(1),b.botAction(1));
+        for(int p=0;p<2;++p){g.cursor[p]=mine;g.visible[p][mine]=-1;g.cooldown[p]=0;g.action(p,0);}g.step();QCOMPARE(g.winner,2);
+        g.reset(42);g.tick=60;
+        for(int c=0;c<81&&g.winner<0;++c)if(!g.mines[c]){g.cursor[0]=c;g.cooldown[0]=0;g.action(0,0);g.step();}
+        QCOMPARE(g.score[0],69);QCOMPARE(g.winner,0);
+    }
+    void chainCascadeAttackAndGarbage(){
+        ChainRules g;g.reset(7);QCOMPARE(g.players[0].cells,g.players[1].cells);QVERIFY(ChainRules::matches(g.players[0].cells).isEmpty());
+        g.tick=60;auto& a=g.players[0];a.cells.fill(0);
+        // Clear a bottom triple: staggered colour 2 falls into a second triple.
+        a.cells[54]=a.cells[60]=a.cells[66]=1;a.cells[48]=2;a.cells[67]=2;a.cells[68]=2;a.cells[61]=5;
+        g.step();QCOMPARE(a.chain,1);QCOMPARE(g.score[0],30);QCOMPARE(a.flash.size(),3);
+        for(int i=0;i<12;++i)g.step();QCOMPARE(a.chain,2);QCOMPARE(g.score[0],90);QVERIFY(g.players[1].incoming>=1);QCOMPARE(a.cells[61],0);
+        for(int i=0;i<80;++i)g.step();QVERIFY(g.players[1].cells.contains(5));
+        g.reset(3);g.tick=60;for(auto& p:g.players){p.cells.fill(0);p.cells[0]=1;}
+        g.action(0,1);g.action(1,1);g.step();QCOMPARE(g.winner,2);
+    }
     void lateClosedChannelResponseDoesNotRevokeRejoin(){
         QTemporaryDir dir;QTcpServer server;QVERIFY(server.listen(QHostAddress::LocalHost));
         QFile endpoint(dir.filePath("endpoint.json"));QVERIFY(endpoint.open(QIODevice::WriteOnly));
@@ -71,20 +109,23 @@ private slots:
         game.reset(2);game.tick=63;game.cells[game.head[0]+1]=2;game.step();QCOMPARE(game.winner,1);
     }
     void seededMatchesAndSnapshotValidation(){
-        for(auto kind:{Kind::Pong,Kind::Snake,Kind::Cycles})for(quint32 seed:{1u,7u,4242u}){
+        for(auto kind:{Kind::Pong,Kind::Snake,Kind::Cycles,Kind::Blocks,Kind::Mines,Kind::Chain})for(quint32 seed:{1u,7u,4242u}){
             auto a=makeRules(kind),b=makeRules(kind);a->reset(seed);b->reset(seed);
             for(int t=0;t<6000&&a->view()["winner"]==-1;++t){
-                for(int p=0;p<2;++p){int d=a->bot(p);a->input(p,d);b->input(p,d);}
+                for(int p=0;p<2;++p){int d=a->bot(p),action=a->botAction(p);a->input(p,d);b->input(p,d);a->action(p,action);b->action(p,action);}
                 a->step();b->step();QCOMPARE(a->view(),b->view());QVERIFY(a->validView(a->view()));
             }
             QVERIFY(a->view()["winner"]!=-1);
             auto invalid=a->view();invalid["winner"]=99;QVERIFY(!a->validView(invalid));
             invalid=a->view();invalid["tick"]=1.5;QVERIFY(!a->validView(invalid));
+            QVERIFY(QJsonDocument(a->view()).toJson(QJsonDocument::Compact).size()<15000);
+            if(int(kind)>=3){invalid=a->view();auto players=invalid["players"].toArray();auto p=players[0].toObject();p["cells"]=QJsonArray{999};players[0]=p;invalid["players"]=players;QVERIFY(!a->validView(invalid));}
             qInfo().noquote()<<identity(kind).id<<seed<<QCryptographicHash::hash(QJsonDocument(a->view()).toJson(QJsonDocument::Compact),QCryptographicHash::Sha256).toHex();
         }
     }
     void uiAndLocalLifecycle_data(){
         QTest::addColumn<int>("kind");QTest::newRow("pong")<<0;QTest::newRow("snake")<<1;QTest::newRow("cycles")<<2;
+        QTest::newRow("blocks")<<3;QTest::newRow("mines")<<4;QTest::newRow("chain")<<5;
     }
     void uiAndLocalLifecycle(){
         QFETCH(int,kind);QTemporaryDir directory;ArcadeGame game(Kind(kind),directory.filePath("missing.json"));
@@ -96,6 +137,25 @@ private slots:
         QTest::keyClick(window,Qt::Key_Down);QTest::keyClick(window,Qt::Key_Return);
         QCOMPARE(game.phase(),"play");QVERIFY(game.couch());
         QTest::qWait(2100);
+        if(kind>=3){
+            if(kind==4){
+                const auto cells=game.scene()["players"].toList()[0].toMap()["cells"].toList();int target=0;while(cells[target].toInt()!=-1)++target;
+                for(int p=0;p<2;++p)for(int n=0;n<20;++n){
+                    int cursor=game.scene()["players"].toList()[p].toMap()["cursor"].toInt();if(cursor==target)break;
+                    int d=cursor%9<target%9?1:cursor%9>target%9?3:cursor/9<target/9?2:0;
+                    const int keys[2][4]={{Qt::Key_W,Qt::Key_D,Qt::Key_S,Qt::Key_A},{Qt::Key_Up,Qt::Key_Right,Qt::Key_Down,Qt::Key_Left}};
+                    QTest::keyPress(window,Qt::Key(keys[p][d]));QTest::qWait(50);QTest::keyRelease(window,Qt::Key(keys[p][d]));QTest::qWait(30);
+                }
+            }
+            auto before=game.scene();auto* action=item(window->contentItem(),"action0-1");QVERIFY(action);QVERIFY(action->isVisible());
+            auto pos=action->mapToScene(QPointF(action->width()/2,action->height()/2)).toPoint();
+            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,pos);QTest::keyClick(window,Qt::Key_Shift);QTest::qWait(90);
+            auto first=game.scene()["players"].toList()[0].toMap(),second=game.scene()["players"].toList()[1].toMap();
+            if(kind==3){QVERIFY(first["cells"]!=before["players"].toList()[0].toMap()["cells"]);QCOMPARE(first["cells"],second["cells"]);}
+            if(kind==4){QCOMPARE(first["flags"].toInt(),1);QCOMPARE(second["flags"].toInt(),1);}
+            if(kind==5){QVERIFY(first["cells"]!=before["players"].toList()[0].toMap()["cells"]);QCOMPARE(first["cells"],second["cells"]);}
+            QTest::keyClick(window,Qt::Key_F);QTest::keyClick(window,Qt::Key_Return);QTest::qWait(50);
+        }
         auto* up=item(window->contentItem(),"control0-0");QVERIFY(up);QVERIFY(up->isEnabled());
         auto pos=up->mapToScene(QPointF(up->width()/2,up->height()/2)).toPoint();
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,pos);QTest::qWait(80);QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,pos);

@@ -58,7 +58,8 @@ int main(int argc,char** argv){
         case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:direction=1;break;
         case SDL_CONTROLLER_BUTTON_DPAD_DOWN:direction=2;break;
         case SDL_CONTROLLER_BUTTON_DPAD_LEFT:direction=3;break;
-        case SDL_CONTROLLER_BUTTON_A:key(Qt::Key_Return,pressed);break;
+        case SDL_CONTROLLER_BUTTON_A:if(player==0||game.couch())key(game.phase()=="play"&&game.couch()&&player==0?Qt::Key_F:Qt::Key_Return,pressed);break;
+        case SDL_CONTROLLER_BUTTON_X:if(game.phase()=="play"&&(player==0||game.couch()))key(game.couch()&&player==0?Qt::Key_G:Qt::Key_Shift,pressed);break;
         case SDL_CONTROLLER_BUTTON_B:key(Qt::Key_Escape,pressed);break;
         case SDL_CONTROLLER_BUTTON_START:key(Qt::Key_Escape,pressed);break;
         }

@@ -1,6 +1,7 @@
 # Crates arcade integration
 
-Shared support for **Pong**, **Snake Arena** and **Light Cycles**. Each game owns
+Shared support for **Pong**, **Snake Arena**, **Light Cycles**, **Falling Blocks**,
+**Minesweeper Race** and **Chain Reaction**. Each game owns
 its rules in `src/`, its board in `ui/`, and its own icon and package. The common
 code supplies the menu, two-player controls, SDK connection and match lifecycle.
 Pocket Artillery remains unchanged; `ArcadeBridge` reuses its GPL SDK client with
@@ -23,8 +24,10 @@ parameterized game identity. This is application-side support, not a new Trainer
   Neither a disconnect nor a profile change awards a victory.
 
 D-pad, Confirm and Back work through SDL2's controller mapping. Controller slots
-remain independent on removal/addition. Paddle controls are held; grid games keep
-moving in their last direction. Turning directly backwards is disallowed. Both
+remain independent on removal/addition. Paddle controls are held; Snake/Cycles keep
+moving in their last direction and reject reversal. Puzzle directions repeat while
+held; primary/secondary actions use separate ordered records and a bounded queue.
+The game README lists its keyboard, touch and two-controller action mapping. Both
 players can hold separate touch controls at once. Desktop keyboard and synthetic
 pointer/touch checks do not establish physical controller or handheld acceptance.
 
@@ -32,11 +35,11 @@ pointer/touch checks do not establish physical controller or handheld acceptance
 
 Requires SDK v1 `lobby.activity` and `network.records`. App IDs are
 `art.abysstail.<game-id>` and protocols `<game-id>.1`; game IDs are `pong`,
-`snake-arena`, `light-cycles`. Missing capabilities return to the menu with a
+`snake-arena`, `light-cycles`, `falling-blocks`, `minesweeper-race`, `chain-reaction`. Missing capabilities return to the menu with a
 readable explanation and leave offline modes available.
 
 The organizer computes the authoritative match at approximately 30 ticks/second.
-The guest sends direction changes, and the organizer sends bounded snapshots
+The guest sends direction changes and, for puzzles, discrete actions. The organizer sends bounded snapshots
 every two ticks (approximately 15/second) plus the final result. Pong interpolates
 ball rendering between snapshots. This uses the existing reliable ordered SDK
 channel, not a new UDP/relay/provider implementation. Guest input waits for the
@@ -72,9 +75,9 @@ ctest --test-dir build/arcade --output-on-failure
 python3 games/competitive-minigames/arcade-common/package.py pong build/arcade/pong dist/pong
 ```
 
-Repeat packaging for `snake-arena` and `light-cycles`. Each package contains a
+Repeat packaging with the desired game ID. Each package contains a
 separate executable, icon, instructions and screenshot. The matching source archive
-contains the common code plus all three rule implementations and can be rebuilt
+contains the common code plus all six rule implementations and can be rebuilt
 with `cmake -S arcade -B build -DARCADE_GAMES=pong` (or another game ID). Native Linux
 ELF x86_64/aarch64 is supported by the packager; it does not cross-compile or certify ARM.
 Packages reuse host Qt/SDL. `Experimental` / `untested` records contain future release
@@ -128,3 +131,9 @@ Original code and SVG/canvas artwork: GPL-3.0-or-later. See [LICENSE](LICENSE).
   reached a result on Flip. System Home/Exit returned to Crates for each, using
   remote synthetic input. Physical controllers/touch, live account invitation,
   paired internet play, latency/NAT and full-session acceptance remain open.
+
+## Puzzle preparation — 21 October 2026
+
+The next three games and the preparation/publication split are recorded in
+[the handoff document](../docs/puzzle-trio-preparation.md). This adds application-side
+actions to the existing channel; no TrainerOS runtime changes or new transport.

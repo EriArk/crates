@@ -11,7 +11,8 @@ import subprocess
 import tarfile
 
 base = Path(__file__).resolve().parent.parent
-titles = {'pong': 'Pong', 'snake-arena': 'Snake Arena', 'light-cycles': 'Light Cycles'}
+titles = {'pong': 'Pong', 'snake-arena': 'Snake Arena', 'light-cycles': 'Light Cycles',
+          'falling-blocks': 'Falling Blocks', 'minesweeper-race': 'Minesweeper Race', 'chain-reaction': 'Chain Reaction'}
 p = argparse.ArgumentParser()
 p.add_argument('game', choices=titles)
 p.add_argument('executable', type=Path)
@@ -60,7 +61,8 @@ except (OSError, subprocess.CalledProcessError):
 source = a.output/f'{a.game}-{a.version}-source.tar.gz'
 with tarfile.open(source, 'w:gz') as tar:
     tar.add(base/'CMakeLists.txt', arcname='arcade/CMakeLists.txt')
-    for directory in ('arcade-common', *titles):
+    tar.add(base/'README.md', arcname='arcade/README.md')
+    for directory in ('docs', 'arcade-common', *titles):
         for path in sorted((base/directory).rglob('*')):
             if path.is_file() and '__pycache__' not in path.parts:
                 tar.add(path, arcname=Path('arcade')/path.relative_to(base))
