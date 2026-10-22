@@ -26,15 +26,65 @@ private slots:
         QTest::qWait(70);pad.tap(SDL_CONTROLLER_BUTTON_A);pad.tap(SDL_CONTROLLER_BUTTON_A);QVERIFY(game.canFire());
         pad.axis(-25000,0);pad.axis(0,0);QCOMPARE(game.angle(),40);
         pad.button(SDL_CONTROLLER_BUTTON_DPAD_UP,true);pad.button(SDL_CONTROLLER_BUTTON_DPAD_UP,false);QCOMPARE(game.power(),90);
-        window->resize(640,480);QTest::qWait(80);QVERIFY(window->grabWindow().save("artillery-pad-640.png"));
-        window->resize(1280,720);QTest::qWait(80);QVERIFY(window->grabWindow().save("artillery-pad-1280.png"));
+        auto* field=visualItem(window->contentItem(),"battlefield");QVERIFY(field);
+        auto* panel=visualItem(window->contentItem(),"aimPanel");QVERIFY(panel);
+        window->resize(640,480);QTest::qWait(500);QVERIFY(window->grabWindow().save("artillery-pad-640.png"));
+        QVERIFY(panel->isVisible());QVERIFY(panel->x()>=0&&panel->x()+panel->width()<=field->width());
+        QVERIFY(!window->property("touchControls").toBool());
+        const auto closeScale=field->property("cameraScale").toReal();
+        pad.tap(SDL_CONTROLLER_BUTTON_X);QTest::qWait(450);
+        QVERIFY(!panel->isVisible());QVERIFY(field->property("cameraScale").toReal()<closeScale);
+        QVERIFY(window->grabWindow().save("artillery-overview-640.png"));
+        pad.tap(SDL_CONTROLLER_BUTTON_X);QTest::qWait(450);QVERIFY(panel->isVisible());
+        window->resize(1280,720);QTest::qWait(500);QVERIFY(window->grabWindow().save("artillery-pad-1280.png"));
         int best=-1,angle=45,power=85;
         for(int a=10;a<=80;a+=5)for(int p=20;p<=100;p+=5){auto world=game.world();auto shot=world.fire(a,p);const int damage=game.world().hp[1]-world.hp[1];if(shot.hit&&damage>best){best=damage;angle=a;power=p;}}
         QVERIFY(best>0);game.aim((angle-game.angle())/5);game.charge((power-game.power())/5);
         pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"flight");QTest::qWait(650);QCOMPARE(game.phase(),"flight");
-        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["impactAge"].toInt()>=0,8000);QVERIFY(game.scene()["hit"].toBool());QTest::qWait(180);QVERIFY(window->grabWindow().save("artillery-impact.png"));
+        const auto scale=field->property("cameraScale").toReal();
+        const auto shellX=field->property("cameraX").toReal()+game.scene()["shellX"].toReal()*scale;
+        const auto shellY=field->property("cameraY").toReal()+game.scene()["shellY"].toReal()*scale;
+        QVERIFY(shellX>=0&&shellX<=field->width());QVERIFY(shellY>=78&&shellY<=field->height());
+        QVERIFY(window->grabWindow().save("artillery-flight.png"));
+        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["impactAge"].toInt()>=0,8000);QVERIFY(game.scene()["hit"].toBool());
+        QCOMPARE(game.scene()["hp1"].toInt(),game.world().hp[1]);QVERIFY(!game.canFire());
+        QCOMPARE(game.scene()["shotAngle"].toInt(),angle);
+        QTest::qWait(400);QVERIFY(window->grabWindow().save("artillery-impact.png"));
+        auto* damage=visualItem(window->contentItem(),"damage1");QVERIFY(damage&&damage->isVisible());
         QTRY_COMPARE_WITH_TIMEOUT(game.phase(),"handoff",1000);
         pad.tap(SDL_CONTROLLER_BUTTON_START);QVERIFY(window->property("asking").toBool());pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"menu");
+    }
+    void completeMatchWithController(){
+        Game game;QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        ControllerInput input(window);VirtualPad pad;QVERIFY(pad.joystick);window->requestActivate();
+        QTRY_VERIFY(window->isActive());QTRY_COMPARE(window->property("padCount").toInt(),1);QTest::qWait(70);
+        pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"handoff");
+        int shots=0;
+        while(game.phase()!="result"&&shots<30){
+            QCOMPARE(game.phase(),"handoff");pad.tap(SDL_CONTROLLER_BUTTON_A);QVERIFY(game.canFire());
+            int best=-10000,angle=45,power=85;
+            for(int a=10;a<=80;a+=5)for(int p=20;p<=100;p+=5){auto candidate=game.world();candidate.fire(a,p);
+                const int own=game.world().turn,other=1-own;
+                const int score=(game.world().hp[other]-candidate.hp[other])*3-(game.world().hp[own]-candidate.hp[own])*4;
+                if(score>best){best=score;angle=a;power=p;}}
+            // The search chooses a shot; every state-changing action goes through SDL.
+            while(game.angle()!=angle)pad.tap(game.angle()<angle?SDL_CONTROLLER_BUTTON_DPAD_RIGHT:SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+            while(game.power()!=power)pad.tap(game.power()<power?SDL_CONTROLLER_BUTTON_DPAD_UP:SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+            const int before=game.world().ply;pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"flight");
+            pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.world().ply,before+1);
+            QTRY_VERIFY_WITH_TIMEOUT(game.phase()!="flight",8000);++shots;
+        }
+        QCOMPARE(game.phase(),"result");QVERIFY(game.world().winner<2);
+        QVERIFY(window->grabWindow().save("artillery-result.png"));
+        pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"handoff");QCOMPARE(game.world().turn,1);
+        QCOMPARE(game.world().hp[0],100);QCOMPARE(game.world().hp[1],100);
+        pad.tap(SDL_CONTROLLER_BUTTON_A);QVERIFY(game.canFire());QTest::qWait(450);
+        QVERIFY(window->grabWindow().save("artillery-coral.png"));
+        pad.tap(SDL_CONTROLLER_BUTTON_B);QVERIFY(window->property("asking").toBool());
+        pad.tap(SDL_CONTROLLER_BUTTON_B);QVERIFY(!window->property("asking").toBool());QVERIFY(game.canFire());
+        pad.tap(SDL_CONTROLLER_BUTTON_START);pad.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"menu");
+        qInfo()<<"SDL complete match shots"<<shots;
     }
     void unavailableHostReturnsToLocalPlay(){
         QTemporaryDir directory;
@@ -92,7 +142,14 @@ private slots:
         QTest::keyClick(window,Qt::Key_Return);QVERIFY(game.canFire());
         QTest::keyClick(window,Qt::Key_Left);QCOMPARE(game.angle(),40);
         QTest::keyClick(window,Qt::Key_Up);QCOMPARE(game.power(),90);
-        QTest::qWait(100);QVERIFY(window->grabWindow().save("duel-small.png"));
+        QTest::qWait(500);QVERIFY(window->grabWindow().save("duel-small.png"));
+        auto* field=visualItem(window->contentItem(),"battlefield");QVERIFY(field);
+        auto* panel=visualItem(window->contentItem(),"aimPanel");QVERIFY(panel);
+        QVERIFY(panel->isVisible());QVERIFY(panel->y()+panel->height()<=field->height());
+        const auto tankBottom=field->property("cameraY").toReal()+game.scene()["y0"].toReal()*field->property("cameraScale").toReal();
+        QVERIFY(tankBottom<field->height()&&tankBottom>150);
+        QTest::keyClick(window,Qt::Key_Tab);QVERIFY(window->property("wideView").toBool());
+        QTest::keyClick(window,Qt::Key_Tab);QVERIFY(!window->property("wideView").toBool());
         auto* fire=window->findChild<QQuickItem*>("fireButton");QVERIFY(fire);
         auto pos=fire->mapToScene(QPointF(fire->width()/2,fire->height()/2)).toPoint();
         QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,pos);QCOMPARE(game.world().ply,1);
@@ -102,6 +159,17 @@ private slots:
         QTest::keyClick(window,Qt::Key_Escape);QCOMPARE(game.phase(),"handoff"); // Back cancels confirmation.
         QTest::keyClick(window,Qt::Key_Escape);QTest::keyClick(window,Qt::Key_Return);QCOMPARE(game.phase(),"menu");
         QVERIFY(!game.canFire());
+    }
+    void highArcFitsSmallScreen(){
+        Game game;QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        window->resize(640,440);game.local();game.acceptTurn();game.aim(7);game.charge(3);
+        QCOMPARE(game.angle(),80);QCOMPARE(game.power(),100);game.fire();QTest::qWait(450);
+        QCOMPARE(game.phase(),"flight");auto* field=visualItem(window->contentItem(),"battlefield");QVERIFY(field);
+        const auto scale=field->property("cameraScale").toReal(),offset=field->property("cameraY").toReal();
+        QVERIFY(offset+game.scene()["arcTop"].toReal()*scale>=90);
+        QVERIFY(offset+400*scale<=field->height());
+        QVERIFY(window->grabWindow().save("artillery-high-arc-640.png"));game.leave();
     }
 };
 int main(int argc,char** argv){QGuiApplication app(argc,argv);

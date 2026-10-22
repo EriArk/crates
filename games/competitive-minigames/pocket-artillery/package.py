@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser()
 parser.add_argument('executable', type=Path)
 parser.add_argument('output', type=Path)
-parser.add_argument('--version', default='0.1.1')
+parser.add_argument('--version', default='0.1.2')
 args = parser.parse_args()
 import re
 if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?', args.version):
@@ -34,6 +34,10 @@ files = {'bin/pocket-artillery': binary, 'LICENSE': (root / 'LICENSE').read_byte
          'README.md': (root / 'README.md').read_bytes(), 'icon.svg': (root / 'icon.svg').read_bytes(),
          'docs/duel.png': (root / 'docs/duel.png').read_bytes(),
          'docs/idea.md': (root / 'docs/idea.md').read_bytes()}
+for document in ('presentation-pass.md', 'flight.png', 'impact.png'):
+    files['docs/'+document] = (root/'docs'/document).read_bytes()
+for evidence in sorted((root/'docs/evidence').glob('*.txt')):
+    files['docs/evidence/'+evidence.name] = evidence.read_bytes()
 if archive.exists():
     parser.error('Choose a fresh output directory; published packages are immutable')
 with tarfile.open(archive, 'w:gz') as tar:

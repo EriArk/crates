@@ -12,7 +12,7 @@
 
 int main(int argc,char** argv){
     QGuiApplication app(argc,argv);
-    app.setApplicationName("Pocket Artillery");app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.1");
+    app.setApplicationName("Pocket Artillery");app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.2");
 #ifdef Q_OS_WIN
     app.setFont(QFont("Segoe UI"));
 #else

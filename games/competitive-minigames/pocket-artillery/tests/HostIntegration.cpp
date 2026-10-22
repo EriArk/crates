@@ -46,6 +46,8 @@ private slots:
             current.aim((angle-current.angle())/5);current.charge((power-current.power())/5);current.fire();
             QTRY_COMPARE_WITH_TIMEOUT(ga.world().ply,turns,5000);QTRY_COMPARE_WITH_TIMEOUT(gb.world().ply,turns,5000);
             QCOMPARE(ga.world().digest(),gb.world().digest());
+            QCOMPARE(ga.scene()["shotAngle"].toInt(),angle);QCOMPARE(gb.scene()["shotAngle"].toInt(),angle);
+            QCOMPARE(ga.scene()["shotPower"].toInt(),power);QCOMPARE(gb.scene()["shotPower"].toInt(),power);
         }
         QVERIFY(ga.world().winner!=-1);QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"result",5000);QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"result",5000);
         ga.rematch();QTest::qWait(200);QCOMPARE(ga.phase(),"result");QCOMPARE(gb.phase(),"result");
