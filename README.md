@@ -5,6 +5,10 @@ concepts; implementation and verification are recorded per project.
 
 **Implemented projects:**
 
+- [Pocket Golf](games/pocket-golf/) — separate Godot 4 preparation: three 3D greens,
+  solo/local two-player play and existing SDK Lobby integration. Shared avatar
+  integration is pending; the golfer is a temporary marker. Not published.
+
 - [Session Timer](widgets/session-timer/) — a session stopwatch, Start widget and
   optional break reminders.
 - [Pocket Artillery](games/competitive-minigames/pocket-artillery/) — a two-player
