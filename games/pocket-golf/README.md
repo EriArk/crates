@@ -4,17 +4,24 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.0.** Not published or installed on handhelds.
+**Preparation build 0.1.1.** Not published or installed on handhelds.
 The visible golfer is a temporary abstract marker. The shared TrainerOS avatar
 and wardrobe are being developed separately and are **not integrated yet**.
 
-![First green](docs/green.png)
+![First green](docs/camera-overview.png)
 
 ## Play
 
 - Left/right or stick/D-pad: aim in five-degree steps. Up/down: power in five-percent steps.
 - Confirm (bottom face button; A on Xbox), Enter or Space: putt / accept handoff.
-- Secondary face button (X on Xbox) or Tab: view the course from the opposite side.
+- Secondary face button (X on Xbox), Tab, or **View**: overview → shoulder → eyes.
+- Right stick or WASD: rotate/look around; right trigger / E zooms in, left trigger /
+  Q zooms out. R3 / R restores the selected view. Camera controls never change aim/power.
+- Mouse: hold the right button to rotate; wheel to zoom. Touch: drag the green to
+  rotate and spread/pinch two fingers to zoom. HUD touches remain ordinary buttons.
+- Overview/shoulder zoom changes camera distance; eye zoom changes the field of view.
+  Each view retains its own bounded zoom/rotation. A putt smoothly switches to ball
+  follow and returns to the selected view for the next stroke. Pause freezes the camera.
 - Back / Start / Escape: pause/menu. Confirm **Leave round** ends the round.
 - **Touch** reveals direct aiming/power/putt buttons. Hardware input hides them.
 - Each player uses their own ball; the other ball does not block a shot. Players
@@ -62,6 +69,7 @@ godot --path games/pocket-golf --editor
 godot --headless --path games/pocket-golf --script tests/rules_test.gd
 godot --headless --path games/pocket-golf --script tests/protocol_test.gd
 godot --headless --path games/pocket-golf --script tests/presentation.gd
+godot --headless --path games/pocket-golf --script tests/camera_test.gd
 python3 games/pocket-golf/build.py --godot /path/to/godot --templates /path/to/templates --output /path/to/build
 python3 games/pocket-golf/package.py /path/to/build /path/to/fresh-output
 ```
