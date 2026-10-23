@@ -3,7 +3,14 @@ extends Node3D
 # Decorative environment. The deterministic course rules own all collision/gameplay.
 const SEA := preload("res://shaders/sea.gdshader")
 const ROOT := "res://assets/kenney/"
+const RINGS := [Vector3(8.4,-0.24,11.7),Vector3(8.8,-0.42,12.1),Vector3(9.1,-0.73,12.5),Vector3(10.7,-1.30,14.2),Vector3(11.9,-2.20,15.5)]
+# x/z, height and footprint. Lower foreground dunes preserve the low camera views.
+const HILLS := [Vector4(-6.9,-5.4,1.7,2.6),Vector4(3.2,-10.0,2.1,3.0),Vector4(-3.7,-10.2,1.25,2.5),Vector4(7.0,-2.6,1.35,2.7),Vector4(-7.0,4.2,0.95,2.8),Vector4(2.8,10.3,0.65,2.8),Vector4(-3.6,10.0,0.55,2.3)]
 var trees: Array[Node3D] = []
+var planting: Array[Node3D] = []
+var grass_positions: Array[Vector3] = []
+var terrain_vertices := PackedVector3Array()
+var terrain_cells: Dictionary = {}
 var boat: Node3D
 var flag: Node3D
 var clock := 0.0
@@ -30,20 +37,16 @@ func build(hole: int) -> void:
 		var a := i*TAU/16.0+0.2
 		var point := Vector3(cos(a)*9.9,-1.05,sin(a)*13.3)
 		prop("nature/stone_largeA" if i%3 else "nature/stone_largeC",point,1.2+(i%3)*0.4,a)
-	for i in 12:
-		var a := i*TAU/12.0+0.15
-		var p := Vector3(cos(a)*7.9,-0.18,sin(a)*10.8)
-		prop("nature/plant_bushDetailed" if i%2 else "nature/plant_bushSmall",p,1.8,a)
-		prop("nature/grass_large",p+Vector3(0.6,0,0.2),1.3,a)
-		for j in 3:
-			prop("nature/flower_yellowA" if (hole+i)%2 else "nature/flower_purpleA",p+Vector3(0.25+j*0.2,0,0.55),1.6,a+j)
+	_plant_gardens(hole)
 	# A small landing, moored rowboat and a distant sailboat make the sea feel inhabited.
 	for i in 3: prop("pirate/structure-platform-dock",Vector3(8.5+i*1.8,-1.45,4.0),0.75,PI/2)
 	prop("pirate/barrel",Vector3(8.0,-0.35,4.65),0.36,0.4)
 	boat=prop("pirate/boat-row-small",Vector3(13.0,-1.52,6.3),0.70,-0.5)
 	prop("pirate/ship-small",Vector3(-32,-1.55,-39),0.75,0.8)
 	for i in 7:
-		prop("nature/stone_smallFlatA",Vector3(6.0+i*0.32,-0.15,3.8),1.1,0.3*i)
+		var step := Vector3(6.0+i*0.32,0,3.8)
+		step.y=surface_height(step)+0.035
+		prop("nature/stone_smallFlatA",step,1.1,0.3*i)
 	# A pair of low rocky islets, well outside every gameplay camera target.
 	for i in 5:
 		prop("nature/rock_largeC",Vector3(26+i*1.3,-1.6,-27+i*0.6),3.3-i*0.25,i*0.8)
@@ -72,8 +75,45 @@ func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3
 		_clear_green(instance)
 		# The original nature models have a -0.05 m base offset.
 		if Vector2(instance.position.x,instance.position.z).length()<20:
-			instance.position.y=ground_height(instance.position)+0.05*size
+			instance.position.y=surface_height(instance.position)+0.05*size
+			planting.append(instance)
 	return instance
+
+func _plant_gardens(hole: int) -> void:
+	# Local seeded randomness never consumes gameplay RNG. Clusters leave gaps and a dock path.
+	var rng := RandomNumberGenerator.new(); rng.seed=7319+hole*137
+	var grass: Array[Transform3D] = []
+	for i in 26:
+		var a := i*TAU/26.0+0.1
+		var center := Vector3(cos(a)*7.5,0,sin(a)*10.3)
+		if center.x>5.5 and absf(center.z-3.8)<1.7: continue
+		for j in 3:
+			var p := center+Vector3(rng.randf_range(-0.8,0.8),0,rng.randf_range(-0.8,0.8))
+			prop("nature/plant_bushDetailed" if j==0 else "nature/plant_bushSmall",p,rng.randf_range(1.4,2.4),rng.randf()*TAU)
+		for j in 4:
+			var p := center+Vector3(rng.randf_range(-1.0,1.0),0,rng.randf_range(-1.0,1.0))
+			prop("nature/flower_yellowA" if (hole+i)%3 else "nature/flower_purpleA",p,rng.randf_range(1.0,1.7),rng.randf()*TAU)
+		for j in 22:
+			var p := center+Vector3(rng.randf_range(-1.25,1.25),0,rng.randf_range(-1.25,1.25))
+			if absf(p.x)<5.8 and absf(p.z)<8.8: continue
+			if p.x>5.5 and absf(p.z-3.8)<0.9: continue
+			if ground_height(p)<-0.48: continue
+			var size := rng.randf_range(0.85,1.65)
+			p.y=surface_height(p)+0.05*size-0.025
+			grass.append(Transform3D(Basis(Vector3.UP,rng.randf()*TAU).scaled(Vector3.ONE*size),p))
+			grass_positions.append(p)
+	# Reuse the original grass mesh in GPU batches instead of hundreds of scene nodes.
+	var template := prop("nature/grass_large",Vector3(30,0,30))
+	for child in template.find_children("*","MeshInstance3D",true,false):
+		var mesh: Mesh = child.mesh.duplicate()
+		for s in mesh.get_surface_count(): mesh.surface_set_material(s,child.get_active_material(s))
+		var batch := MultiMesh.new(); batch.transform_format=MultiMesh.TRANSFORM_3D
+		batch.mesh=mesh; batch.instance_count=grass.size()
+		var local: Transform3D = template.global_transform.affine_inverse()*child.global_transform
+		for i in grass.size(): batch.set_instance_transform(i,grass[i]*local)
+		var draw := MultiMeshInstance3D.new(); draw.multimesh=batch; draw.name="GrassMeadow"
+		add_child(draw)
+	remove_child(template); template.free(); imported_count-=1
 
 func visual_bounds(instance: Node3D) -> AABB:
 	var bounds := AABB(); var first := true
@@ -91,28 +131,60 @@ func _clear_green(instance: Node3D) -> void:
 	else: instance.position.z+=dz
 
 func ground_height(point: Vector3) -> float:
-	var rings := [Vector3(8.4,-0.24,11.7),Vector3(8.8,-0.42,12.1),Vector3(9.1,-0.73,12.5),Vector3(10.7,-1.30,14.2),Vector3(11.9,-2.20,15.5)]
 	var p := Vector2(point.x,point.z)
 	var a := atan2(point.z/11.7,point.x/8.4)
 	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
 	var dir := p.normalized(); var distance := p.length()
 	var previous := 0.0; var height := -0.24
-	for ring in rings:
+	for ring in RINGS:
 		var radius: float = shape/sqrt(pow(dir.x/ring.x,2)+pow(dir.y/ring.z,2)) if distance>0 else 1.0
-		if distance<=radius: return lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))
+		if distance<=radius: return lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))+_relief(p)
 		previous=radius; height=ring.y
 	return height
 
+func _relief(p: Vector2) -> float:
+	var clearance := maxf(absf(p.x)-5.35,absf(p.y)-8.35)
+	var edge := smoothstep(0.0,1.4,clearance)
+	var coast := 1.0-smoothstep(0.87,1.08,(p/Vector2(8.8,12.1)).length())
+	var path := smoothstep(0.55,1.5,absf(p.y-3.8)) if p.x>5.0 else 1.0
+	var hills := 0.0
+	for hill in HILLS:
+		var distance: float = (p-Vector2(hill.x,hill.y)).length()/hill.w
+		hills+=hill.z*exp(-distance*distance*1.35)
+	return hills*edge*coast*path
+
+func surface_height(point: Vector3) -> float:
+	# Ground props on the rendered triangles, not the continuous curve between vertices.
+	var cell := Vector2i(floori(point.x),floori(point.z))
+	for i in terrain_cells.get(cell,[]):
+		var a := terrain_vertices[i]; var b := terrain_vertices[i+1]; var c := terrain_vertices[i+2]
+		var divisor := (b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z)
+		if absf(divisor)<0.000001: continue
+		var u := ((b.z-c.z)*(point.x-c.x)+(c.x-b.x)*(point.z-c.z))/divisor
+		var v := ((c.z-a.z)*(point.x-c.x)+(a.x-c.x)*(point.z-c.z))/divisor
+		if u>=-0.00001 and v>=-0.00001 and u+v<=1.00001:
+			return a.y*u+b.y*v+c.y*(1.0-u-v)
+	return ground_height(point)
+
 func _outline(a: float, radius: Vector2, y: float) -> Vector3:
 	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
-	return Vector3(cos(a)*radius.x*shape,y,sin(a)*radius.y*shape)
+	var point := Vector3(cos(a)*radius.x*shape,y,sin(a)*radius.y*shape)
+	point.y=ground_height(point)
+	return point
 
 func _terrain() -> void:
-	var rings := [Vector3(8.4,-0.24,11.7),Vector3(8.8,-0.42,12.1),Vector3(9.1,-0.73,12.5),Vector3(10.7,-1.30,14.2),Vector3(11.9,-2.20,15.5)]
-	var colors := [Color("8eb87f"),Color("7fa96d"),Color("c7a873"),Color("ecd49c"),Color("b6bf98")]
+	var rings: Array[Vector3] = []
+	var colors: Array[Color] = []
+	# Subdivide the interior too: a center fan cannot represent rolling ground.
+	for i in range(1,25):
+		rings.append(Vector3(8.4*i/24.0,-0.24,11.7*i/24.0)); colors.append(Color("8eb87f"))
+	var shore_colors := [Color("7fa96d"),Color("c7a873"),Color("ecd49c"),Color("b6bf98")]
+	for i in 4:
+		for j in range(1,5):
+			rings.append(RINGS[i].lerp(RINGS[i+1],j/4.0)); colors.append(shore_colors[i])
 	var surface := SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in 64:
-		var a := i*TAU/64.0; var b := (i+1)*TAU/64.0
+	for i in 96:
+		var a := i*TAU/96.0; var b := (i+1)*TAU/96.0
 		var first: Vector3 = rings[0]
 		_triangle(surface,Vector3(0,first.y,0),_outline(b,Vector2(first.x,first.z),first.y),_outline(a,Vector2(first.x,first.z),first.y),colors[0])
 		for r in rings.size()-1:
@@ -126,6 +198,14 @@ func _terrain() -> void:
 	var terrain := MeshInstance3D.new(); terrain.mesh=surface.commit()
 	var mat := StandardMaterial3D.new(); mat.vertex_color_use_as_albedo=true; mat.roughness=1.0
 	terrain.material_override=mat; terrain.name="IslandTerrain"; add_child(terrain)
+	terrain_vertices=terrain.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	for i in range(0,terrain_vertices.size(),3):
+		var a := terrain_vertices[i]; var b := terrain_vertices[i+1]; var c := terrain_vertices[i+2]
+		for x in range(floori(minf(a.x,minf(b.x,c.x))),floori(maxf(a.x,maxf(b.x,c.x)))+1):
+			for z in range(floori(minf(a.z,minf(b.z,c.z))),floori(maxf(a.z,maxf(b.z,c.z)))+1):
+				var cell := Vector2i(x,z)
+				if not terrain_cells.has(cell): terrain_cells[cell]=[]
+				terrain_cells[cell].append(i)
 
 func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
 	# Godot uses clockwise front faces.
