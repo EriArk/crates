@@ -104,6 +104,12 @@ func _setup_scene() -> void:
 	env.ambient_light_color=Color("dcebe5")
 	env.ambient_light_energy=0.25 if compatibility else 0.45
 	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR
+	# Gentle distance separation; the playable island remains crisp.
+	env.fog_enabled=true
+	env.fog_mode=Environment.FOG_MODE_DEPTH
+	env.fog_depth_begin=80.0; env.fog_depth_end=240.0
+	env.fog_density=0.35; env.fog_light_color=Color("b8dbdc")
+	env.fog_light_energy=1.0; env.fog_sky_affect=0.0
 	environment.environment=env
 	add_child(environment)
 	var light := DirectionalLight3D.new()

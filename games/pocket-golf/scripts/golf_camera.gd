@@ -59,7 +59,7 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		# The golfer stands beside the ball: look diagonally down to the putting line.
 		heading -= atan2(0.85,0.75)
 		focus = desired - _offset(heading, elevation) * 5.0
-		lens = clampf(65.0 * zoom[active], 38.0, 85.0)
+		lens = clampf(60.0 * zoom[active], 38.0, 75.0)
 	var blend := 1.0 if not initialized else 1.0 - exp(-delta * 6.0)
 	position = position.lerp(desired, blend)
 	look_point = look_point.lerp(focus, blend)

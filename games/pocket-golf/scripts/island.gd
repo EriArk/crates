@@ -2,6 +2,7 @@
 extends Node3D
 # Decorative environment. The deterministic course rules own all collision/gameplay.
 const SEA := preload("res://shaders/sea.gdshader")
+const MEADOW := preload("res://shaders/meadow.gdshader")
 const ROOT := "res://assets/kenney/"
 const RINGS := [Vector3(8.4,-0.24,11.7),Vector3(8.8,-0.42,12.1),Vector3(9.1,-0.73,12.5),Vector3(10.7,-1.30,14.2),Vector3(11.9,-2.20,15.5)]
 # x/z, height and footprint. Lower foreground dunes preserve the low camera views.
@@ -82,7 +83,6 @@ func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3
 func _plant_gardens(hole: int) -> void:
 	# Local seeded randomness never consumes gameplay RNG. Clusters leave gaps and a dock path.
 	var rng := RandomNumberGenerator.new(); rng.seed=7319+hole*137
-	var grass: Array[Transform3D] = []
 	for i in 26:
 		var a := i*TAU/26.0+0.1
 		var center := Vector3(cos(a)*7.5,0,sin(a)*10.3)
@@ -93,27 +93,58 @@ func _plant_gardens(hole: int) -> void:
 		for j in 4:
 			var p := center+Vector3(rng.randf_range(-1.0,1.0),0,rng.randf_range(-1.0,1.0))
 			prop("nature/flower_yellowA" if (hole+i)%3 else "nature/flower_purpleA",p,rng.randf_range(1.0,1.7),rng.randf()*TAU)
-		for j in 22:
-			var p := center+Vector3(rng.randf_range(-1.25,1.25),0,rng.randf_range(-1.25,1.25))
-			if absf(p.x)<5.8 and absf(p.z)<8.8: continue
-			if p.x>5.5 and absf(p.z-3.8)<0.9: continue
-			if ground_height(p)<-0.48: continue
-			var size := rng.randf_range(0.85,1.65)
-			p.y=surface_height(p)+0.05*size-0.025
-			grass.append(Transform3D(Basis(Vector3.UP,rng.randf()*TAU).scaled(Vector3.ONE*size),p))
+	_meadow(hole)
+
+func meadow_allowed(p: Vector3) -> bool:
+	if absf(p.x)<5.65 and absf(p.z)<8.65: return false
+	if p.x>5.5 and absf(p.z-3.8)<0.8: return false
+	var a := atan2(p.z/11.7,p.x/8.4)
+	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	return (Vector2(p.x,p.z)/Vector2(8.55,11.85)).length()<shape
+
+func _meadow(hole: int) -> void:
+	# Stratified coverage over the whole grassy surface, including the hilltops.
+	var rng := RandomNumberGenerator.new(); rng.seed=9427+hole*113
+	var chunks: Dictionary = {}
+	for x in range(-57,58):
+		for z in range(-79,80):
+			var p := Vector3(x*0.16+rng.randf_range(-0.055,0.055),0,z*0.16+rng.randf_range(-0.055,0.055))
+			if not meadow_allowed(p): continue
+			p.y=surface_height(p)-0.012
 			grass_positions.append(p)
-	# Reuse the original grass mesh in GPU batches instead of hundreds of scene nodes.
-	var template := prop("nature/grass_large",Vector3(30,0,30))
-	for child in template.find_children("*","MeshInstance3D",true,false):
-		var mesh: Mesh = child.mesh.duplicate()
-		for s in mesh.get_surface_count(): mesh.surface_set_material(s,child.get_active_material(s))
+			var cell := Vector2i(floori(p.x/4.0),floori(p.z/4.0))
+			if not chunks.has(cell): chunks[cell]=[]
+			var size := rng.randf_range(0.8,1.25)
+			chunks[cell].append(Transform3D(Basis(Vector3.UP,rng.randf()*TAU).scaled(Vector3.ONE*size),p))
+	var mesh := _grass_mesh()
+	var material := ShaderMaterial.new(); material.shader=MEADOW; material.set_shader_parameter("grass",true)
+	for cell in chunks:
 		var batch := MultiMesh.new(); batch.transform_format=MultiMesh.TRANSFORM_3D
-		batch.mesh=mesh; batch.instance_count=grass.size()
-		var local: Transform3D = template.global_transform.affine_inverse()*child.global_transform
-		for i in grass.size(): batch.set_instance_transform(i,grass[i]*local)
-		var draw := MultiMeshInstance3D.new(); draw.multimesh=batch; draw.name="GrassMeadow"
-		add_child(draw)
-	remove_child(template); template.free(); imported_count-=1
+		batch.mesh=mesh; batch.instance_count=chunks[cell].size()
+		var origin := Vector3(cell.x*4.0,0,cell.y*4.0)
+		for i in batch.instance_count:
+			var placement: Transform3D = chunks[cell][i]; placement.origin-=origin
+			batch.set_instance_transform(i,placement)
+		var draw := MultiMeshInstance3D.new(); draw.multimesh=batch; draw.material_override=material
+		draw.position=origin; draw.name="Meadow_%s_%s"%[cell.x,cell.y]
+		draw.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		draw.extra_cull_margin=0.25; draw.visibility_range_end=150.0; add_child(draw)
+
+func _grass_mesh() -> ArrayMesh:
+	# Original opaque geometry: no alpha cards, texture shimmer or downloaded code.
+	var surface := SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for blade in 5:
+		var angle := blade*2.39996
+		var side := Vector3(cos(angle),0,sin(angle))
+		var base := Vector3(sin(angle)*0.065,0,cos(angle)*0.065)
+		var height := 0.16+0.025*(blade%3)
+		var width := 0.034+0.006*(blade%2)
+		var bend := Vector3(cos(angle+0.7),0,sin(angle+0.7))*0.05
+		var points := [base-side*width,base+side*width,base+Vector3.UP*height*0.55+bend*0.3-side*width*0.7,base+Vector3.UP*height*0.55+bend*0.3+side*width*0.7,base+Vector3.UP*height+bend]
+		for index in [0,2,1,1,2,3,2,4,3]:
+			surface.set_normal(Vector3.UP); surface.set_uv(Vector2(0,points[index].y/height))
+			surface.add_vertex(points[index])
+	return surface.commit()
 
 func visual_bounds(instance: Node3D) -> AABB:
 	var bounds := AABB(); var first := true
@@ -196,7 +227,7 @@ func _terrain() -> void:
 			_triangle(surface,p,q,t,colors[r+1]); _triangle(surface,p,t,s,colors[r+1])
 	surface.generate_normals()
 	var terrain := MeshInstance3D.new(); terrain.mesh=surface.commit()
-	var mat := StandardMaterial3D.new(); mat.vertex_color_use_as_albedo=true; mat.roughness=1.0
+	var mat := ShaderMaterial.new(); mat.shader=MEADOW
 	terrain.material_override=mat; terrain.name="IslandTerrain"; add_child(terrain)
 	terrain_vertices=terrain.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	for i in range(0,terrain_vertices.size(),3):

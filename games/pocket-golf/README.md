@@ -4,15 +4,16 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.3.** Not published or installed on handhelds.
+**Preparation build 0.1.4.** Not published or installed on handhelds.
 The visible golfer is a temporary abstract marker. The shared TrainerOS avatar
 and wardrobe are being developed separately and are **not integrated yet**.
 
-![Island green](docs/relief-wide.png)
+![Island green](docs/meadow-overview.png)
 
 The greens sit on a small sandy island surrounded by animated turquoise water,
-with rolling hills, clustered grass and bushes, low-poly palms, flowers, rocks,
-a landing and boats. See [landscaping and checks](docs/RELIEF.md). Environment models
+with rolling hills, a continuous short-grass meadow, bushes, low-poly palms,
+flowers, rocks, a landing and boats. Grass and water reduce subpixel detail in
+the distance; see [grass, distance rendering and checks](docs/MEADOW.md). Environment models
 come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 [asset sources, licences and visual checks](docs/ISLAND.md).
 

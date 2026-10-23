@@ -1,0 +1,4 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+INPUT state=handoff players=2 neutral=false focus=@Button@610:<Button#61538831450>
+PRESENTATION PASS Godot injected joy events; physical controller not tested

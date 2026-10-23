@@ -23,20 +23,31 @@ func check_landscape(environment) -> void:
 		if absf(vertex.x)<5.35 and absf(vertex.z)<8.35:
 			check(vertex.y< -0.1,"landscaping stays below playable green")
 	check(highest>1.0,"real terrain has raised hills")
-	check(environment.grass_positions.size()>250,"dense meadow present")
+	check(environment.grass_positions.size()>4000,"continuous meadow present")
 	var batches: Array[Node] = environment.find_children("*","MultiMeshInstance3D",true,false)
-	check(batches.size()>0 and batches.size()<5,"grass uses bounded GPU batches")
+	check(batches.size()>4 and batches.size()<64,"grass split into bounded spatial batches")
 	for plant in environment.planting:
 		var box: AABB = environment.visual_bounds(plant)
 		check(box.position.x>5.3 or box.end.x< -5.3 or box.position.z>8.3 or box.end.z< -8.3,"plant clear of playable rectangle")
 		check(absf(box.position.y-surface_height(vertices,plant.position))<0.08,"plant grounded on rendered slope")
 	for point in environment.grass_positions:
-		check(absf(point.x)>=5.8 or absf(point.z)>=8.8,"grass clear of green")
-		check(not (point.x>5.5 and absf(point.z-3.8)<0.9),"dock path clear of grass")
+		check(absf(point.x)>=5.65 or absf(point.z)>=8.65,"grass clear of green")
+		check(not (point.x>5.5 and absf(point.z-3.8)<0.8),"dock path clear of grass")
 	# Sample across every cluster; avoid repeating a brute-force mesh query for every blade.
-	for i in range(0,environment.grass_positions.size(),11):
+	for i in range(0,environment.grass_positions.size(),maxi(1,environment.grass_positions.size()/45)):
 		var point: Vector3 = environment.grass_positions[i]
 		check(absf(point.y-surface_height(vertices,point))<0.08,"grass grounded on rendered slope")
+	# Sample the green belt, including hill crests, rather than just counting clusters.
+	var occupied := {}
+	for point in environment.grass_positions:
+		occupied[Vector2i(floori(point.x/0.5),floori(point.z/0.5))]=true
+	for x in range(-16,17):
+		for z in range(-22,23):
+			var p := Vector3(x*0.5+0.25,0,z*0.5+0.25)
+			if (Vector2(p.x,p.z)/Vector2(8.0,11.1)).length()>0.97: continue
+			if absf(p.x)<6.0 and absf(p.z)<9.0: continue
+			if p.x>5.0 and absf(p.z-3.8)<1.2: continue
+			check(occupied.has(Vector2i(x,z)),"continuous hillside coverage")
 	print("LANDSCAPE hills=",snappedf(highest,0.01)," plants=",environment.planting.size()," grass=",environment.grass_positions.size()," batches=",batches.size())
 func surface_height(vertices: PackedVector3Array, point: Vector3) -> float:
 	# Independently sample the triangles actually sent to the renderer.
