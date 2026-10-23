@@ -10,6 +10,17 @@ var zoom := [1.0, 1.0, 1.0]
 var look_point := Vector3.ZERO
 var initialized := false
 var following := false
+var optics: CameraAttributesPractical
+
+func _ready() -> void:
+	# Compatibility has no DOF pass; keep its full field sharp.
+	if RenderingServer.get_current_rendering_method()=="gl_compatibility": return
+	optics=CameraAttributesPractical.new()
+	optics.dof_blur_far_enabled=true
+	optics.dof_blur_near_enabled=false
+	optics.dof_blur_amount=0.055
+	optics.dof_blur_far_transition=22.0
+	attributes=optics
 
 func cycle() -> void:
 	view = (view + 1) % 3
@@ -65,7 +76,19 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 	look_point = look_point.lerp(focus, blend)
 	fov = lerpf(fov, lens, blend)
 	if position.distance_squared_to(look_point) > 0.001: look_at(look_point)
+	_update_focus(ball)
 	initialized = true
+
+func _update_focus(ball: Vector3) -> void:
+	if optics==null: return
+	# Protect the entire course, including the cup at the far edge, for every orbit,
+	# zoom and interpolated camera pose. No near blur ever obscures the putting ball.
+	var protected_depth := maxf(0.0,-to_local(ball).z)+2.0
+	for x in [-5.5,5.5]:
+		for z in [-8.5,8.5]:
+			for y in [0.0,2.0]:
+				protected_depth=maxf(protected_depth,-to_local(Vector3(x,y,z)).z+2.0)
+	optics.dof_blur_far_distance=protected_depth
 
 func _offset(heading: float, elevation: float) -> Vector3:
 	return Vector3(sin(heading) * cos(elevation), sin(elevation), cos(heading) * cos(elevation))

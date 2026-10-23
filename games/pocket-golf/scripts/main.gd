@@ -5,6 +5,7 @@ const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
 const Island = preload("res://scripts/island.gd")
+const Surfaces = preload("res://scripts/surfaces.gd")
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
@@ -72,10 +73,20 @@ func mesh(parent: Node3D, shape: Mesh, pos: Vector3, color: Color) -> MeshInstan
 	parent.add_child(node)
 	return node
 
-func box(parent: Node3D, size: Vector3, pos: Vector3, color: Color) -> MeshInstance3D:
+func box(parent: Node3D, size: Vector3, pos: Vector3, color: Color, kind: int=-1) -> MeshInstance3D:
 	var shape := BoxMesh.new()
 	shape.size=size
-	return mesh(parent,shape,pos,color)
+	var node := mesh(parent,shape,pos,color)
+	if kind>=0:
+		node.material_override=Surfaces.make(color,kind,Vector3.RIGHT if size.x>size.z else Vector3.FORWARD)
+		if kind==Surfaces.Kind.TURF:
+			var walls := PackedVector4Array()
+			for wall in Courses.get_course(field_index).walls:
+				walls.append(Vector4(wall[0],wall[1],wall[2],wall[3])/1000.0)
+			node.material_override.set_shader_parameter("obstacle_count",mini(walls.size(),8))
+			walls.resize(8)
+			node.material_override.set_shader_parameter("obstacles",walls)
+	return node
 
 func sphere(parent: Node3D, radius: float, pos: Vector3, color: Color) -> MeshInstance3D:
 	var shape := SphereMesh.new()
@@ -98,12 +109,13 @@ func _setup_scene() -> void:
 	sky_material.sky_horizon_color=Color("c5e7e5")
 	sky_material.ground_horizon_color=Color("c5e7e5")
 	sky_material.ground_bottom_color=Color("4b9db1")
-	sky_material.sun_angle_max=12.0
+	sky_material.sun_angle_max=3.0
 	sky.sky_material=sky_material; env.sky=sky
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color=Color("dcebe5")
-	env.ambient_light_energy=0.25 if compatibility else 0.45
-	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR
+	env.ambient_light_color=Color("b7d5e8")
+	env.ambient_light_energy=0.32 if compatibility else 0.48
+	# Compatibility shades in sRGB; ACES overdrives its sunny grass and sand.
+	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR if compatibility else Environment.TONE_MAPPER_ACES
 	# Gentle distance separation; the playable island remains crisp.
 	env.fog_enabled=true
 	env.fog_mode=Environment.FOG_MODE_DEPTH
@@ -113,10 +125,19 @@ func _setup_scene() -> void:
 	environment.environment=env
 	add_child(environment)
 	var light := DirectionalLight3D.new()
-	light.rotation_degrees=Vector3(-48,-35,0)
-	light.light_color=Color("fff2d7")
-	light.light_energy=0.36 if compatibility else 0.65
+	light.name="Sun"
+	light.rotation_degrees=Vector3(-36,-55,0)
+	light.light_color=Color("ffebcb")
+	light.light_energy=0.50 if compatibility else 0.90
 	light.shadow_enabled=true
+	light.directional_shadow_max_distance=125.0
+	light.directional_shadow_blend_splits=true
+	light.directional_shadow_split_1=0.08
+	light.directional_shadow_split_2=0.25
+	light.directional_shadow_split_3=0.60
+	light.shadow_bias=0.10
+	light.shadow_normal_bias=2.0
+	light.shadow_blur=1.2
 	add_child(light)
 	camera=GolfCamera.new()
 	camera.near=0.05
@@ -142,18 +163,18 @@ func _build_course() -> void:
 	field_index=game.world.hole
 	var c := Courses.get_course(field_index)
 	island=Island.new(); course_root.add_child(island); island.build(field_index)
-	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"))
+	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"),Surfaces.Kind.WOOD)
 	# Alternating mown strips and quiet edge markings make distances visible.
 	for z in 16:
-		box(course_root,Vector3(10,0.06,1),Vector3(0,-0.04,z-7.5),Color("80bc8c") if z%2==0 else Color("88c493"))
-	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"))
-	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"))
+		box(course_root,Vector3(10,0.06,1),Vector3(0,-0.04,z-7.5),Color("80bc8c") if z%2==0 else Color("88c493"),Surfaces.Kind.TURF)
+	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"),Surfaces.Kind.WOOD)
+	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"),Surfaces.Kind.WOOD)
 	for x in [-5.12,5.12]:
 		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("f2d7a0"))
 	for wall in c.walls:
-		box(course_root,Vector3((wall[2]-wall[0])/1000.0,0.6,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,0.3,(wall[1]+wall[3])/2000.0),Color("9baaa2"))
+		box(course_root,Vector3((wall[2]-wall[0])/1000.0,0.6,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,0.3,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
 	for sand in c.sand:
-		box(course_root,Vector3((sand[2]-sand[0])/1000.0,0.025,(sand[3]-sand[1])/1000.0),Vector3((sand[0]+sand[2])/2000.0,0.008,(sand[1]+sand[3])/2000.0),Color("e5cd96"))
+		box(course_root,Vector3((sand[2]-sand[0])/1000.0,0.025,(sand[3]-sand[1])/1000.0),Vector3((sand[0]+sand[2])/2000.0,0.008,(sand[1]+sand[3])/2000.0),Color("e5cd96"),Surfaces.Kind.SAND)
 	cup=Node3D.new(); cup.position=Vector3(c.cup[0]/1000.0,0,c.cup[1]/1000.0); course_root.add_child(cup)
 	cylinder(cup,0.43,0.02,Vector3(0,0.035,0),Color("f1e4c4"))
 	cylinder(cup,0.33,0.025,Vector3(0,0.05,0),Color("284e43"))

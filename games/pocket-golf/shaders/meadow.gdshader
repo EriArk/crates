@@ -26,7 +26,7 @@ void vertex() {
         NORMAL = vec3(0.0,1.0,0.0);
     } else {
         // Soft terrain lighting helps roots blend into the slope below them.
-        NORMAL = normalize(mix(NORMAL,vec3(0.0,1.0,0.0),0.65));
+        NORMAL = normalize(mix(NORMAL,vec3(0.0,1.0,0.0),0.25));
     }
 }
 
@@ -39,6 +39,13 @@ void fragment() {
     float lawn = grass ? 1.0 : smoothstep(0.01,0.08,COLOR.g-COLOR.r);
     ALBEDO = mix(COLOR.rgb,turf,lawn);
     ALBEDO += vec3(0.055,0.065,0.025)*tip*detail;
+    // Low contrast surface grain, band-limited before it becomes subpixel detail.
+    vec2 p=world.xz*110.0;
+    float grain=sin(p.x+sin(p.y))*sin(p.y*1.37);
+    float filtered=1.0-smoothstep(0.25,1.0,max(length(dFdx(p)),length(dFdy(p))));
+    if (!grass) ALBEDO*=1.0+grain*filtered*0.075;
+    AO=grass ? mix(0.76,1.0,tip) : 1.0;
+    AO_LIGHT_AFFECT=0.15;
     ROUGHNESS = 1.0;
     SPECULAR = 0.0;
 }

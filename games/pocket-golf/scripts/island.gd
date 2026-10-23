@@ -3,6 +3,7 @@ extends Node3D
 # Decorative environment. The deterministic course rules own all collision/gameplay.
 const SEA := preload("res://shaders/sea.gdshader")
 const MEADOW := preload("res://shaders/meadow.gdshader")
+const Surfaces := preload("res://scripts/surfaces.gd")
 const ROOT := "res://assets/kenney/"
 const RINGS := [Vector3(8.4,-0.24,11.7),Vector3(8.8,-0.42,12.1),Vector3(9.1,-0.73,12.5),Vector3(10.7,-1.30,14.2),Vector3(11.9,-2.20,15.5)]
 # x/z, height and footprint. Lower foreground dunes preserve the low camera views.
@@ -69,6 +70,12 @@ func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3
 				var palette := {"leafsGreen":"609c70","grass":"78aa76","woodBark":"b58a60","stone":"a9b9b4"}
 				if palette.has(original.resource_name): mat.albedo_color=Color(palette[original.resource_name])
 				materials[key]=mat
+				var kind := -1
+				if original.resource_name=="woodBark": kind=Surfaces.Kind.WOOD
+				elif original.resource_name=="stone" or "stone_" in id or "rock_" in id: kind=Surfaces.Kind.STONE
+				elif original.resource_name=="leafsGreen": kind=Surfaces.Kind.LEAF
+				elif id=="pirate/structure-platform-dock" or id=="pirate/barrel": kind=Surfaces.Kind.WOOD
+				if kind>=0: materials[key]=Surfaces.make(mat.albedo_color,kind,Vector3.UP,mat.albedo_texture)
 			mesh.set_surface_override_material(surface,materials[key])
 	instance.position=at; instance.scale=Vector3.ONE*size; instance.rotation.y=heading
 	add_child(instance); imported_count+=1
