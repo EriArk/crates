@@ -180,7 +180,11 @@ func _build_course() -> void:
 	balls.clear()
 	for i in game.world.players:
 		var ball := Node3D.new(); course_root.add_child(ball)
-		sphere(ball,0.18,Vector3.ZERO,Color("fff8e7") if i==0 else CORAL)
+		var visual := sphere(ball,0.18,Vector3.ZERO,Color("fff8e7") if i==0 else CORAL)
+		visual.name="RollingBall"
+		# A narrow painted band makes physical rolling readable, even on a small screen.
+		var band := TorusMesh.new(); band.inner_radius=0.174; band.outer_radius=0.182
+		mesh(visual,band,Vector3.ZERO,MINT if i==0 else Color("fff0d5"))
 		# A floor ring distinguishes the two overlapping tee positions without moving rules.
 		cylinder(ball,0.24,0.015,Vector3(0,-0.165,0),MINT if i==0 else CORAL)
 		balls.append(ball)
@@ -330,21 +334,34 @@ func _process(delta: float) -> void:
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
 			elapsed+=delta
-			var frame := mini(int(elapsed*60),shot.path.size()-1)
+			var sample_time: float = elapsed*shot.hz
+			var frame := mini(int(sample_time),shot.path.size()-1)
+			var next_frame := mini(frame+1,shot.path.size()-1)
+			var blend := clampf(sample_time-frame,0,1)
 			var p: Array = shot.path[frame]
+			var q: Array = shot.path[next_frame]
 			var ball: Node3D = balls[shot.player]
-			ball.position=Vector3(p[0]/1000.0,0.19,p[1]/1000.0)
+			ball.position=Vector3(lerpf(p[0],q[0],blend)/1000.0,lerpf(shot.heights[frame],shot.heights[next_frame],blend)/1000.0,lerpf(p[1],q[1],blend)/1000.0)
+			var visual: Node3D = ball.get_node("RollingBall")
+			# Integrate every crossed segment, not just the render-frame displacement:
+			# banks still rotate correctly when the display skips simulation samples.
+			for index in range(maxi(last_frame+1,1),frame+1):
+				var previous: Array = shot.path[index-1]
+				var current: Array = shot.path[index]
+				var movement := Vector3(current[0]-previous[0],0,current[1]-previous[1])/1000.0
+				if movement.length_squared()>0:
+					visual.rotate(Vector3.UP.cross(movement).normalized(),movement.length()/0.18)
+			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
 				for bounce in shot.bounces:
 					if bounce>last_frame and bounce<=frame: _burst(ball.position,Color("e4dbbc"),5)
 				if frame==shot.path.size()-1 and shot.sunk:
 					_burst(ball.position,Color("f3cd79"),18); anchor.play_action("celebrate")
 				last_frame=frame
-			if elapsed>=shot.path.size()/60.0:
-				if shot.sunk: ball.scale=Vector3.ONE*maxf(0,1-(elapsed-shot.path.size()/60.0)*5)
+			if elapsed>=(shot.path.size()-1)/float(shot.hz):
 				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
-			if elapsed>shot.path.size()/60.0+0.85:
-				ball.scale=Vector3.ONE; game.finish_shot()
+			if elapsed>(shot.path.size()-1)/float(shot.hz)+0.85:
+				ball.get_child(1).visible=true; game.finish_shot()
 	for i in range(effects.size()-1,-1,-1):
 		var fx: Dictionary = effects[i]; fx.age+=delta; fx.v.y-=delta*4; fx.node.position+=fx.v*delta; fx.node.scale=Vector3.ONE*maxf(0,1-fx.age)
 		if fx.age>=1: fx.node.queue_free(); effects.remove_at(i)
@@ -353,6 +370,8 @@ func _process(delta: float) -> void:
 	var rolling: bool = game.phase=="moving" and not shot.is_empty()
 	var player: int = shot.player if rolling else game.world.turn
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
+	# Follow the cup at ground level while the ball drops below the green.
+	ball_pos.y=maxf(ball_pos.y,0.19)
 	var shot_angle: float = shot.angle if rolling else game.angle
 	var golfer := ball_pos+Vector3(-cos(deg_to_rad(shot_angle))*0.85,-0.19,-sin(deg_to_rad(shot_angle))*0.85)
 	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length())
