@@ -14,6 +14,7 @@ var state: Dictionary = {}
 var captures: Dictionary = {}
 var status := ""
 var distance := 0.0
+var elevation := 0.0
 var font: Font
 
 func _ready() -> void:
@@ -32,8 +33,9 @@ func update_state(next: Dictionary) -> void:
 func set_status(text: String) -> void:
 	if status!=text: status=text; queue_redraw()
 
-func set_distance(metres: float) -> void:
-	if absf(metres-distance)>0.05: distance=metres; queue_redraw()
+func set_distance(metres: float, rise: float=0.0) -> void:
+	if absf(metres-distance)>0.05 or absf(rise-elevation)>0.01:
+		distance=metres; elevation=rise; queue_redraw()
 
 func ui_scale() -> float:
 	return clampf(960.0/maxf(1.0,get_window().size.x),1.0,1.5)
@@ -135,7 +137,9 @@ func _draw() -> void:
 	draw_arc(Vector2(43,56),7,0,TAU,24,PAPER,1.5,true)
 	_text("HOLE %02d"%state.hole,Vector2(83,38),23)
 	_text("PAR %d  ·  %s"%[state.par,state.title.capitalize()],Vector2(83,59),13)
-	_text("%.1f m to pin"%distance,Vector2(22,98),15)
+	var pin := "%.1f m to pin"%distance
+	if absf(elevation)>=0.05: pin+=" · %s%.1f m"%["↑" if elevation>0 else "↓",absf(elevation)]
+	_text(pin,Vector2(22,98),15)
 	# Two unobtrusive touch targets double as pointer controls. Gamepad uses shortcuts.
 	for action in ["view","pause"]:
 		var rect: Rect2 = regions()[action]; var center := rect.position+Vector2(23,19)

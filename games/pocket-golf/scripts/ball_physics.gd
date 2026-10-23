@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
+const Surface = preload("res://scripts/green_surface.gd")
 # Authoritative fixed-point rolling model. 0.1 micrometres, 120 ticks/s; no float math
 # or engine contacts enter the shared result. Public paths/positions use mm.
 const HZ := 120
@@ -11,16 +12,12 @@ const CUP_SPEED := 18*SCALE # 2.16 m/s; fast putts cross the cup.
 const GRASS_DRAG := 950 # 1.368 m/s^2
 const SAND_DRAG := 4800
 const RESTITUTION := 72 # percent, normal component only
-const MAX_TICKS := 1200
+const MAX_TICKS := 1800
+# Approximate solid-sphere rolling gravity (5/7 g), in fixed units/tick^2.
+const ROLL_GRAVITY := 4861
 
 static func root_int(n: int) -> int:
-	if n<=0: return 0
-	var x: int = n
-	var y: int = (x+1)/2
-	while y<x:
-		x=y
-		y=(x+n/x)/2
-	return x
+	return Surface.root_int(n)
 
 static func length_int(x: int, z: int) -> int:
 	return root_int(x*x+z*z)
@@ -66,8 +63,9 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 	var p := [origin[0]*SCALE,origin[1]*SCALE]
 	var norm := length_int(direction[0],direction[1])
 	var v := [direction[0]*power*7000/norm,direction[1]*power*7000/norm]
+	var grid: PackedInt32Array = course.get("height_grid",PackedInt32Array())
 	var path: Array = [origin.duplicate()]
-	var heights: Array = [190]
+	var heights: Array = [Surface.ball_height(grid,origin[0],origin[1])]
 	var bounces: Array = []
 	var rims: Array = []
 	var sunk := false
@@ -75,6 +73,11 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 	var capture_frame := -1
 	var stopped := false
 	for tick in MAX_TICKS:
+		var ground := Surface.sample(grid,p[0]/SCALE,p[1]/SCALE)
+		var denominator: int = Surface.Q*Surface.Q+ground[1]*ground[1]+ground[2]*ground[2]
+		var gx: int = -ROLL_GRAVITY*ground[1]*Surface.Q/denominator
+		var gz: int = -ROLL_GRAVITY*ground[2]*Surface.Q/denominator
+		v[0]+=gx; v[1]+=gz
 		p[0]+=v[0]; p[1]+=v[1]
 		var bounced := false
 		for axis in 2:
@@ -89,7 +92,8 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 				if wall_contact(p,v,wall): bounced=true
 			p[0]=clampi(p[0],-4820*SCALE,4820*SCALE)
 			p[1]=clampi(p[1],-7820*SCALE,7820*SCALE)
-		path.append([p[0]/SCALE,p[1]/SCALE]); heights.append(190)
+		path.append([p[0]/SCALE,p[1]/SCALE])
+		heights.append(Surface.ball_height(grid,path.back()[0],path.back()[1]))
 		if bounced: bounces.append(path.size()-1)
 		var dx: int = course.cup[0]*SCALE-p[0]
 		var dz: int = course.cup[1]*SCALE-p[1]
@@ -105,11 +109,12 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 			if distance<=CUP_CORE and speed<=CUP_SPEED:
 				sunk=true; stopped=true; capture_frame=path.size()-1
 				var entry: Array = path.back().duplicate()
+				var cup_level: int = Surface.sample(grid,course.cup[0],course.cup[1])[0]
 				# Continue the trajectory into the bowl; don't teleport or shrink.
 				for drop in range(1,37):
 					var travel := mini(drop,18)
 					path.append([entry[0]+(course.cup[0]-entry[0])*travel/18,entry[1]+(course.cup[1]-entry[1])*travel/18])
-					heights.append(190-480*drop*drop/(36*36))
+					heights.append(cup_level+190-480*drop*drop/(36*36))
 				break
 			# Shallow bowl bends grazing paths. Only slow central contacts sink.
 			if distance>0:
@@ -119,6 +124,10 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 			drag=300
 		else: in_cup=false
 		if speed<=drag:
+			# At an uphill apex a steep slope must roll the ball back. A blocking
+			# contact can hold it; otherwise tiny velocities must not freeze gravity.
+			if not bounced and not in_cup and length_int(gx,gz)>drag:
+				v=[0,0]; continue
 			stopped=true; break
 		v[0]=rounded_div(v[0]*(speed-drag),speed)
 		v[1]=rounded_div(v[1]*(speed-drag),speed)

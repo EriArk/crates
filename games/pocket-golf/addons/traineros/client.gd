@@ -7,7 +7,7 @@ signal record(data: Dictionary)
 signal closed
 var app_id := "art.abysstail.pocket-golf"
 var activity_title := "Pocket Golf"
-var game_protocol := "pocket-golf.2"
+var game_protocol := "pocket-golf.3"
 var endpoint_override := ""
 var channel := ""
 var registered := false

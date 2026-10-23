@@ -1,0 +1,134 @@
+Pocket Golf 0.1.8 - playable slopes checks, 2026-10-23
+Windows GTX 1660 Ti Vulkan Mobile; Linux Xvfb Mesa llvmpipe OpenGL Compatibility.
+Synthetic input. No physical handheld/controller, live pair or ARM execution claim.
+An early Windows exhaustive solver hit its 60 s timeout. Integer sqrt and duplicate-position test search were optimized; the final rules pass below completed. Full trajectory hashes remained unchanged.
+
+
+WINDOWS slopes_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SLOPE range mm flat=[1620, 0] uphill=[1072, 0] downhill=[-3291, 0] cross=[-557, -1731] rollback=[-4820, 0]
+GREEN 1 vertices=2665 crest mm=650 gradient=0.43645849609375 cup mm=16
+GREEN 2 vertices=2665 crest mm=800 gradient=0.52952807617188 cup mm=66
+GREEN 3 vertices=2665 crest mm=598 gradient=0.489505859375 cup mm=276
+SURFACE ray error mm=0.99630355834961 sha256=89268ef5eca97f06ace46b5c0577c1d38e0baa09ffaa449d9a3987edbf7250bd
+SLOPES PASS failures=0
+
+
+WINDOWS physics_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RANGE mm shortest=2330.13916015625 longest=2331.85302734375 spread=1.7138671875
+CUP slow=true fast=[0, -5968] lip=[169, -2429] miss=[400, -2271]
+REPLAY cases=365 sha256=4fdad639c13fdf2c84f7583cb3d19fda8ef3cc74b330ef0d2050c82e95264558
+PHYSICS PASS failures=0
+
+
+WINDOWS rules_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SOLVED scores=[[1, 2, 1], [1, 2, 1]] cups=6 bounces=4 digest=647b6e3b2954a54ff6e4701ce747fcb347d48fc64ced90d666d2cc0c4d651bbb
+RULES PASS failures=0
+
+
+WINDOWS protocol_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PROTOCOL PASS failures=0
+
+
+WINDOWS slopes_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+SLOPES PRESENTATION PASS terrain, feet, aim, cup, eyes, HUD elevation, rolling clearance, small layout
+
+
+WINDOWS physics_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+WINDOWS presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+INPUT state=handoff players=2 neutral=false focus=@Button@567:<Button#71152176094>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+
+WINDOWS camera_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+
+WINDOWS hud_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+HUD PASS touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause
+
+
+LINUX slopes_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SLOPE range mm flat=[1620, 0] uphill=[1072, 0] downhill=[-3291, 0] cross=[-557, -1731] rollback=[-4820, 0]
+GREEN 1 vertices=2665 crest mm=650 gradient=0.43645849609375 cup mm=16
+GREEN 2 vertices=2665 crest mm=800 gradient=0.52952807617188 cup mm=66
+GREEN 3 vertices=2665 crest mm=598 gradient=0.489505859375 cup mm=276
+SURFACE ray error mm=0.99630355834961 sha256=89268ef5eca97f06ace46b5c0577c1d38e0baa09ffaa449d9a3987edbf7250bd
+SLOPES PASS failures=0
+
+
+LINUX physics_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RANGE mm shortest=2330.13916015625 longest=2331.85302734375 spread=1.7138671875
+CUP slow=true fast=[0, -5968] lip=[169, -2429] miss=[400, -2271]
+REPLAY cases=365 sha256=4fdad639c13fdf2c84f7583cb3d19fda8ef3cc74b330ef0d2050c82e95264558
+PHYSICS PASS failures=0
+
+
+LINUX rules_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SOLVED scores=[[1, 2, 1], [1, 2, 1]] cups=6 bounces=4 digest=647b6e3b2954a54ff6e4701ce747fcb347d48fc64ced90d666d2cc0c4d651bbb
+RULES PASS failures=0
+
+
+LINUX protocol_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PROTOCOL PASS failures=0
+
+
+LINUX slopes_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+SLOPES PRESENTATION PASS terrain, feet, aim, cup, eyes, HUD elevation, rolling clearance, small layout
+
+
+LINUX physics_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+LINUX presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+INPUT state=handoff players=2 neutral=false focus=@Button@567:<Button#62562241496>
+PRESENTATION PASS Godot injected joy events; physical controller not tested

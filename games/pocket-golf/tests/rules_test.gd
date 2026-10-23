@@ -3,22 +3,30 @@ extends SceneTree
 const Rules = preload("res://scripts/rules.gd")
 const Courses = preload("res://scripts/courses.gd")
 var failures := 0
+static var solved_positions: Dictionary = {}
 
 func check(value: bool, message: String) -> void:
 	if not value: failures+=1; printerr("FAIL: "+message)
 
 static func best_shot(world) -> Array:
+	# Both local players often start from the identical position. Reuse the
+	# expensive exhaustive search; the actual shot is still executed for each.
+	var key := str(world.hole)+":"+JSON.stringify(world.balls[world.turn])
+	if solved_positions.has(key): return solved_positions[key]
 	var course: Dictionary = Courses.get_course(world.hole)
 	var best := [0,10]
 	var distance := 1.0e30
 	for angle in range(0,360,5):
 		for power in range(10,101,5):
 			var shot: Dictionary = Rules.trace(course,world.balls[world.turn],angle,power)
-			if shot.sunk: return [angle,power]
+			if shot.sunk:
+				solved_positions[key]=[angle,power]
+				return [angle,power]
 			var dx: int = shot.position[0]-course.cup[0]
 			var dz: int = shot.position[1]-course.cup[1]
 			var score: float = dx*dx+dz*dz
 			if score<distance: distance=score; best=[angle,power]
+	solved_positions[key]=best
 	return best
 
 func _initialize() -> void:

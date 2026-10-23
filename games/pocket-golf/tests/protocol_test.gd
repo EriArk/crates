@@ -32,9 +32,9 @@ func run() -> void:
 	game.finish_shot()
 	check(game.phase=="aim" and game.can_fire(),"receiver gets next turn after animation")
 	var client := Client.new(); root.add_child(client)
-	check(client.game_protocol=="pocket-golf.2","new physics uses separate protocol")
+	check(client.game_protocol=="pocket-golf.3","new physics uses separate protocol")
 	client.active=true; client.registered=true
-	client._packet({"event":"network.ready","session":{"channel":"fixture","protocol":"pocket-golf.1","host":true,"delivery":"reliable-ordered"}})
+	client._packet({"event":"network.ready","session":{"channel":"fixture","protocol":"pocket-golf.2","host":true,"delivery":"reliable-ordered"}})
 	check(not client.active and client.channel.is_empty(),"old physics cannot join new match")
 	client.active=true; client.registered=true
 	client._packet({"event":"network.ready","session":{"channel":"fixture","protocol":"wrong","host":true,"delivery":"reliable-ordered"}})

@@ -4,17 +4,21 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.7.** Not published or installed on handhelds.
+**Preparation build 0.1.8.** Not published or installed on handhelds.
 
 The rolling model now uses direction-independent deceleration, round corner
 contacts, slower putts and a speed-sensitive cup with lip deflection and a visible
 drop. Animation interpolates the 120 Hz integer trajectory and rolls the marked
-ball. See [physics parameters, evidence and limits](docs/PHYSICS.md).
-The green is still flat; playable slopes are the next separate increment.
+ball. See [the rolling model](docs/PHYSICS.md).
+All three greens now have playable slopes: uphill loss of speed, downhill
+acceleration, lateral break and rollback on steep climbs. One triangle height
+grid drives the actual green mesh and the rules. Sand follows that same surface;
+the ball, aiming dots, golfer and cup sit at its height. The distance hint includes
+signed rise/fall to the pin. See [slopes, screenshots and checks](docs/SLOPES.md).
 The visible golfer is a temporary abstract marker. The shared TrainerOS avatar
 and wardrobe are being developed separately and are **not integrated yet**.
 
-![Full-screen golf HUD](docs/hud-overview.png)
+![Playable hills and compact golf HUD](docs/slopes-overview.png)
 
 The field stays visible behind a compact floating HUD: hole/par, distance to the pin,
 player stroke counts, running totals and a slim power gauge. Shot controls disappear
@@ -65,9 +69,9 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 Both players open **Play with a friend**, then select Pocket Golf in the existing
 GameHub Lobby, prepare, mark Ready and let the organizer Start. The game uses
 Platform API v1 `lobby.activity` and `network.records`, app ID
-`art.abysstail.pocket-golf`, protocol `pocket-golf.2`.
-Both players need 0.1.7 or a compatible physics revision. The former
-`pocket-golf.1` route is deliberately incompatible; the state hash also includes
+`art.abysstail.pocket-golf`, protocol `pocket-golf.3`.
+Both players need 0.1.8 or a compatible physics revision. The former
+`pocket-golf.1` and `pocket-golf.2` routes are deliberately incompatible; the state hash also includes
 the physics revision, so mixed rules cannot silently share a round.
 
 The GDScript client in `addons/traineros/client.gd` uses the existing local JSON-lines
@@ -98,6 +102,8 @@ needs checking. The game has no audio track in this preparation.
 godot --path games/pocket-golf --editor
 godot --headless --path games/pocket-golf --script tests/rules_test.gd
 godot --headless --path games/pocket-golf --script tests/physics_test.gd
+godot --headless --path games/pocket-golf --script tests/slopes_test.gd
+godot --path games/pocket-golf --script tests/slopes_presentation.gd
 godot --path games/pocket-golf --script tests/physics_presentation.gd
 godot --headless --path games/pocket-golf --script tests/protocol_test.gd
 godot --headless --path games/pocket-golf --script tests/presentation.gd

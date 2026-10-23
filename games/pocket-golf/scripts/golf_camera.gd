@@ -11,6 +11,7 @@ var look_point := Vector3.ZERO
 var initialized := false
 var following := false
 var optics: CameraAttributesPractical
+var obstruction_height := 0.6
 
 func _ready() -> void:
 	# Compatibility has no DOF pass; keep its full field sharp.
@@ -61,8 +62,8 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 	elif active == View.SHOULDER:
 		focus = ball + Vector3(0, 0.35, 0)
 		desired = focus + _offset(heading, elevation) * 4.8 * zoom[active]
-		# Keep the camera above the 0.6 m obstacles, including at minimum distance.
-		desired.y = maxf(desired.y, 1.15)
+		# Terrain can raise wall tops. Keep the closest shoulder orbit above them.
+		desired.y = maxf(desired.y, obstruction_height+0.55)
 		lens = 60.0
 	else:
 		# Temporary eye height of the placeholder. SDK socket integration comes later.

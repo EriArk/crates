@@ -9,6 +9,10 @@ uniform bool use_palette = false;
 uniform sampler2D palette : source_color, filter_linear;
 uniform int obstacle_count = 0;
 uniform vec4 obstacles[8];
+uniform bool course_surface = false;
+uniform int sand_count = 0;
+uniform vec4 sand_bounds[8];
+uniform vec4 sand_tint : source_color = vec4(0.89804,0.80392,0.58824,1.0);
 varying vec3 world;
 varying vec3 local;
 float hash(vec3 p) {
@@ -28,13 +32,24 @@ float filtered_noise(vec3 p) {
 void vertex() { world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz; local=VERTEX; }
 void fragment() {
     vec3 base=tint.rgb;
+    int surface_kind=kind;
+    if (course_surface) {
+        base*=mix(1.0,1.065,mod(floor(world.z+8.0),2.0));
+        for (int i=0;i<8;i++) {
+            if (i>=sand_count) break;
+            if (world.x>sand_bounds[i].x && world.z>sand_bounds[i].y && world.x<sand_bounds[i].z && world.z<sand_bounds[i].w) {
+                surface_kind=1;
+                base=sand_tint.rgb;
+            }
+        }
+    }
     if (use_palette) base*=texture(palette,UV).rgb;
     float broad=noise(world*1.7);
     float fine=filtered_noise(world*95.0);
     float detail=0.0;
     float rough=0.95;
     float micro=0.0;
-    if (kind==0) {
+    if (surface_kind==0) {
         // Short mown fibres, small variations between individual clumps.
         detail=(filtered_noise(world*vec3(110.0,30.0,28.0))-0.5)*0.16+(broad-0.5)*0.065;
         micro=0.035; rough=0.94;
@@ -45,17 +60,17 @@ void fragment() {
             contact=max(contact,1.0-smoothstep(0.0,0.30,length(d)));
         }
         AO=1.0-contact*0.38; AO_LIGHT_AFFECT=0.25;
-    } else if (kind==1) {
+    } else if (surface_kind==1) {
         float phase=world.x*19.0+world.z*8.0+sin(world.z*3.0)*0.8;
         float ripples=sin(phase)*(1.0-smoothstep(0.3,1.5,fwidth(phase)));
         detail=(fine-0.5)*0.20+(broad-0.5)*0.10+ripples*0.035;
         micro=0.055;
-    } else if (kind==2) {
+    } else if (surface_kind==2) {
         vec3 grain=local*22.0;
         grain*=vec3(1.0)-abs(grain_axis)*0.96;
         detail=(filtered_noise(grain)-0.5)*0.24+(broad-0.5)*0.055;
         rough=0.78; micro=0.025;
-    } else if (kind==3) {
+    } else if (surface_kind==3) {
         detail=(noise(world*4.0)-0.5)*0.19+(filtered_noise(world*42.0)-0.5)*0.10;
         rough=0.88; micro=0.06;
     } else {

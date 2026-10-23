@@ -9,6 +9,9 @@ func check(value: bool, label: String) -> void:
 	if not value: failures+=1; printerr("FAIL: "+label)
 
 func _initialize() -> void:
+	for n in [0,1,2,3,4,8,9,10,99,100,101,999999999999999999,1000000000000000000,1000000000000000001]:
+		var r: int = Physics.root_int(n)
+		check(r*r<=n and (r+1)*(r+1)>n,"exact integer square root bounds")
 	var grass := {"cup":[90000,90000],"walls":[],"sand":[]}
 	var shortest := 1.0e10
 	var longest := 0.0

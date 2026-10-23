@@ -50,7 +50,7 @@ func run() -> void:
 	begin([0,-4600],20)
 	check(ui.shot.sunk,"cup fixture sinks through real Match")
 	ui.elapsed=(ui.shot.capture_frame+18.5)/float(ui.shot.hz); ui._process(0)
-	check(ui.balls[0].position.y<0.19 and ui.balls[0].scale==Vector3.ONE,"ball descends without shrinking")
+	check(ui.balls[0].position.y<ui.cup.position.y+0.19 and ui.balls[0].scale==Vector3.ONE,"ball descends without shrinking")
 	check(not ui.balls[0].get_child(1).visible,"floor marker disappears inside cup")
 	await capture("physics-cup")
 	ui.elapsed=20; ui._process(0)

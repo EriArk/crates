@@ -7,10 +7,13 @@ const GolfCamera = preload("res://scripts/golf_camera.gd")
 const Island = preload("res://scripts/island.gd")
 const GolfHud = preload("res://scripts/golf_hud.gd")
 const Surfaces = preload("res://scripts/surfaces.gd")
+const GreenSurface = preload("res://scripts/green_surface.gd")
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
 var course_root: Node3D
+var green_grid := PackedInt32Array()
+var green_mesh: MeshInstance3D
 var island: Island
 var camera: GolfCamera
 var balls: Array[Node3D] = []
@@ -160,20 +163,36 @@ func _build_course() -> void:
 	course_root=Node3D.new(); add_child(course_root)
 	field_index=game.world.hole
 	var c := Courses.get_course(field_index)
+	green_grid=c.height_grid
+	camera.obstruction_height=0.6
 	island=Island.new(); course_root.add_child(island); island.build(field_index)
 	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"),Surfaces.Kind.WOOD)
-	# Alternating mown strips and quiet edge markings make distances visible.
-	for z in 16:
-		box(course_root,Vector3(10,0.06,1),Vector3(0,-0.04,z-7.5),Color("80bc8c") if z%2==0 else Color("88c493"),Surfaces.Kind.TURF)
+	# The exact same triangle grid supplies physics height/gradients and this mesh.
+	green_mesh=MeshInstance3D.new(); green_mesh.name="PlayableGreen"
+	green_mesh.mesh=GreenSurface.make_mesh(green_grid)
+	var turf := Surfaces.make(Color("80bc8c"),Surfaces.Kind.TURF)
+	turf.set_shader_parameter("course_surface",true)
+	var sand_bounds := PackedVector4Array(); var wall_bounds := PackedVector4Array()
+	for sand in c.sand: sand_bounds.append(Vector4(sand[0],sand[1],sand[2],sand[3])/1000.0)
+	for wall in c.walls: wall_bounds.append(Vector4(wall[0],wall[1],wall[2],wall[3])/1000.0)
+	turf.set_shader_parameter("sand_count",sand_bounds.size()); sand_bounds.resize(8)
+	turf.set_shader_parameter("sand_bounds",sand_bounds)
+	turf.set_shader_parameter("obstacle_count",wall_bounds.size()); wall_bounds.resize(8)
+	turf.set_shader_parameter("obstacles",wall_bounds)
+	green_mesh.material_override=turf; course_root.add_child(green_mesh)
 	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"),Surfaces.Kind.WOOD)
 	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"),Surfaces.Kind.WOOD)
 	for x in [-5.12,5.12]:
 		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("f2d7a0"))
 	for wall in c.walls:
-		box(course_root,Vector3((wall[2]-wall[0])/1000.0,0.6,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,0.3,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
-	for sand in c.sand:
-		box(course_root,Vector3((sand[2]-sand[0])/1000.0,0.025,(sand[3]-sand[1])/1000.0),Vector3((sand[0]+sand[2])/2000.0,0.008,(sand[1]+sand[3])/2000.0),Color("e5cd96"),Surfaces.Kind.SAND)
-	cup=Node3D.new(); cup.position=Vector3(c.cup[0]/1000.0,0,c.cup[1]/1000.0); course_root.add_child(cup)
+		var top := 0.6
+		for x in range(wall[0],wall[2]+251,250):
+			for z in range(wall[1],wall[3]+251,250):
+				top=maxf(top,_ground(Vector3(x/1000.0,0,z/1000.0))+0.6)
+		camera.obstruction_height=maxf(camera.obstruction_height,top)
+		# Extend below all nearby ground so no wall floats above a downhill side.
+		box(course_root,Vector3((wall[2]-wall[0])/1000.0,top,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,top/2,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
+	cup=Node3D.new(); cup.position=Vector3(c.cup[0]/1000.0,GreenSurface.sample(green_grid,c.cup[0],c.cup[1])[0]/1000.0,c.cup[1]/1000.0); course_root.add_child(cup)
 	cylinder(cup,0.43,0.02,Vector3(0,0.035,0),Color("f1e4c4"))
 	cylinder(cup,0.33,0.025,Vector3(0,0.05,0),Color("284e43"))
 	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.06,0),1.85,0.2)
@@ -190,6 +209,19 @@ func _build_course() -> void:
 		balls.append(ball)
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
 	for i in 8: sphere(aim_root,0.055,Vector3(0,0.14,-0.45-i*0.22),Color("fff4d4"))
+
+func _ground(point: Vector3) -> float:
+	return GreenSurface.sample(green_grid,roundi(point.x*1000),roundi(point.z*1000))[0]/1000.0
+
+func _stance(ball: Vector3, radians: float) -> Vector3:
+	var feet := ball+Vector3(-cos(radians)*0.85,0,-sin(radians)*0.85)
+	feet.y=_ground(feet)
+	return feet
+
+func _align_marker(ball: Node3D) -> void:
+	var normal := GreenSurface.normal(green_grid,roundi(ball.position.x*1000),roundi(ball.position.z*1000))
+	ball.get_child(1).basis=Basis(Quaternion(Vector3.UP,normal))
+	ball.get_child(1).position.y=_ground(ball.position)-ball.position.y+0.018
 
 func _setup_ui() -> void:
 	var canvas := CanvasLayer.new(); add_child(canvas)
@@ -232,7 +264,8 @@ func _refresh() -> void:
 		for i in balls.size():
 			if i>=game.world.balls.size(): continue
 			var p: Array = game.world.balls[i]
-			balls[i].position=Vector3(p[0]/1000.0,0.19,p[1]/1000.0)
+			balls[i].position=Vector3(p[0]/1000.0,GreenSurface.ball_height(green_grid,p[0],p[1])/1000.0,p[1]/1000.0)
+			_align_marker(balls[i])
 			balls[i].visible=not game.world.finished[i]
 			if i!=game.world.turn and p==game.world.balls[game.world.turn]: balls[i].visible=false
 	var c := Courses.get_course(field_index)
@@ -261,8 +294,11 @@ func _refresh() -> void:
 	if game.can_fire():
 		var ball: Vector3 = balls[game.world.turn].position
 		var radians := deg_to_rad(game.angle)
-		aim_root.position=ball-Vector3(0,0.15,0); aim_root.rotation.y=-radians
-		anchor.position=ball+Vector3(-cos(radians)*0.85, -0.19,-sin(radians)*0.85)
+		for i in aim_root.get_child_count():
+			var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.45+i*0.22)
+			point.y=_ground(point)+0.055
+			aim_root.get_child(i).position=point
+		anchor.position=_stance(ball,radians)
 		anchor.rotation.y=-radians
 	var state: String = "paused" if paused else game.phase
 	popup.visible=state in ["menu","waiting","handoff","result","paused"]
@@ -317,7 +353,7 @@ func _shot_started(result: Dictionary) -> void:
 	last_frame=-1
 	var origin: Array = result.path[0]
 	var radians := deg_to_rad(result.angle)
-	anchor.position=Vector3(origin[0]/1000.0-cos(radians)*0.85,0,origin[1]/1000.0-sin(radians)*0.85)
+	anchor.position=_stance(Vector3(origin[0]/1000.0,0,origin[1]/1000.0),radians)
 	anchor.rotation.y=-radians
 	anchor.play_action("golf_putt")
 	_burst(balls[result.player].position,Color("f8e2a6"),7)
@@ -342,15 +378,18 @@ func _process(delta: float) -> void:
 			var q: Array = shot.path[next_frame]
 			var ball: Node3D = balls[shot.player]
 			ball.position=Vector3(lerpf(p[0],q[0],blend)/1000.0,lerpf(shot.heights[frame],shot.heights[next_frame],blend)/1000.0,lerpf(p[1],q[1],blend)/1000.0)
+			_align_marker(ball)
 			var visual: Node3D = ball.get_node("RollingBall")
 			# Integrate every crossed segment, not just the render-frame displacement:
 			# banks still rotate correctly when the display skips simulation samples.
 			for index in range(maxi(last_frame+1,1),frame+1):
 				var previous: Array = shot.path[index-1]
 				var current: Array = shot.path[index]
-				var movement := Vector3(current[0]-previous[0],0,current[1]-previous[1])/1000.0
+				var movement := Vector3(current[0]-previous[0],shot.heights[index]-shot.heights[index-1],current[1]-previous[1])/1000.0
 				if movement.length_squared()>0:
-					visual.rotate(Vector3.UP.cross(movement).normalized(),movement.length()/0.18)
+					var normal := GreenSurface.normal(green_grid,current[0],current[1])
+					var axis := normal.cross(movement)
+					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/0.18)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
 				for bounce in shot.bounces:
@@ -371,10 +410,10 @@ func _process(delta: float) -> void:
 	var player: int = shot.player if rolling else game.world.turn
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
 	# Follow the cup at ground level while the ball drops below the green.
-	ball_pos.y=maxf(ball_pos.y,0.19)
+	ball_pos.y=maxf(ball_pos.y,_ground(ball_pos)+0.19)
 	var shot_angle: float = shot.angle if rolling else game.angle
-	var golfer := ball_pos+Vector3(-cos(deg_to_rad(shot_angle))*0.85,-0.19,-sin(deg_to_rad(shot_angle))*0.85)
-	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length())
+	var golfer := _stance(ball_pos,deg_to_rad(shot_angle))
+	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length(),cup.position.y-_ground(ball_pos))
 	# Pause freezes the local camera too. Online ball presentation may continue.
 	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"])
 
