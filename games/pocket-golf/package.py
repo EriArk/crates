@@ -4,7 +4,7 @@
 import argparse,hashlib,io,json,pathlib,subprocess,tarfile,zipfile
 root=pathlib.Path(__file__).resolve().parent
 p=argparse.ArgumentParser();p.add_argument('build',type=pathlib.Path);p.add_argument('output',type=pathlib.Path);a=p.parse_args()
-version='0.1.1'
+version='0.1.2'
 if 'config/version="'+version+'"' not in (root/'project.godot').read_text():p.error('Version mismatch')
 if a.output.exists():p.error('Choose a fresh output directory')
 manifest=json.loads((a.build/'build-manifest.json').read_text())
@@ -21,6 +21,9 @@ except (OSError,subprocess.CalledProcessError):
     pass # A distributed source archive is a valid build/package input without Git.
 common={name:(root/name).read_bytes() for name in ['LICENSE','README.md','icon.svg']}
 common['build-manifest.json']=(a.build/'build-manifest.json').read_bytes()
+for pack in ['nature','pirate','golf']:
+    common['licenses/kenney-'+pack+'.txt']=(root/'assets/kenney'/pack/'LICENSE.txt').read_bytes()
+common['licenses/kenney-provenance.json']=(root/'assets/kenney/provenance.json').read_bytes()
 for folder in ['licenses','docs']:
     for file in sorted((root/folder).rglob('*')):
         if file.is_file():common[file.relative_to(root).as_posix()]=file.read_bytes()

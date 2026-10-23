@@ -46,7 +46,7 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		var toward_ball := clampf((1.0 - zoom[active]) * 2.2, 0, 1) if playing else 0.0
 		focus = Vector3(0,0,0.6).lerp(ball, toward_ball)
 		desired = focus + _offset(heading, elevation) * 60.0 * zoom[active]
-		lens = 22.0
+		lens = 28.0
 	elif active == View.SHOULDER:
 		focus = ball + Vector3(0, 0.35, 0)
 		desired = focus + _offset(heading, elevation) * 4.8 * zoom[active]

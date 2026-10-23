@@ -4,10 +4,12 @@ const Match = preload("res://scripts/match.gd")
 const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
+const Island = preload("res://scripts/island.gd")
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
 var course_root: Node3D
+var island: Island
 var camera: GolfCamera
 var balls: Array[Node3D] = []
 var anchor = AvatarAnchor.new()
@@ -86,20 +88,28 @@ func cylinder(parent: Node3D, radius: float, height: float, pos: Vector3, color:
 	return mesh(parent,shape,pos,color)
 
 func _setup_scene() -> void:
+	# Compatibility blends shadowed lighting differently; keep the pastel palette readable.
+	var compatibility := RenderingServer.get_current_rendering_method()=="gl_compatibility"
 	var environment := WorldEnvironment.new()
 	var env := Environment.new()
-	env.background_mode=Environment.BG_COLOR
-	env.background_color=Color("c5dcdb")
+	env.background_mode=Environment.BG_SKY
+	var sky := Sky.new(); var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color=Color("72bed8")
+	sky_material.sky_horizon_color=Color("c5e7e5")
+	sky_material.ground_horizon_color=Color("c5e7e5")
+	sky_material.ground_bottom_color=Color("4b9db1")
+	sky_material.sun_angle_max=12.0
+	sky.sky_material=sky_material; env.sky=sky
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color=Color("e3eee0")
-	env.ambient_light_energy=0.4
+	env.ambient_light_color=Color("dcebe5")
+	env.ambient_light_energy=0.25 if compatibility else 0.45
 	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR
 	environment.environment=env
 	add_child(environment)
 	var light := DirectionalLight3D.new()
-	light.rotation_degrees=Vector3(-55,-30,0)
+	light.rotation_degrees=Vector3(-48,-35,0)
 	light.light_color=Color("fff2d7")
-	light.light_energy=0.65
+	light.light_energy=0.36 if compatibility else 0.65
 	light.shadow_enabled=true
 	add_child(light)
 	camera=GolfCamera.new()
@@ -107,7 +117,6 @@ func _setup_scene() -> void:
 	add_child(camera)
 	camera.frame(0,Vector3.ZERO,Vector3.ZERO,0,false,false)
 	camera.current=true
-	box(self,Vector3(200,0.5,200),Vector3(0,-1.4,0),Color("b7d0c7"))
 	add_child(anchor)
 	# Abstract marker until the SDK avatar presenter is delivered; no clothing data.
 	_placeholder()
@@ -116,8 +125,8 @@ func _placeholder() -> void:
 	var marker := Node3D.new()
 	cylinder(marker,0.28,0.85,Vector3(0,0.45,0),Color("e8c386"))
 	sphere(marker,0.29,Vector3(0,1.05,0),Color("f7e8c9"))
-	box(marker,Vector3(0.07,0.85,0.07),Vector3(0.45,0.45,0),Color("4b615a"))
-	box(marker,Vector3(0.12,0.12,0.4),Vector3(0.45,0.06,0),Color("4b615a"))
+	var club: Node3D = preload("res://assets/kenney/golf/club-green.glb").instantiate()
+	club.position=Vector3(0.45,0.68,0); club.scale=Vector3.ONE*0.8; marker.add_child(club)
 	anchor.install_visual(marker,"")
 
 func _build_course() -> void:
@@ -126,13 +135,15 @@ func _build_course() -> void:
 	course_root=Node3D.new(); add_child(course_root)
 	field_index=game.world.hole
 	var c := Courses.get_course(field_index)
-	box(course_root,Vector3(11.4,0.7,17.4),Vector3(0,-0.55,0),Color("b8a487"))
-	box(course_root,Vector3(10.6,0.25,16.6),Vector3(0,-0.15,0),Color("e9dbc1"))
+	island=Island.new(); course_root.add_child(island); island.build(field_index)
+	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"))
 	# Alternating mown strips and quiet edge markings make distances visible.
 	for z in 16:
-		box(course_root,Vector3(10,0.06,1),Vector3(0,-0.04,z-7.5),Color("79ad87") if z%2==0 else Color("80b58c"))
-	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("f4e6ce"))
-	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("f4e6ce"))
+		box(course_root,Vector3(10,0.06,1),Vector3(0,-0.04,z-7.5),Color("80bc8c") if z%2==0 else Color("88c493"))
+	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"))
+	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"))
+	for x in [-5.12,5.12]:
+		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("f2d7a0"))
 	for wall in c.walls:
 		box(course_root,Vector3((wall[2]-wall[0])/1000.0,0.6,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,0.3,(wall[1]+wall[3])/2000.0),Color("9baaa2"))
 	for sand in c.sand:
@@ -140,14 +151,7 @@ func _build_course() -> void:
 	cup=Node3D.new(); cup.position=Vector3(c.cup[0]/1000.0,0,c.cup[1]/1000.0); course_root.add_child(cup)
 	cylinder(cup,0.43,0.02,Vector3(0,0.035,0),Color("f1e4c4"))
 	cylinder(cup,0.33,0.025,Vector3(0,0.05,0),Color("284e43"))
-	cylinder(cup,0.035,2,Vector3(0,1,0),Color("fff0d3"))
-	box(cup,Vector3(0.7,0.4,0.04),Vector3(0.35,1.8,0),CORAL)
-	for i in 9:
-		var x := (-1 if i%2==0 else 1)*(6.7+(i%3)*0.7)
-		var z := -8.0+i*2.1
-		cylinder(course_root,0.14,0.9,Vector3(x,-0.5,z),Color("99896d"))
-		sphere(course_root,0.85+(i%3)*0.12,Vector3(x,0.35,z),Color("8eb99b") if i%2==0 else Color("a5c18b"))
-		cylinder(course_root,0.8,0.12,Vector3(x,-1.07,z),Color("a7c3ad"))
+	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.06,0),1.85,0.2)
 	balls.clear()
 	for i in game.world.players:
 		var ball := Node3D.new(); course_root.add_child(ball)

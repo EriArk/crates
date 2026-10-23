@@ -1,0 +1,136 @@
+{
+  "author": "Kenney",
+  "license": "CC0-1.0",
+  "retrieved": "2026-10-23",
+  "packs": [
+    {
+      "pack": "nature",
+      "page": "https://kenney.nl/assets/nature-kit",
+      "download": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+      "archive_sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+      "files": [
+        {
+          "source": "Models/GLTF format/tree_palmDetailedTall.glb",
+          "file": "nature/tree_palmDetailedTall.glb",
+          "sha256": "2cbea0f9621cde884c63a7b4ad787bda1d051fa27ef3c66b9f2b65328dc53683"
+        },
+        {
+          "source": "Models/GLTF format/tree_palmBend.glb",
+          "file": "nature/tree_palmBend.glb",
+          "sha256": "8af9dae16ce3c03183f9457996ebdd135167199514e8f4f944ee2bd82828d5c9"
+        },
+        {
+          "source": "Models/GLTF format/tree_oak.glb",
+          "file": "nature/tree_oak.glb",
+          "sha256": "d7fd8773674928c50c11b66d12c636d49bdcc15a8b1c7fbb98e6f63a3439a3f3"
+        },
+        {
+          "source": "Models/GLTF format/tree_small.glb",
+          "file": "nature/tree_small.glb",
+          "sha256": "d26c0eeed65cc681667f50042ef23ec72ce47ae3b39837bfeec170b05ba6ab6a"
+        },
+        {
+          "source": "Models/GLTF format/plant_bushDetailed.glb",
+          "file": "nature/plant_bushDetailed.glb",
+          "sha256": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406"
+        },
+        {
+          "source": "Models/GLTF format/plant_bushSmall.glb",
+          "file": "nature/plant_bushSmall.glb",
+          "sha256": "a9620a7d1fb165ae68d323676f80dbb2a9e3aafb21110d18d18d90b07026b91d"
+        },
+        {
+          "source": "Models/GLTF format/grass_large.glb",
+          "file": "nature/grass_large.glb",
+          "sha256": "af49a595624abca7249824eeefb944d4baf974abeeb5b16110d175da3563d6cd"
+        },
+        {
+          "source": "Models/GLTF format/flower_yellowA.glb",
+          "file": "nature/flower_yellowA.glb",
+          "sha256": "8a3b08cd2ca411c21f9c581d5bda651d78b13c50cba45ad8fa0389398ead6d1d"
+        },
+        {
+          "source": "Models/GLTF format/flower_purpleA.glb",
+          "file": "nature/flower_purpleA.glb",
+          "sha256": "f6fc34c96a03420a74fe36d4c2d0ec88f15204fcad99cd1416c3c4ecb22e48c4"
+        },
+        {
+          "source": "Models/GLTF format/stone_largeA.glb",
+          "file": "nature/stone_largeA.glb",
+          "sha256": "fe486a13775e833b1aca99413a89e013f300841de80f42ecd44ceaf43720f17b"
+        },
+        {
+          "source": "Models/GLTF format/stone_largeC.glb",
+          "file": "nature/stone_largeC.glb",
+          "sha256": "f78e984f04f2c9d3a242d42b1c8f65b8a095b9ccf9f74ac55a97b7cdd1c4668c"
+        },
+        {
+          "source": "Models/GLTF format/stone_smallFlatA.glb",
+          "file": "nature/stone_smallFlatA.glb",
+          "sha256": "04f2d1bf9dba77426a5fa076a07d7b1319fb78021b7fe619a6ca3599d96d762a"
+        },
+        {
+          "source": "Models/GLTF format/rock_largeC.glb",
+          "file": "nature/rock_largeC.glb",
+          "sha256": "23aee8b727adeaf260207af3e0615dc69aa766c6d87de1d44cbc8c2711d74dd1"
+        }
+      ]
+    },
+    {
+      "pack": "pirate",
+      "page": "https://kenney.nl/assets/pirate-kit",
+      "download": "https://kenney.nl/media/pages/assets/pirate-kit/e6d4bb1525-1771333093/kenney_pirate-kit.zip",
+      "archive_sha256": "667ed2caf92954ddb98f7b7cede831fe99ab75063c26b25e23d32715bee9c943",
+      "files": [
+        {
+          "source": "Models/GLB format/boat-row-small.glb",
+          "file": "pirate/boat-row-small.glb",
+          "sha256": "846d9b17a73f80e03f7201d3bf0ad1b1bbb49e114b99697740d3426e4f42482d"
+        },
+        {
+          "source": "Models/GLB format/Textures/colormap.png",
+          "file": "pirate/Textures/colormap.png",
+          "sha256": "451e1d7a53b8e76f4b2ee58742e241509fee5f82cf2cee6e3f7aca86ba718abe"
+        },
+        {
+          "source": "Models/GLB format/structure-platform-dock.glb",
+          "file": "pirate/structure-platform-dock.glb",
+          "sha256": "bf64343d37b5570cb78cf0918e3eeb98f96f9b2c69b3f16d103c61ebc8f063f7"
+        },
+        {
+          "source": "Models/GLB format/barrel.glb",
+          "file": "pirate/barrel.glb",
+          "sha256": "7616dedf7c1023afa6ecd3c52a4609460aae0e582dee14e60ec5e47c1174793b"
+        },
+        {
+          "source": "Models/GLB format/ship-small.glb",
+          "file": "pirate/ship-small.glb",
+          "sha256": "6fdabdfd358f345ad3dd0510af4165843ab3fffe46357395c94ca00db4f317b3"
+        }
+      ]
+    },
+    {
+      "pack": "golf",
+      "page": "https://kenney.nl/assets/minigolf-kit",
+      "download": "https://kenney.nl/media/pages/assets/minigolf-kit/3ae60d8b01-1741163874/kenney_minigolf-kit.zip",
+      "archive_sha256": "74b7bf5cf82bf8a5225319ade1284600c64f9482ae66f0ccf1f22d2212d5a952",
+      "files": [
+        {
+          "source": "Models/GLB format/flag-red.glb",
+          "file": "golf/flag-red.glb",
+          "sha256": "8ecd3bda0bf3908b1e4cad753a79be815083ef1c2cf2bec0856ab59e89542167"
+        },
+        {
+          "source": "Models/GLB format/Textures/colormap.png",
+          "file": "golf/Textures/colormap.png",
+          "sha256": "0d4947d34ff32acf4a359c7f22ca784e057e7e72f622170a9a77b6fc88fdb70e"
+        },
+        {
+          "source": "Models/GLB format/club-green.glb",
+          "file": "golf/club-green.glb",
+          "sha256": "ff00fb98d05e088ea63823fb047eb9c34dcdd3e271437bbf8bfc919a520c64eb"
+        }
+      ]
+    }
+  ]
+}

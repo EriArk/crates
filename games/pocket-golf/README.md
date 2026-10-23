@@ -4,11 +4,16 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.1.** Not published or installed on handhelds.
+**Preparation build 0.1.2.** Not published or installed on handhelds.
 The visible golfer is a temporary abstract marker. The shared TrainerOS avatar
 and wardrobe are being developed separately and are **not integrated yet**.
 
-![First green](docs/camera-overview.png)
+![Island green](docs/island-wide.png)
+
+The greens sit on a small sandy island surrounded by animated turquoise water,
+with low-poly palms, trees, flowers, rocks, a landing and boats. Environment models
+come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
+[asset sources, licences and visual checks](docs/ISLAND.md).
 
 ## Play
 
@@ -70,6 +75,7 @@ godot --headless --path games/pocket-golf --script tests/rules_test.gd
 godot --headless --path games/pocket-golf --script tests/protocol_test.gd
 godot --headless --path games/pocket-golf --script tests/presentation.gd
 godot --headless --path games/pocket-golf --script tests/camera_test.gd
+godot --path games/pocket-golf --script tests/island_test.gd
 python3 games/pocket-golf/build.py --godot /path/to/godot --templates /path/to/templates --output /path/to/build
 python3 games/pocket-golf/package.py /path/to/build /path/to/fresh-output
 ```
@@ -83,6 +89,8 @@ release templates disable `--script` path overrides, so source tests must use th
 editor binary. `tests/HostIntegration.cpp` launches two actual Godot processes against
 two real PlatformHosts; see [the preparation record](docs/PREPARATION.md).
 
-Original game/client/primitive artwork: GPL-3.0-or-later, see [LICENSE](LICENSE).
+Original game/client/procedural environment: GPL-3.0-or-later, see [LICENSE](LICENSE).
+Kenney models/textures retain CC0-1.0; their original notices and source hashes
+are included in `assets/kenney/` and under `licenses/` in the binary packages.
 The unmodified Godot engine is MIT; its notices and bundled third-party licenses
 are included under `licenses/`. No model, rig or clothing from the other chat is copied.
