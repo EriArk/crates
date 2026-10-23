@@ -5,6 +5,7 @@ const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
 const Island = preload("res://scripts/island.gd")
+const GolfHud = preload("res://scripts/golf_hud.gd")
 const Surfaces = preload("res://scripts/surfaces.gd")
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
@@ -28,17 +29,13 @@ var repeat_time := 0.0
 var last_axis := Vector2.ZERO
 var neutral_required := false
 var root_ui: Control
-var header: Label
-var score: Label
-var hint: Label
-var values: Label
+var hud: GolfHud
+var input_kind := "keyboard"
+var modal_shade: ColorRect
 var popup: PanelContainer
 var popup_title: Label
 var popup_text: Label
 var popup_buttons: VBoxContainer
-var touch_row: HBoxContainer
-var touch_button: Button
-var view_button: Button
 var last_popup := ""
 var ball_materials: Array = []
 var capture_dir := ""
@@ -55,7 +52,8 @@ func _ready() -> void:
 	game.bridge.closed.connect(func(): anchor.clear_identity())
 	Input.joy_connection_changed.connect(func(_device, connected):
 		neutral_required=true
-		if not connected: _suspend_input())
+		if not connected: _suspend_input()
+		_set_input("pad" if connected else "keyboard"))
 	get_window().focus_exited.connect(_suspend_input)
 	_refresh()
 
@@ -199,21 +197,14 @@ func _setup_ui() -> void:
 	var hover := style.duplicate(); hover.bg_color=Color("e1e8cd"); theme.set_stylebox("hover","Button",hover); theme.set_stylebox("pressed","Button",hover)
 	theme.set_color("font_color","Button",Color("294e43")); theme.set_color("font_focus_color","Button",Color("294e43")); theme.set_color("font_hover_color","Button",Color("294e43")); theme.set_color("font_pressed_color","Button",Color("294e43"))
 	theme.set_color("font_color","Label",Color("294e43")); root_ui.theme=theme
-	var top := Panel.new(); top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE); top.offset_bottom=72; root_ui.add_child(top)
-	var bg := StyleBoxFlat.new(); bg.bg_color=Color("f7f2e6"); top.add_theme_stylebox_override("panel",bg)
-	header=label(top,"POCKET GOLF",Vector2(20,10),24)
-	score=label(top,"",Vector2(20,41),18)
-	var menu := button(top,"Menu",_pause); menu.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT); menu.offset_left=-112; menu.offset_right=-16; menu.offset_top=13; menu.offset_bottom=59
-	touch_button=button(top,"Touch",func(): touch_mode=!touch_mode; _refresh()); touch_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT); touch_button.offset_left=-224; touch_button.offset_right=-122; touch_button.offset_top=13; touch_button.offset_bottom=59
-	view_button=button(root_ui,"View: Overview",_cycle_view)
-	view_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	view_button.offset_left=-192; view_button.offset_right=-16; view_button.offset_top=82; view_button.offset_bottom=128
-	view_button.add_theme_font_size_override("font_size",17)
-	var bottom := Panel.new(); bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE); bottom.offset_top=-78; root_ui.add_child(bottom); bottom.add_theme_stylebox_override("panel",bg)
-	values=label(bottom,"",Vector2(20,7),23)
-	hint=label(bottom,"",Vector2(20,43),17)
-	touch_row=HBoxContainer.new(); bottom.add_child(touch_row); touch_row.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT); touch_row.offset_left=-396; touch_row.offset_right=-16; touch_row.offset_top=13; touch_row.offset_bottom=59; touch_row.add_theme_constant_override("separation",8)
-	button(touch_row,"←",func(): game.adjust(-1,0)); button(touch_row,"→",func(): game.adjust(1,0)); button(touch_row,"−",func(): game.adjust(0,-1)); button(touch_row,"+",func(): game.adjust(0,1)); button(touch_row,"Putt",_primary)
+	hud=GolfHud.new(); root_ui.add_child(hud)
+	hud.pause_requested.connect(_pause)
+	hud.view_requested.connect(_cycle_view)
+	hud.putt_requested.connect(_primary)
+	hud.aim_dragged.connect(func(steps): game.adjust(steps,0))
+	hud.power_selected.connect(func(percent): game.adjust(0,roundi((percent-game.power)/5.0)))
+	modal_shade=ColorRect.new(); modal_shade.color=Color(0.04,0.12,0.13,0.24)
+	modal_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); root_ui.add_child(modal_shade)
 	popup=PanelContainer.new(); root_ui.add_child(popup); popup.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	popup.offset_left=-220; popup.offset_right=220; popup.offset_top=-182; popup.offset_bottom=182
 	var panel := style.duplicate(); panel.bg_color=Color("faf3e3"); panel.set_corner_radius_all(20); panel.content_margin_left=26; panel.content_margin_right=26; panel.content_margin_top=20; panel.content_margin_bottom=20
@@ -241,28 +232,25 @@ func _refresh() -> void:
 			balls[i].visible=not game.world.finished[i]
 			if i!=game.world.turn and p==game.world.balls[game.world.turn]: balls[i].visible=false
 	var c := Courses.get_course(field_index)
-	header.text="POCKET GOLF   /   %02d  %s" % [field_index+1,c.title]
 	var counts: Array = shot.strokes if game.phase=="moving" and not shot.is_empty() else game.world.strokes
-	score.text="PAR %d     MINT %d" % [c.par, counts[0]]
-	if game.world.players==2: score.text+="    CORAL %d" % counts[1]
-	if game.online: score.text+="     YOU: "+("MINT" if game.seat==0 else "CORAL")
+	var totals: Array = []
+	for i in game.world.players:
+		totals.append(game.world.total(i)+(counts[i] if game.world.scores[i].size()<=field_index else 0))
 	var player := "Mint" if game.world.turn==0 else "Coral"
-	values.text="%s   ·   Angle %d°   Power %d%%" % [player,game.angle,game.power]
-	if game.phase=="moving": values.text="In the cup!" if shot.get("sunk",false) and elapsed>shot.path.size()/60.0 else "Rolling…"
-	elif game.online and not game.can_fire() and game.phase=="aim": values.text="Your friend is lining up a putt…"
-	var pads := Input.get_connected_joypads()
 	var confirm := "A"; var back := "B"; var view := "X"
+	var pads := Input.get_connected_joypads()
 	if not pads.is_empty():
 		var name := Input.get_joy_name(pads[0]).to_lower()
 		if "playstation" in name or "dual" in name or "ps5" in name: confirm="×"; back="○"; view="□"
 		elif "nintendo" in name or "switch" in name: confirm="B"; back="A"; view="Y"
-	hint.text="L: aim/power  R: camera  Triggers: zoom  %s: putt  %s: view  R3: reset  %s: menu" % [confirm,view,back] if not pads.is_empty() else "Arrows: aim/power  Enter: putt  Tab: view  WASD: camera  Q/E: zoom  R: reset"
-	hint.add_theme_font_size_override("font_size",14)
-	view_button.text="View: "+GolfCamera.TITLES[camera.view]
-	view_button.visible=_camera_allowed()
-	touch_row.visible=touch_mode and game.can_fire() and not paused
-	touch_button.text="Hide" if touch_mode else "Touch"
-	if touch_row.visible: values.text="Angle %d°   Power %d%%" % [game.angle,game.power]; hint.text="Drag the green: camera · Pinch: zoom · Tap View to switch"
+	hud.update_state({"hole":field_index+1,"title":c.title,"par":c.par,
+		"players":game.world.players,"player":shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn,
+		"strokes":counts,"totals":totals,
+		"power":game.power,"angle":game.angle,"phase":game.phase,"paused":paused,
+		"online":game.online,"seat":game.seat,"can_shoot":game.can_fire() and not paused,
+		"mode":"touch" if touch_mode else input_kind,"confirm":confirm,"back":back,"view_key":view,
+		"view":GolfCamera.TITLES[camera.view]})
+	if game.phase!="moving": hud.set_status("")
 	anchor.visible=(game.can_fire() or game.phase=="moving") and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
 	aim_root.visible=game.can_fire() and not paused
@@ -274,7 +262,8 @@ func _refresh() -> void:
 		anchor.rotation.y=-radians
 	var state: String = "paused" if paused else game.phase
 	popup.visible=state in ["menu","waiting","handoff","result","paused"]
-	if popup.visible: touches.clear()
+	modal_shade.visible=popup.visible
+	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
 		last_popup=state
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
@@ -299,12 +288,14 @@ func _refresh() -> void:
 			button(popup_buttons,"Play again",func(): game.rematch())
 			button(popup_buttons,"Main menu",func(): game.leave())
 		elif state=="paused":
-			popup_title.text="Take a breather"; popup_text.text="Return when you are ready.\nLeaving ends this round."
+			popup_title.text="Take a breather"
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
 			button(popup_buttons,"Leave round",func(): paused=false; game.leave())
 			button(popup_buttons,"Reset camera",func(): camera.reset_view(); paused=false; _refresh())
 		if popup_buttons.get_child_count()>0: popup_buttons.get_child(0).grab_focus()
 	elif not popup.visible: last_popup=""
+	if state=="paused":
+		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
 	if game.phase=="waiting" and not paused: popup_text.text=game.info
 	if game.phase=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
 	if game.phase=="result" and game.voted:
@@ -317,6 +308,7 @@ func _start_local(count: int) -> void:
 
 func _shot_started(result: Dictionary) -> void:
 	shot=result
+	hud.set_status("Rolling…")
 	elapsed=0
 	last_frame=-1
 	var origin: Array = result.path[0]
@@ -350,7 +342,7 @@ func _process(delta: float) -> void:
 				last_frame=frame
 			if elapsed>=shot.path.size()/60.0:
 				if shot.sunk: ball.scale=Vector3.ONE*maxf(0,1-(elapsed-shot.path.size()/60.0)*5)
-				values.text="In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady."
+				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
 			if elapsed>shot.path.size()/60.0+0.85:
 				ball.scale=Vector3.ONE; game.finish_shot()
 	for i in range(effects.size()-1,-1,-1):
@@ -363,6 +355,7 @@ func _process(delta: float) -> void:
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
 	var shot_angle: float = shot.angle if rolling else game.angle
 	var golfer := ball_pos+Vector3(-cos(deg_to_rad(shot_angle))*0.85,-0.19,-sin(deg_to_rad(shot_angle))*0.85)
+	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length())
 	# Pause freezes the local camera too. Online ball presentation may continue.
 	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"])
 
@@ -388,6 +381,7 @@ func _poll_stick(delta: float) -> void:
 	if neutral_required:
 		if direction==Vector2.ZERO and not camera_held and not Input.is_anything_pressed(): neutral_required=false
 		return
+	if direction!=Vector2.ZERO or camera_held: _set_input("pad")
 	_camera_axes(look,magnification,delta)
 	if direction==Vector2.ZERO: repeat_time=0; last_axis=direction; return
 	repeat_time-=delta
@@ -396,7 +390,6 @@ func _poll_stick(delta: float) -> void:
 	last_axis=direction
 
 func _direction(x: int, y: int) -> void:
-	touch_mode=false
 	if popup.visible:
 		var focused := get_viewport().gui_get_focus_owner()
 		var list := popup_buttons.get_children()
@@ -417,13 +410,20 @@ func _pause() -> void:
 
 func _suspend_input() -> void:
 	neutral_required=true
-	touches.clear()
+	touches.clear(); hud.cancel_pointers()
 	if game.phase!="menu": paused=true; _refresh()
 
+func _set_input(kind: String) -> void:
+	if input_kind==kind and touch_mode==(kind=="touch"): return
+	input_kind=kind; touch_mode=kind=="touch"; _refresh()
+
 func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch and event.pressed: touch_mode=true; _refresh()
+	if event is InputEventScreenTouch and event.pressed: _set_input("touch")
+	elif event is InputEventMouseButton and event.pressed and event.device!=InputEvent.DEVICE_ID_EMULATION: _set_input("mouse")
+	if hud.route_pointer(event):
+		get_viewport().set_input_as_handled(); return
 	if event is InputEventKey and event.pressed:
-		touch_mode=false
+		_set_input("keyboard")
 		match event.keycode:
 			KEY_LEFT: _direction(-1,0)
 			KEY_RIGHT: _direction(1,0)
@@ -437,7 +437,7 @@ func _input(event: InputEvent) -> void:
 			_: return
 		get_viewport().set_input_as_handled()
 	elif event is InputEventJoypadButton and event.pressed:
-		touch_mode=false
+		_set_input("pad")
 		if neutral_required: return
 		match event.button_index:
 			JOY_BUTTON_DPAD_LEFT: _direction(-1,0); last_axis=Vector2.LEFT; repeat_time=0.3
@@ -462,13 +462,13 @@ func _cycle_view() -> void:
 func _camera_axes(look: Vector2, magnification: float, delta: float) -> void:
 	if not _camera_allowed() or neutral_required: return
 	if look.length_squared()>0 or magnification!=0:
-		if touch_mode: touch_mode=false; _refresh()
 		camera.rotate_view(look*delta*1.8)
 		camera.magnify(magnification*delta)
 
 func _poll_camera_keys(delta: float) -> void:
 	var look := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
 	var magnification := float(Input.is_physical_key_pressed(KEY_E))-float(Input.is_physical_key_pressed(KEY_Q))
+	if look!=Vector2.ZERO or magnification!=0: _set_input("keyboard")
 	_camera_axes(look,magnification,delta)
 
 func _unhandled_input(event: InputEvent) -> void:

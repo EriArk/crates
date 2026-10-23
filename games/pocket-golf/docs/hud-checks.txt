@@ -1,0 +1,51 @@
+Pocket Golf 0.1.6 - HUD checks, 2026-10-23
+Windows: GTX 1660 Ti, Vulkan Mobile; Linux: isolated Xvfb, Mesa llvmpipe, OpenGL Compatibility.
+All three scripts use the editor and actual rendering. Input is synthetic, not physical-device acceptance.
+
+Windows hud_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+HUD PASS touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause
+
+Windows camera_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+Windows presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+INPUT state=handoff players=2 neutral=false focus=@Button@596:<Button#72578239533>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+Linux hud-test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+HUD PASS touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause
+
+Linux hud-camera
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+Linux hud-presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+INPUT state=handoff players=2 neutral=false focus=@Button@596:<Button#63484988455>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+Final screenshots reviewed at 960x540, 1920x1080 and the small-window drawable size.
+Remote-turn HUD is a local fixture, not live network acceptance.
+Retained earlier rendering/rules/transport evidence; no new handheld performance or physical controller claim.

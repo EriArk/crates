@@ -85,8 +85,8 @@ func run() -> void:
 	check(ui.touches.is_empty(),"released fingers cleared")
 	touch(0,Vector2(40,35),true); check(ui.touches.is_empty(),"HUD touch cannot orbit")
 	touch(0,Vector2(40,35),false)
-	ui.view_button.pressed.emit(); check(ui.camera.view==1,"touch View button")
-	ui.view_button.pressed.emit(); check(ui.camera.view==2,"touch Eyes button")
+	ui.hud.view_requested.emit(); check(ui.camera.view==1,"touch View action")
+	ui.hud.view_requested.emit(); check(ui.camera.view==2,"touch Eyes action")
 	pad(JOY_BUTTON_A); await create_timer(0.45).timeout
 	check(ui.camera.following and ui.anchor.visible,"putt enters ball follow and restores golfer")
 	await capture("follow")

@@ -60,7 +60,7 @@ func run() -> void:
 	root.size=Vector2i(640,440); await create_timer(0.3).timeout
 	await capture("small-controller")
 	ui.touch_mode=true; ui._refresh(); await capture("small-touch")
-	check(ui.touch_row.visible,"optional touch controls")
+	check(ui.hud.visible and ui.hud.regions().has("aim"),"contextual touch aim control")
 	ui.get_window().focus_exited.emit(); check(ui.paused,"focus loss opens pause")
 	ui.get_window().focus_exited.emit(); check(ui.paused,"repeated focus loss never resumes")
 	ui.neutral_required=false; pad(JOY_BUTTON_B); check(not ui.paused,"resume after focus")

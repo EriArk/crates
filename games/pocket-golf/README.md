@@ -4,11 +4,15 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.5.** Not published or installed on handhelds.
+**Preparation build 0.1.6.** Not published or installed on handhelds.
 The visible golfer is a temporary abstract marker. The shared TrainerOS avatar
 and wardrobe are being developed separately and are **not integrated yet**.
 
-![Island green](docs/lighting-overview.png)
+![Full-screen golf HUD](docs/hud-overview.png)
+
+The field stays visible behind a compact floating HUD: hole/par, distance to the pin,
+player stroke counts, running totals and a slim power gauge. Shot controls disappear
+while the ball rolls or your friend aims. See [HUD references and checks](docs/HUD.md).
 
 The greens sit on a small sandy island surrounded by animated turquoise water,
 with rolling hills, a continuous short-grass meadow, bushes, low-poly palms,
@@ -24,16 +28,23 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 
 - Left/right or stick/D-pad: aim in five-degree steps. Up/down: power in five-percent steps.
 - Confirm (bottom face button; A on Xbox), Enter or Space: putt / accept handoff.
-- Secondary face button (X on Xbox), Tab, or **View**: overview → shoulder → eyes.
+- Secondary face button (X on Xbox), Tab, or the camera icon: overview → shoulder → eyes.
 - Right stick or WASD: rotate/look around; right trigger / E zooms in, left trigger /
   Q zooms out. R3 / R restores the selected view. Camera controls never change aim/power.
 - Mouse: hold the right button to rotate; wheel to zoom. Touch: drag the green to
-  rotate and spread/pinch two fingers to zoom. HUD touches remain ordinary buttons.
+  rotate and spread/pinch two fingers to zoom. Drag the power gauge to select power;
+  click **PUTT** to strike. Touches on the HUD do not also orbit the camera.
 - Overview/shoulder zoom changes camera distance; eye zoom changes the field of view.
   Each view retains its own bounded zoom/rotation. A putt smoothly switches to ball
   follow and returns to the selected view for the next stroke. Pause freezes the camera.
 - Back / Start / Escape: pause/menu. Confirm **Leave round** ends the round.
-- **Touch** reveals direct aiming/power/putt buttons. Hardware input hides them.
+- Touch automatically reveals a horizontal aim gesture and one round **PUTT** target.
+  Drag the aim control sideways; slide the power gauge; release **PUTT** to strike.
+  Dragging off **PUTT** cancels it. Keyboard/controller input hides the touch controls.
+  The two small corner icons provide camera and pause access with touch or mouse.
+- Current player is ringed in the player list. `Σ` shows the running round total,
+  including strokes on the current hole. Initial circles await the shared SDK portrait.
+- Pause also shows the full control reference for the active input method.
 - Each player uses their own ball; the other ball does not block a shot. Players
   alternate strokes, skipping anyone already in the cup. Eight strokes ends that
   player's hole. Lowest total across three holes wins; equal totals are a draw.
