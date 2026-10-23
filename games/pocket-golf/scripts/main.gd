@@ -24,7 +24,7 @@ var field_index := -1
 var shot: Dictionary = {}
 var elapsed := 0.0
 var last_frame := -1
-var effects: Array = []
+var effects = preload("res://scripts/golf_effects.gd").new()
 var touches: Dictionary = {}
 var paused := false
 var touch_mode := false
@@ -145,6 +145,7 @@ func _setup_scene() -> void:
 	add_child(camera)
 	camera.frame(0,Vector3.ZERO,Vector3.ZERO,0,false,false)
 	camera.current=true
+	add_child(effects)
 	add_child(anchor)
 	# Abstract marker until the SDK avatar presenter is delivered; no clothing data.
 	_placeholder()
@@ -158,6 +159,7 @@ func _placeholder() -> void:
 	anchor.install_visual(marker,"")
 
 func _build_course() -> void:
+	effects.clear()
 	if course_root!=null:
 		remove_child(course_root); course_root.queue_free()
 	course_root=Node3D.new(); add_child(course_root)
@@ -258,7 +260,8 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 
 func _refresh() -> void:
 	if anchor.visual==null: _placeholder()
-	if game.phase=="menu": paused=false
+	if game.phase=="menu":
+		paused=false; effects.clear()
 	if field_index<0 or (game.phase!="moving" and (field_index!=game.world.hole or balls.size()!=game.world.players)): _build_course()
 	if game.phase!="moving":
 		for i in balls.size():
@@ -356,13 +359,7 @@ func _shot_started(result: Dictionary) -> void:
 	anchor.position=_stance(Vector3(origin[0]/1000.0,0,origin[1]/1000.0),radians)
 	anchor.rotation.y=-radians
 	anchor.play_action("golf_putt")
-	_burst(balls[result.player].position,Color("f8e2a6"),7)
-
-func _burst(pos: Vector3, color: Color, count: int) -> void:
-	for i in count:
-		var node := sphere(self,0.06,pos,color)
-		var a := i*2.39996
-		effects.append({"node":node,"v":Vector3(cos(a),1.8+0.1*i,sin(a))*0.8,"age":0.0})
+	effects.begin(result,Courses.get_course(field_index))
 
 func _process(delta: float) -> void:
 	if course_root==null: return
@@ -370,6 +367,7 @@ func _process(delta: float) -> void:
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
 			elapsed+=delta
+			effects.seek(elapsed)
 			var sample_time: float = elapsed*shot.hz
 			var frame := mini(int(sample_time),shot.path.size()-1)
 			var next_frame := mini(frame+1,shot.path.size()-1)
@@ -392,18 +390,14 @@ func _process(delta: float) -> void:
 					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/0.18)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
-				for bounce in shot.bounces:
-					if bounce>last_frame and bounce<=frame: _burst(ball.position,Color("e4dbbc"),5)
 				if frame==shot.path.size()-1 and shot.sunk:
-					_burst(ball.position,Color("f3cd79"),18); anchor.play_action("celebrate")
+					anchor.play_action("celebrate")
 				last_frame=frame
 			if elapsed>=(shot.path.size()-1)/float(shot.hz):
 				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
 			if elapsed>(shot.path.size()-1)/float(shot.hz)+0.85:
 				ball.get_child(1).visible=true; game.finish_shot()
-	for i in range(effects.size()-1,-1,-1):
-		var fx: Dictionary = effects[i]; fx.age+=delta; fx.v.y-=delta*4; fx.node.position+=fx.v*delta; fx.node.scale=Vector3.ONE*maxf(0,1-fx.age)
-		if fx.age>=1: fx.node.queue_free(); effects.remove_at(i)
+	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
 	_poll_stick(delta)
 	_poll_camera_keys(delta)
 	var rolling: bool = game.phase=="moving" and not shot.is_empty()

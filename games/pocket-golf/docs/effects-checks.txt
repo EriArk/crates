@@ -1,0 +1,58 @@
+Pocket Golf 0.1.9 VFX checks, 2026-10-24.
+Physics/rules/protocol sources unchanged from 0.1.8.
+
+build/effects_presentation-check.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+EFFECTS PRESENTATION PASS contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=30
+
+
+build/physics_presentation-check.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+build/presentation-check.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+INPUT state=handoff players=2 neutral=false focus=@Button@568:<Button#71974259684>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+
+build/effects-linux/effects-effects_presentation.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+EFFECTS PRESENTATION PASS contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=30
+
+
+build/effects-linux/effects-physics_presentation.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+build/effects-linux/effects-presentation.txt
+
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+INPUT state=handoff players=2 neutral=false focus=@Button@568:<Button#63032003549>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+

@@ -4,7 +4,13 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.8.** Not published or installed on handhelds.
+**Preparation build 0.1.9.** Not published or installed on handhelds.
+
+Shots now scatter grass or sand, fast rolls leave a brief soft streak, wood and
+stone contacts shed different chips, and cup entry lights a short ring above the
+green. A hole-in-one receives a larger golden flourish. Effects follow exact
+trajectory time, respect local pause and use a reusable pool capped at 128 meshes.
+See [effects, screenshots and checks](docs/EFFECTS.md).
 
 The rolling model now uses direction-independent deceleration, round corner
 contacts, slower putts and a speed-sensitive cup with lip deflection and a visible
