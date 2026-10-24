@@ -4,6 +4,12 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
+**0.1.16 adds player portrait cards.** The existing score pills show a static
+256px snapshot of each Trainer's saved 3D appearance, with the current player
+highlighted. Guests retain an anonymous silhouette. Capture releases its extra
+3D viewport and identity revocation fences late results; no model assets are
+embedded in the game. See [the shared implementation](../competitive-minigames/docs/player-cards.md).
+
 **0.1.15 fixes the opponent while waiting for a putt.** Both visibility and
 placement beside the active ball are independent of the local right to fire.
 The real paired SDK/Godot test checks both during the opponent's aiming turn.

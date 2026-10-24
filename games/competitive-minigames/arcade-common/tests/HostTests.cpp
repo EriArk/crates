@@ -5,6 +5,7 @@
 #include "platform/sdk/PlatformHost.h"
 #include "platform/sdk/SdkNetwork.h"
 #include "features/device/ControlsDashboard.h"
+#include "features/trainer/AvatarAssets.h"
 #include "ArcadeGame.h"
 using namespace trainer;
 using namespace arcade;
@@ -23,6 +24,14 @@ private slots:
         SdkNetwork an(a,ar,python,helper,"127.0.0.1"),bn(b,br,python,helper,"127.0.0.1");
         ControlsDashboard ad,bd;ad.setOwner("alice");bd.setOwner("bob");PlatformHost ah(ad),bh(bd);ah.setNetwork(&an);bh.setNetwork(&bn);
         ah.setContext({{"profile","alice"}});bh.setContext({{"profile","bob"}});
+        QJsonObject avatarA,avatarB;
+        if(kind==0){
+            auto appearance=AvatarAssets::defaults();avatarA=AvatarAssets::resolve(appearance,{},dir.filePath("avatar-a"));
+            appearance["hair"]="bob";appearance["hairColor"]="#d8b468";
+            avatarB=AvatarAssets::resolve(appearance,{},dir.filePath("avatar-b"));
+            QVERIFY(!avatarA.contains("error"));QVERIFY(!avatarB.contains("error"));
+            avatarA["profile"]="alice";avatarB["profile"]="bob";ah.setAvatar(avatarA,true);bh.setAvatar(avatarB,true);
+        }
         const auto ae=dir.filePath("a/endpoint.json"),be=dir.filePath("b/endpoint.json");QVERIFY(ah.start(ae));QVERIFY(bh.start(be));
         QVERIFY(a.create("private"));QVERIFY(a.invite("2"));b.answer(true);
         ArcadeGame ga(Kind(kind),ae),gb(Kind(kind),be);
@@ -43,6 +52,15 @@ private slots:
         QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"play",30000);QTRY_COMPARE(gb.phase(),"play");
         QCOMPARE(launches,2);QCOMPARE(openedA.count(),0);QCOMPARE(openedB.count(),0);
         QCOMPARE(ga.seat(),0);QCOMPARE(gb.seat(),1);
+        if(kind==0){
+            auto* cardsA=qobject_cast<AvatarCards*>(ga.avatars());auto* cardsB=qobject_cast<AvatarCards*>(gb.avatars());
+            QVERIFY(cardsA&&cardsB);
+            QTRY_VERIFY_WITH_TIMEOUT(!cardsA->peer().isEmpty(),30000);QTRY_VERIFY_WITH_TIMEOUT(!cardsB->peer().isEmpty(),30000);
+            QCOMPARE(cardsA->local()["appearance"].toMap(),avatarA["appearance"].toObject().toVariantMap());
+            QCOMPARE(cardsA->peer()["appearance"].toMap(),avatarB["appearance"].toObject().toVariantMap());
+            QCOMPARE(cardsB->peer()["appearance"].toMap(),avatarA["appearance"].toObject().toVariantMap());
+            QVERIFY(cardsA->local()["appearance"]!=cardsA->peer()["appearance"]);
+        }
         ga.control(0,kind==7?1:0);gb.control(0,kind==7?3:2); // Input from both sides traverses the game contract.
         QTRY_VERIFY_WITH_TIMEOUT(gb.scene()["tick"].toInt()>66,5000);
         if(kind==0){QVERIFY(ga.scene()["p0"].toInt()<270);QVERIFY(ga.scene()["p1"].toInt()>270);}
