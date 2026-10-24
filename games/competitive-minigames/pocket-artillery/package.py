@@ -51,8 +51,8 @@ record = dict(id='pocket-artillery', title='Pocket Artillery', kind='game', vers
               license='GPL-3.0-or-later', repository='https://github.com/EriArk/crates.git',
               size=archive.stat().st_size, unpackedSize=sum(map(len, files.values())) + 1048576,
               sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), channel='Experimental',
-              compatibility='untested', compatibilityNote='Local two-player duel; optional Platform SDK v1 Lobby/records. Device and internet acceptance pending.',
-              notes='Two-player artillery with destructible terrain. Requires Qt Quick, Qt Network and SDL2.',
+              compatibility='untested', compatibilityNote='Linux x86_64/ARM64 UI checks and paired SDK match/rematch checks passed. Physical controls and separate-network acceptance remain open.',
+              notes='Two-player artillery, Lobby-first matches and shared avatar portraits. Optional Qt Quick 3D for portraits; Qt Quick, Network and SDL2 for play.',
               url=f'https://github.com/EriArk/crates/releases/download/pocket-artillery-v{args.version}/{name}')
 try:
     if not subprocess.check_output(['git','-C',str(root),'status','--porcelain','--','.', '../avatar-sdk', '../arcade-common/ControllerInput.h', '../arcade-common/tests/VirtualPad.h'], text=True).strip():

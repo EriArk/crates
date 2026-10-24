@@ -50,8 +50,8 @@ record = dict(id=a.game, title=titles[a.game], kind='game', version=a.version,
               size=archive.stat().st_size, unpackedSize=sum(map(len, files.values()))+1048576,
               sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), channel='Experimental',
               compatibility='untested',
-              compatibilityNote='Desktop checks only; ARM, physical controls and live internet acceptance pending.',
-              notes='Bot practice, two local players and optional TrainerOS SDK Lobby. Requires Qt Quick, Qt Network and SDL2.',
+              compatibilityNote='Linux x86_64/ARM64 UI checks and paired SDK host checks passed. Physical controls and separate-network acceptance remain open.',
+              notes='Bot practice, local players, Lobby-first matches and shared avatar portraits. Optional Qt Quick 3D for portraits; Qt Quick, Network and SDL2 for play.',
               url=f'https://github.com/EriArk/crates/releases/download/{a.game}-v{a.version}/{name}')
 try:
     if not subprocess.check_output(['git','-C',str(base),'status','--porcelain','--','.'], text=True).strip():
