@@ -1,0 +1,14 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.11.1, Qt 6.11.1 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 16.1.0), windows 10
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::twoGodotClients() Two Godot processes: 3 holes, equal result, mutual rematch, alternating starter, profile revocation, retained lobby passed
+QINFO  : HostIntegration::twoGodotClients() Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+?
+
+QINFO  : HostIntegration::twoGodotClients() Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+?
+
+PASS   : HostIntegration::twoGodotClients()
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 7784ms
+********* Finished testing of HostIntegration *********

@@ -1,0 +1,79 @@
+Pocket Golf 0.1.5 - presentation checks, 2026-10-23
+Windows: GTX 1660 Ti, Vulkan Mobile; Linux: isolated Xvfb, Mesa llvmpipe, OpenGL Compatibility.
+Camera check is headless; presentation/island/distance/lighting use actual render.
+
+Windows lighting_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+LIGHTING PASS shadow pixels=5426 DOF far=8788 clear turf differences=0 renderer=mobile
+
+Windows camera_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+Windows island_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+LANDSCAPE hills=1.82 plants=183 grass=4610 batches=24
+LANDSCAPE hills=1.82 plants=183 grass=4623 batches=24
+LANDSCAPE hills=1.82 plants=183 grass=4614 batches=23
+ISLAND PASS imported models, clear canopy, visible terrain, decorative isolation, lifecycle
+
+Windows presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+INPUT state=handoff players=2 neutral=false focus=@Button@609:<Button#71772933214>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+Windows motion sequence
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+DISTANCE PASS visible grass pixels=9742 540p/1080p, MSAA 2x/4x, camera sweep=true
+
+Linux lighting-island
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+LANDSCAPE hills=1.82 plants=183 grass=4610 batches=24
+LANDSCAPE hills=1.82 plants=183 grass=4623 batches=24
+LANDSCAPE hills=1.82 plants=183 grass=4614 batches=23
+ISLAND PASS imported models, clear canopy, visible terrain, decorative isolation, lifecycle
+
+Linux lighting-camera
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+Linux lighting-presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+INPUT state=handoff players=2 neutral=false focus=@Button@609:<Button#63300439133>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+Linux lighting-distance
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+DISTANCE PASS visible grass pixels=7757 540p/1080p, MSAA 2x/4x, camera sweep=false
+
+Linux lighting-effects
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+LIGHTING PASS shadow pixels=40122 DOF far=0 clear turf differences=0 renderer=gl_compatibility
+
+Linux lighting and distance rerun after Compatibility palette calibration.
+Unchanged geometry, camera input and match-cycle checks retained from earlier in this pass.
+Motion video: 96 captured frames encoded at 24 fps; not a device performance benchmark.
+Physical controls, handheld performance and separate-network acceptance remain pending.

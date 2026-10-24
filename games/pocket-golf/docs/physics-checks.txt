@@ -1,0 +1,95 @@
+Pocket Golf 0.1.7 - physics checks, 2026-10-23
+Windows GTX 1660 Ti Vulkan Mobile; Linux Xvfb Mesa llvmpipe OpenGL Compatibility.
+Synthetic input; no physical handheld/controller or live pair claim.
+
+
+WINDOWS physics_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RANGE mm shortest=2330.13916015625 longest=2331.85302734375 spread=1.7138671875
+CUP slow=true fast=[0, -5968] lip=[169, -2429] miss=[400, -2271]
+REPLAY cases=365 sha256=de440738af43a36729bf263051ab96061fd03b8896aa919d502ab23d7eb17c61
+PHYSICS PASS failures=0
+
+
+WINDOWS rules_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SOLVED scores=[[1, 2, 2], [1, 2, 2]] cups=6 bounces=10 digest=b490834e3fe01cc3c496f3418b72f007ee0e4ff9451dda2a2ed389bea468706d
+RULES PASS failures=0
+
+
+WINDOWS protocol_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PROTOCOL PASS failures=0
+
+
+WINDOWS physics_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+WINDOWS presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+INPUT state=handoff players=2 neutral=false focus=@Button@599:<Button#73232550967>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
+
+
+WINDOWS camera_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+CAMERA PASS views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation
+
+
+WINDOWS hud_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+HUD PASS touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause
+
+
+LINUX physics_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RANGE mm shortest=2330.13916015625 longest=2331.85302734375 spread=1.7138671875
+CUP slow=true fast=[0, -5968] lip=[169, -2429] miss=[400, -2271]
+REPLAY cases=365 sha256=de440738af43a36729bf263051ab96061fd03b8896aa919d502ab23d7eb17c61
+PHYSICS PASS failures=0
+
+
+LINUX rules_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SOLVED scores=[[1, 2, 2], [1, 2, 2]] cups=6 bounces=10 digest=b490834e3fe01cc3c496f3418b72f007ee0e4ff9451dda2a2ed389bea468706d
+RULES PASS failures=0
+
+
+LINUX protocol_test
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PROTOCOL PASS failures=0
+
+
+LINUX physics_presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+PHYSICS PRESENTATION PASS interpolation, rolling, pause, 30/60/144 Hz, cup drop, handoff
+
+
+LINUX presentation
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+
+INPUT state=handoff players=2 neutral=false focus=@Button@599:<Button#63971527729>
+PRESENTATION PASS Godot injected joy events; physical controller not tested
