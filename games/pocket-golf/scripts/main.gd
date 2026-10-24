@@ -12,6 +12,10 @@ const Island = preload("res://scripts/island.gd")
 const GolfHud = preload("res://scripts/golf_hud.gd")
 const Surfaces = preload("res://scripts/surfaces.gd")
 const GreenSurface = preload("res://scripts/green_surface.gd")
+const Graphics = preload("res://scripts/graphics_settings.gd")
+var graphics = Graphics.new()
+var graphics_open := false
+var graphics_notice := ""
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
@@ -50,6 +54,7 @@ var ball_materials: Array = []
 var capture_dir := ""
 
 func _ready() -> void:
+	graphics.load_settings()
 	if OS.get_environment("TRAINEROS_CRATES_GAME")=="1": get_window().mode=Window.MODE_FULLSCREEN
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--sdk-endpoint="): game.bridge.endpoint_override=arg.trim_prefix("--sdk-endpoint=")
@@ -73,6 +78,7 @@ func _ready() -> void:
 		_set_input("pad" if connected else "keyboard"))
 	get_window().focus_exited.connect(_suspend_input)
 	_refresh()
+	graphics.apply(self)
 	_connect_sdk.call_deferred()
 
 func _connect_sdk() -> void:
@@ -235,6 +241,7 @@ func _build_course() -> void:
 		balls.append(ball)
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
 	for i in 8: sphere(aim_root,0.012,Vector3(0,0.02,-0.15-i*0.15),Color("fff4d4"))
+	graphics.apply(self)
 
 func _ground(point: Vector3) -> float:
 	return GreenSurface.sample(green_grid,roundi(point.x*1000),roundi(point.z*1000))[0]/1000.0
@@ -331,8 +338,8 @@ func _refresh() -> void:
 				var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
 				point.y=_ground(point)+0.012
 				aim_root.get_child(i).position=point
-	var state: String = "paused" if paused else game.phase
-	popup.visible=state in ["menu","waiting","handoff","result","paused"]
+	var state: String = "graphics" if graphics_open else "paused" if paused else game.phase
+	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics"]
 	modal_shade.visible=popup.visible
 	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
@@ -342,6 +349,7 @@ func _refresh() -> void:
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
 			button(popup_buttons,"Solo round",func(): _start_local(1))
 			button(popup_buttons,"Two players · pass the pad",func(): _start_local(2))
+			button(popup_buttons,"Graphics",_open_graphics)
 			button(popup_buttons,"Exit",func(): get_tree().quit())
 		elif state=="handoff":
 			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.world.players==2 else "Aim with left/right. Power with up/down."]
@@ -361,15 +369,38 @@ func _refresh() -> void:
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
 			button(popup_buttons,"Leave round",func(): paused=false; game.leave())
 			button(popup_buttons,"Reset camera",func(): camera.reset_view(); paused=false; _refresh())
+			button(popup_buttons,"Graphics",_open_graphics)
+		elif state=="graphics":
+			popup_title.text="Graphics"
+			button(popup_buttons,"",func(): graphics.quality=(graphics.quality+1)%3; _apply_graphics())
+			button(popup_buttons,"",func(): graphics.scale_percent={50:75,75:100,100:50}[graphics.scale_percent]; _apply_graphics())
+			button(popup_buttons,"",func(): graphics.fps=30 if graphics.fps==60 else 60; _apply_graphics())
+			button(popup_buttons,"Back",_close_graphics)
 		if popup_buttons.get_child_count()>0: popup_buttons.get_child(0).grab_focus()
 	elif not popup.visible: last_popup=""
 	if state=="paused":
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
 	if game.phase=="waiting" and not paused: popup_text.text=game.info
-	if game.phase=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
-	if game.phase=="result" and game.voted:
+	if state=="graphics":
+		popup_text.text=Graphics.DESCRIPTIONS[graphics.quality]+"\n"+("Saved on this device · applies immediately." if graphics_notice.is_empty() else graphics_notice)
+		popup_buttons.get_child(0).text="Quality: "+Graphics.TITLES[graphics.quality]
+		popup_buttons.get_child(1).text="3D resolution: %d%%"%graphics.scale_percent
+		popup_buttons.get_child(2).text="Frame limit: %d FPS"%graphics.fps
+	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
+	if state=="result" and game.voted:
 		popup_text.text="Rematch requested. Waiting for your friend…"
 		popup_buttons.get_child(0).disabled=true
+
+func _open_graphics() -> void:
+	graphics_open=true; graphics_notice=""; _refresh()
+
+func _close_graphics() -> void:
+	graphics_open=false; _refresh()
+
+func _apply_graphics() -> void:
+	graphics.apply(self)
+	graphics_notice="Could not save settings; active until exit." if graphics.save_settings()!=OK else ""
+	_refresh()
 
 func _start_local(count: int) -> void:
 	# Force presentation rebuild when switching one/two-player modes on the same hole.
@@ -486,6 +517,7 @@ func _primary() -> void:
 	elif not paused: game.fire()
 
 func _pause() -> void:
+	if graphics_open: _close_graphics(); return
 	if game.phase=="menu": return
 	paused=!paused; _refresh()
 

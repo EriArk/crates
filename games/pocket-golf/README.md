@@ -4,6 +4,16 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
+**0.1.17 adds local graphics settings** in Main menu / Pause → Graphics.
+Performance, Balanced and Quality change shadows, antialiasing, grass, small
+plants, water and depth of field. 3D resolution (50/75/100%) keeps the HUD sharp;
+the frame limit is 30 or 60 FPS. Changes apply immediately and persist on this
+device without resetting the round or changing network rules. Flip2 defaults to
+Performance at 75% resolution; other devices use Balanced at 100%. A saved
+choice always wins. The existing Flip2 OpenGL workaround remains in place.
+Build and local settings checks are separate from owner gameplay/performance
+acceptance; no measured FPS improvement is claimed.
+
 **0.1.16 adds player portrait cards.** The existing score pills show a static
 256px snapshot of each Trainer's saved 3D appearance, with the current player
 highlighted. Guests retain an anonymous silhouette. Capture releases its extra

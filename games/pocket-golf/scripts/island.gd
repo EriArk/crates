@@ -19,6 +19,16 @@ var clock := 0.0
 var models: Dictionary = {}
 var materials: Dictionary = {}
 var imported_count := 0
+var detail_props: Array[Node3D] = []
+var full_water: Material
+var simple_water: Material
+
+func set_quality(level: int) -> void:
+	for draw in find_children("Meadow_*","MultiMeshInstance3D",false,false):
+		draw.multimesh.visible_instance_count=int(draw.multimesh.instance_count*[0.25,0.6,1.0][level])
+	for i in detail_props.size(): detail_props[i].visible=level==2 or i%(3 if level==0 else 2)==0
+	var water: MeshInstance3D = get_node("Ocean")
+	water.material_override=simple_water if level==0 else full_water
 
 func build(hole: int) -> void:
 	_terrain()
@@ -26,6 +36,9 @@ func build(hole: int) -> void:
 	var plane := PlaneMesh.new(); plane.size=Vector2(1600,1600)
 	water.mesh=plane; water.position.y=-1.55
 	var sea := ShaderMaterial.new(); sea.shader=SEA
+	full_water=sea
+	var calm := ShaderMaterial.new(); calm.shader=preload("res://shaders/calm_sea.gdshader")
+	simple_water=calm
 	water.material_override=sea; water.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	water.name="Ocean"; add_child(water)
 	# Tall silhouettes stay behind or beside the playable rectangle, with low foreground planting.
@@ -79,6 +92,7 @@ func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3
 			mesh.set_surface_override_material(surface,materials[key])
 	instance.position=at; instance.scale=Vector3.ONE*size; instance.rotation.y=heading
 	add_child(instance); imported_count+=1
+	if "plant_" in id or "flower_" in id: detail_props.append(instance)
 	if id.begins_with("nature/") and ("tree_" in id or "plant_" in id or "flower_" in id or "grass_" in id):
 		_clear_green(instance)
 		# The original nature models have a -0.05 m base offset.

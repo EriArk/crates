@@ -3,10 +3,11 @@
 # Flip2 / Turnip Adreno 650 loses the Vulkan device in Godot 4.7.2,
 # including in the menu. Keep the workaround local to this game/device.
 renderer=${POCKET_GOLF_RENDERER:-auto}
-if [ "$renderer" = auto ] && [ -r /proc/device-tree/model ]; then
+if [ -r /proc/device-tree/model ]; then
     model=$(tr -d '\000' </proc/device-tree/model)
     if [ "$model" = 'Retroid Pocket Flip2' ]; then
-        renderer=gl_compatibility
+        if [ "$renderer" = auto ]; then renderer=gl_compatibility; fi
+        export POCKET_GOLF_DEFAULT_QUALITY=performance
     fi
 fi
 case "$renderer" in
