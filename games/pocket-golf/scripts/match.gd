@@ -28,6 +28,10 @@ func _ready() -> void:
 	bridge.session_ready.connect(_session)
 	bridge.record.connect(_receive)
 	world.setup(1)
+	# Lobby starts the installed game; registration attaches its admitted session.
+	# Ordinary launches keep the local menu until a session is actually granted.
+	if not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty():
+		bridge.connect_host()
 
 func _process(_delta: float) -> void:
 	if not sync.is_empty() and Time.get_ticks_msec()>deadline: invalid()
@@ -120,7 +124,8 @@ func invalid() -> void:
 	changed.emit()
 
 func _session(host: bool) -> void:
-	if not online: bridge.close_channel(); return
+	if phase not in ["menu","waiting"]: bridge.close_channel(); return
+	online = true
 	seat = 0 if host else 1
 	round_id = 0
 	phase = "waiting"

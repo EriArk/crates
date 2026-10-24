@@ -4,7 +4,8 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**Preparation build 0.1.10.** Not published or installed on handhelds.
+**0.1.12 in preparation.** Version 0.1.11 was installed from Crates on Odin/Flip;
+the complete paired-device match is still being verified.
 
 Shots now scatter grass or sand, fast rolls leave a brief soft streak, wood and
 stone contacts shed different chips, and cup entry lights a short ring above the
@@ -74,10 +75,18 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 
 ## TrainerOS
 
-Both players open **Play with a friend**, then select Pocket Golf in the existing
-GameHub Lobby, prepare, mark Ready and let the organizer Start. The game uses
+Select installed Pocket Golf in GameHub Lobby, mark Ready and let the organizer
+Start. TrainerOS launches both games and the SDK supplies their admitted session.
+No preliminary game launch or "Meet in Lobby" menu is needed. The game uses
 Platform API v1 `lobby.activity` and `network.records`, app ID
-`art.abysstail.pocket-golf`, protocol `pocket-golf.4` (avatar recipe records).
+`art.abysstail.pocket-golf`, protocol `pocket-golf.5` (scaled physics and avatar recipes).
+The package includes `traineros-activity.json` for discovery while the game is closed.
+
+Retroid Pocket Flip2 uses OpenGL Compatibility because Godot 4.7.2 / Turnip
+Adreno 650 repeatedly lost the Vulkan device in the menu. Other devices retain
+Vulkan Mobile. `POCKET_GOLF_RENDERER=mobile` or `gl_compatibility` overrides the
+package launcher for diagnosis. These are standard
+[Godot renderer arguments](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html).
 Both players need 0.1.8 or a compatible physics revision. The former
 `pocket-golf.1` and `pocket-golf.2` routes are deliberately incompatible; the state hash also includes
 the physics revision, so mixed rules cannot silently share a round.

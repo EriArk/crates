@@ -4,7 +4,7 @@
 import argparse,hashlib,io,json,pathlib,subprocess,tarfile,zipfile
 root=pathlib.Path(__file__).resolve().parent
 p=argparse.ArgumentParser();p.add_argument('build',type=pathlib.Path);p.add_argument('output',type=pathlib.Path);a=p.parse_args()
-version='0.1.11'
+version='0.1.12'
 if 'config/version="'+version+'"' not in (root/'project.godot').read_text():p.error('Version mismatch')
 if a.output.exists():p.error('Choose a fresh output directory')
 manifest=json.loads((a.build/'build-manifest.json').read_text())
@@ -19,7 +19,7 @@ try:
         revision=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
 except (OSError,subprocess.CalledProcessError):
     pass # A distributed source archive is a valid build/package input without Git.
-common={name:(root/name).read_bytes() for name in ['LICENSE','README.md','icon.svg']}
+common={name:(root/name).read_bytes() for name in ['LICENSE','README.md','icon.svg','traineros-activity.json']}
 common['build-manifest.json']=(a.build/'build-manifest.json').read_bytes()
 common['licenses/traineros-avatar-sdk.json']=(root/'addons/traineros/avatar-sdk.json').read_bytes()
 for pack in ['nature','pirate','golf']:
@@ -32,11 +32,11 @@ archives=[]
 for suffix,arch,machine in [('x86_64','x86_64',62),('arm64','aarch64',183)]:
     binary=(a.build/('pocket-golf.'+suffix)).read_bytes()
     if binary[:6]!=b'\x7fELF\x02\x01' or int.from_bytes(binary[18:20],'little')!=machine:p.error('Wrong ELF architecture')
-    files={'bin/pocket-golf':binary,**common}
+    files={'bin/pocket-golf':(root/'launch.sh').read_bytes(),'libexec/pocket-golf':binary,**common}
     name=f'pocket-golf-{version}-{arch}.tar.gz';archive=a.output/name
     with tarfile.open(archive,'w:gz') as t:
         for path,data in files.items():
-            member=tarfile.TarInfo(path);member.size=len(data);member.mode=0o755 if path.startswith('bin/') else 0o644;t.addfile(member,io.BytesIO(data))
+            member=tarfile.TarInfo(path);member.size=len(data);member.mode=0o755 if path.startswith(('bin/','libexec/')) else 0o644;t.addfile(member,io.BytesIO(data))
     record=dict(id='pocket-golf',title='Pocket Golf',kind='game',version=version,architecture=arch,entry='bin/pocket-golf',icon='icon.svg',license='GPL-3.0-or-later',repository='https://github.com/EriArk/crates.git',size=archive.stat().st_size,unpackedSize=sum(map(len,files.values()))+1048576,sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),channel='Experimental',compatibility='untested',compatibilityNote='Godot preparation; shared avatars checked on host, handheld acceptance pending.',notes='Three-hole minigolf: solo, local pass-controller and optional SDK Lobby. Vulkan Mobile; OpenGL fallback.',url=f'https://github.com/EriArk/crates/releases/download/pocket-golf-v{version}/{name}')
     if revision:record['revision']=revision
     (a.output/f'pocket-golf-{arch}-record.json').write_text(json.dumps(record,indent=2)+'\n')

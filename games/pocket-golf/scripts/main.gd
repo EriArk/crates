@@ -329,14 +329,12 @@ func _refresh() -> void:
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
 			button(popup_buttons,"Solo round",func(): _start_local(1))
 			button(popup_buttons,"Two players · pass the pad",func(): _start_local(2))
-			button(popup_buttons,"Play with a friend",func(): game.join())
 			button(popup_buttons,"Exit",func(): get_tree().quit())
 		elif state=="handoff":
 			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.world.players==2 else "Aim with left/right. Power with up/down."]
 			button(popup_buttons,"Ready",func(): game.accept_turn())
 		elif state=="waiting":
-			popup_title.text="Meet in Lobby"; popup_text.text=game.info
-			button(popup_buttons,"Open TrainerOS Lobby",func(): game.bridge.open_lobby())
+			popup_title.text="Connecting match"; popup_text.text=game.info
 			button(popup_buttons,"Back",func(): game.leave())
 		elif state=="result":
 			popup_title.text="Round complete"

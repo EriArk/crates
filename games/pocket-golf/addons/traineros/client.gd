@@ -27,7 +27,6 @@ var token := ""
 
 func connect_host() -> void:
 	if registered:
-		open_lobby()
 		return
 	disconnect_host()
 	var path := endpoint_override
@@ -206,5 +205,4 @@ func _packet(value: Dictionary) -> void:
 		request("activity.register",{"title":activity_title,"protocol":game_protocol})
 	elif method=="activity.register":
 		registered = true
-		status.emit("Choose Pocket Golf in Lobby. Both players Ready, then the host starts.")
-		open_lobby()
+		status.emit("Connected to TrainerOS.")
