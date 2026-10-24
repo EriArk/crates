@@ -36,15 +36,17 @@ func run() -> void:
 	ui._set_input("touch")
 	var point: Vector2 = ui.hud.screen_point(Vector2(26+210*0.6,ui.hud.layout_size().y-67))
 	touch(0,point,true)
-	check(ui.game.power==60,"touch selects power through Match")
+	check(is_equal_approx(ui.game.power,60),"touch selects power through Match")
 	var after: Vector2 = ui.hud.screen_point(Vector2(26+210*0.9,ui.hud.layout_size().y-67))
 	drag(0,after,after-point); touch(0,after,false)
-	check(ui.game.power==90 and ui.game.angle==0,"slider only changes power")
+	check(is_equal_approx(ui.game.power,90) and ui.game.angle==0,"slider only changes power")
 	check(ui.camera.yaw[0]==yaw and ui.touches.is_empty(),"power gesture never orbits camera")
 	point=ui.hud.screen_point(ui.hud.regions().aim.get_center())
 	touch(0,point,true); drag(0,point+Vector2(40,0),Vector2(40,0)); touch(0,point+Vector2(40,0),false)
-	check(ui.game.angle==20 and ui.game.power==90,"drag aim keeps five-degree rules")
+	check(ui.game.angle==20 and is_equal_approx(ui.game.power,90),"drag aim retains sensitivity")
 	check(ui.camera.yaw[0]==yaw and ui.touches.is_empty(),"aim gesture never orbits camera")
+	touch(0,point,true); drag(0,point+Vector2(1,0),Vector2(1,0)); touch(0,point+Vector2(1,0),false)
+	check(is_equal_approx(ui.game.angle,20.5),"single-pixel aim movement is not quantized to a button tap")
 	# A second finger on the field remains a camera gesture, independent of the dial.
 	touch(0,point,true); touch(1,Vector2(400,250),true)
 	drag(1,Vector2(420,250),Vector2(20,0))
@@ -64,7 +66,7 @@ func run() -> void:
 	check(not ui.paused,"touch resume works")
 	# A modality change cancels a held dial so its eventual drag/release is harmless.
 	point=ui.hud.screen_point(ui.hud.regions().aim.get_center()); touch(0,point,true)
-	key(KEY_TAB); var angle: int = ui.game.angle
+	key(KEY_TAB); var angle: float = ui.game.angle
 	drag(0,point+Vector2(80,0),Vector2(80,0)); touch(0,point+Vector2(80,0),false)
 	check(ui.hud.captures.is_empty() and ui.game.angle==angle,"keyboard cancels stale touch capture")
 	check(ui.hud.state.mode=="keyboard" and not ui.hud.regions().has("aim"),"hardware input hides touch dial")
@@ -84,7 +86,7 @@ func run() -> void:
 	await picture("hud-small-touch")
 	point=ui.hud.screen_point(Vector2(26+210*0.5,ui.hud.layout_size().y-67))
 	touch(0,point,true); touch(0,point,false)
-	check(ui.game.power==50,"scaled touch slider retains correct mapping")
+	check(is_equal_approx(ui.game.power,50),"scaled touch slider retains correct mapping")
 	point=ui.hud.screen_point(ui.hud.regions().putt.get_center())
 	touch(0,point,true); drag(0,Vector2(300,200),Vector2(-100,-100)); touch(0,Vector2(300,200),false)
 	check(ui.game.phase=="aim","dragging off PUTT cancels the touch action")

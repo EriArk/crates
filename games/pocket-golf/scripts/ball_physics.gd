@@ -60,10 +60,10 @@ static func wall_contact(p: Array, v: Array, wall: Array) -> bool:
 	v[1]-=impulse*nz/distance
 	return true
 
-static func trace(course: Dictionary, origin: Array, direction: Array, power: int) -> Dictionary:
+static func trace(course: Dictionary, origin: Array, direction: Array, power: int, power_scale: int = 1) -> Dictionary:
 	var p := [origin[0]*SCALE,origin[1]*SCALE]
 	var norm := length_int(direction[0],direction[1])
-	var v := [direction[0]*power*7000/norm,direction[1]*power*7000/norm]
+	var v := [direction[0]*power*7000/(norm*power_scale),direction[1]*power*7000/(norm*power_scale)]
 	var grid: PackedInt32Array = course.get("height_grid",PackedInt32Array())
 	var path: Array = [origin.duplicate()]
 	var heights: Array = [Surface.ball_height(grid,origin[0],origin[1])]

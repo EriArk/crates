@@ -33,7 +33,7 @@ func _initialize() -> void:
 	var a := Rules.new(); a.setup(2)
 	var b := Rules.new(); b.setup(2)
 	var initial: String = a.digest()
-	check(a.fire(1,50).is_empty(),"invalid angle")
+	check(a.fire(-1,50).is_empty(),"invalid angle")
 	check(a.fire(0,101).is_empty(),"invalid power")
 	check(a.digest()==initial,"invalid shot leaves state untouched")
 	var bounces := 0; var cups := 0

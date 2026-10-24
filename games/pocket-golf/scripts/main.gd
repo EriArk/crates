@@ -13,6 +13,7 @@ const GolfHud = preload("res://scripts/golf_hud.gd")
 const Surfaces = preload("res://scripts/surfaces.gd")
 const GreenSurface = preload("res://scripts/green_surface.gd")
 const Graphics = preload("res://scripts/graphics_settings.gd")
+const AimInput = preload("res://scripts/aim_input.gd")
 var graphics = Graphics.new()
 var graphics_open := false
 var graphics_notice := ""
@@ -273,8 +274,8 @@ func _setup_ui() -> void:
 	hud.pause_requested.connect(_pause)
 	hud.view_requested.connect(_cycle_view)
 	hud.putt_requested.connect(_primary)
-	hud.aim_dragged.connect(func(steps): game.adjust(steps,0))
-	hud.power_selected.connect(func(percent): game.adjust(0,roundi((percent-game.power)/5.0)))
+	hud.aim_dragged.connect(func(degrees): game.adjust_continuous(degrees,0))
+	hud.power_selected.connect(func(percent): game.adjust_continuous(0,percent-game.power))
 	modal_shade=ColorRect.new(); modal_shade.color=Color(0.04,0.12,0.13,0.24)
 	modal_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); root_ui.add_child(modal_shade)
 	popup=PanelContainer.new(); root_ui.add_child(popup); popup.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -330,13 +331,13 @@ func _refresh() -> void:
 	# Turn ownership gates input, not the opponent's presence on the green.
 	anchor.visible=(game.phase in ["aim","moving"]) and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
-	aim_root.visible=game.can_fire() and not paused
+	aim_root.visible=game.phase=="aim" and not paused
 	if game.phase=="aim":
 		var ball: Vector3 = balls[game.world.turn].position
 		var radians := deg_to_rad(game.angle)
 		anchor.position=_stance(ball,radians)
 		anchor.rotation.y=-radians
-		if game.can_fire():
+		if aim_root.visible:
 			for i in aim_root.get_child_count():
 				var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
 				point.y=_ground(point)+0.012
@@ -498,6 +499,7 @@ func _process(delta: float) -> void:
 
 func _poll_stick(delta: float) -> void:
 	var direction := Vector2.ZERO
+	var aim_axis := Vector2.ZERO
 	var look := Vector2.ZERO
 	var magnification := 0.0
 	var camera_held := false
@@ -510,21 +512,31 @@ func _poll_stick(delta: float) -> void:
 		var trigger: float = trigger_right-trigger_left
 		if absf(trigger)>0.10: magnification=trigger
 		var axis := Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
-		if axis.length()>0.55: direction=Vector2(signf(axis.x),0) if absf(axis.x)>absf(axis.y) else Vector2(0,signf(axis.y))
+		if axis.length_squared()>aim_axis.length_squared(): aim_axis=axis
+		if popup.visible and axis.length()>0.55: direction=Vector2(signf(axis.x),0) if absf(axis.x)>absf(axis.y) else Vector2(0,signf(axis.y))
 		if Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_LEFT): direction=Vector2.LEFT
 		elif Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_RIGHT): direction=Vector2.RIGHT
 		elif Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_UP): direction=Vector2.UP
 		elif Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_DOWN): direction=Vector2.DOWN
 	if neutral_required:
-		if direction==Vector2.ZERO and not camera_held and not Input.is_anything_pressed(): neutral_required=false
+		if direction==Vector2.ZERO and AimInput.response(aim_axis)==Vector2.ZERO and not camera_held and not Input.is_anything_pressed(): neutral_required=false
 		return
-	if direction!=Vector2.ZERO or camera_held: _set_input("pad")
+	if direction!=Vector2.ZERO or AimInput.response(aim_axis)!=Vector2.ZERO or camera_held: _set_input("pad")
 	_camera_axes(look,magnification,delta)
+	_aim_stick(aim_axis,delta)
 	if direction==Vector2.ZERO: repeat_time=0; last_axis=direction; return
 	repeat_time-=delta
 	if direction!=last_axis or repeat_time<=0:
 		_direction(int(direction.x),int(direction.y)); repeat_time=0.3 if direction!=last_axis else 0.12
 	last_axis=direction
+
+func _aim_stick(axis: Vector2, delta: float) -> void:
+	if paused or popup.visible or neutral_required or not game.can_fire(): return
+	var rate := AimInput.response(axis)
+	if rate==Vector2.ZERO: return
+	# Limit a stalled frame's jump; ordinary 30/60/120 FPS have identical rates.
+	var elapsed := clampf(delta,0.0,0.1)
+	game.adjust_continuous(rate.x*AimInput.AIM_SPEED*elapsed,-rate.y*AimInput.POWER_SPEED*elapsed)
 
 func _direction(x: int, y: int) -> void:
 	if popup.visible:

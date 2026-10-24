@@ -4,6 +4,14 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
+**0.1.19 adds continuous left-stick aiming and power.** Small deflections give
+fine control; full deflection turns faster. Touch aim/power are continuous too;
+D-pad and keyboard retain discrete taps. Opponents see preparation before the
+putt: orientation and aim guide update smoothly over the existing game channel.
+Preparation is coalesced at up to 15 Hz and never changes the rules state. Shots
+use integer hundredths of a degree / percent, with fixed-point trajectories.
+Both players need protocol `pocket-golf.6` (0.1.19 or compatible).
+
 **0.1.18 adds a Contrast slider** to Graphics (80–150%, original image at 100%).
 Pointer/touch adjusts the slider; on a controller use up/down to select it,
 left/right to adjust and confirm to reset to 100%. Changes are immediate and
@@ -75,7 +83,8 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 
 ## Play
 
-- Left/right or stick/D-pad: aim in five-degree steps. Up/down: power in five-percent steps.
+- Left stick: continuous aim (left/right) and power (up/down), proportional to deflection.
+  D-pad / keyboard arrows retain five-degree / five-percent taps. Power stays within 10?100%.
 - Confirm (bottom face button; A on Xbox), Enter or Space: putt / accept handoff.
 - Secondary face button (X on Xbox), Tab, or the camera icon: overview → shoulder → eyes.
 - Right stick or WASD: rotate/look around; right trigger / E zooms in, left trigger /
@@ -109,7 +118,7 @@ Select installed Pocket Golf in GameHub Lobby, mark Ready and let the organizer
 Start. TrainerOS launches both games and the SDK supplies their admitted session.
 No preliminary game launch or "Meet in Lobby" menu is needed. The game uses
 Platform API v1 `lobby.activity` and `network.records`, app ID
-`art.abysstail.pocket-golf`, protocol `pocket-golf.5` (scaled physics and avatar recipes).
+`art.abysstail.pocket-golf`, protocol `pocket-golf.6` (fine aim, live preparation, scaled physics and avatar recipes).
 The package includes `traineros-activity.json` for discovery while the game is closed.
 
 Retroid Pocket Flip2 uses OpenGL Compatibility because Godot 4.7.2 / Turnip
@@ -117,13 +126,15 @@ Adreno 650 repeatedly lost the Vulkan device in the menu. Other devices retain
 Vulkan Mobile. `POCKET_GOLF_RENDERER=mobile` or `gl_compatibility` overrides the
 package launcher for diagnosis. These are standard
 [Godot renderer arguments](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html).
-Both players need 0.1.8 or a compatible physics revision. The former
-`pocket-golf.1` and `pocket-golf.2` routes are deliberately incompatible; the state hash also includes
+Both players need 0.1.19 or a compatible physics revision. Earlier
+`pocket-golf.1` through `pocket-golf.5` routes are deliberately incompatible; the state hash also includes
 the physics revision, so mixed rules cannot silently share a round.
 
 The GDScript client in `addons/traineros/client.gd` uses the existing local JSON-lines
 SDK contract. It has no separate login, room service, IP entry, or new relay. Shots
-carry angle, power, turn and pre/post-state hashes. Both sides calculate integer
+carry integer angle_units (0?35999), power_units (1000?10000), turn and pre/post-state hashes.
+Cosmetic aim records carry the same units with round/ply, are rate limited and
+interpolated at the receiver; stale turns cannot change the current preparation. Both sides calculate integer
 rules; rendering and engine physics never decide the result. Hash agreement detects
 divergence, not cheating or eligibility for official rewards.
 
@@ -153,6 +164,7 @@ godot --headless --path games/pocket-golf --script tests/slopes_test.gd
 godot --path games/pocket-golf --script tests/slopes_presentation.gd
 godot --path games/pocket-golf --script tests/physics_presentation.gd
 godot --headless --path games/pocket-golf --script tests/protocol_test.gd
+godot --headless --path games/pocket-golf --script tests/analog_test.gd
 godot --headless --path games/pocket-golf --script tests/presentation.gd
 godot --headless --path games/pocket-golf --script tests/camera_test.gd
 godot --path games/pocket-golf --script tests/island_test.gd

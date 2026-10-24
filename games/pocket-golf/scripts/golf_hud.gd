@@ -4,8 +4,8 @@ extends Control
 signal pause_requested
 signal view_requested
 signal putt_requested
-signal aim_dragged(steps: int)
-signal power_selected(percent: int)
+signal aim_dragged(degrees: float)
+signal power_selected(percent: float)
 const INK := Color("183f3d")
 const PAPER := Color("fff9e8")
 const MINT := Color("8eddb4")
@@ -99,10 +99,7 @@ func route_pointer(event: InputEvent) -> bool:
 	if moving:
 		if capture.action=="power": _power_at(point)
 		elif capture.action=="aim":
-			capture.remainder+=point.x-capture.last.x
-			var steps := int(capture.remainder/10.0)
-			capture.remainder-=steps*10.0
-			if steps!=0: aim_dragged.emit(steps)
+			aim_dragged.emit((point.x-capture.last.x)*0.5)
 		capture.last=point
 	elif released:
 		captures.erase(id)
@@ -118,7 +115,7 @@ func cancel_pointers() -> void:
 
 func _power_at(point: Vector2) -> void:
 	var amount := clampf((point.x-26.0)/210.0,0.0,1.0)
-	power_selected.emit(clampi(roundi(amount*20.0)*5,10,100))
+	power_selected.emit(clampf(amount*100.0,10,100))
 
 func _text(text: String, at: Vector2, pixels: int=16, color: Color=PAPER) -> void:
 	draw_string_outline(font,at+Vector2(0,1),text,HORIZONTAL_ALIGNMENT_LEFT,-1,pixels,4,Color(0.05,0.15,0.15,0.24))
@@ -184,7 +181,7 @@ func _draw() -> void:
 		var y := layout_size().y-84
 		_text("POWER",Vector2(24,y),12)
 		_text("%03d°"%state.angle,Vector2(112,y),13)
-		_text("%d%%"%state.power,Vector2(183,y),22)
+		_text("%.1f%%"%state.power,Vector2(173,y),20)
 		_pill(Rect2(22,y+10,222,14),Color(0.08,0.22,0.21,0.80),7)
 		var fraction: float = state.power/100.0
 		var color := MINT.lerp(Color("f2d68d"),fraction)

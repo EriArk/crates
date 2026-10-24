@@ -4,7 +4,7 @@ const Courses = preload("res://scripts/courses.gd")
 # Integer coordinates: 1000 units = one metre. No engine physics feeds the rules.
 const SIN = [0,872,1736,2588,3420,4226,5000,5736,6428,7071,7660,8192,8660,9063,9397,9659,9848,9962,10000]
 const Physics = preload("res://scripts/ball_physics.gd")
-const PHYSICS_REVISION := "scale-4"
+const PHYSICS_REVISION := "analog-5"
 const CAP = 8
 var players := 1
 var hole := 0
@@ -37,29 +37,41 @@ func _begin_hole() -> void:
 		finished.append(false)
 	turn = (starter + hole) % players
 
-static func sine(degrees: int) -> int:
-	var d := posmod(degrees, 360)
-	if d <= 90: return SIN[d / 5]
-	if d <= 180: return SIN[(180-d) / 5]
-	if d <= 270: return -SIN[(d-180) / 5]
-	return -SIN[(360-d) / 5]
+static func sine_units(centidegrees: int) -> int:
+	# Integer interpolation preserves the original five-degree samples, while
+	# allowing fine aiming without platform-dependent trigonometry in the rules.
+	var d := posmod(centidegrees,36000)
+	var polarity := 1 if d<=18000 else -1
+	d=posmod(d,18000)
+	if d>9000: d=18000-d
+	if d==9000: return polarity*10000
+	var index := d/500
+	return polarity*(SIN[index]+(SIN[index+1]-SIN[index])*(d%500)/500)
 
 static func inside(p: Array, rect: Array, margin: int = 0) -> bool:
 	return p[0] > rect[0]-margin and p[0] < rect[2]+margin and p[1] > rect[1]-margin and p[1] < rect[3]+margin
 
-static func trace(course: Dictionary, origin: Array, angle: int, power: int) -> Dictionary:
-	return Physics.trace(course,origin,[sine(angle),-sine(90-angle)],power)
+static func trace(course: Dictionary, origin: Array, angle: float, power: float) -> Dictionary:
+	return trace_units(course,origin,posmod(roundi(angle*100),36000),roundi(power*100))
 
-func fire(angle: int, power: int) -> Dictionary:
-	if complete or angle < 0 or angle >= 360 or angle % 5 != 0 or power < 10 or power > 100 or power % 5 != 0:
+static func trace_units(course: Dictionary, origin: Array, angle_units: int, power_units: int) -> Dictionary:
+	return Physics.trace(course,origin,[sine_units(angle_units),-sine_units(9000-angle_units)],power_units,100)
+
+func fire(angle: float, power: float) -> Dictionary:
+	if not is_finite(angle) or not is_finite(power) or angle<0 or angle>=360 or power<10 or power>100:
+		return {}
+	return fire_units(posmod(roundi(angle*100),36000),roundi(power*100))
+
+func fire_units(angle_units: int, power_units: int) -> Dictionary:
+	if complete or angle_units<0 or angle_units>=36000 or power_units<1000 or power_units>10000:
 		return {}
 	var shooter := turn
-	var result := trace(Courses.get_course(hole), balls[turn], angle, power)
+	var result := trace_units(Courses.get_course(hole), balls[turn], angle_units, power_units)
 	balls[turn] = result.position.duplicate()
 	strokes[turn] += 1
 	finished[turn] = result.sunk or strokes[turn] >= CAP
 	result["player"] = shooter
-	result["angle"] = angle
+	result["angle"] = angle_units/100.0
 	result["hole"] = hole
 	result["capped"] = not result.sunk and finished[turn]
 	result["strokes"] = strokes.duplicate()

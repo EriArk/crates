@@ -9,7 +9,7 @@ signal identity_revoked
 signal sdk_record(data: Dictionary)
 var app_id := "art.abysstail.pocket-golf"
 var activity_title := "Pocket Golf"
-var game_protocol := "pocket-golf.5"
+var game_protocol := "pocket-golf.6"
 var session: Dictionary = {}
 var endpoint_override := ""
 var channel := ""
