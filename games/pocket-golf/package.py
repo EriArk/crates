@@ -4,7 +4,7 @@
 import argparse,hashlib,io,json,pathlib,subprocess,tarfile,zipfile
 root=pathlib.Path(__file__).resolve().parent
 p=argparse.ArgumentParser();p.add_argument('build',type=pathlib.Path);p.add_argument('output',type=pathlib.Path);a=p.parse_args()
-version='0.1.13'
+version='0.1.14'
 if 'config/version="'+version+'"' not in (root/'project.godot').read_text():p.error('Version mismatch')
 if a.output.exists():p.error('Choose a fresh output directory')
 manifest=json.loads((a.build/'build-manifest.json').read_text())

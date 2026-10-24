@@ -316,7 +316,8 @@ func _refresh() -> void:
 		"mode":"touch" if touch_mode else input_kind,"confirm":confirm,"back":back,"view_key":view,
 		"view":GolfCamera.TITLES[camera.view]})
 	if game.phase!="moving": hud.set_status("")
-	anchor.visible=(game.can_fire() or game.phase=="moving") and not paused
+	# Turn ownership gates input, not the opponent's presence on the green.
+	anchor.visible=(game.phase in ["aim","moving"]) and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
 	aim_root.visible=game.can_fire() and not paused
 	if game.can_fire():

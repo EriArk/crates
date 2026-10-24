@@ -32,6 +32,14 @@ func peer_changed(description: Dictionary, member: String) -> void:
 		ui.avatar_binding.select(false,true)
 		check(ui.anchor.visual==ui.avatar_binding.peer_visual and ui.anchor.player_id=="session-peer:"+member,"remote turn uses remote appearance")
 		ui.avatar_binding.select(local_turn,true)
+		# Exercise the actual scene: an opponent who is aiming must remain visible,
+		# even though this client is not allowed to putt on their behalf.
+		var turn: int = ui.game.world.turn
+		var phase: String = ui.game.phase
+		ui.game.world.turn=1-ui.game.seat; ui.game.phase="aim"; ui.camera.view=1; ui._refresh()
+		check(not ui.game.can_fire() and ui.anchor.visible,"waiting player sees opponent aiming")
+		check(ui.anchor.visual==ui.avatar_binding.peer_visual,"scene displays admitted opponent")
+		ui.game.world.turn=turn; ui.game.phase=phase; ui._refresh()
 		print("received" if role=="host" else "consumed")
 	elif role=="guest":
 		check(description.appearance.hair=="ponytail" and description.appearance.eyes=="almond","saved peer changes propagated")
