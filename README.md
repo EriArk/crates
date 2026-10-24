@@ -7,8 +7,8 @@ concepts; implementation and verification are recorded per project.
 
 - [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
   Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.
-  Version 0.1.17 is published and installed on Odin/Flip, with static player
-  portraits and local graphics settings. See [current evidence](PROJECT_STATUS.md).
+  Version 0.1.18 is published and installed on Odin/Flip, with static player
+  portraits, local graphics settings and contrast. See [current evidence](PROJECT_STATUS.md).
 
 - [Session Timer](widgets/session-timer/) — a session stopwatch, Start widget and
   optional break reminders.
