@@ -13,7 +13,7 @@ func install_visual(sdk_visual: Node3D, id: String) -> void:
 	if visual != null: add_child(visual)
 
 func play_action(action: String) -> void:
-	# A future SDK presenter translates semantic game actions to its own rig/clips.
+	# The SDK presenter translates supported semantic actions to its own rig/clips.
 	if is_instance_valid(visual) and visual.has_method("play_action"):
 		visual.call("play_action",action)
 

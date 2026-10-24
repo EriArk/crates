@@ -3,6 +3,8 @@ extends Node3D
 const Match = preload("res://scripts/match.gd")
 const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
+const AvatarBinding = preload("res://scripts/avatar_binding.gd")
+const AvatarExchange = preload("res://addons/traineros/avatar_exchange.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
 const Island = preload("res://scripts/island.gd")
 const GolfHud = preload("res://scripts/golf_hud.gd")
@@ -18,6 +20,8 @@ var island: Island
 var camera: GolfCamera
 var balls: Array[Node3D] = []
 var anchor = AvatarAnchor.new()
+var avatar_binding = AvatarBinding.new()
+var avatar_exchange = AvatarExchange.new()
 var aim_root: Node3D
 var cup: Node3D
 var field_index := -1
@@ -52,7 +56,14 @@ func _ready() -> void:
 	add_child(game)
 	game.changed.connect(_refresh)
 	game.shot_started.connect(_shot_started)
-	game.bridge.closed.connect(func(): anchor.clear_identity())
+	add_child(avatar_binding)
+	avatar_binding.start(anchor,_placeholder,game.bridge.endpoint_override)
+	add_child(avatar_exchange)
+	avatar_exchange.start(avatar_binding.client,game.bridge)
+	avatar_exchange.can_resolve=func(): return game.phase!="moving"
+	avatar_exchange.peer_changed.connect(avatar_binding.receive_peer)
+	avatar_exchange.peer_unavailable.connect(avatar_binding.clear_peer)
+	game.bridge.identity_revoked.connect(avatar_binding.disconnect_identity)
 	Input.joy_connection_changed.connect(func(_device, connected):
 		neutral_required=true
 		if not connected: _suspend_input()
@@ -147,7 +158,7 @@ func _setup_scene() -> void:
 	camera.current=true
 	add_child(effects)
 	add_child(anchor)
-	# Abstract marker until the SDK avatar presenter is delivered; no clothing data.
+	# Offline/guest marker; actual user appearance comes exclusively from the SDK.
 	_placeholder()
 
 func _placeholder() -> void:
@@ -259,7 +270,9 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	var node := Button.new(); node.text=text; node.custom_minimum_size.y=46; parent.add_child(node); node.pressed.connect(action); return node
 
 func _refresh() -> void:
-	if anchor.visual==null: _placeholder()
+	if not game.online and not avatar_exchange.peer_member.is_empty(): avatar_exchange.clear_peer()
+	var avatar_seat: int = shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn
+	avatar_binding.select(avatar_seat==(game.seat if game.online else 0),game.phase!="moving")
 	if game.phase=="menu":
 		paused=false; effects.clear()
 	if field_index<0 or (game.phase!="moving" and (field_index!=game.world.hole or balls.size()!=game.world.players)): _build_course()
@@ -409,7 +422,7 @@ func _process(delta: float) -> void:
 	var golfer := _stance(ball_pos,deg_to_rad(shot_angle))
 	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length(),cup.position.y-_ground(ball_pos))
 	# Pause freezes the local camera too. Online ball presentation may continue.
-	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"])
+	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
 	var direction := Vector2.ZERO

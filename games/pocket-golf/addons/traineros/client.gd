@@ -5,9 +5,12 @@ signal status(text: String)
 signal session_ready(host: bool)
 signal record(data: Dictionary)
 signal closed
+signal identity_revoked
+signal sdk_record(data: Dictionary)
 var app_id := "art.abysstail.pocket-golf"
 var activity_title := "Pocket Golf"
-var game_protocol := "pocket-golf.3"
+var game_protocol := "pocket-golf.4"
+var session: Dictionary = {}
 var endpoint_override := ""
 var channel := ""
 var registered := false
@@ -59,6 +62,7 @@ func disconnect_host() -> void:
 	connecting = false
 	registered = false
 	channel = ""
+	session={}
 	token = ""
 	pending.clear()
 	buffer.clear()
@@ -84,6 +88,8 @@ func close_channel() -> void:
 	if not channel.is_empty():
 		request("network.close",{"channel":channel})
 		channel = ""
+		session={}
+		closed.emit()
 
 func send(data: Dictionary) -> bool:
 	var bytes := JSON.stringify(data).to_utf8_buffer()
@@ -145,21 +151,27 @@ func _packet(value: Dictionary) -> void:
 	var event: String = value.get("event","")
 	if not event.is_empty():
 		if event in ["host.stopping","context.revoked"]:
+			identity_revoked.emit()
 			fail("Trainer changed or TrainerOS closed. Return to Lobby for a fresh game.")
 		elif event=="network.ready":
 			var s = value.get("session",{})
 			if not s is Dictionary or not channel.is_empty() or not registered or s.get("protocol")!=game_protocol or s.get("delivery")!="reliable-ordered" or not s.get("host") is bool or not s.get("channel") is String or s.channel.is_empty():
 				fail("Incompatible game session.")
 				return
+			if not s.get("peer") is String or s.peer.is_empty() or not s.get("self") is String or s.self.is_empty() or s.peer==s.self:
+				fail("Missing admitted player identity.")
+				return
 			channel = s.channel
+			session=s.duplicate(true)
 			sequence = 0
 			session_ready.emit(s.host)
 		elif event=="network.closed" and value.get("channel")==channel and not channel.is_empty():
 			channel = ""
+			session={}
 			closed.emit()
 			status.emit("Match disconnected. Your Lobby remains available.")
 		elif event=="network.data" and value.get("channel")==channel and not channel.is_empty():
-			if value.get("sequence")!=str(sequence) or not value.get("data") is String:
+			if value.get("peer")!=session.get("peer") or value.get("sequence")!=str(sequence) or not value.get("data") is String:
 				fail("Out-of-order game record.")
 				return
 			var bytes := Marshalls.base64_to_raw(value.data)
@@ -169,7 +181,8 @@ func _packet(value: Dictionary) -> void:
 				return
 			var grant := channel
 			sequence += 1
-			record.emit(data)
+			if data.get("namespace")=="traineros.avatar.v1": sdk_record.emit(data)
+			else: record.emit(data)
 			if channel==grant: request("network.consume",{"channel":grant,"sequence":value.sequence})
 		return
 	var id = value.get("id","")

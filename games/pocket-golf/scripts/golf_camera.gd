@@ -40,7 +40,7 @@ func rotate_view(motion: Vector2) -> void:
 func magnify(amount: float) -> void:
 	zoom[view] = clampf(zoom[view] * exp(-amount), 0.55, 1.55)
 
-func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bool, playing: bool) -> void:
+func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bool, playing: bool, eye_height: float = 1.05) -> void:
 	following = rolling and playing
 	var active: int = view if playing else View.OVERVIEW
 	var heading: float = yaw[active] - (aim if active != View.OVERVIEW else 0.0)
@@ -66,8 +66,8 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		desired.y = maxf(desired.y, obstruction_height+0.55)
 		lens = 60.0
 	else:
-		# Temporary eye height of the placeholder. SDK socket integration comes later.
-		desired = golfer + Vector3(0, 1.05, 0)
+		# SDK model height, or the anonymous marker's height when no identity exists.
+		desired = golfer + Vector3(0, eye_height, 0)
 		# The golfer stands beside the ball: look diagonally down to the putting line.
 		heading -= atan2(0.85,0.75)
 		focus = desired - _offset(heading, elevation) * 5.0
