@@ -81,8 +81,10 @@ func _process(_delta: float) -> void:
 			connecting=false
 			_request("hello", {"protocol":1,"token":token,"app":app_id})
 			token=""
-		elif Time.get_ticks_msec()>deadline or tcp.get_status()==StreamPeerTCP.STATUS_ERROR: _fail("TrainerOS connection timed out")
-		return
+		else:
+			if Time.get_ticks_msec()>deadline or tcp.get_status()==StreamPeerTCP.STATUS_ERROR: _fail("TrainerOS connection timed out")
+			return
+		# Flush hello now: the next rendered frame may compile shaders for seconds.
 	if tcp.get_status()!=StreamPeerTCP.STATUS_CONNECTED:
 		_fail("TrainerOS disconnected")
 		return

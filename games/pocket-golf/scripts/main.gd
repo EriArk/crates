@@ -72,6 +72,16 @@ func _ready() -> void:
 		_set_input("pad" if connected else "keyboard"))
 	get_window().focus_exited.connect(_suspend_input)
 	_refresh()
+	_connect_sdk.call_deferred()
+
+func _connect_sdk() -> void:
+	# The first draw may compile the island shaders. Open bounded IPC only once
+	# rendering is ready, so its hello deadline does not run during shader setup.
+	if DisplayServer.get_name()!="headless":
+		await RenderingServer.frame_post_draw
+	if not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty() or not game.bridge.endpoint_override.is_empty():
+		game.bridge.connect_host()
+	avatar_binding.client.connect_host()
 
 func material(color: Color, roughness: float = 0.8) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()

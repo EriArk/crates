@@ -104,9 +104,11 @@ func _process(_delta: float) -> void:
 			connecting = false
 			request("hello",{"protocol":1,"token":token,"app":app_id})
 			token = ""
-		elif Time.get_ticks_msec()>deadline or connection==StreamPeerTCP.STATUS_ERROR:
-			fail("TrainerOS did not respond.")
-		return
+		else:
+			if Time.get_ticks_msec()>deadline or connection==StreamPeerTCP.STATUS_ERROR:
+				fail("TrainerOS did not respond.")
+			return
+		# Send hello in this turn, before the renderer can block on new shaders.
 	if connection!=StreamPeerTCP.STATUS_CONNECTED:
 		fail("TrainerOS disconnected. Local play is available.")
 		return

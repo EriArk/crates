@@ -22,7 +22,6 @@ func start(target: Node3D, make_fallback: Callable, endpoint: String) -> void:
 	add_child(client)
 	client.appearance_changed.connect(_received)
 	client.unavailable.connect(func(_reason): revoke())
-	client.connect_host()
 
 func _received(descriptor: Dictionary) -> void:
 	# Keep only the latest saved appearance; never replace a rig during a shot.
