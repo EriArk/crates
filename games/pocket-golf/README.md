@@ -4,6 +4,14 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
+**0.1.18 adds a Contrast slider** to Graphics (80–150%, original image at 100%).
+Pointer/touch adjusts the slider; on a controller use up/down to select it,
+left/right to adjust and confirm to reset to 100%. Changes are immediate and
+saved locally, independently of the quality preset. Native Environment contrast
+affects the 3D world after tonemapping, leaving the HUD/menu unchanged. Local
+render checks verify actual pixel changes in both Vulkan Mobile and OpenGL;
+device display calibration and gameplay remain the owner's check.
+
 **0.1.17 adds local graphics settings** in Main menu / Pause → Graphics.
 Performance, Balanced and Quality change shadows, antialiasing, grass, small
 plants, water and depth of field. 3D resolution (50/75/100%) keeps the HUD sharp;

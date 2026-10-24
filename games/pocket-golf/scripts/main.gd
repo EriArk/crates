@@ -16,6 +16,8 @@ const Graphics = preload("res://scripts/graphics_settings.gd")
 var graphics = Graphics.new()
 var graphics_open := false
 var graphics_notice := ""
+var contrast_slider: HSlider
+var contrast_label: Label
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
@@ -133,6 +135,7 @@ func _setup_scene() -> void:
 	# Compatibility blends shadowed lighting differently; keep the pastel palette readable.
 	var compatibility := RenderingServer.get_current_rendering_method()=="gl_compatibility"
 	var environment := WorldEnvironment.new()
+	environment.name="WorldEnvironment"
 	var env := Environment.new()
 	env.background_mode=Environment.BG_SKY
 	var sky := Sky.new(); var sky_material := ProceduralSkyMaterial.new()
@@ -375,6 +378,14 @@ func _refresh() -> void:
 			button(popup_buttons,"",func(): graphics.quality=(graphics.quality+1)%3; _apply_graphics())
 			button(popup_buttons,"",func(): graphics.scale_percent={50:75,75:100,100:50}[graphics.scale_percent]; _apply_graphics())
 			button(popup_buttons,"",func(): graphics.fps=30 if graphics.fps==60 else 60; _apply_graphics())
+			var contrast_row := HBoxContainer.new(); popup_buttons.add_child(contrast_row)
+			contrast_label=Label.new(); contrast_label.custom_minimum_size.x=156; contrast_row.add_child(contrast_label)
+			contrast_slider=HSlider.new(); contrast_slider.min_value=80; contrast_slider.max_value=150; contrast_slider.step=5
+			contrast_slider.custom_minimum_size=Vector2(180,46); contrast_slider.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			contrast_slider.tooltip_text="100% is the original image. Left/right adjusts; confirm resets."
+			contrast_slider.set_value_no_signal(graphics.contrast_percent); contrast_row.add_child(contrast_slider)
+			contrast_slider.value_changed.connect(func(value):
+				graphics.contrast_percent=roundi(value); graphics.apply_contrast(self); _save_graphics(); _refresh())
 			button(popup_buttons,"Back",_close_graphics)
 		if popup_buttons.get_child_count()>0: popup_buttons.get_child(0).grab_focus()
 	elif not popup.visible: last_popup=""
@@ -382,10 +393,12 @@ func _refresh() -> void:
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
 	if game.phase=="waiting" and not paused: popup_text.text=game.info
 	if state=="graphics":
-		popup_text.text=Graphics.DESCRIPTIONS[graphics.quality]+"\n"+("Saved on this device · applies immediately." if graphics_notice.is_empty() else graphics_notice)
+		popup_text.text="Applies now · saved on this device\nContrast: 100% = original image" if graphics_notice.is_empty() else graphics_notice
 		popup_buttons.get_child(0).text="Quality: "+Graphics.TITLES[graphics.quality]
 		popup_buttons.get_child(1).text="3D resolution: %d%%"%graphics.scale_percent
 		popup_buttons.get_child(2).text="Frame limit: %d FPS"%graphics.fps
+		contrast_label.text="Contrast: %d%%"%graphics.contrast_percent
+		contrast_slider.set_value_no_signal(graphics.contrast_percent)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
 	if state=="result" and game.voted:
 		popup_text.text="Rematch requested. Waiting for your friend…"
@@ -399,8 +412,20 @@ func _close_graphics() -> void:
 
 func _apply_graphics() -> void:
 	graphics.apply(self)
-	graphics_notice="Could not save settings; active until exit." if graphics.save_settings()!=OK else ""
+	_save_graphics()
 	_refresh()
+
+func _save_graphics() -> void:
+	graphics_notice="Could not save settings; active until exit." if graphics.save_settings()!=OK else ""
+
+func _popup_controls() -> Array[Control]:
+	var result: Array[Control] = []
+	for child in popup_buttons.get_children():
+		if child is Button: result.append(child)
+		elif child is Container:
+			for control in child.get_children():
+				if control is Slider: result.append(control)
+	return result
 
 func _start_local(count: int) -> void:
 	# Force presentation rebuild when switching one/two-player modes on the same hole.
@@ -504,7 +529,10 @@ func _poll_stick(delta: float) -> void:
 func _direction(x: int, y: int) -> void:
 	if popup.visible:
 		var focused := get_viewport().gui_get_focus_owner()
-		var list := popup_buttons.get_children()
+		if focused is Slider and x!=0:
+			focused.value+=x*focused.step
+			return
+		var list := _popup_controls()
 		if not list.is_empty(): list[posmod(list.find(focused)+(1 if y>0 or x>0 else -1),list.size())].grab_focus()
 	elif not paused: game.adjust(x,-y)
 	_refresh()
@@ -512,7 +540,10 @@ func _direction(x: int, y: int) -> void:
 func _primary() -> void:
 	if popup.visible:
 		var focus := get_viewport().gui_get_focus_owner()
-		if focus not in popup_buttons.get_children() and popup_buttons.get_child_count()>0: focus=popup_buttons.get_child(0)
+		if graphics_open and focus==contrast_slider:
+			contrast_slider.value=100; return
+		var list := _popup_controls()
+		if focus not in list and not list.is_empty(): focus=list[0]
 		if focus is Button and not focus.disabled: focus.pressed.emit()
 	elif not paused: game.fire()
 
