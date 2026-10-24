@@ -8,8 +8,10 @@ pass a controller between two people, or play with a friend through TrainerOS Lo
 placement beside the active ball are independent of the local right to fire.
 The real paired SDK/Godot test checks both during the opponent's aiming turn.
 0.1.13 already proved Crates installation, cold startup, bidirectional putts and
-return to the same Lobby on Odin/Flip. Updated device visual acceptance, a complete
-device match, physical controls and different networks remain open.
+return to the same Lobby on Odin/Flip. 0.1.15 was then updated through Crates on
+both devices: distinct peer appearances, correct stance before either player's
+putt, two opposing shots and return to the same room were verified. A complete
+device match, physical controls, different networks and owner art review remain open.
 
 Shots now scatter grass or sand, fast rolls leave a brief soft streak, wood and
 stone contacts shed different chips, and cup entry lights a short ring above the
