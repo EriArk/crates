@@ -3,7 +3,12 @@
 #include <QRandomGenerator>
 using namespace arcade;
 ArcadeGame::ArcadeGame(Kind kind,QString endpoint,QObject* parent)
-    :QObject(parent),identity_(identity(kind)),rules_(makeRules(kind)),bridge_(identity_,endpoint){
+    :QObject(parent),identity_(identity(kind)),rules_(makeRules(kind)),bridge_(identity_,endpoint),avatars_("art.abysstail."+identity_.id+".avatar",endpoint){
+    avatars_.sendRecord=[this](const QJsonObject& r){return bridge_.send(r);};
+    connect(&bridge_,&ArcadeBridge::ready,&avatars_,[this](bool){avatars_.session(bridge_.peerMember());});
+    connect(&bridge_,&ArcadeBridge::closed,&avatars_,&AvatarCards::clearPeer);
+    connect(&bridge_,&ArcadeBridge::avatarRecord,&avatars_,&AvatarCards::receive);
+
     rules_->reset(1);view_=rules_->view();
     clock_.setInterval(33);clock_.setTimerType(Qt::PreciseTimer);
     connect(&clock_,&QTimer::timeout,this,&ArcadeGame::tick);
@@ -18,7 +23,8 @@ ArcadeGame::ArcadeGame(Kind kind,QString endpoint,QObject* parent)
     connect(&bridge_,&ArcadeBridge::status,this,[this](const QString& text){status_=text;emit changed();});
     connect(&bridge_,&ArcadeBridge::closed,this,[this]{if(online_)stopped();});
     connect(&bridge_,&ArcadeBridge::ready,this,[this](bool host){
-        if(!online_||phase_!="waiting"){bridge_.closeChannel();return;}
+        if(phase_!="menu"){bridge_.closeChannel();return;}
+        online_=true;couch_=false;phase_="waiting";
         host_=host;seat_=host?0:1;round_=0;sync_="start";deadline_.start();
         if(host_)startRound(QRandomGenerator::global()->generate());
     });
@@ -43,12 +49,8 @@ void ArcadeGame::local(bool couch){
     bridge_.disconnectHost();online_=false;couch_=couch;seat_=0;round_=0;
     startRound(QRandomGenerator::global()->generate());
 }
-void ArcadeGame::join(){
-    if(phase_!="menu"&&phase_!="waiting")return;
-    online_=true;couch_=false;phase_="waiting";bridge_.connectHost();emit changed();
-}
-void ArcadeGame::lobby(){if(bridge_.registered())bridge_.openLobby();else join();}
-void ArcadeGame::leave(){bridge_.closeChannel();stopped();}
+void ArcadeGame::attach(){avatars_.start();if(phase_=="menu")bridge_.connectHost();}
+void ArcadeGame::leave(){bridge_.closeChannel();stopped();attach();}
 bool ArcadeGame::send(QJsonObject packet){
     packet["round"]=round_;
     if(bridge_.send(packet))return true;

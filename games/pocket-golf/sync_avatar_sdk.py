@@ -5,7 +5,7 @@ import argparse, hashlib, json, pathlib, subprocess
 
 root = pathlib.Path(__file__).resolve().parent
 target = root / 'addons/traineros'
-names = ['avatar_client.gd', 'avatar_presenter.gd', 'avatar_exchange.gd']
+names = ['avatar_client.gd', 'avatar_presenter.gd', 'avatar_exchange.gd', 'avatar_portrait.gd']
 parser = argparse.ArgumentParser()
 parser.add_argument('sdk', type=pathlib.Path, nargs='?')
 parser.add_argument('--verify', action='store_true')

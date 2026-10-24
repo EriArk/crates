@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/EriArk/TrainerOS",
+  "revision": "e93f113a924b35bb6941883d8e14beca2259acea",
+  "normalization": "LF",
+  "license": "GPL-3.0-or-later",
+  "sha256": {
+    "AvatarCards.h": "071c4ea679360bbd506293733895135996936fb2ece910c23488956408099297",
+    "AvatarPortrait.qml": "8eba4e7e8fcc2e6c0c229b6b9e3242c281e295b4a1dd88e4d4c8265025c69f1b",
+    "AvatarPortraitScene.qml": "bc78a2e4cf58131452d7e24c1ca390b13aecc50f9020582d760938931c792a3e",
+    "PlayerCard.qml": "6ae1c382218a2190c25e398fe9330d87da1e541e2fdfac69f35f02323b12fa8e"
+  }
+}

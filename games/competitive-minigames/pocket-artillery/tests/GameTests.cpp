@@ -89,14 +89,14 @@ private slots:
     void unavailableHostReturnsToLocalPlay(){
         QTemporaryDir directory;
         Game game(directory.filePath("missing.json"));
-        game.join();QCOMPARE(game.phase(),"menu");QVERIFY(!game.online());
+        game.attach();QCOMPARE(game.phase(),"menu");QVERIFY(!game.online());
         game.local();game.acceptTurn();QVERIFY(game.canFire());
 
         QTcpServer server;QVERIFY(server.listen(QHostAddress::LocalHost));
         const auto endpoint=directory.filePath("endpoint.json");
         QFile file(endpoint);QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(QJsonDocument(QJsonObject{{"protocol",1},{"host","127.0.0.1"},{"port",server.serverPort()},{"token","test"}}).toJson());file.close();
-        Game disconnected(endpoint);disconnected.join();
+        Game disconnected(endpoint);disconnected.attach();
         QTRY_VERIFY(server.hasPendingConnections());
         auto* client=server.nextPendingConnection();client->disconnectFromHost();
         QTRY_COMPARE(disconnected.phase(),"menu");QVERIFY(!disconnected.online());

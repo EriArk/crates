@@ -1,6 +1,10 @@
 # Crates arcade integration
 
-Prepared **0.1.1** repair: [controls, presentation and handoff](../docs/controls-and-presentation.md).
+**0.1.2** migrates all eight games to Lobby-first launch. Each package includes
+`traineros-activity.json`; the game attaches to the SDK after its first frame.
+Registration keeps the solo menu intact, and only an admitted `network.ready`
+starts the online match. Protocols and game rules are unchanged.
+The earlier 0.1.1 repair is recorded in [controls and presentation](../docs/controls-and-presentation.md).
 All eight arcade games and Pocket Artillery use `ControllerInput.h`: left stick,
 D-pad, semantic actions, focus neutralisation and stable controller seats.
 The touch panel is optional and returns on touch; hardware input hides it.
@@ -18,9 +22,10 @@ parameterized game identity. This is application-side support, not a new Trainer
 - **Practice with bot:** offline, one human against a simple local bot.
 - **Two on this device:** simultaneous independent controls. Mint uses WASD or
   controller 1; Coral uses arrows or controller 2. Each has visible touch buttons.
-- **Play with a friend:** both players open the same game, select this option,
-  then use ordinary **GameHub → Lobby**: choose the game, prepare, both Ready,
-  organizer Start. The game does not create an additional room or account.
+- **Online:** install the game on both devices, then use **GameHub → Lobby**:
+  choose the installed game, prepare, both Ready, organizer Start. TrainerOS
+  launches both clients and attaches them to the admitted session. Opening the
+  game first is unnecessary; the solo menu has no multiplayer entry button.
 - Each match starts with a two-second countdown. Back/Escape opens the leave
   confirmation. Local play pauses for the dialog or loss of focus and resumes
   explicitly. An online match continues while a player opens the menu or loses focus;

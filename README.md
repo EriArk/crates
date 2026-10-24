@@ -5,41 +5,42 @@ concepts; implementation and verification are recorded per project.
 
 **Implemented projects:**
 
-- [Pocket Golf](games/pocket-golf/) — separate Godot 4 preparation: three 3D greens,
-  solo/local two-player play and existing SDK Lobby integration. Shared avatar
-  integration is pending; the golfer is a temporary marker. Not published.
+- [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
+  Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.
+  Version 0.1.15 is published and installed on Odin/Flip; 0.1.16 adds static
+  player portraits. See [current evidence](PROJECT_STATUS.md).
 
 - [Session Timer](widgets/session-timer/) — a session stopwatch, Start widget and
   optional break reminders.
 - [Pocket Artillery](games/competitive-minigames/pocket-artillery/) — a two-player
   duel with destructible terrain, local pass-controller play and optional TrainerOS Lobby integration.
 
-Both have experimental x86_64 and ARM64 builds in the signed TrainerOS
-catalogue (revision 6). Public download, installation and managed launch passed on
-Linux x86_64 and emulated ARM64 with updated TrainerOS helpers/SDK. Handheld acceptance and Pocket
-Artillery's live internet checks remain open.
+These projects have experimental x86_64 and ARM64 builds in the signed TrainerOS
+catalogue. Public download, installation and managed launch have been checked;
+device evidence and remaining gameplay/network acceptance are recorded per version
+in [PROJECT_STATUS](PROJECT_STATUS.md), not implied by package availability.
 
 **New experimental desktop games:** [Pong](games/competitive-minigames/pong/),
 [Snake Arena](games/competitive-minigames/snake-arena/) and
 [Light Cycles](games/competitive-minigames/light-cycles/) add bot practice,
 simultaneous local controls and matches through TrainerOS Lobby. Their separate
-Linux packages are prepared; public catalogue publication, ARM and live internet
-acceptance remain open.
+Linux packages are published and installed on Odin/Flip. New 0.1.2 packages add
+Lobby-first launch and player portraits; separate-network acceptance remains open.
 
 **Next games prepared:** [Falling Blocks](games/competitive-minigames/falling-blocks/),
 [Minesweeper Race](games/competitive-minigames/minesweeper-race/) and
-[Chain Reaction](games/competitive-minigames/chain-reaction/). Preparation happens in
-a separate branch; publication and installed acceptance belong to the main workflow.
+[Chain Reaction](games/competitive-minigames/chain-reaction/). These are now published
+alongside the other native arcades; the preparation report below is historical.
 See [the handoff](games/competitive-minigames/docs/puzzle-trio-preparation.md).
 
 **Brick Game duo prepared:** [Brick Racing](games/competitive-minigames/mini-racing/)
 and [Brick Tanks](games/competitive-minigames/tanks/) add shared-road overtaking
-and destructible-cover duels, plus training bots.
+and destructible-cover duels, plus training bots. Both are published native games.
 [Preparation and handoff](games/competitive-minigames/docs/brick-duo-preparation.md).
 
 **Experimental Linux x86_64 / ARM64 downloads:**
 [Session Timer 0.1.0](https://github.com/EriArk/crates/releases/tag/session-timer-v0.1.0)
-and [Pocket Artillery 0.1.0](https://github.com/EriArk/crates/releases/tag/pocket-artillery-v0.1.0).
+and [all game releases](https://github.com/EriArk/crates/releases).
 Each release includes architecture-specific packages/installer records and the same
 matching source archive. ARM additions use `SHA256SUMS-aarch64`; earlier x86_64
 assets and `SHA256SUMS` remain unchanged. The x86_64 baseline uses Qt 6.4;

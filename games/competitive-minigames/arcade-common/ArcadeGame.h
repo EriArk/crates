@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include "AvatarCards.h"
 #include "ArcadeBridge.h"
 #include <QElapsedTimer>
 #include <QVariantMap>
 
 class ArcadeGame final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QObject* avatars READ avatars CONSTANT)
     Q_PROPERTY(QString title READ title CONSTANT)
     Q_PROPERTY(QString slug READ slug CONSTANT)
     Q_PROPERTY(QString subtitle READ subtitle CONSTANT)
@@ -38,8 +40,8 @@ public:
     int seat() const{return seat_;}
     QString result() const;
     Q_INVOKABLE void local(bool couch=false);
-    Q_INVOKABLE void join();
-    Q_INVOKABLE void lobby();
+    void attach();
+    QObject* avatars(){return &avatars_;}
     Q_INVOKABLE void leave();
     Q_INVOKABLE void rematch();
     Q_INVOKABLE void input(int player,int direction);
@@ -54,6 +56,7 @@ private:
     arcade::Identity identity_;
     std::unique_ptr<arcade::Rules> rules_;
     ArcadeBridge bridge_;
+    AvatarCards avatars_;
     QTimer clock_,deadline_,watchdog_;
     QElapsedTimer received_;
     QJsonObject view_;

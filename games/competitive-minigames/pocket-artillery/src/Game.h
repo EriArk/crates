@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include "AvatarCards.h"
 #include "World.h"
 #include "Bridge.h"
 #include <QVariantList>
 
 class Game final:public QObject {
     Q_OBJECT
+    Q_PROPERTY(QObject* avatars READ avatars CONSTANT)
     Q_PROPERTY(QString phase READ phase NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(QString connection READ connection NOTIFY changed)
@@ -30,8 +32,8 @@ public:
     QVariantMap scene() const;
     const World& world() const{return world_;}
     Q_INVOKABLE void local();
-    Q_INVOKABLE void join();
-    Q_INVOKABLE void lobby();
+    void attach();
+    QObject* avatars(){return &avatars_;}
     Q_INVOKABLE void leave();
     Q_INVOKABLE void aim(int delta);
     Q_INVOKABLE void charge(int delta);
@@ -42,6 +44,7 @@ signals:
     void changed();
 private:
     Bridge bridge_;
+    AvatarCards avatars_;
     World world_,display_;
     World::Shot shot_;
     QTimer flight_,handshake_;

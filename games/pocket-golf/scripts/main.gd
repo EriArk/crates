@@ -60,6 +60,7 @@ func _ready() -> void:
 	game.shot_started.connect(_shot_started)
 	add_child(avatar_binding)
 	avatar_binding.start(anchor,_placeholder,game.bridge.endpoint_override)
+	avatar_binding.portraits_changed.connect(func(): hud.set_portraits(avatar_binding.local_portrait,avatar_binding.peer_portrait))
 	add_child(avatar_exchange)
 	avatar_exchange.start(avatar_binding.client,game.bridge)
 	avatar_exchange.can_resolve=func(): return game.phase!="moving"

@@ -13,6 +13,7 @@ class ArcadeBridge final:public QObject {
 public:
     explicit ArcadeBridge(arcade::Identity identity,QString endpoint={},QObject* parent=nullptr);
     ~ArcadeBridge() override;
+    QString peerMember() const {return peer_;}
     void connectHost();
     void openLobby();
     void closeChannel();
@@ -24,12 +25,13 @@ signals:
     void status(QString text);
     void ready(bool host);
     void record(QJsonObject value);
+    void avatarRecord(QJsonObject value);
     void closed();
 private:
     arcade::Identity identity_;
     QTcpSocket socket_;
     QTimer deadline_;
-    QString endpoint_,token_,channel_;
+    QString endpoint_,token_,channel_,peer_;
     struct Request {QString method,channel;};
     QHash<QString,Request> pending_;
     QByteArray input_;

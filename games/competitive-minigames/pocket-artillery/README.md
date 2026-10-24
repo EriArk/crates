@@ -4,9 +4,10 @@ A two-player artillery duel: aim, set the power and fire across destructible hil
 Shells carve craters; explosions and falls damage the tanks. The last surviving
 tank wins. A round ends in a draw after 60 shots if both tanks survive.
 
-**Prepared update:** 0.1.2 adds close aiming, a whole-flight camera, impact focus
-and immediate damage feedback on top of the 0.1.1 controller repair.
-This is not a published or installed update. See the
+**0.1.3** adds the installed Lobby declaration and automatic SDK attachment after
+the first frame. Online matches launch from TrainerOS Lobby; registration alone
+keeps the solo menu open. Version 0.1.2 added close aiming, a whole-flight camera,
+impact focus and immediate damage feedback on top of the 0.1.1 controller repair. See the
 [Pocket Artillery review and handoff](docs/presentation-pass.md).
 
 ![Local duel in the Linux desktop build](docs/duel.png)
@@ -15,9 +16,9 @@ This is not a published or installed update. See the
 
 - **Play on one device:** pass the controls between Mint and Coral. Each player
   confirms the handoff before aiming. This mode works without TrainerOS or an account.
-- **Play with a friend:** both players open the game and select this option.
-  In TrainerOS **GameHub → Lobby**, create/join the usual room, select Pocket Artillery,
-  prepare, mark both players Ready, then the organizer presses Start. Invitations
+- **Online:** install the game on both devices. In TrainerOS **GameHub → Lobby**,
+  create/join the usual room, select Pocket Artillery, prepare, mark both players
+  Ready, then the organizer presses Start. TrainerOS launches both games. Invitations
   and membership belong to TrainerOS; the game does not create a second room system.
 - Left/right changes angle; up/down changes power. Confirm/Enter/Space fires.
   Back/Escape or Start opens the leave confirmation. The D-pad or left stick aims;

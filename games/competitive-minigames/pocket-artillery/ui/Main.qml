@@ -7,6 +7,7 @@ Window {
     width: 960; height: 600; minimumWidth: 640; minimumHeight: 440
     visible: true; title: "Pocket Artillery"; color: "#f5f0e4"
     property bool touchControls: true
+    property real cardScale:Math.max(1,Math.min(1.5,height/720))
     property int padCount: 0
     property string primaryGlyph: "A"
     property string secondaryGlyph: "X"
@@ -34,8 +35,8 @@ Window {
     function back() { if (asking) asking = false; else if (menu) Qt.quit(); else asking = true }
     function primary() {
         if (asking) { game.leave(); asking = false }
-        else if (menu) { if (selected === 0) game.local(); else game.join() }
-        else if (waiting) game.lobby()
+        else if (menu) { if (selected === 0) game.local(); else Qt.quit() }
+        else if (waiting) game.leave()
         else if (game.phase === "handoff") game.acceptTurn()
         else if (game.phase === "result") game.rematch()
         else game.fire()
@@ -73,13 +74,29 @@ Window {
     }
     Rectangle {
         x: 0; y: 0; width: parent.width; height: 58; color: "#faf7ef"
-        Text { x: 16; y: 7; text: "POCKET ARTILLERY"; font.pixelSize: width < 700 ? 17 : 19; font.bold: true; color: "#294a40" }
+        Text { x: 16; y: 7; text: window.width<800?"ARTILLERY":"POCKET ARTILLERY"; font.pixelSize: 17; font.bold: true; color: "#294a40" }
         Text { x: 16; y: 34; text: game.online ? "FRIEND DUEL  ·  YOU ARE " + (game.seat === 0 ? "MINT" : "CORAL") : "TWO PLAYERS  ·  ONE DEVICE"; font.pixelSize: 11; font.letterSpacing: 1; color: "#64776b" }
         Button { anchors.right: parent.right; anchors.rightMargin: 12; y: 8; width: 76; height: 40; label: menu ? "Exit" : "Menu"; onActivated: window.back() }
     }
+    Row {
+        x:12;y:62;spacing:8
+        Repeater {
+            model:2
+            PlayerCard {
+                required property int index
+                width:148*window.cardScale;height:48*window.cardScale
+                property bool own:index===(game.online?game.seat:0)
+                descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
+                label:own?"YOU":game.online?"FRIEND":"GUEST"
+                detail:index===0?"MINT":"CORAL"
+                accent:index===0?"#8eddb4":"#f4aa89"
+                current:!window.menu && !window.waiting && window.sceneData.turn===index
+            }
+        }
+    }
     Battlefield {
         id: battlefield; objectName: "battlefield"
-        x: 8; y: 64; width: parent.width-16; height: parent.height-y-(touchControls?108:62)
+        x: 8; y: 68+48*window.cardScale; width: parent.width-16; height: parent.height-y-(touchControls?108:62)
         closeAim: game.canFire && !window.asking && !window.wideView
         overview: window.wideView
         overviewKey: window.padCount > 0 ? window.secondaryGlyph : "Tab"
@@ -107,7 +124,7 @@ Window {
         Text { anchors.horizontalCenter:parent.horizontalCenter;text:padCount>0?"Stick / D-pad: aim and power     "+primaryGlyph+": fire     "+secondaryGlyph+": view     "+backGlyph+" / Start: menu":"Left / right: angle     Up / down: power     Enter: fire     Tab: view     Esc: menu";color:"#597060";font.pixelSize:13 }
     }
     Rectangle {
-        visible: overlay; x: 8; y: 64; width: parent.width-16; height: parent.height-y-(touchControls?108:62); radius: 18; color: "#77405145"
+        visible: overlay; x: 8; y: 68+48*window.cardScale; width: parent.width-16; height: parent.height-y-(touchControls?108:62); radius: 18; color: "#77405145"
         MouseArea { anchors.fill: parent } // No click-through into the battlefield.
         Rectangle {
             width: Math.min(parent.width-28,540); height: Math.min(parent.height-16,270); radius: 20; anchors.centerIn: parent; color: "#faf7ee"; border.color: "#d6dcc9"
@@ -118,8 +135,8 @@ Window {
             }
             Row {
                 anchors.bottom:parent.bottom; anchors.bottomMargin:14; anchors.horizontalCenter:parent.horizontalCenter; spacing:10
-                Button { objectName:"primaryButton"; width:menu?Math.min(210,(window.width-100)/2):210; height:44; highlighted:!menu||selected===0; label:asking?"Leave duel":menu?"Play on one device":waiting?"Open Lobby":game.phase==="handoff"?"Ready to aim":game.voted?"Rematch requested":"Play again"; enabled:!(!asking&&game.phase==="result"&&game.voted); onActivated:{if(menu)selected=0;window.primary()} }
-                Button { visible:menu||asking; width:menu?Math.min(210,(window.width-100)/2):140; height:44; highlighted:menu&&selected===1; label:asking?"Keep playing":"Play with a friend"; tint:"#efcfb9"; onActivated:{if(asking)asking=false;else{selected=1;game.join()}} }
+                Button { objectName:"primaryButton"; width:menu?Math.min(210,(window.width-100)/2):210; height:44; highlighted:!menu||selected===0; label:asking?"Leave duel":menu?"Play on one device":waiting?"Cancel":game.phase==="handoff"?"Ready to aim":game.voted?"Rematch requested":"Play again"; enabled:!(!asking&&game.phase==="result"&&game.voted); onActivated:{if(menu)selected=0;window.primary()} }
+                Button { visible:menu||asking; width:menu?Math.min(210,(window.width-100)/2):140; height:44; highlighted:menu&&selected===1; label:asking?"Keep playing":"Exit"; tint:"#efcfb9"; onActivated:{if(asking)asking=false;else{selected=1;Qt.quit()}} }
             }
         }
     }

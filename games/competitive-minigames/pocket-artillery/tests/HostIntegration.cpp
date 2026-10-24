@@ -26,11 +26,20 @@ private slots:
         PlatformHost ah(ad),bh(bd);ah.setNetwork(&an);bh.setNetwork(&bn);ah.setContext({{"profile","alice"}});bh.setContext({{"profile","bob"}});
         const auto ae=dir.filePath("a/endpoint.json"),be=dir.filePath("b/endpoint.json");QVERIFY(ah.start(ae));QVERIFY(bh.start(be));
         QVERIFY(a.create("private"));QVERIFY(a.invite("2"));b.answer(true);
-        Game ga(ae),gb(be);ga.join();gb.join();
+        Game ga(ae),gb(be);
+        const auto slug=QString("pocket-artillery");
+        const QVariantList installed{QVariantMap{{"app","art.abysstail."+slug},{"title",slug},{"protocol",QString("pocket-artillery.2")},{"local","crates:"+slug}}};
+        an.setInstalledActivities(installed);bn.setInstalledActivities(installed);
+        int launches=0;
+        an.launchInstalled=[&](QString local){if(local!="crates:"+slug)return false;++launches;ga.attach();return true;};
+        bn.launchInstalled=[&](QString local){if(local!="crates:"+slug)return false;++launches;gb.attach();return true;};
+        QSignalSpy openedA(&an,&SdkNetwork::openLobbyRequested),openedB(&bn,&SdkNetwork::openLobbyRequested);
+        QCOMPARE(ga.phase(),"menu");QCOMPARE(gb.phase(),"menu");
         QTRY_COMPARE_WITH_TIMEOUT(an.activities().size(),1,10000);QTRY_COMPARE_WITH_TIMEOUT(bn.activities().size(),1,10000);
         const auto activity=an.activities().first().toMap();
         auto launch=[&]{return a.selectGame({activity["id"].toString(),activity["title"].toString(),activity["platform"].toString(),activity["mode"].toString(),2,QJsonObject::fromVariantMap(activity["runtime"].toMap())})&&ar.prepare()&&br.prepare()&&a.ready(true)&&b.ready(true)&&a.start();};
         QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"aim",30000);QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"aim",10000);
+        QCOMPARE(launches,2);QCOMPARE(openedA.count(),0);QCOMPARE(openedB.count(),0);
         QCOMPARE(ga.seat(),0);QCOMPARE(gb.seat(),1);QCOMPARE(ga.world().digest(),gb.world().digest());
         gb.fire();QCOMPARE(gb.world().ply,0); // Non-owner cannot shoot.
         int turns=0;
@@ -54,13 +63,13 @@ private slots:
         gb.rematch();QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"aim",5000);QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"aim",5000);
         QCOMPARE(ga.world().ply,0);QCOMPARE(ga.world().turn,1);QCOMPARE(ga.world().digest(),gb.world().digest());
         ga.leave();QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"menu",5000);QTRY_COMPARE(a.state()["phase"].toString(),"gathering");QCOMPARE(a.state()["members"].toArray().size(),2);
-        ga.join();gb.join();QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"aim",30000);QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"aim",5000);
+        QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"aim",30000);QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"aim",5000);
         QCOMPARE(ga.world().ply,0);QCOMPARE(ga.world().turn,0);
         ah.setContext({{"profile","new-owner"}});QTRY_COMPARE(ga.phase(),"menu");QTRY_COMPARE_WITH_TIMEOUT(gb.phase(),"menu",10000);
         QVERIFY(!ga.canFire());QCOMPARE(a.state()["members"].toArray().size(),2);
         // A peer can send arbitrary records. A fabricated result must end the duel,
         // not authorize state replacement or a ranked victory.
-        gb.local();QTRY_VERIFY(bn.activities().isEmpty());
+        gb.local();QTest::qWait(100);QCOMPARE(bn.activities().size(),1);
         Bridge bad(be);bool began=false,forgeOwnedTurn=false;
         connect(&bad,&Bridge::record,&bad,[&](QJsonObject packet){
             if(packet["type"]=="start")bad.send({{"type","ready"},{"round",packet["round"]},{"hash",packet["hash"]}});
@@ -71,13 +80,13 @@ private slots:
             if(forgeOwnedTurn&&packet["type"]=="shot")
                 bad.send({{"type","shot"},{"round",1},{"ply",1},{"angle",45},{"power",85},{"before",ga.world().digest()},{"after","fabricated"}});
         });
-        ga.join();bad.connectHost();QTRY_COMPARE(an.activities().size(),1);QTRY_COMPARE(bn.activities().size(),1);
+        bn.launchInstalled=[&](QString){bad.connectHost();return true;};ga.attach();bad.connectHost();QTRY_VERIFY(bad.registered());QTRY_COMPARE(an.activities().size(),1);QTRY_COMPARE(bn.activities().size(),1);
         QVERIFY(launch());QTRY_VERIFY_WITH_TIMEOUT(began,30000);QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"menu",5000);
         QCOMPARE(ga.world().ply,0);QVERIFY(ga.connection().contains("sync"));QCOMPARE(a.state()["members"].toArray().size(),2);
         // Now forge a result on a legitimate turn: validation must reject it
         // without committing the candidate state, independently of turn ownership.
         QTRY_VERIFY(bad.channel().isEmpty());QTRY_COMPARE(a.state()["phase"].toString(),"gathering");
-        forgeOwnedTurn=true;began=false;ga.join();bad.connectHost();QVERIFY(launch());
+        forgeOwnedTurn=true;began=false;ga.attach();bad.connectHost();QVERIFY(launch());
         QTRY_VERIFY_WITH_TIMEOUT(began,30000);QTRY_VERIFY(ga.canFire());
         auto expected=ga.world();expected.fire(ga.angle(),ga.power());ga.fire();
         QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"menu",5000);

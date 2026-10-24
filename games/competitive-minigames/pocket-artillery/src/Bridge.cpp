@@ -20,7 +20,7 @@ Bridge::~Bridge(){
     closing_=true;socket_.disconnect(this);socket_.abort();
 }
 void Bridge::connectHost(){
-    if(registered_){openLobby();return;}
+    if(registered_ || socket_.state()!=QAbstractSocket::UnconnectedState)return;
     disconnectHost();
     QFile file(endpoint_);
     if(!file.open(QIODevice::ReadOnly)||file.size()>65536){fail("Open TrainerOS to play with a friend.");return;}
@@ -70,6 +70,8 @@ void Bridge::packet(const QJsonObject& value){
             const auto s=value["session"].toObject();
             if(!channel_.isEmpty()||s["protocol"]!="pocket-artillery.2"||s["delivery"]!="reliable-ordered"||s["channel"].toString().isEmpty()){fail("Incompatible game session.");return;}
             if(!s["host"].isBool()){fail("Invalid game role.");return;}
+            peer_=s["peer"].toString();
+            if(peer_.isEmpty()){fail("Missing session peer.");return;}
             channel_=s["channel"].toString();receiveSequence_=0;emit ready(s["host"].toBool());return;
         }
         if(event=="network.closed"){
@@ -77,12 +79,15 @@ void Bridge::packet(const QJsonObject& value){
         }
         if(event=="network.data"){
             if(channel_.isEmpty()||value["channel"]!=channel_)return;
+            if(value["peer"].toString()!=peer_){fail("Unexpected session peer.");return;}
             const auto seq=value["sequence"].toString();
             if(seq!=QString::number(receiveSequence_++)){fail("Game record arrived out of order.");return;}
             const auto bytes=QByteArray::fromBase64(value["data"].toString().toLatin1(),QByteArray::AbortOnBase64DecodingErrors);
             QJsonParseError error;const auto doc=QJsonDocument::fromJson(bytes,&error);
             if(bytes.size()>16384||error.error!=QJsonParseError::NoError||!doc.isObject()){fail("Invalid game record.");return;}
-            const auto channel=channel_;emit record(doc.object());
+            const auto channel=channel_;
+            if(doc.object()["namespace"]=="traineros.avatar.v1")emit avatarRecord(doc.object());
+            else emit record(doc.object());
             // Consumption acknowledges validation, not animation or delivery of a reply.
             if(channel_==channel)call("network.consume",{{"channel",channel},{"sequence",seq}});
         }
@@ -97,6 +102,6 @@ void Bridge::packet(const QJsonObject& value){
         if(result["protocol"]!=1||caps["lobby.activity"]!=1||caps["network.records"]!=1){fail("This TrainerOS build needs native game networking support.");return;}
         call("activity.register",{{"title","Pocket Artillery"},{"protocol","pocket-artillery.2"}});
     }else if(method=="activity.register"){
-        registered_=true;emit status("Both players: open Pocket Artillery, choose it in Lobby, Ready, then host starts.");openLobby();
+        registered_=true;emit status("Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.");
     }
 }

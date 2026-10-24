@@ -14,7 +14,7 @@
 int main(int argc,char** argv){
     QGuiApplication app(argc,argv);
     const auto kind=arcade::Kind(ARCADE_KIND);
-    app.setApplicationName(arcade::identity(kind).title);app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.1");
+    app.setApplicationName(arcade::identity(kind).title);app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.2");
 #ifdef Q_OS_WIN
     app.setFont(QFont("Segoe UI"));
 #else
@@ -30,6 +30,9 @@ int main(int argc,char** argv){
     auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());if(!window)return 1;
     if(!parser.isSet("windowed"))window->showFullScreen();
     QObject::connect(window,&QWindow::activeChanged,&game,[&]{if(!window->isActive())game.pause(true);});
+    // Open IPC only after the first frame; registration never opens Lobby.
+    QObject::connect(window,&QQuickWindow::frameSwapped,&game,[&game]{game.attach();},
+                     Qt::ConnectionType(Qt::QueuedConnection|Qt::SingleShotConnection));
     ControllerInput controllers(window);
     if(parser.isSet("screenshot"))QTimer::singleShot(1200,window,[&]{app.exit(window->grabWindow().save(parser.value("screenshot"))?0:2);});
     return app.exec();

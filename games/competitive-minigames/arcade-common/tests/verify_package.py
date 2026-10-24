@@ -22,6 +22,8 @@ with tempfile.TemporaryDirectory(prefix='arcade-package-') as directory:
     home=Path(directory)
     with patch.dict(os.environ,{'HOME':str(home)}):
         store=Store(home/'packages');receipt=store.activate(a.archive,record)
+        declaration=json.loads((store.root/"objects"/receipt["object"]/"traineros-activity.json").read_text())
+        assert declaration==dict(schema=1,app="art.abysstail."+record["id"],protocol=record["id"]+(".2" if record["id"]=="pocket-artillery" else ".1"),seats=2)
         assert not (home/'.local/share/applications'/('org.traineros.crates.'+record['id']+'.desktop')).exists()
         data=store.root/('data/'+record['id']+'/owners')/('a'*64);data.mkdir(parents=True)
         (data/'preserved.txt').write_text('personal game data')

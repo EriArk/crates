@@ -2,11 +2,17 @@
 #include "Game.h"
 #include <QRandomGenerator>
 
-Game::Game(QString endpoint,QObject* parent):QObject(parent),bridge_(endpoint){
+Game::Game(QString endpoint,QObject* parent):QObject(parent),bridge_(endpoint),avatars_("art.abysstail.pocket-artillery.avatar",endpoint){
+    avatars_.sendRecord=[this](const QJsonObject& r){return bridge_.send(r);};
+    connect(&bridge_,&Bridge::ready,&avatars_,[this](bool){avatars_.session(bridge_.peerMember());});
+    connect(&bridge_,&Bridge::closed,&avatars_,&AvatarCards::clearPeer);
+    connect(&bridge_,&Bridge::avatarRecord,&avatars_,&AvatarCards::receive);
+
     connect(&bridge_,&Bridge::status,this,[this](QString text){connection_=text;emit changed();});
     connect(&bridge_,&Bridge::closed,this,[this]{if(online_){flight_.stop();handshake_.stop();phase_="menu";online_=false;sync_.clear();emit changed();}});
     connect(&bridge_,&Bridge::ready,this,[this](bool host){
-        if(!online_){bridge_.closeChannel();return;}
+        if(phase_!="menu"){bridge_.closeChannel();return;}
+        online_=true;phase_="waiting";
         host_=host;seat_=host?0:1;round_=0;sync_="start";handshake_.start();
         if(host_)startRound(QRandomGenerator::global()->generate());
     });
@@ -19,7 +25,7 @@ Game::Game(QString endpoint,QObject* parent):QObject(parent),bridge_(endpoint){
 }
 QString Game::message() const{
     if(phase_=="menu")return "Small tanks. Big craters.";
-    if(phase_=="waiting")return "Meet in GameHub Lobby";
+    if(phase_=="waiting")return "Preparing your match...";
     if(phase_=="result")return world_.winner==2?"A draw — one more round?":QString("%1 wins the duel!").arg(world_.winner==0?"Mint":"Coral");
     if(phase_=="flight")return frame_<shot_.path.size()?"Shell in flight…":shot_.hit?"Impact!":"Shot wide";
     if(phase_=="handoff")return QString("Pass the controls to %1").arg(world_.turn==0?"Mint":"Coral");
@@ -42,9 +48,8 @@ QVariantMap Game::scene() const{
         {"arcTop",arcTop},{"impactX",shot_.impact.x()},{"impactY",shot_.impact.y()},{"hit",shot_.hit},{"round",round_},{"impactAge",phase_=="flight"?std::max(-1,frame_-int(shot_.path.size())):-1}};
 }
 void Game::local(){bridge_.disconnectHost();online_=false;round_=0;startRound(QRandomGenerator::global()->generate());}
-void Game::join(){if(phase_!="menu"&&phase_!="waiting")return;online_=true;phase_="waiting";bridge_.connectHost();emit changed();}
-void Game::lobby(){if(bridge_.registered())bridge_.openLobby();else join();}
-void Game::leave(){flight_.stop();handshake_.stop();bridge_.closeChannel();phase_="menu";online_=false;sync_.clear();shot_={};emit changed();}
+void Game::attach(){avatars_.start();if(phase_=="menu")bridge_.connectHost();}
+void Game::leave(){flight_.stop();handshake_.stop();bridge_.closeChannel();phase_="menu";online_=false;sync_.clear();shot_={};emit changed();attach();}
 void Game::aim(int delta){if(canFire()){angle_=std::clamp(angle_+delta*5,10,80);emit changed();}}
 void Game::charge(int delta){if(canFire()){power_=std::clamp(power_+delta*5,20,100);emit changed();}}
 void Game::acceptTurn(){if(phase_=="handoff"){phase_="aim";emit changed();}}

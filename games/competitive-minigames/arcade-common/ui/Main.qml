@@ -7,6 +7,7 @@ Window {
     width: 960; height: 640; minimumWidth: 640; minimumHeight: 480
     visible: true; title: game.title; color: "#f4f0e6"
     property bool touchControls: true
+    property real cardScale:Math.max(1,Math.min(1.5,height/720))
     property int padCount: 0
     property string primaryGlyph: "A"
     property string secondaryGlyph: "X"
@@ -51,8 +52,8 @@ Window {
     }
     function primary() {
         if (asking) { asking=false; game.leave() }
-        else if (menu) { if(selected===2)game.join(); else game.local(selected===1) }
-        else if (waiting) game.lobby()
+        else if (menu) { if(selected===2)Qt.quit(); else game.local(selected===1) }
+        else if (waiting) game.leave()
         else if (game.phase === "paused") game.pause(false)
         else if (game.phase === "result") game.rematch()
     }
@@ -102,13 +103,29 @@ Window {
     }
     Rectangle {
         width:parent.width;height:58;color:"#fcf9f1"
-        Text {x:16;y:6;text:game.title;font.pixelSize:22;font.bold:true;color:"#2e4c40"}
+        Text {x:16;y:6;text:game.title;font.pixelSize:window.width<800?16:22;font.bold:true;color:"#2e4c40"}
         Text {x:17;y:34;text:game.online?"FRIEND MATCH · YOU ARE "+(game.seat===0?"MINT":"CORAL"):game.couch?"TWO PLAYERS · TWO CONTROLS":"PRACTICE · YOU AND A BOT";font.pixelSize:11;font.letterSpacing:0.6;color:"#65766a"}
         Button {anchors.right:parent.right;anchors.rightMargin:12;y:8;width:76;height:40;label:menu?"Exit":"Menu";onActivated:window.back()}
     }
+    Row {
+        x:12;y:62;spacing:8
+        Repeater {
+            model:2
+            PlayerCard {
+                required property int index
+                width:148*window.cardScale;height:48*window.cardScale
+                property bool own:index===(game.online?game.seat:0)
+                descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
+                label:own?"YOU":game.online?"FRIEND":game.couch?"GUEST":"BOT"
+                detail:index===0?"MINT":"CORAL"
+                accent:index===0?"#8eddb4":"#f4aa89"
+                current:game.slug==="chain-reaction" && !window.modal && window.sceneData.turn===index
+            }
+        }
+    }
     Rectangle {
         id:field
-        objectName:"playfield";x:8;y:64;width:parent.width-16;height:parent.height-y-(touchControls?108:36);radius:18;color:game.slug==="light-cycles"?"#172e37":"#e0e9dc"
+        objectName:"playfield";x:8;y:68+48*window.cardScale;width:parent.width-16;height:parent.height-y-(touchControls?108:36);radius:18;color:game.slug==="light-cycles"?"#172e37":"#e0e9dc"
         Loader {
             id:board;anchors.fill:parent;anchors.margins:4
             source:"qrc:/boards/"+game.slug+".qml"
@@ -167,7 +184,7 @@ Window {
             anchors.centerIn:parent;width:Math.min(parent.width-24,570);height:Math.min(parent.height-12,370);radius:20;color:"#fcf8ed";border.color:"#d4dcc9"
             Text {
                 x:20;y:14;width:parent.width-40;horizontalAlignment:Text.AlignHCenter;font.pixelSize:25;font.bold:true;color:"#2f5143"
-                text:asking?"Leave this match?":menu?game.subtitle:waiting?"Meet in GameHub Lobby":game.phase==="paused"?"Take a moment":game.result
+                text:asking?"Leave this match?":menu?game.subtitle:waiting?"Preparing your match...":game.phase==="paused"?"Take a moment":game.result
                 wrapMode:Text.WordWrap
             }
             Text {
@@ -181,11 +198,11 @@ Window {
                     Button {objectName:"practiceButton";width:210;height:42;highlighted:selected===0;label:"Practice with bot";onActivated:{selected=0;window.primary()}}
                     Button {objectName:"couchButton";width:210;height:42;highlighted:selected===1;label:"Two on this device";tint:"#eed0bd";onActivated:{selected=1;window.primary()}}
                 }
-                Button {objectName:"onlineButton";anchors.horizontalCenter:parent.horizontalCenter;width:260;height:42;highlighted:selected===2;label:"Play with a friend";onActivated:{selected=2;window.primary()}}
+                Button {objectName:"exitButton";anchors.horizontalCenter:parent.horizontalCenter;width:260;height:42;highlighted:selected===2;label:"Exit";onActivated:{selected=2;window.primary()}}
             }
             Row {
                 visible:!menu;anchors.bottom:parent.bottom;anchors.bottomMargin:14;anchors.horizontalCenter:parent.horizontalCenter;spacing:10
-                Button {objectName:"primaryButton";width:210;height:44;highlighted:true;label:asking?"Leave match":waiting?"Open Lobby":game.phase==="paused"?"Resume":game.voted?"Rematch requested":"Play again";enabled:asking||!game.voted||game.phase!=="result";onActivated:window.primary()}
+                Button {objectName:"primaryButton";width:210;height:44;highlighted:true;label:asking?"Leave match":waiting?"Cancel":game.phase==="paused"?"Resume":game.voted?"Rematch requested":"Play again";enabled:asking||!game.voted||game.phase!=="result";onActivated:window.primary()}
                 Button {visible:asking;width:140;height:44;label:"Keep playing";tint:"#eed0bd";onActivated:window.back()}
             }
         }

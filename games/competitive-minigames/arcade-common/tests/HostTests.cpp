@@ -25,7 +25,15 @@ private slots:
         ah.setContext({{"profile","alice"}});bh.setContext({{"profile","bob"}});
         const auto ae=dir.filePath("a/endpoint.json"),be=dir.filePath("b/endpoint.json");QVERIFY(ah.start(ae));QVERIFY(bh.start(be));
         QVERIFY(a.create("private"));QVERIFY(a.invite("2"));b.answer(true);
-        ArcadeGame ga(Kind(kind),ae),gb(Kind(kind),be);ga.join();gb.join();
+        ArcadeGame ga(Kind(kind),ae),gb(Kind(kind),be);
+        const auto slug=identity(Kind(kind)).id;
+        const QVariantList installed{QVariantMap{{"app","art.abysstail."+slug},{"title",slug},{"protocol",identity(Kind(kind)).id+".1"},{"local","crates:"+slug}}};
+        an.setInstalledActivities(installed);bn.setInstalledActivities(installed);
+        int launches=0;
+        an.launchInstalled=[&](QString local){if(local!="crates:"+slug)return false;++launches;ga.attach();return true;};
+        bn.launchInstalled=[&](QString local){if(local!="crates:"+slug)return false;++launches;gb.attach();return true;};
+        QSignalSpy openedA(&an,&SdkNetwork::openLobbyRequested),openedB(&bn,&SdkNetwork::openLobbyRequested);
+        QCOMPARE(ga.phase(),"menu");QCOMPARE(gb.phase(),"menu");
         QString lastA,lastB;
         connect(&ga,&ArcadeGame::changed,&ga,[&]{const auto value=ga.phase()+": "+ga.status();if(value!=lastA){lastA=value;qInfo().noquote()<<"host"<<value;}});
         connect(&gb,&ArcadeGame::changed,&gb,[&]{const auto value=gb.phase()+": "+gb.status();if(value!=lastB){lastB=value;qInfo().noquote()<<"guest"<<value;}});
@@ -33,6 +41,7 @@ private slots:
         const auto activity=an.activities().first().toMap();
         auto launch=[&]{return a.selectGame({activity["id"].toString(),activity["title"].toString(),activity["platform"].toString(),activity["mode"].toString(),2,QJsonObject::fromVariantMap(activity["runtime"].toMap())})&&ar.prepare()&&br.prepare()&&a.ready(true)&&b.ready(true)&&a.start();};
         QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"play",30000);QTRY_COMPARE(gb.phase(),"play");
+        QCOMPARE(launches,2);QCOMPARE(openedA.count(),0);QCOMPARE(openedB.count(),0);
         QCOMPARE(ga.seat(),0);QCOMPARE(gb.seat(),1);
         ga.control(0,kind==7?1:0);gb.control(0,kind==7?3:2); // Input from both sides traverses the game contract.
         QTRY_VERIFY_WITH_TIMEOUT(gb.scene()["tick"].toInt()>66,5000);
@@ -57,21 +66,22 @@ private slots:
                 else gb.control(0,cursor%9<target%9?1:cursor%9>target%9?3:cursor/9<target/9?2:0);
             });drive.start(250);
         }
-        QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"result",90000);QTRY_COMPARE(gb.phase(),"result");QCOMPARE(ga.scene(),gb.scene());
+        // Tanks has a 120-second rules limit when neither player lands enough hits.
+        QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"result",kind==7?150000:90000);QTRY_COMPARE(gb.phase(),"result");QCOMPARE(ga.scene(),gb.scene());
         drive.stop();
         ga.rematch();QTest::qWait(150);QCOMPARE(ga.phase(),"result");gb.rematch();
         QTRY_COMPARE(ga.phase(),"play");QTRY_COMPARE(gb.phase(),"play");QVERIFY(ga.scene()["tick"].toInt()<60);
         ga.leave();QTRY_COMPARE(gb.phase(),"menu");QTRY_COMPARE(a.state()["phase"].toString(),"gathering");QCOMPARE(a.state()["members"].toArray().size(),2);
-        ga.join();gb.join();QVERIFY(launch());QTRY_VERIFY_WITH_TIMEOUT(ga.phase()=="play"||ga.phase()=="menu",30000);QCOMPARE(ga.phase(),"play");QTRY_COMPARE(gb.phase(),"play");
+        QVERIFY(launch());QTRY_COMPARE_WITH_TIMEOUT(ga.phase(),"play",30000);QTRY_COMPARE(gb.phase(),"play");
         ah.setContext({{"profile","other"}});QTRY_COMPARE(ga.phase(),"menu");QTRY_COMPARE(gb.phase(),"menu");QCOMPARE(a.state()["members"].toArray().size(),2);
         // A peer cannot assign a winner or write a host snapshot.
-        gb.local();QTRY_VERIFY(bn.activities().isEmpty());ArcadeBridge bad(identity(Kind(kind)),be);bool began=false;
+        gb.local();QTest::qWait(100);QCOMPARE(bn.activities().size(),1);ArcadeBridge bad(identity(Kind(kind)),be);bool began=false;
         connect(&bad,&ArcadeBridge::record,&bad,[&](QJsonObject packet){
             if(packet["type"]=="start")bad.send({{"type","ready"},{"round",packet["round"]}});
             if(packet["type"]=="begin"){began=true;if(kind>=3)bad.send({{"type","action"},{"round",1},{"seq",0},{"action",99}});
                 else bad.send({{"type","state"},{"round",1},{"state",QJsonObject{{"winner",1}}}});}
         });
-        ga.join();bad.connectHost();QTRY_COMPARE(an.activities().size(),1);QTRY_COMPARE(bn.activities().size(),1);
+        bn.launchInstalled=[&](QString){bad.connectHost();return true;};ga.attach();bad.connectHost();QTRY_VERIFY(bad.registered());QTRY_COMPARE(an.activities().size(),1);QTRY_COMPARE(bn.activities().size(),1);
         QVERIFY(launch());QTRY_VERIFY_WITH_TIMEOUT(began,30000);QTRY_COMPARE(ga.phase(),"menu");
         QCOMPARE(ga.scene()["winner"].toInt(),-1);QCOMPARE(a.state()["members"].toArray().size(),2);
         a.leave();b.leave();

@@ -12,7 +12,7 @@
 
 int main(int argc,char** argv){
     QGuiApplication app(argc,argv);
-    app.setApplicationName("Pocket Artillery");app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.2");
+    app.setApplicationName("Pocket Artillery");app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.3");
 #ifdef Q_OS_WIN
     app.setFont(QFont("Segoe UI"));
 #else
@@ -32,6 +32,9 @@ int main(int argc,char** argv){
     if(!parser.isSet("windowed"))window->showFullScreen();
 
 
+    // Open IPC only after the first frame; registration never opens Lobby.
+    QObject::connect(window,&QQuickWindow::frameSwapped,&game,[&game]{game.attach();},
+                     Qt::ConnectionType(Qt::QueuedConnection|Qt::SingleShotConnection));
     ControllerInput controllers(window);
     if(parser.isSet("screenshot"))QTimer::singleShot(1800,window,[&]{const auto frame=window->grabWindow();app.exit(!frame.isNull()&&frame.save(parser.value("screenshot"))?0:2);});
     return app.exec();

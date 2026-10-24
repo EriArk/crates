@@ -12,6 +12,7 @@ class Bridge final:public QObject {
 public:
     explicit Bridge(QString endpoint={},QObject* parent=nullptr);
     ~Bridge() override;
+    QString peerMember() const {return peer_;}
     void connectHost();
     void openLobby();
     void closeChannel();
@@ -23,11 +24,12 @@ signals:
     void status(QString text);
     void ready(bool host);
     void record(QJsonObject value);
+    void avatarRecord(QJsonObject value);
     void closed();
 private:
     QTcpSocket socket_;
     QTimer deadline_;
-    QString endpoint_,token_,channel_;
+    QString endpoint_,token_,channel_,peer_;
     QHash<QString,QString> pending_;
     QByteArray input_;
     quint64 request_=0,receiveSequence_=0;

@@ -18,7 +18,7 @@ p = argparse.ArgumentParser()
 p.add_argument('game', choices=titles)
 p.add_argument('executable', type=Path)
 p.add_argument('output', type=Path)
-p.add_argument('--version', default='0.1.1')
+p.add_argument('--version', default='0.1.2')
 a = p.parse_args()
 match = re.search(r'project\(CratesArcade VERSION ([0-9.]+)', (base/'CMakeLists.txt').read_text())
 if not match or a.version != match.group(1):
@@ -31,7 +31,7 @@ if not arch:
     p.error('Unsupported ELF architecture')
 root = base/a.game
 files = {f'bin/{a.game}': binary}
-for name in ('LICENSE', 'README.md', 'icon.svg', 'docs/play.png'):
+for name in ('LICENSE', 'README.md', 'icon.svg', 'docs/play.png', 'traineros-activity.json'):
     files[name] = (root/name).read_bytes()
 a.output.mkdir(parents=True, exist_ok=True)
 name = f'{a.game}-{a.version}-{arch}.tar.gz'
@@ -63,7 +63,7 @@ source = a.output/f'{a.game}-{a.version}-source.tar.gz'
 with tarfile.open(source, 'w:gz') as tar:
     tar.add(base/'CMakeLists.txt', arcname='arcade/CMakeLists.txt')
     tar.add(base/'README.md', arcname='arcade/README.md')
-    for directory in ('docs', 'arcade-common', *titles):
+    for directory in ('docs', 'arcade-common', 'avatar-sdk', *titles):
         for path in sorted((base/directory).rglob('*')):
             if path.is_file() and '__pycache__' not in path.parts:
                 tar.add(path, arcname=Path('arcade')/path.relative_to(base))

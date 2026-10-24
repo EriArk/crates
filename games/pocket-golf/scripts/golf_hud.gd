@@ -16,6 +16,13 @@ var status := ""
 var distance := 0.0
 var elevation := 0.0
 var font: Font
+var local_portrait: Texture2D
+var peer_portrait: Texture2D
+
+func set_portraits(local_texture: Texture2D, peer_texture: Texture2D) -> void:
+	local_portrait=local_texture
+	peer_portrait=peer_texture
+	queue_redraw()
 
 func _ready() -> void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -164,9 +171,13 @@ func _draw() -> void:
 		var center := rect.position+Vector2(24,22)
 		draw_circle(center,16,color)
 		if active: draw_arc(center,19,0,TAU,32,PAPER,1.5,true)
-		# Initials are placeholders, not a second avatar/wardrobe implementation.
-		_text("M" if i==0 else "C",center+Vector2(-6,5),14,INK)
-		_text(("MINT" if i==0 else "CORAL")+(" · YOU" if state.online and state.seat==i else ""),rect.position+Vector2(49,17),11)
+		var own: bool = i==(state.seat if state.online else 0)
+		var portrait: Texture2D = local_portrait if own else peer_portrait if state.online else null
+		if portrait!=null: draw_texture_rect(portrait,Rect2(center-Vector2(21,21),Vector2(42,42)),false)
+		else:
+			draw_circle(center+Vector2(0,-5),5,INK)
+			draw_arc(center+Vector2(0,9),8,PI,TAU,20,INK,5,true)
+		_text("YOU" if own else "FRIEND" if state.online else "GUEST",rect.position+Vector2(49,17),11)
 		_text("%d strokes"%state.strokes[i],rect.position+Vector2(49,33),14)
 		_text("Σ%d"%state.totals[i],rect.position+Vector2(128,28),16,color)
 	if state.can_shoot:

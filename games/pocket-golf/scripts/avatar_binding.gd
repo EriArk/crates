@@ -3,6 +3,11 @@ extends Node
 ## Local SDK identity only. Guest/remote seats keep the anonymous game marker.
 const Client = preload("res://addons/traineros/avatar_client.gd")
 const Presenter = preload("res://addons/traineros/avatar_presenter.gd")
+const Portrait = preload("res://addons/traineros/avatar_portrait.gd")
+signal portraits_changed
+var local_portrait: Texture2D
+var peer_portrait: Texture2D
+var portrait_generation := [0,0]
 var client = Client.new()
 var anchor: Node3D
 var fallback: Callable
@@ -26,7 +31,20 @@ func start(target: Node3D, make_fallback: Callable, endpoint: String) -> void:
 func _received(descriptor: Dictionary) -> void:
 	# Keep only the latest saved appearance; never replace a rig during a shot.
 	pending=descriptor.duplicate(true)
+	_capture(descriptor,0)
 	select(local_turn,safe_boundary)
+
+func _capture(descriptor: Dictionary, slot: int) -> void:
+	portrait_generation[slot]+=1
+	var generation: int = portrait_generation[slot]
+	if slot==0: local_portrait=null
+	else: peer_portrait=null
+	portraits_changed.emit()
+	var texture = await Portrait.capture(self,descriptor)
+	if generation!=portrait_generation[slot]: return
+	if slot==0: local_portrait=texture
+	else: peer_portrait=texture
+	portraits_changed.emit()
 
 func _park(visual: Node3D) -> void:
 	if is_instance_valid(visual) and anchor.visual==visual:
@@ -39,9 +57,13 @@ func _park(visual: Node3D) -> void:
 func receive_peer(description: Dictionary, member: String) -> void:
 	peer_id=member
 	peer_pending=description.duplicate(true)
+	_capture(description,1)
 	select(local_turn,safe_boundary)
 
 func clear_peer() -> void:
+	portrait_generation[1]+=1
+	peer_portrait=null
+	portraits_changed.emit()
 	peer_pending={}; peer_id=""
 	if is_instance_valid(peer_visual):
 		if anchor.visual==peer_visual: anchor.clear_identity()
@@ -91,6 +113,9 @@ func eye_height() -> float:
 	return 1.05
 
 func revoke() -> void:
+	portrait_generation[0]+=1
+	local_portrait=null
+	portraits_changed.emit()
 	clear_peer()
 	pending.clear()
 	if is_instance_valid(local_visual):

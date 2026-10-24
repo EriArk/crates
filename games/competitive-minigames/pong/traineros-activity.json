@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "app": "art.abysstail.pong",
+  "protocol": "pong.1",
+  "seats": 2
+}

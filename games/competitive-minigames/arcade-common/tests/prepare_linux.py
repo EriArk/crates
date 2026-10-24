@@ -10,7 +10,7 @@ games=('pong','snake-arena','light-cycles','falling-blocks','minesweeper-race','
 def ssh(command):subprocess.run(['ssh','-o','BatchMode=yes',a.host,command],check=True)
 archive=out/'source.tar.gz'
 with tarfile.open(archive,'w:gz') as tar:
-    for name in ('CMakeLists.txt','arcade-common','pocket-artillery',*games):tar.add(base/name,arcname='source/'+name)
+    for name in ('CMakeLists.txt','arcade-common','avatar-sdk','pocket-artillery',*games):tar.add(base/name,arcname='source/'+name)
     tar.add(a.installer_source,arcname='host/packaging/crates')
 ssh('mkdir -p '+shlex.quote(a.remote));subprocess.run(['scp',str(archive),a.host+':'+a.remote+'/source.tar.gz'],check=True)
 ssh('tar -xzf '+a.remote+'/source.tar.gz -C '+a.remote)

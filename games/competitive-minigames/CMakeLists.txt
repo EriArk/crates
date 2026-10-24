@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.24)
-project(CratesArcade VERSION 0.1.1 LANGUAGES CXX)
+project(CratesArcade VERSION 0.1.2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_AUTOMOC ON)
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick Network)
 find_package(SDL2 REQUIRED)
 set(COMMON "${CMAKE_CURRENT_SOURCE_DIR}/arcade-common")
 add_library(arcade STATIC
+    avatar-sdk/AvatarCards.h
     ${COMMON}/Rules.h ${COMMON}/Rules.cpp ${COMMON}/ArcadeBridge.h ${COMMON}/ArcadeBridge.cpp
     ${COMMON}/ArcadeGame.h ${COMMON}/ArcadeGame.cpp
     pong/src/PongRules.h pong/src/PongRules.cpp
@@ -17,7 +18,7 @@ add_library(arcade STATIC
     chain-reaction/src/ChainRules.h chain-reaction/src/ChainRules.cpp
     mini-racing/src/RacingRules.h mini-racing/src/RacingRules.cpp
     tanks/src/TanksRules.h tanks/src/TanksRules.cpp)
-target_include_directories(arcade PUBLIC ${COMMON} ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(arcade PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/avatar-sdk ${COMMON} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(arcade PUBLIC Qt6::Quick Qt6::Network)
 set_source_files_properties(${COMMON}/ui/Main.qml PROPERTIES QT_RESOURCE_ALIAS ui/Main.qml)
 set_source_files_properties(${COMMON}/ui/ImpactFx.qml PROPERTIES QT_RESOURCE_ALIAS ui/ImpactFx.qml)
@@ -25,6 +26,10 @@ set(ARCADE_RESOURCES ${COMMON}/ui/Main.qml ${COMMON}/ui/ImpactFx.qml)
 foreach(slug pong snake-arena light-cycles falling-blocks minesweeper-race chain-reaction mini-racing tanks)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/${slug}/ui/Board.qml PROPERTIES QT_RESOURCE_ALIAS boards/${slug}.qml)
     list(APPEND ARCADE_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${slug}/ui/Board.qml)
+endforeach()
+foreach(name AvatarPortrait AvatarPortraitScene PlayerCard)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/avatar-sdk/${name}.qml PROPERTIES QT_RESOURCE_ALIAS ui/${name}.qml)
+    list(APPEND ARCADE_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/avatar-sdk/${name}.qml)
 endforeach()
 set(ARCADE_GAMES "pong;snake-arena;light-cycles;falling-blocks;minesweeper-race;chain-reaction;mini-racing;tanks" CACHE STRING "Games to build")
 foreach(slug IN LISTS ARCADE_GAMES)

@@ -149,7 +149,7 @@ private slots:
             }
         };
         connect(socket,&QTcpSocket::readyRead,&server,drain);drain();QTRY_VERIFY(bridge.registered());
-        auto ready=[&](QString channel){write({{"event","network.ready"},{"session",QJsonObject{{"channel",channel},{"host",true},{"protocol","pong.1"},{"delivery","reliable-ordered"}}}});};
+        auto ready=[&](QString channel){write({{"event","network.ready"},{"session",QJsonObject{{"channel",channel},{"peer","peer"},{"host",true},{"protocol","pong.1"},{"delivery","reliable-ordered"}}}});};
         ready("old");QTRY_COMPARE(bridge.channel(),"old");QVERIFY(bridge.send({{"type","state"}}));QTRY_VERIFY(!heldRequest.isEmpty());
         bridge.closeChannel();ready("new");QTRY_COMPARE(bridge.channel(),"new");
         write({{"id",heldRequest},{"error",QJsonObject{{"code","channel_unavailable"}}}});QTest::qWait(100);
@@ -205,7 +205,7 @@ private slots:
     }
     void uiAndLocalLifecycle(){
         QFETCH(int,kind);QTemporaryDir directory;ArcadeGame game(Kind(kind),directory.filePath("missing.json"));
-        game.join();QCOMPARE(game.phase(),"menu");QVERIFY(!game.online());
+        game.attach();QCOMPARE(game.phase(),"menu");QVERIFY(!game.online());
         QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
         QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);
         window->resize(640,480);QTest::qWait(150);QVERIFY(window->grabWindow().save(game.slug()+"-menu-small.png"));

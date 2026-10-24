@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "app": "art.abysstail.minesweeper-race",
+  "protocol": "minesweeper-race.1",
+  "seats": 2
+}
