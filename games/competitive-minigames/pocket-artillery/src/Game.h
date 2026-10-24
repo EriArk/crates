@@ -45,7 +45,7 @@ private:
     World world_,display_;
     World::Shot shot_;
     QTimer flight_,handshake_;
-    int frame_=0,angle_=45,power_=85,seat_=0,round_=0;
+    int frame_=0,angle_=45,power_=85,seat_=0,round_=0,shotAngle_=45,shotPower_=85;
     bool online_=false,host_=false,localVote_=false,peerVote_=false;
     QString phase_="menu",connection_="Play on one device, or invite a friend through TrainerOS.",sync_;
     void startRound(quint32 seed);
@@ -53,6 +53,6 @@ private:
     void receive(const QJsonObject& record);
     bool send(QJsonObject record);
     void invalid();
-    void animate(const World& before,const World::Shot& shot);
+    void animate(const World& before,const World::Shot& shot,int angle,int power);
     void finishFlight();
 };

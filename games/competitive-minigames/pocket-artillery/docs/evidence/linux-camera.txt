@@ -1,0 +1,9 @@
+********* Start testing of GameTests *********
+Config: Using QtTest library 6.4.2, Qt 6.4.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 13.2.0), ubuntu 24.04
+PASS   : GameTests::initTestCase()
+PASS   : GameTests::controllerAndReadableFlight()
+PASS   : GameTests::localUiAndInputs()
+PASS   : GameTests::highArcFitsSmallScreen()
+PASS   : GameTests::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 8845ms
+********* Finished testing of GameTests *********

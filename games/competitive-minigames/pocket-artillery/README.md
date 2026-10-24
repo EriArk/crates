@@ -4,9 +4,10 @@ A two-player artillery duel: aim, set the power and fire across destructible hil
 Shells carve craters; explosions and falls damage the tanks. The last surviving
 tank wins. A round ends in a draw after 60 shots if both tanks survive.
 
-**Prepared update:** 0.1.1 fixes controller input, scale and flight presentation.
+**Prepared update:** 0.1.2 adds close aiming, a whole-flight camera, impact focus
+and immediate damage feedback on top of the 0.1.1 controller repair.
 This is not a published or installed update. See the
-[repair evidence and handoff](../docs/controls-and-presentation.md).
+[Pocket Artillery review and handoff](docs/presentation-pass.md).
 
 ![Local duel in the Linux desktop build](docs/duel.png)
 
@@ -22,6 +23,12 @@ This is not a published or installed update. See the
   Back/Escape or Start opens the leave confirmation. The D-pad or left stick aims;
   hold a direction to repeat adjustments. Touch restores the optional screen controls;
   hardware input hides them. SDL2 handles connected controllers while Qt has focus.
+- X (Xbox layout), the displayed secondary controller button, Tab, or a tap on the
+  minimap switches between close aiming and the whole field. Angle and power remain
+  visible in either view. Flight automatically shows the arc, then focuses the impact.
+- Recoil, muzzle smoke, flying dirt, a brief hit flash and floating damage accompany
+  each shot. Terrain and health update at impact, followed by about one second to
+  read the result before the next handoff. Effects do not change the integer rules.
 - After the result, **Play again** creates new terrain and alternates the starting
   player. In a friend duel, both players must request the rematch.
 - Leaving or losing a connection ends the round, preserving persistent Lobby
@@ -36,8 +43,8 @@ The wider [collection plans](../docs/shared-approach.md) remain targets.
 
 Optional Platform SDK v1 capabilities: `lobby.activity: 1` and `network.records: 1`.
 App ID: `art.abysstail.pocket-artillery`; game protocol: `pocket-artillery.2`.
-Both participants must update: the enlarged tanks have matching hit areas and
-cannot share a match with the previous `.1` rules.
+Version 0.1.1 introduced enlarged tanks with matching hit areas; the older `.1`
+rules cannot share this match. Version 0.1.2 retains the `.2` protocol and rules.
 See the [SDK network contract](https://github.com/EriArk/TrainerOS/blob/codex/platform-sdk-foundation/sdk/NETWORK.md).
 
 The SDK discovers/authenticates the local host and supplies its existing two-peer
