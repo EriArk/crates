@@ -4,9 +4,9 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
-**0.1.14 fixes the missing opponent while waiting for a putt.** The scene no
-longer hides its character when the local player cannot fire. The real paired
-SDK/Godot test checks the admitted opponent is visible during their aiming turn.
+**0.1.15 fixes the opponent while waiting for a putt.** Both visibility and
+placement beside the active ball are independent of the local right to fire.
+The real paired SDK/Godot test checks both during the opponent's aiming turn.
 0.1.13 already proved Crates installation, cold startup, bidirectional putts and
 return to the same Lobby on Odin/Flip. Updated device visual acceptance, a complete
 device match, physical controls and different networks remain open.

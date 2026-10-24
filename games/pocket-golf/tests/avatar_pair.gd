@@ -36,9 +36,11 @@ func peer_changed(description: Dictionary, member: String) -> void:
 		# even though this client is not allowed to putt on their behalf.
 		var turn: int = ui.game.world.turn
 		var phase: String = ui.game.phase
+		ui.anchor.position=Vector3(0,-10,0)
 		ui.game.world.turn=1-ui.game.seat; ui.game.phase="aim"; ui.camera.view=1; ui._refresh()
 		check(not ui.game.can_fire() and ui.anchor.visible,"waiting player sees opponent aiming")
 		check(ui.anchor.visual==ui.avatar_binding.peer_visual,"scene displays admitted opponent")
+		check(ui.anchor.position.distance_to(ui.balls[ui.game.world.turn].position)<1.0,"waiting player sees opponent beside active ball")
 		ui.game.world.turn=turn; ui.game.phase=phase; ui._refresh()
 		print("received" if role=="host" else "consumed")
 	elif role=="guest":

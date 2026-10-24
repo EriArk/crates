@@ -320,15 +320,16 @@ func _refresh() -> void:
 	anchor.visible=(game.phase in ["aim","moving"]) and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
 	aim_root.visible=game.can_fire() and not paused
-	if game.can_fire():
+	if game.phase=="aim":
 		var ball: Vector3 = balls[game.world.turn].position
 		var radians := deg_to_rad(game.angle)
-		for i in aim_root.get_child_count():
-			var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
-			point.y=_ground(point)+0.012
-			aim_root.get_child(i).position=point
 		anchor.position=_stance(ball,radians)
 		anchor.rotation.y=-radians
+		if game.can_fire():
+			for i in aim_root.get_child_count():
+				var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
+				point.y=_ground(point)+0.012
+				aim_root.get_child(i).position=point
 	var state: String = "paused" if paused else game.phase
 	popup.visible=state in ["menu","waiting","handoff","result","paused"]
 	modal_shade.visible=popup.visible
