@@ -68,7 +68,7 @@ void ArcadeBridge::packet(const QJsonObject& value){
         if(event=="host.stopping"||event=="context.revoked"){fail("Trainer changed or TrainerOS closed. Reconnect to continue.");return;}
         if(event=="network.ready"){
             const auto s=value["session"].toObject();
-            if(!channel_.isEmpty()||s["protocol"]!=identity_.id+".1"||s["delivery"]!="reliable-ordered"||s["channel"].toString().isEmpty()){fail("Incompatible game session.");return;}
+            if(!channel_.isEmpty()||s["protocol"]!=identity_.id+".2"||s["delivery"]!="reliable-ordered"||s["channel"].toString().isEmpty()){fail("Incompatible game session.");return;}
             if(!s["host"].isBool()){fail("Invalid game role.");return;}
             peer_=s["peer"].toString();
             if(peer_.isEmpty()){fail("Missing session peer.");return;}
@@ -104,7 +104,7 @@ void ArcadeBridge::packet(const QJsonObject& value){
     if(method=="hello"){
         const auto caps=result["capabilities"].toObject();
         if(result["protocol"]!=1||caps["lobby.activity"]!=1||caps["network.records"]!=1){fail("This TrainerOS build needs native game networking support.");return;}
-        call("activity.register",{{"title",identity_.title},{"protocol",identity_.id+".1"}});
+        call("activity.register",{{"title",identity_.title},{"protocol",identity_.id+".2"}});
     }else if(method=="activity.register"){
         registered_=true;emit status("Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.");
     }

@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "app": "art.abysstail.mini-racing",
-  "protocol": "mini-racing.1",
+  "protocol": "mini-racing.2",
   "seats": 2
 }

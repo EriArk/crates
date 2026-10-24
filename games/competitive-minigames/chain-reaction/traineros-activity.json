@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "app": "art.abysstail.chain-reaction",
-  "protocol": "chain-reaction.1",
+  "protocol": "chain-reaction.2",
   "seats": 2
 }

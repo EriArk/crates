@@ -28,7 +28,7 @@ private slots:
         QVERIFY(a.create("private"));QVERIFY(a.invite("2"));b.answer(true);
         Game ga(ae),gb(be);
         const auto slug=QString("pocket-artillery");
-        const QVariantList installed{QVariantMap{{"app","art.abysstail."+slug},{"title",slug},{"protocol",QString("pocket-artillery.2")},{"local","crates:"+slug}}};
+        const QVariantList installed{QVariantMap{{"app","art.abysstail."+slug},{"title",slug},{"protocol",QString("pocket-artillery.3")},{"local","crates:"+slug}}};
         an.setInstalledActivities(installed);bn.setInstalledActivities(installed);
         int launches=0;
         an.launchInstalled=[&](QString local){if(local!="crates:"+slug)return false;++launches;ga.attach();return true;};

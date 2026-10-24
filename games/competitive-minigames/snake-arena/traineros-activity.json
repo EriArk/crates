@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "app": "art.abysstail.snake-arena",
-  "protocol": "snake-arena.1",
+  "protocol": "snake-arena.2",
   "seats": 2
 }

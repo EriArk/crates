@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "app": "art.abysstail.tanks",
-  "protocol": "tanks.1",
+  "protocol": "tanks.2",
   "seats": 2
 }

@@ -43,7 +43,7 @@ The wider [collection plans](../docs/shared-approach.md) remain targets.
 ## TrainerOS integration
 
 Optional Platform SDK v1 capabilities: `lobby.activity: 1` and `network.records: 1`.
-App ID: `art.abysstail.pocket-artillery`; game protocol: `pocket-artillery.2`.
+App ID: `art.abysstail.pocket-artillery`; game protocol: `pocket-artillery.3`.
 Version 0.1.1 introduced enlarged tanks with matching hit areas; the older `.1`
 rules cannot share this match. Version 0.1.2 retains the `.2` protocol and rules.
 See the [SDK network contract](https://github.com/EriArk/TrainerOS/blob/codex/platform-sdk-foundation/sdk/NETWORK.md).

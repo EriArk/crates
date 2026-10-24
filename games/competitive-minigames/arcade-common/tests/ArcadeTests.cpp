@@ -149,7 +149,7 @@ private slots:
             }
         };
         connect(socket,&QTcpSocket::readyRead,&server,drain);drain();QTRY_VERIFY(bridge.registered());
-        auto ready=[&](QString channel){write({{"event","network.ready"},{"session",QJsonObject{{"channel",channel},{"peer","peer"},{"host",true},{"protocol","pong.1"},{"delivery","reliable-ordered"}}}});};
+        auto ready=[&](QString channel){write({{"event","network.ready"},{"session",QJsonObject{{"channel",channel},{"peer","peer"},{"host",true},{"protocol","pong.2"},{"delivery","reliable-ordered"}}}});};
         ready("old");QTRY_COMPARE(bridge.channel(),"old");QVERIFY(bridge.send({{"type","state"}}));QTRY_VERIFY(!heldRequest.isEmpty());
         bridge.closeChannel();ready("new");QTRY_COMPARE(bridge.channel(),"new");
         write({{"id",heldRequest},{"error",QJsonObject{{"code","channel_unavailable"}}}});QTest::qWait(100);

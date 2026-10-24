@@ -45,7 +45,7 @@ pointer/touch checks do not establish physical controller or handheld acceptance
 ## Network contract
 
 Requires SDK v1 `lobby.activity` and `network.records`. App IDs are
-`art.abysstail.<game-id>` and protocols `<game-id>.1`; game IDs are `pong`,
+`art.abysstail.<game-id>` and protocols `<game-id>.2`; game IDs are `pong`,
 `snake-arena`, `light-cycles`, `falling-blocks`, `minesweeper-race`, `chain-reaction`, `mini-racing`, `tanks`. Missing capabilities return to the menu with a
 readable explanation and leave offline modes available.
 

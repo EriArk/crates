@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "app": "art.abysstail.light-cycles",
-  "protocol": "light-cycles.1",
+  "protocol": "light-cycles.2",
   "seats": 2
 }
