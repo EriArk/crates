@@ -64,8 +64,8 @@ func select(is_local: bool, can_replace: bool) -> void:
 		_park(local_visual)
 		if is_instance_valid(local_visual): local_visual.queue_free()
 		local_visual=replacement
-		# The game faces -Z; the SDK's unmodified model faces +Z.
-		local_visual.rotation.y=PI
+		# Stand side-on to the putting line, facing the ball on the right.
+		local_visual.rotation.y=PI/2
 		add_child(local_visual)
 		local_visual.visible=false
 	if can_replace and not peer_pending.is_empty():
@@ -76,7 +76,7 @@ func select(is_local: bool, can_replace: bool) -> void:
 			_park(peer_visual)
 			if is_instance_valid(peer_visual): peer_visual.queue_free()
 			peer_visual=replacement
-			peer_visual.rotation.y=PI
+			peer_visual.rotation.y=PI/2
 			add_child(peer_visual); peer_visual.visible=false
 	_park(peer_visual if local_turn else local_visual)
 	var selected: Node3D = local_visual if local_turn else peer_visual

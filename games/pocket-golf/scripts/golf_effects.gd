@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+const Size = preload("res://scripts/dimensions.gd")
 ## Presentation only. Absolute shot time keeps contacts and particle age correct
 ## when render frames are skipped. No RNG or writes to authoritative state.
 const Surface = preload("res://scripts/green_surface.gd")
@@ -51,7 +52,7 @@ func begin(shot: Dictionary, course: Dictionary) -> void:
 		var outgoing := point(shot,mini(frame+1,shot.path.size()-1))-p
 		# The impulse normal locates the surface contact on the sphere, not its centre.
 		var normal := (outgoing-incoming).normalized()
-		var contact := p-normal*0.18
+		var contact := p-normal*Size.BALL
 		var wood := absf(contact.x)>4.95 or absf(contact.z)>7.95
 		schedule("wood" if wood else "stone",frame/float(shot.hz),contact,clampf(incoming.length()*shot.hz/8.4,0.15,1),normal)
 	for frame in shot.rims:
@@ -110,7 +111,7 @@ func emit_event(event: Dictionary) -> void:
 	if kind=="trail":
 		var direction: Vector3 = event.direction
 		var orientation := Basis(Quaternion(Vector3.UP,direction.normalized()))
-		particle("trail",event.time,event.pos,Vector3.ZERO,Color(0.87,0.97,0.87,0.18),Vector3(0.035,(direction.length()+0.035)/2,0.035),0.16,0,orientation)
+		particle("trail",event.time,event.pos,Vector3.ZERO,Color(0.87,0.97,0.87,0.18),Vector3(0.008,(direction.length()+0.008)/2,0.008),0.16,0,orientation)
 		return
 	var color := Color("9ecb77")
 	var count := 5+roundi(event.strength*7)
@@ -120,9 +121,9 @@ func emit_event(event: Dictionary) -> void:
 		color=Color("e9c786") if kind!="stone" else Color("c9d5cb")
 		shape="grain" if kind in ["sand","strike_sand"] else "chip"
 	if kind=="sand": count=2; life=0.32
-	if kind in ["strike","strike_sand"]: halo(event,Color("ffe9ad"),0.48,0.22)
+	if kind in ["strike","strike_sand"]: halo(event,Color("ffe9ad"),0.12,0.22)
 	if kind=="rim":
-		halo(event,Color("fff2c5"),0.22,0.24); return
+		halo(event,Color("fff2c5"),0.10,0.24); return
 	if kind in ["cup","ace"]:
 		color=Color("f8d375"); life=0.78; count=28 if kind=="ace" else 16
 		halo(event,Color("ffdf86"),1.0 if kind=="ace" else 0.72,0.75)
@@ -133,7 +134,7 @@ func emit_event(event: Dictionary) -> void:
 		var a: float = i*2.399963+event.time*3
 		var outward := Vector3(cos(a),0,sin(a))
 		var velocity: Vector3 = outward*(0.35+0.65*event.strength)+Vector3.UP*(0.65+0.13*(i%4))
-		var size := Vector3(0.035,0.10,0.018) if shape=="chip" else Vector3.ONE*0.055
+		var size := Vector3(0.008,0.025,0.004) if shape=="chip" else Vector3.ONE*0.012
 		if kind in ["wood","stone"]: velocity=outward*0.35+event.direction*0.8+Vector3.UP*0.7
 		if kind=="sand": velocity=outward*0.25+event.direction*0.4+Vector3.UP*0.35
 		if kind in ["cup","ace"]:

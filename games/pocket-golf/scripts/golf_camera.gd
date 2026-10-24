@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Camera3D
+const Size = preload("res://scripts/dimensions.gd")
 # Local presentation only: never writes aim, shot power, or network state.
 enum View { OVERVIEW, SHOULDER, EYES }
 const TITLES := ["Overview", "Shoulder", "Eyes"]
@@ -52,16 +53,16 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		# Observe the ball from above; never drag the player's eyes along the turf.
 		elevation = maxf(elevation, 0.60)
 		focus = ball + Vector3(0, 0.2, 0)
-		var distance := clampf(7.5 * zoom[active], 5.0, 12.0)
+		var distance := clampf(3.8 * zoom[active], 2.5, 6.0)
 		desired = focus + _offset(heading, elevation) * distance
 	elif active == View.OVERVIEW:
 		var toward_ball := clampf((1.0 - zoom[active]) * 2.2, 0, 1) if playing else 0.0
 		focus = Vector3(0,0,0.6).lerp(ball, toward_ball)
-		desired = focus + _offset(heading, elevation) * 60.0 * zoom[active]
+		desired = focus + _offset(heading, elevation) * 43.0 * zoom[active]
 		lens = 28.0
 	elif active == View.SHOULDER:
 		focus = ball + Vector3(0, 0.35, 0)
-		desired = focus + _offset(heading, elevation) * 4.8 * zoom[active]
+		desired = focus + _offset(heading, elevation) * 2.6 * zoom[active]
 		# Terrain can raise wall tops. Keep the closest shoulder orbit above them.
 		desired.y = maxf(desired.y, obstruction_height+0.55)
 		lens = 60.0
@@ -69,7 +70,8 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		# SDK model height, or the anonymous marker's height when no identity exists.
 		desired = golfer + Vector3(0, eye_height, 0)
 		# The golfer stands beside the ball: look diagonally down to the putting line.
-		heading -= atan2(0.85,0.75)
+		heading -= atan2(Size.STANCE,0.20)
+		elevation = clampf(elevation+atan2(eye_height-Size.BALL,sqrt(Size.STANCE*Size.STANCE+0.04))-0.85,-0.35,1.45)
 		focus = desired - _offset(heading, elevation) * 5.0
 		lens = clampf(60.0 * zoom[active], 38.0, 75.0)
 	var blend := 1.0 if not initialized else 1.0 - exp(-delta * 6.0)

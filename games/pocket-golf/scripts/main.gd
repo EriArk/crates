@@ -5,6 +5,8 @@ const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const AvatarBinding = preload("res://scripts/avatar_binding.gd")
 const AvatarExchange = preload("res://addons/traineros/avatar_exchange.gd")
+const Stroke = preload("res://scripts/golf_stroke.gd")
+const Size = preload("res://scripts/dimensions.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
 const Island = preload("res://scripts/island.gd")
 const GolfHud = preload("res://scripts/golf_hud.gd")
@@ -206,35 +208,35 @@ func _build_course() -> void:
 		# Extend below all nearby ground so no wall floats above a downhill side.
 		box(course_root,Vector3((wall[2]-wall[0])/1000.0,top,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,top/2,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
 	cup=Node3D.new(); cup.position=Vector3(c.cup[0]/1000.0,GreenSurface.sample(green_grid,c.cup[0],c.cup[1])[0]/1000.0,c.cup[1]/1000.0); course_root.add_child(cup)
-	cylinder(cup,0.43,0.02,Vector3(0,0.035,0),Color("f1e4c4"))
-	cylinder(cup,0.33,0.025,Vector3(0,0.05,0),Color("284e43"))
-	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.06,0),1.85,0.2)
+	cylinder(cup,Size.CUP+0.012,0.004,Vector3(0,0.004,0),Color("f1e4c4"))
+	cylinder(cup,Size.CUP,0.004,Vector3(0,0.007,0),Color("284e43"))
+	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.01,0),1.0,0.2)
 	balls.clear()
 	for i in game.world.players:
 		var ball := Node3D.new(); course_root.add_child(ball)
-		var visual := sphere(ball,0.18,Vector3.ZERO,Color("fff8e7") if i==0 else CORAL)
+		var visual := sphere(ball,Size.BALL,Vector3.ZERO,Color("fff8e7") if i==0 else CORAL)
 		visual.name="RollingBall"
 		# A narrow painted band makes physical rolling readable, even on a small screen.
-		var band := TorusMesh.new(); band.inner_radius=0.174; band.outer_radius=0.182
+		var band := TorusMesh.new(); band.inner_radius=Size.BALL-0.001; band.outer_radius=Size.BALL+0.0004
 		mesh(visual,band,Vector3.ZERO,MINT if i==0 else Color("fff0d5"))
 		# A floor ring distinguishes the two overlapping tee positions without moving rules.
-		cylinder(ball,0.24,0.015,Vector3(0,-0.165,0),MINT if i==0 else CORAL)
+		cylinder(ball,0.065,0.002,Vector3(0,-Size.BALL,0),MINT if i==0 else CORAL)
 		balls.append(ball)
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
-	for i in 8: sphere(aim_root,0.055,Vector3(0,0.14,-0.45-i*0.22),Color("fff4d4"))
+	for i in 8: sphere(aim_root,0.012,Vector3(0,0.02,-0.15-i*0.15),Color("fff4d4"))
 
 func _ground(point: Vector3) -> float:
 	return GreenSurface.sample(green_grid,roundi(point.x*1000),roundi(point.z*1000))[0]/1000.0
 
 func _stance(ball: Vector3, radians: float) -> Vector3:
-	var feet := ball+Vector3(-cos(radians)*0.85,0,-sin(radians)*0.85)
+	var feet := ball+Vector3(-cos(radians)*Size.STANCE,0,-sin(radians)*Size.STANCE)
 	feet.y=_ground(feet)
 	return feet
 
 func _align_marker(ball: Node3D) -> void:
 	var normal := GreenSurface.normal(green_grid,roundi(ball.position.x*1000),roundi(ball.position.z*1000))
 	ball.get_child(1).basis=Basis(Quaternion(Vector3.UP,normal))
-	ball.get_child(1).position.y=_ground(ball.position)-ball.position.y+0.018
+	ball.get_child(1).position.y=_ground(ball.position)-ball.position.y+0.003
 
 func _setup_ui() -> void:
 	var canvas := CanvasLayer.new(); add_child(canvas)
@@ -311,8 +313,8 @@ func _refresh() -> void:
 		var ball: Vector3 = balls[game.world.turn].position
 		var radians := deg_to_rad(game.angle)
 		for i in aim_root.get_child_count():
-			var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.45+i*0.22)
-			point.y=_ground(point)+0.055
+			var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
+			point.y=_ground(point)+0.012
 			aim_root.get_child(i).position=point
 		anchor.position=_stance(ball,radians)
 		anchor.rotation.y=-radians
@@ -364,7 +366,7 @@ func _start_local(count: int) -> void:
 
 func _shot_started(result: Dictionary) -> void:
 	shot=result
-	hud.set_status("Rolling…")
+	hud.set_status("Putting…")
 	elapsed=0
 	last_frame=-1
 	var origin: Array = result.path[0]
@@ -380,8 +382,11 @@ func _process(delta: float) -> void:
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
 			elapsed+=delta
-			effects.seek(elapsed)
-			var sample_time: float = elapsed*shot.hz
+			anchor.seek_stroke(elapsed)
+			var rolling_time := maxf(0,elapsed-Stroke.CONTACT)
+			if elapsed>=Stroke.CONTACT: hud.set_status("Rolling…")
+			effects.seek(rolling_time)
+			var sample_time: float = rolling_time*shot.hz
 			var frame := mini(int(sample_time),shot.path.size()-1)
 			var next_frame := mini(frame+1,shot.path.size()-1)
 			var blend := clampf(sample_time-frame,0,1)
@@ -400,15 +405,15 @@ func _process(delta: float) -> void:
 				if movement.length_squared()>0:
 					var normal := GreenSurface.normal(green_grid,current[0],current[1])
 					var axis := normal.cross(movement)
-					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/0.18)
+					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/Size.BALL)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
 				if frame==shot.path.size()-1 and shot.sunk:
 					anchor.play_action("celebrate")
 				last_frame=frame
-			if elapsed>=(shot.path.size()-1)/float(shot.hz):
+			if rolling_time>=(shot.path.size()-1)/float(shot.hz):
 				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
-			if elapsed>(shot.path.size()-1)/float(shot.hz)+0.85:
+			if rolling_time>(shot.path.size()-1)/float(shot.hz)+0.85:
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
 	_poll_stick(delta)
@@ -417,7 +422,7 @@ func _process(delta: float) -> void:
 	var player: int = shot.player if rolling else game.world.turn
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
 	# Follow the cup at ground level while the ball drops below the green.
-	ball_pos.y=maxf(ball_pos.y,_ground(ball_pos)+0.19)
+	ball_pos.y=maxf(ball_pos.y,_ground(ball_pos)+Size.BALL)
 	var shot_angle: float = shot.angle if rolling else game.angle
 	var golfer := _stance(ball_pos,deg_to_rad(shot_angle))
 	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length(),cup.position.y-_ground(ball_pos))

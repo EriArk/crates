@@ -36,27 +36,27 @@ func _initialize() -> void:
 			previous_step=step
 	var sand: Dictionary = grass.duplicate(true); sand.sand=[[-5000,-8000,5000,8000]]
 	check(-Rules.trace(sand,[0,0],0,30).position[1]<shortest/3,"sand brakes substantially harder")
-	var p := [-120*Physics.SCALE,-120*Physics.SCALE]; var v := [40*Physics.SCALE,40*Physics.SCALE]
+	var p := [-20*Physics.SCALE,-20*Physics.SCALE]; var v := [40*Physics.SCALE,40*Physics.SCALE]
 	check(Physics.wall_contact(p,v,[0,0,1000,1000]),"round corner contact")
 	check(v[0]<0 and v[1]<0 and absi(v[0]-v[1])<=1,"corner reflects radially")
 	check(Physics.length_int(p[0],p[1])>=Physics.RADIUS,"corner resolves penetration")
 	check(Physics.length_int(v[0],v[1])<Physics.length_int(40*Physics.SCALE,40*Physics.SCALE),"bounce loses energy")
-	p=[-179*Physics.SCALE,500*Physics.SCALE]; v=[0,70*Physics.SCALE]
+	p=[-34*Physics.SCALE,500*Physics.SCALE]; v=[0,70*Physics.SCALE]
 	check(not Physics.wall_contact(p,v,[0,0,1000,1000]) and v==[0,70*Physics.SCALE],"tangential motion is preserved")
 	var narrow: Dictionary = grass.duplicate(true); narrow.walls=[[0,-1000,1,1000]]
 	var thin: Dictionary = Rules.trace(narrow,[-2000,0],90,100)
 	check(not thin.bounces.is_empty(),"maximum-power contact with 1 mm wall")
-	for point in thin.path: check(point[0]<=-180,"no tunnelling through thin wall")
+	for point in thin.path: check(point[0]<=-35,"no tunnelling through thin wall")
 	var cup: Dictionary = grass.duplicate(true); cup.cup=[0,0]
 	var slow: Dictionary = Rules.trace(cup,[0,900],0,20)
 	var fast: Dictionary = Rules.trace(cup,[0,1000],0,50)
-	var lip: Dictionary = Rules.trace(cup,[310,900],0,35)
-	var miss: Dictionary = Rules.trace(cup,[400,900],0,35)
+	var lip: Dictionary = Rules.trace(cup,[70,900],0,35)
+	var miss: Dictionary = Rules.trace(cup,[100,900],0,35)
 	check(slow.sunk and slow.position==[0,0],"slow central putt sinks")
 	check(slow.capture_frame>=0 and slow.heights.back()<0 and slow.path.size()-slow.capture_frame==37,"continuous drop below ground")
 	check(not fast.sunk and not fast.rims.is_empty() and fast.position[1]<-1000,"fast putt crosses cup")
-	check(not lip.sunk and not lip.rims.is_empty() and absi(lip.position[0]-310)>5,"grazing lip redirects without automatic capture")
-	check(not miss.sunk and miss.rims.is_empty() and miss.position[0]==400,"near miss stays outside physical rim")
+	check(not lip.sunk and not lip.rims.is_empty() and absi(lip.position[0]-70)>5,"grazing lip redirects without automatic capture")
+	check(not miss.sunk and miss.rims.is_empty() and miss.position[0]==100,"near miss stays outside physical rim")
 	print("CUP slow=",slow.sunk," fast=",fast.position," lip=",lip.position," miss=",miss.position)
 	# Cross-platform replay fingerprint covers full paths, heights and contact events.
 	for hole in 3:
@@ -65,11 +65,11 @@ func _initialize() -> void:
 				var shot: Dictionary = Rules.trace(Courses.get_course(hole),Courses.get_course(hole).tee,angle,power)
 				check(shot.stopped,"simulation settles before safety limit")
 				for point in shot.path:
-					check(absi(point[0])<=4820 and absi(point[1])<=7820,"course bounds")
+					check(absi(point[0])<=4965 and absi(point[1])<=7965,"course bounds")
 					for wall in Courses.get_course(hole).walls:
 						var dx: int = point[0]-clampi(point[0],wall[0],wall[2])
 						var dz: int = point[1]-clampi(point[1],wall[1],wall[3])
-						check(dx*dx+dz*dz>=178*178,"ball remains outside walls, mm rounding tolerance")
+						check(dx*dx+dz*dz>=33*33,"ball remains outside walls, mm rounding tolerance")
 				corpus.append(shot)
 	corpus.append_array([slow,fast,lip,miss,thin])
 	print("REPLAY cases=",corpus.size()," sha256=",JSON.stringify(corpus).sha256_text())

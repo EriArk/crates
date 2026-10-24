@@ -56,7 +56,7 @@ func _initialize() -> void:
 			max_gradient=maxf(max_gradient,Vector2(s[1],s[2]).length()/Surface.Q)
 			var centre := Surface.ball_height(grid,x,z)
 			var normal := Vector3(-s[1]/float(Surface.Q),1,-s[2]/float(Surface.Q)).normalized()
-			check((centre-hit.y*1000)*normal.y>=180,"sphere clears sloped surface")
+			check((centre-hit.y*1000)*normal.y>=35,"sphere clears sloped surface")
 		for point in [course.tee,course.cup]:
 			var level: int = Surface.sample(grid,point[0],point[1])[0]
 			for dx in [-450,0,450]:

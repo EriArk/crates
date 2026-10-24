@@ -42,7 +42,7 @@ func _initialize() -> void:
 		var result: Dictionary = a.fire(command[0],command[1])
 		b.fire(command[0],command[1])
 		check(a.digest()==b.digest(),"identical simulation")
-		for point in result.path: check(absi(point[0])<=4820 and absi(point[1])<=7820,"ball inside rails")
+		for point in result.path: check(absi(point[0])<=4965 and absi(point[1])<=7965,"ball inside rails")
 		bounces+=result.bounces.size()
 		cups+=int(result.sunk)
 	check(a.complete,"complete course")

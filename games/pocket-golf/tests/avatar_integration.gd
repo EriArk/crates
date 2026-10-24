@@ -31,9 +31,9 @@ func receive(description: Dictionary) -> void:
 		check(old_visual.find_children("*","CollisionObject3D",true,false).is_empty(),"visual has no collision")
 		ui.game.bridge.closed.emit()
 		check(ui.anchor.visual==old_visual,"match connection lifecycle does not revoke local profile")
-		check(old_visual.global_basis.z.dot(Vector3.FORWARD)>0.99,"SDK +Z converted to game -Z")
+		check(old_visual.global_basis.z.dot(Vector3.RIGHT)>0.99,"golfer stands side-on facing the ball")
 		check(is_equal_approx(ui.avatar_binding.eye_height(),description.eyeHeight),"SDK eye height")
-		check(not old_visual.play_action("golf_putt"),"missing putting animation reported honestly")
+		check(ui.anchor.stroke!=null and ui.anchor.stroke.club!=null,"game-owned putter and two-hand rig bound")
 		ui.game.world.turn=1; ui._refresh()
 		check(ui.anchor.player_id.is_empty() and not old_visual.visible,"guest never borrows owner appearance")
 		ui.game.world.turn=0; ui._refresh()
@@ -45,6 +45,17 @@ func receive(description: Dictionary) -> void:
 		await capture("owner-shoulder")
 		ui.game.fire()
 		check(ui.game.phase=="moving","actual shot still starts")
+		ui.set_process(false)
+		var ball_before: Vector3 = ui.balls[ui.shot.player].position
+		ui._process(0.3)
+		check(ui.balls[ui.shot.player].position.distance_to(ball_before)<0.001,"ball waits for club contact")
+		await capture("backswing")
+		ui._process(0.25)
+		await capture("contact")
+		ui._process(0.18)
+		check(ui.balls[ui.shot.player].position.distance_to(ball_before)>0.001,"ball rolls after contact")
+		await capture("follow-through")
+		ui.set_process(true)
 		# Freeze local rolling time while the host publishes the next appearance.
 		ui.paused=true
 		print("AVATAR_RECEIVED 1")
@@ -63,6 +74,10 @@ func capture(name: String) -> void:
 	if path.is_empty() or DisplayServer.get_name()=="headless": return
 	DirAccess.make_dir_recursive_absolute(path)
 	await create_timer(0.3).timeout
+	if OS.get_environment("TRAINER_AVATAR_CLOSEUP")=="1":
+		ui.camera.set_process(false)
+		ui.camera.position=ui.anchor.position+Vector3(1.1,0.80,1.3)
+		ui.camera.look_at(ui.anchor.position+Vector3(0.10,0.52,0))
 	await RenderingServer.frame_post_draw
 	check(root.get_texture().get_image().save_png(path.path_join(name+".png"))==OK,"capture "+name)
 

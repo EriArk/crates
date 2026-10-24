@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
+const Size = preload("res://scripts/dimensions.gd")
 # One integer height grid and one triangle split for rendering AND shot rules.
 const STEP := 250 # mm
 const WIDTH := 41
@@ -72,8 +73,7 @@ static func normal(grid: PackedInt32Array, x: int, z: int) -> Vector3:
 static func ball_height(grid: PackedInt32Array, x: int, z: int) -> int:
 	if grid.is_empty(): return 190
 	var s := sample(grid,x,z)
-	# Vertical clearance for a 180 mm sphere touching this inclined plane.
-	return s[0]+maxi(190,180*root_int(Q*Q+s[1]*s[1]+s[2]*s[2])/Q+2)
+	return s[0]+Size.BALL_MM*root_int(Q*Q+s[1]*s[1]+s[2]*s[2])/Q+2
 
 static func make_mesh(grid: PackedInt32Array) -> ArrayMesh:
 	var vertices := PackedVector3Array(); var normals := PackedVector3Array()

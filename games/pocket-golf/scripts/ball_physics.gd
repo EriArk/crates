@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const Surface = preload("res://scripts/green_surface.gd")
+const Size = preload("res://scripts/dimensions.gd")
 # Authoritative fixed-point rolling model. 0.1 micrometres, 120 ticks/s; no float math
 # or engine contacts enter the shared result. Public paths/positions use mm.
 const HZ := 120
 const SCALE := 10000
-const RADIUS := 180*SCALE
-const CUP_RADIUS := 330*SCALE
+const RADIUS := Size.BALL_MM*SCALE
+const CUP_RADIUS := Size.CUP_MM*SCALE
 const CUP_CORE := CUP_RADIUS-RADIUS
 const CUP_SPEED := 18*SCALE # 2.16 m/s; fast putts cross the cup.
 const GRASS_DRAG := 950 # 1.368 m/s^2
@@ -27,7 +28,7 @@ static func rounded_div(numerator: int, denominator: int) -> int:
 	return (numerator+denominator/2)/denominator if numerator>=0 else -((-numerator+denominator/2)/denominator)
 
 # Circle/rectangle contact: radial normals around corners, face normals elsewhere.
-# Full-power launch travels 70 mm/tick, well below the 360 mm collision diameter.
+# Two contact substeps keep full-power motion below the 70 mm collision diameter.
 # The thin-wall regression covers face crossings; grazing corners remain discrete.
 # Project out before reflecting.
 static func wall_contact(p: Array, v: Array, wall: Array) -> bool:
@@ -78,20 +79,21 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 		var gx: int = -ROLL_GRAVITY*ground[1]*Surface.Q/denominator
 		var gz: int = -ROLL_GRAVITY*ground[2]*Surface.Q/denominator
 		v[0]+=gx; v[1]+=gz
-		p[0]+=v[0]; p[1]+=v[1]
 		var bounced := false
-		for axis in 2:
-			var limit := (4820 if axis==0 else 7820)*SCALE
-			if absi(p[axis])>limit:
-				p[axis]=clampi(p[axis],-limit,limit)
-				v[axis]=-v[axis]*RESTITUTION/100
-				bounced=true
-		# Revisit contacts at intersections (wall/rail, or multiple walls).
-		for pass_index in 3:
-			for wall in course.walls:
-				if wall_contact(p,v,wall): bounced=true
-			p[0]=clampi(p[0],-4820*SCALE,4820*SCALE)
-			p[1]=clampi(p[1],-7820*SCALE,7820*SCALE)
+		for substep in 2:
+			p[0]+=rounded_div(v[0],2); p[1]+=rounded_div(v[1],2)
+			for axis in 2:
+				var limit := (5000 if axis==0 else 8000)*SCALE-RADIUS
+				if absi(p[axis])>limit:
+					p[axis]=clampi(p[axis],-limit,limit)
+					v[axis]=-v[axis]*RESTITUTION/100
+					bounced=true
+			# Revisit contacts at intersections (wall/rail, or multiple walls).
+			for pass_index in 3:
+				for wall in course.walls:
+					if wall_contact(p,v,wall): bounced=true
+				p[0]=clampi(p[0],-5000*SCALE+RADIUS,5000*SCALE-RADIUS)
+				p[1]=clampi(p[1],-8000*SCALE+RADIUS,8000*SCALE-RADIUS)
 		path.append([p[0]/SCALE,p[1]/SCALE])
 		heights.append(Surface.ball_height(grid,path.back()[0],path.back()[1]))
 		if bounced: bounces.append(path.size()-1)
@@ -114,7 +116,7 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 				for drop in range(1,37):
 					var travel := mini(drop,18)
 					path.append([entry[0]+(course.cup[0]-entry[0])*travel/18,entry[1]+(course.cup[1]-entry[1])*travel/18])
-					heights.append(cup_level+190-480*drop*drop/(36*36))
+					heights.append(cup_level+Size.BALL_MM+2-150*drop*drop/(36*36))
 				break
 			# Shallow bowl bends grazing paths. Only slow central contacts sink.
 			if distance>0:
