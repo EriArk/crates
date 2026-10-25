@@ -1,3 +1,5 @@
-Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
-
-EFFECTS PRESENTATION PASS contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=30
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+
+
+EFFECTS PRESENTATION PASS contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=30

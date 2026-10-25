@@ -32,7 +32,9 @@ archives=[]
 for suffix,arch,machine in [('x86_64','x86_64',62),('arm64','aarch64',183)]:
     binary=(a.build/('pocket-golf.'+suffix)).read_bytes()
     if binary[:6]!=b'\x7fELF\x02\x01' or int.from_bytes(binary[18:20],'little')!=machine:p.error('Wrong ELF architecture')
-    files={'bin/pocket-golf':(root/'launch.sh').read_bytes(),'libexec/pocket-golf':binary,**common}
+    # A Windows checkout may use CRLF. Linux must see an exact /bin/sh shebang.
+    launcher=(root/'launch.sh').read_bytes().replace(b'\r\n',b'\n')
+    files={'bin/pocket-golf':launcher,'libexec/pocket-golf':binary,**common}
     name=f'pocket-golf-{version}-{arch}.tar.gz';archive=a.output/name
     with tarfile.open(archive,'w:gz') as t:
         for path,data in files.items():
