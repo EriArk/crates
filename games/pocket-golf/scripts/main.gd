@@ -14,6 +14,15 @@ const Surfaces = preload("res://scripts/surfaces.gd")
 const GreenSurface = preload("res://scripts/green_surface.gd")
 const Graphics = preload("res://scripts/graphics_settings.gd")
 const AimInput = preload("res://scripts/aim_input.gd")
+const Audio = preload("res://scripts/golf_audio.gd")
+var audio = Audio.new()
+var audio_open := false
+var audio_notice := ""
+var audio_focused := true
+var audio_sliders: Array[HSlider] = []
+var audio_labels: Array[Label] = []
+var presentation_phase := ""
+var quitting := false
 var graphics = Graphics.new()
 var graphics_open := false
 var graphics_notice := ""
@@ -35,6 +44,7 @@ var aim_root: Node3D
 var cup: Node3D
 var field_index := -1
 var shot: Dictionary = {}
+var shot_course: Dictionary = {}
 var elapsed := 0.0
 var last_frame := -1
 var effects = preload("res://scripts/golf_effects.gd").new()
@@ -58,10 +68,15 @@ var capture_dir := ""
 
 func _ready() -> void:
 	graphics.load_settings()
+	add_child(audio)
+	get_tree().auto_accept_quit=false
+	get_window().close_requested.connect(_quit_game)
 	if OS.get_environment("TRAINEROS_CRATES_GAME")=="1": get_window().mode=Window.MODE_FULLSCREEN
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--sdk-endpoint="): game.bridge.endpoint_override=arg.trim_prefix("--sdk-endpoint=")
 	_setup_scene()
+	anchor.ground=_ground
+	anchor.foot_landed.connect(func(side): audio.cue("step_l" if side=="L" else "step_r"))
 	_setup_ui()
 	add_child(game)
 	game.changed.connect(_refresh)
@@ -80,6 +95,8 @@ func _ready() -> void:
 		if not connected: _suspend_input()
 		_set_input("pad" if connected else "keyboard"))
 	get_window().focus_exited.connect(_suspend_input)
+	get_window().focus_exited.connect(func(): audio_focused=false; audio.set_state(false,paused))
+	get_window().focus_entered.connect(func(): audio_focused=true; audio.set_state(true,paused))
 	_refresh()
 	graphics.apply(self)
 	_connect_sdk.call_deferred()
@@ -194,6 +211,7 @@ func _placeholder() -> void:
 
 func _build_course() -> void:
 	effects.clear()
+	audio.clear_shot(); anchor.reset_motion()
 	if course_root!=null:
 		remove_child(course_root); course_root.queue_free()
 	course_root=Node3D.new(); add_child(course_root)
@@ -291,9 +309,15 @@ func label(parent: Node, text: String, pos: Vector2, size: int) -> Label:
 	var node := Label.new(); node.text=text; node.position=pos; node.add_theme_font_size_override("font_size",size); parent.add_child(node); return node
 
 func button(parent: Node, text: String, action: Callable) -> Button:
-	var node := Button.new(); node.text=text; node.custom_minimum_size.y=46; parent.add_child(node); node.pressed.connect(action); return node
+	var node := Button.new(); node.text=text; node.custom_minimum_size.y=46; parent.add_child(node)
+	node.pressed.connect(func(): audio.cue("ui")); node.pressed.connect(action); return node
 
 func _refresh() -> void:
+	if presentation_phase!=game.phase:
+		if game.phase!="moving": anchor.reset_motion(); audio.clear_shot()
+		if game.phase=="menu": audio.reset()
+		if game.phase=="result": audio.cue("round-jingle")
+		presentation_phase=game.phase
 	if not game.online and not avatar_exchange.peer_member.is_empty(): avatar_exchange.clear_peer()
 	var avatar_seat: int = shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn
 	avatar_binding.select(avatar_seat==(game.seat if game.online else 0),game.phase!="moving")
@@ -342,8 +366,9 @@ func _refresh() -> void:
 				var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
 				point.y=_ground(point)+0.012
 				aim_root.get_child(i).position=point
-	var state: String = "graphics" if graphics_open else "paused" if paused else game.phase
-	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics"]
+	audio.set_state(audio_focused,paused)
+	var state: String = "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
+	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio"]
 	modal_shade.visible=popup.visible
 	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
@@ -354,7 +379,8 @@ func _refresh() -> void:
 			button(popup_buttons,"Solo round",func(): _start_local(1))
 			button(popup_buttons,"Two players · pass the pad",func(): _start_local(2))
 			button(popup_buttons,"Graphics",_open_graphics)
-			button(popup_buttons,"Exit",func(): get_tree().quit())
+			button(popup_buttons,"Sound",_open_audio)
+			button(popup_buttons,"Exit",_quit_game)
 		elif state=="handoff":
 			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.world.players==2 else "Aim with left/right. Power with up/down."]
 			button(popup_buttons,"Ready",func(): game.accept_turn())
@@ -374,6 +400,23 @@ func _refresh() -> void:
 			button(popup_buttons,"Leave round",func(): paused=false; game.leave())
 			button(popup_buttons,"Reset camera",func(): camera.reset_view(); paused=false; _refresh())
 			button(popup_buttons,"Graphics",_open_graphics)
+			button(popup_buttons,"Sound",_open_audio)
+		elif state=="audio":
+			popup_title.text="Island sounds"
+			audio_sliders.clear(); audio_labels.clear()
+			for setting in ["Music","Effects"]:
+				var row := HBoxContainer.new(); popup_buttons.add_child(row)
+				var caption := Label.new(); caption.custom_minimum_size.x=156; row.add_child(caption); audio_labels.append(caption)
+				var slider := HSlider.new(); slider.min_value=0; slider.max_value=100; slider.step=5
+				slider.custom_minimum_size=Vector2(180,46); slider.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+				row.add_child(slider); audio_sliders.append(slider)
+				slider.value_changed.connect(func(value):
+					if setting=="Music": audio.music_percent=roundi(value)
+					else: audio.effects_percent=roundi(value)
+					audio.apply_levels()
+					audio_notice="Could not save; active until exit." if audio.save_settings()!=OK else ""
+					_refresh())
+			button(popup_buttons,"Back",_close_audio)
 		elif state=="graphics":
 			popup_title.text="Graphics"
 			button(popup_buttons,"",func(): graphics.quality=(graphics.quality+1)%3; _apply_graphics())
@@ -388,7 +431,8 @@ func _refresh() -> void:
 			contrast_slider.value_changed.connect(func(value):
 				graphics.contrast_percent=roundi(value); graphics.apply_contrast(self); _save_graphics(); _refresh())
 			button(popup_buttons,"Back",_close_graphics)
-		if popup_buttons.get_child_count()>0: popup_buttons.get_child(0).grab_focus()
+		var controls := _popup_controls()
+		if not controls.is_empty(): controls[0].grab_focus()
 	elif not popup.visible: last_popup=""
 	if state=="paused":
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
@@ -400,6 +444,12 @@ func _refresh() -> void:
 		popup_buttons.get_child(2).text="Frame limit: %d FPS"%graphics.fps
 		contrast_label.text="Contrast: %d%%"%graphics.contrast_percent
 		contrast_slider.set_value_no_signal(graphics.contrast_percent)
+	if state=="audio":
+		popup_text.text="Music · a little island melody\nEffects · putts, footsteps and jingles" if audio_notice.is_empty() else audio_notice
+		for i in 2:
+			var value: int = audio.music_percent if i==0 else audio.effects_percent
+			audio_labels[i].text=("Music" if i==0 else "Effects")+(": Off" if value==0 else ": %d%%"%value)
+			audio_sliders[i].set_value_no_signal(value)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
 	if state=="result" and game.voted:
 		popup_text.text="Rematch requested. Waiting for your friend…"
@@ -407,6 +457,20 @@ func _refresh() -> void:
 
 func _open_graphics() -> void:
 	graphics_open=true; graphics_notice=""; _refresh()
+
+func _open_audio() -> void:
+	audio_open=true; audio_notice=""; _refresh()
+
+func _quit_game() -> void:
+	if quitting: return
+	quitting=true
+	audio.shutdown()
+	# Release decoder references on the mixer thread before engine teardown.
+	await get_tree().create_timer(0.20).timeout
+	get_tree().quit()
+
+func _close_audio() -> void:
+	audio_open=false; _refresh()
 
 func _close_graphics() -> void:
 	graphics_open=false; _refresh()
@@ -442,10 +506,13 @@ func _shot_started(result: Dictionary) -> void:
 	anchor.position=_stance(Vector3(origin[0]/1000.0,0,origin[1]/1000.0),radians)
 	anchor.rotation.y=-radians
 	anchor.play_action("golf_putt")
-	effects.begin(result,Courses.get_course(field_index))
+	shot_course=Courses.get_course(field_index)
+	effects.begin(result,shot_course)
+	audio.begin(effects.events)
 
 func _process(delta: float) -> void:
-	if course_root==null: return
+	if course_root==null or quitting: return
+	audio.set_state(audio_focused,paused)
 	if game.phase=="moving":
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
@@ -460,6 +527,9 @@ func _process(delta: float) -> void:
 			var blend := clampf(sample_time-frame,0,1)
 			var p: Array = shot.path[frame]
 			var q: Array = shot.path[next_frame]
+			if elapsed>=Stroke.CONTACT:
+				var speed: float = Vector2(q[0]-p[0],q[1]-p[1]).length()*shot.hz/1000.0
+				audio.seek(rolling_time,speed,effects.sandy(effects.point(shot,frame),shot_course))
 			var ball: Node3D = balls[shot.player]
 			ball.position=Vector3(lerpf(p[0],q[0],blend)/1000.0,lerpf(shot.heights[frame],shot.heights[next_frame],blend)/1000.0,lerpf(p[1],q[1],blend)/1000.0)
 			_align_marker(ball)
@@ -476,16 +546,18 @@ func _process(delta: float) -> void:
 					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/Size.BALL)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
-				if frame==shot.path.size()-1 and shot.sunk:
-					anchor.play_action("celebrate")
 				last_frame=frame
+			if shot.sunk and frame==shot.path.size()-1:
+				var reaction_time: float = rolling_time-(shot.path.size()-1)/float(shot.hz)
+				anchor.celebrate(reaction_time,(field_index+shot.strokes[shot.player]+game.round_id)%3)
 			if rolling_time>=(shot.path.size()-1)/float(shot.hz):
 				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
-			if rolling_time>(shot.path.size()-1)/float(shot.hz)+0.85:
+			if rolling_time>(shot.path.size()-1)/float(shot.hz)+(2.8 if shot.sunk else 0.85):
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
 	_poll_stick(delta)
 	_poll_camera_keys(delta)
+	if game.phase=="aim" and not paused: anchor.step_turn(delta)
 	var rolling: bool = game.phase=="moving" and not shot.is_empty()
 	var player: int = shot.player if rolling else game.world.turn
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
@@ -495,7 +567,10 @@ func _process(delta: float) -> void:
 	var golfer := _stance(ball_pos,deg_to_rad(shot_angle))
 	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length(),cup.position.y-_ground(ball_pos))
 	# Pause freezes the local camera too. Online ball presentation may continue.
-	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"],avatar_binding.eye_height())
+	if not paused:
+		if rolling and is_instance_valid(anchor.motion) and anchor.motion.celebration>=0:
+			camera.celebration_frame(delta,anchor.global_position,anchor.global_basis)
+		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
 	var direction := Vector2.ZERO
@@ -560,6 +635,7 @@ func _primary() -> void:
 	elif not paused: game.fire()
 
 func _pause() -> void:
+	if audio_open: _close_audio(); return
 	if graphics_open: _close_graphics(); return
 	if game.phase=="menu": return
 	paused=!paused; _refresh()
@@ -574,6 +650,7 @@ func _set_input(kind: String) -> void:
 	input_kind=kind; touch_mode=kind=="touch"; _refresh()
 
 func _input(event: InputEvent) -> void:
+	if quitting: return
 	if event is InputEventScreenTouch and event.pressed: _set_input("touch")
 	elif event is InputEventMouseButton and event.pressed and event.device!=InputEvent.DEVICE_ID_EMULATION: _set_input("mouse")
 	if hud.route_pointer(event):

@@ -4,6 +4,19 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
 pass a controller between two people, or play with a friend through TrainerOS Lobby.
 
+**0.1.20 adds island music, sound effects and golfer reactions.** A new original
+87-second instrumental loop accompanies the island; putts, rolling, sand, banks,
+cup rims, cup drops and footsteps have sound. Short cup, hole-in-one and round
+jingles soften the music underneath. Main menu / Pause → Sound offers independent
+Music and Effects sliders, including mute, saved on this device.
+The shared SDK golfer now lifts and plants alternating feet while turning and
+performs one of three short cup celebrations: a fist pump, a little victory hop
+or a happy shuffle. The camera briefly frames the scorer and returns to the
+selected view. Appearance and wardrobe remain in TrainerOS; no avatar model is
+included. Physics and `pocket-golf.6` are unchanged. This is a prepared update;
+handheld testing is deferred until the owner authorizes it.
+See [audio, motion and checks](docs/AUDIO_MOTION.md).
+
 **0.1.19 adds continuous left-stick aiming and power.** Small deflections give
 fine control; full deflection turns faster. Touch aim/power are continuous too;
 D-pad and keyboard retain discrete taps. Opponents see preparation before the

@@ -78,6 +78,7 @@ func run() -> void:
 	var coarse := Match.Rules.trace(flat,[0,0],0,30)
 	check(Match.Rules.trace(flat,[0,0],0.37,30).path!=coarse.path,"fine direction affects actual trajectory")
 	check(Match.Rules.trace(flat,[0,0],0,30.23).path!=coarse.path,"fine power affects actual trajectory")
+	ui.audio.shutdown(); await create_timer(.25).timeout
 	ui.queue_free(); a.queue_free(); b.queue_free(); await process_frame
 	print("ANALOG ","PASS" if failures==0 else "FAIL"," failures=",failures)
 	quit(0 if failures==0 else 1)

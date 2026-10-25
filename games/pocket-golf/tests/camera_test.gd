@@ -117,4 +117,6 @@ func run() -> void:
 			check(not ui.camera.is_position_behind(ball),"ball in front for every hole/aim")
 			check(ui.camera.position.y>=1.04,"eyes above course obstacles")
 	print("CAMERA ","FAIL" if failed else "PASS"," views, zoom, keyboard, injected pad buttons, axis mapping, pointer gestures, follow, pause, rules isolation")
+	ui.audio.shutdown(); await create_timer(.25).timeout
+	ui.queue_free(); await process_frame
 	quit(1 if failed else 0)

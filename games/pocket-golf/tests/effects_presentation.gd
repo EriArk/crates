@@ -20,7 +20,8 @@ func begin(hole: int, origin: Array, angle: int, power: int, strokes: int=0) -> 
 	ui.game.angle=angle; ui.game.power=power; ui._refresh(); ui.game.fire()
 
 func at(time: float) -> void:
-	ui.elapsed=time; ui._process(0)
+	# Effects use ball time; the game clock also includes the putting backswing.
+	ui.elapsed=time+ui.Stroke.CONTACT; ui._process(0)
 	peak=maxi(peak,ui.effects.active.size())
 
 func capture(name: String, focus: Vector3) -> void:
@@ -98,4 +99,6 @@ func run() -> void:
 	begin(0,[0,6000],0,75); ui._build_course()
 	check(ui.effects.active.is_empty() and ui.effects.events.is_empty(),"course rebuild clears effects")
 	print("EFFECTS PRESENTATION ","FAIL" if failed else "PASS"," contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=",peak)
+	ui.audio.shutdown(); await create_timer(.25).timeout
+	ui.queue_free(); await process_frame
 	quit(1 if failed else 0)

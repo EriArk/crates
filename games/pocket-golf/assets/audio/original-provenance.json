@@ -1,0 +1,59 @@
+{
+  "title": "A Little Green",
+  "composer": "TrainerOS project",
+  "license": "GPL-3.0-or-later",
+  "original": true,
+  "source": "../../tools/compose_audio.py",
+  "note": "Original melody, arrangement and synthesis; no Animal Crossing audio or melodic transcription.",
+  "sample_rate": 44100,
+  "files": {
+    "little-green": {
+      "seconds": 87.273,
+      "peak": 0.43471,
+      "rms": 0.0709,
+      "sha256": "f281776cc5670af759d540db871d2b450cb25251c015b4973e47ceecbf5d71fe"
+    },
+    "cup-jingle": {
+      "seconds": 3.0,
+      "peak": 0.36239,
+      "rms": 0.06014,
+      "sha256": "dff9fc795d35916fbc93baea4783c348855ec882cbbd5bd8a492b80270bfc450"
+    },
+    "ace-jingle": {
+      "seconds": 3.0,
+      "peak": 0.36424,
+      "rms": 0.06813,
+      "sha256": "0d0a6ad0e013084967537bc342e759e7fb17db4b0b21e5a75018ae464a5707d1"
+    },
+    "round-jingle": {
+      "seconds": 3.0,
+      "peak": 0.4046,
+      "rms": 0.06663,
+      "sha256": "3c8817626e463a0aca2407f43d89563e7e7b804610dcfbe938bc7f2a1b210c32"
+    },
+    "roll": {
+      "seconds": 2.0,
+      "peak": 0.04751,
+      "rms": 0.00941,
+      "sha256": "300c77134a51e019d23f7e4c8a21bf9e015a3fa98ecbb5fe88bcef98f0b84502"
+    },
+    "sand": {
+      "seconds": 0.22,
+      "peak": 0.1753,
+      "rms": 0.02138,
+      "sha256": "1bf1f7819270e83add6a58fe4fa2ddbff7183115d9de19678f25ce1adc9db5aa"
+    },
+    "cup": {
+      "seconds": 0.38,
+      "peak": 0.29872,
+      "rms": 0.04696,
+      "sha256": "7b6747c79abab5479abe77c7e10cc6d50a43c1f46f90579f315b7182ca970cf1"
+    },
+    "ui": {
+      "seconds": 0.09,
+      "peak": 0.12768,
+      "rms": 0.05607,
+      "sha256": "aa439e4f6b7f588805cc70865e265c55c487796041e8c2123313433491c07c88"
+    }
+  }
+}

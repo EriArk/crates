@@ -93,5 +93,16 @@ func _update_focus(ball: Vector3) -> void:
 				protected_depth=maxf(protected_depth,-to_local(Vector3(x,y,z)).z+2.0)
 	optics.dof_blur_far_distance=protected_depth
 
+func celebration_frame(delta: float, golfer: Vector3, facing: Basis) -> void:
+	# Brief portrait of the scorer, including in eyes view; restore the chosen view
+	# through ordinary camera interpolation once presentation finishes.
+	var focus := golfer+Vector3.UP*0.48
+	var desired := golfer+facing*Vector3(1.8,1.30,1.6)
+	var blend := 1-exp(-delta*4.5)
+	position=position.lerp(desired,blend); look_point=look_point.lerp(focus,blend)
+	fov=lerpf(fov,42,blend)
+	if position.distance_squared_to(look_point)>0.001: look_at(look_point)
+	_update_focus(golfer)
+
 func _offset(heading: float, elevation: float) -> Vector3:
 	return Vector3(sin(heading) * cos(elevation), sin(elevation), cos(heading) * cos(elevation))

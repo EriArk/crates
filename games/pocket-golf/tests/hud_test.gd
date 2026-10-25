@@ -96,4 +96,6 @@ func run() -> void:
 	await picture("hud-rolling")
 	ui._suspend_input(); check(ui.hud.captures.is_empty(),"focus loss clears HUD pointer ownership")
 	print("HUD ","FAIL" if failed else "PASS"," touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause")
+	ui.audio.shutdown(); await create_timer(.25).timeout
+	ui.queue_free(); await process_frame
 	quit(1 if failed else 0)
