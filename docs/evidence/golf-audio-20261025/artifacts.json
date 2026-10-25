@@ -1,0 +1,26 @@
+{
+  "source": "cdf3f4e9712d0e9f057d2cb962801894a6c54c19",
+  "published": false,
+  "artifacts": [
+    {
+      "file": "pocket-golf-0.1.20-aarch64.tar.gz",
+      "size": 49576874,
+      "sha256": "b28817f66af9649fd223132550aadc4a5bad8c3040fdadac986a26a275cf953c"
+    },
+    {
+      "file": "pocket-golf-0.1.20-source.tar.gz",
+      "size": 21940486,
+      "sha256": "9b90672f750360638a617fd597c2be6d2e184c4dea3f31f9b311a7c67bb731e0"
+    },
+    {
+      "file": "pocket-golf-0.1.20-windows-preview.zip",
+      "size": 60138579,
+      "sha256": "340c8047b3973c0c2ccf1836d9ebd3d1c947b95e1638cd147932e93dc9ac1b82"
+    },
+    {
+      "file": "pocket-golf-0.1.20-x86_64.tar.gz",
+      "size": 50366116,
+      "sha256": "f9a15b0e0bb9bd79e94800dcfb3f7ee4c601b32d955e8e66f8d5435c6d168740"
+    }
+  ]
+}

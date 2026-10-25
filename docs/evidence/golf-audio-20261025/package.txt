@@ -1,0 +1,3 @@
+Pocket Golf 0.1.20 final, source cdf3f4e9712d0e9f057d2cb962801894a6c54c19
+Linux x86_64, disposable HOME and Xvfb, network disabled, actual Crates installer.
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
