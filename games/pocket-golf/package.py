@@ -4,7 +4,7 @@
 import argparse,hashlib,io,json,pathlib,subprocess,tarfile,zipfile
 root=pathlib.Path(__file__).resolve().parent
 p=argparse.ArgumentParser();p.add_argument('build',type=pathlib.Path);p.add_argument('output',type=pathlib.Path);a=p.parse_args()
-version='0.1.20'
+version='0.1.21'
 if 'config/version="'+version+'"' not in (root/'project.godot').read_text():p.error('Version mismatch')
 if a.output.exists():p.error('Choose a fresh output directory')
 manifest=json.loads((a.build/'build-manifest.json').read_text())
@@ -39,7 +39,7 @@ for suffix,arch,machine in [('x86_64','x86_64',62),('arm64','aarch64',183)]:
     with tarfile.open(archive,'w:gz') as t:
         for path,data in files.items():
             member=tarfile.TarInfo(path);member.size=len(data);member.mode=0o755 if path.startswith(('bin/','libexec/')) else 0o644;t.addfile(member,io.BytesIO(data))
-    record=dict(id='pocket-golf',title='Pocket Golf',kind='game',version=version,architecture=arch,entry='bin/pocket-golf',icon='icon.svg',license='GPL-3.0-or-later',repository='https://github.com/EriArk/crates.git',size=archive.stat().st_size,unpackedSize=sum(map(len,files.values()))+1048576,sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),channel='Experimental',compatibility='untested',compatibilityNote='Godot preparation; shared avatars checked on host, handheld acceptance pending.',notes='Three-hole minigolf: solo, local pass-controller and optional SDK Lobby. Vulkan Mobile; OpenGL fallback.',url=f'https://github.com/EriArk/crates/releases/download/pocket-golf-v{version}/{name}')
+    record=dict(id='pocket-golf',title='Pocket Golf',kind='game',version=version,architecture=arch,entry='bin/pocket-golf',icon='icon.svg',license='GPL-3.0-or-later',repository='https://github.com/EriArk/crates.git',size=archive.stat().st_size,unpackedSize=sum(map(len,files.values()))+1048576,sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),channel='Experimental',compatibility='untested',compatibilityNote='Godot preparation; shared avatars checked on host, handheld acceptance pending.',notes='Three-hole minigolf: solo rival, 2/4 individual players, 4-8 in teams of 2-3, local or SDK group Lobby.',url=f'https://github.com/EriArk/crates/releases/download/pocket-golf-v{version}/{name}')
     if revision:record['revision']=revision
     (a.output/f'pocket-golf-{arch}-record.json').write_text(json.dumps(record,indent=2)+'\n')
     archives.append(archive)

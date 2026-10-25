@@ -1,0 +1,4 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+TURN max ankle target error m=0.01187478005886
+AUDIO/MOTION PASS contact, cue dedup, mute, pause/focus, hitch, ace, settings, bounded pool, real rig foot planting, three celebrations, revocation

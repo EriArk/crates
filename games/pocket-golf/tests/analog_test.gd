@@ -8,7 +8,7 @@ class Wire extends Match.Client:
 	var records: Array = []
 	func send(data: Dictionary) -> bool:
 		records.append(data.duplicate(true))
-		if peer!=null: peer._receive(JSON.parse_string(JSON.stringify(data)))
+		if peer!=null: peer._receive_member(session.get("self","a"),JSON.parse_string(JSON.stringify(data)))
 		return true
 func check(ok: bool, label: String) -> void:
 	if not ok: failures+=1; printerr("FAIL: "+label)
@@ -41,7 +41,10 @@ func run() -> void:
 	var a := Match.new(); a.bridge.free(); a.bridge=Wire.new(); root.add_child(a); a.set_process(false)
 	var b := Match.new(); b.bridge.free(); b.bridge=Wire.new(); root.add_child(b); b.set_process(false)
 	a.local(2); b.local(2); a.accept_turn(); b.accept_turn()
-	a.online=true; b.online=true; a.seat=0; b.seat=1
+	a.online=true; b.online=true; a.seat=0; b.seat=1; a.host=true
+	a.members=["a","b"]; b.members=["a","b"]
+	a.bridge.session={"self":"a","hostMember":"a"}; b.bridge.session={"self":"b","hostMember":"a"}
+	a.heartbeat_at=Time.get_ticks_msec()+60000; b.heartbeat_at=Time.get_ticks_msec()+60000
 	a.bridge.peer=b; b.bridge.peer=a
 	var before: String = b.world.digest()
 	a.angle=359; b.angle=359
@@ -65,11 +68,12 @@ func run() -> void:
 	a.adjust_continuous(0.23,0.17); a.fire()
 	check(a.phase=="moving" and b.phase=="moving" and a.world.digest()==b.world.digest(),"fine putt survives JSON exchange and matches peer rules")
 	check(is_equal_approx(b.angle,round(a.angle*100)/100),"putt overrides delayed visual target")
-	# Receiver finishes first, prepares and shoots while the other still animates.
-	b.finish_shot(); b.adjust_continuous(-11.23,-2.47); b._process(1)
-	check(a.phase=="moving" and a.peer_preview.ply==a.world.ply,"next-turn preview retained during prior animation")
-	b.fire(); check(not a.deferred_shot.is_empty(),"next putt waits for previous animation")
-	a.finish_shot(); check(a.world.digest()==b.world.digest(),"deferred fine putt remains synchronized")
+	# Every presentation must finish before any participant can take the next turn.
+	b.finish_shot(); b.adjust_continuous(-11.23,-2.47)
+	check(b.phase=="waiting_turn" and not b.can_fire(),"fast peer waits for slow animation")
+	a.finish_shot()
+	check(a.phase=="aim" and b.phase=="aim" and b.can_fire(),"all-player barrier releases next actor")
+	check(a.world.digest()==b.world.digest(),"barrier leaves rules synchronized")
 	ui.game.online=true; ui.game.seat=1; ui.game.world.setup(2); ui.game.phase="aim"
 	ui.game.angle=47.31; ui._refresh()
 	check(ui.anchor.visible and ui.aim_root.visible and absf(ui.anchor.rotation.y+deg_to_rad(47.31))<0.001,"scene presents opponent orientation and aim guide")

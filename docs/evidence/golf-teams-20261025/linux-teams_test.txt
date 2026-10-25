@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+TEAMS count=2 roster=[[0], [1]] turns=[24, 24]
+TEAMS count=4 roster=[[0], [1], [2], [3]] turns=[24, 24, 24, 24]
+TEAMS count=5 roster=[[0, 1], [2, 3, 4]] turns=[12, 12, 8, 8, 8]
+TEAMS count=6 roster=[[0, 1, 2], [3, 4, 5]] turns=[8, 8, 8, 8, 8, 8]
+TEAMS count=7 roster=[[0, 1], [2, 3], [4, 5, 6]] turns=[12, 12, 12, 12, 8, 8, 8]
+TEAMS count=8 roster=[[0, 1], [2, 3, 4], [5, 6, 7]] turns=[12, 12, 8, 8, 8, 8, 8, 8]
+BOT scores=[[1, 1, 2]] cups=3 max planning slice us=93
+TEAMS PASS

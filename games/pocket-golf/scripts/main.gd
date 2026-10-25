@@ -4,7 +4,7 @@ const Match = preload("res://scripts/match.gd")
 const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const AvatarBinding = preload("res://scripts/avatar_binding.gd")
-const AvatarExchange = preload("res://addons/traineros/avatar_exchange.gd")
+const AvatarRoster = preload("res://scripts/avatar_roster.gd")
 const Stroke = preload("res://scripts/golf_stroke.gd")
 const Size = preload("res://scripts/dimensions.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
@@ -39,7 +39,17 @@ var camera: GolfCamera
 var balls: Array[Node3D] = []
 var anchor = AvatarAnchor.new()
 var avatar_binding = AvatarBinding.new()
-var avatar_exchange = AvatarExchange.new()
+var avatar_roster = AvatarRoster.new()
+var local_setup := false
+var setup_count := 2
+var setup_teams := false
+var setup_assignment: Array = [0,1]
+var setup_grid: GridContainer
+var setup_count_button: Button
+var setup_mode_button: Button
+var setup_start_button: Button
+const SIDE_COLORS := [Color("579e88"),Color("dd9579"),Color("8d9ed6"),Color("dfbb65")]
+const SIDE_NAMES := ["Mint","Coral","Iris","Honey"]
 var aim_root: Node3D
 var cup: Node3D
 var field_index := -1
@@ -84,11 +94,9 @@ func _ready() -> void:
 	add_child(avatar_binding)
 	avatar_binding.start(anchor,_placeholder,game.bridge.endpoint_override)
 	avatar_binding.portraits_changed.connect(func(): hud.set_portraits(avatar_binding.local_portrait,avatar_binding.peer_portrait))
-	add_child(avatar_exchange)
-	avatar_exchange.start(avatar_binding.client,game.bridge)
-	avatar_exchange.can_resolve=func(): return game.phase!="moving"
-	avatar_exchange.peer_changed.connect(avatar_binding.receive_peer)
-	avatar_exchange.peer_unavailable.connect(avatar_binding.clear_peer)
+	add_child(avatar_roster)
+	avatar_roster.start(avatar_binding,game)
+	avatar_roster.changed.connect(_refresh)
 	game.bridge.identity_revoked.connect(avatar_binding.disconnect_identity)
 	Input.joy_connection_changed.connect(func(_device, connected):
 		neutral_required=true
@@ -259,7 +267,7 @@ func _build_course() -> void:
 		var band := TorusMesh.new(); band.inner_radius=Size.BALL-0.001; band.outer_radius=Size.BALL+0.0004
 		mesh(visual,band,Vector3.ZERO,MINT if i==0 else Color("fff0d5"))
 		# A floor ring distinguishes the two overlapping tee positions without moving rules.
-		cylinder(ball,0.065,0.002,Vector3(0,-Size.BALL,0),MINT if i==0 else CORAL)
+		cylinder(ball,0.065,0.002,Vector3(0,-Size.BALL,0),SIDE_COLORS[i%4])
 		balls.append(ball)
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
 	for i in 8: sphere(aim_root,0.012,Vector3(0,0.02,-0.15-i*0.15),Color("fff4d4"))
@@ -318,9 +326,8 @@ func _refresh() -> void:
 		if game.phase=="menu": audio.reset()
 		if game.phase=="result": audio.cue("round-jingle")
 		presentation_phase=game.phase
-	if not game.online and not avatar_exchange.peer_member.is_empty(): avatar_exchange.clear_peer()
-	var avatar_seat: int = shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn
-	avatar_binding.select(avatar_seat==(game.seat if game.online else 0),game.phase!="moving")
+	var avatar_seat: int = shot.get("actor",shot.player) if game.phase=="moving" and not shot.is_empty() else game.world.actor()
+	avatar_roster.select_actor(avatar_seat,game.phase!="moving")
 	if game.phase=="menu":
 		paused=false; effects.clear()
 	if field_index<0 or (game.phase!="moving" and (field_index!=game.world.hole or balls.size()!=game.world.players)): _build_course()
@@ -337,14 +344,20 @@ func _refresh() -> void:
 	var totals: Array = []
 	for i in game.world.players:
 		totals.append(game.world.total(i)+(counts[i] if game.world.scores[i].size()<=field_index else 0))
-	var player := "Mint" if game.world.turn==0 else "Coral"
+	var player: String = _actor_name(game.world.actor())+" \u00b7 "+SIDE_NAMES[game.world.turn]
 	var confirm := "A"; var back := "B"; var view := "X"
 	var pads := Input.get_connected_joypads()
 	if not pads.is_empty():
 		var name := Input.get_joy_name(pads[0]).to_lower()
 		if "playstation" in name or "dual" in name or "ps5" in name: confirm="×"; back="○"; view="□"
 		elif "nintendo" in name or "switch" in name: confirm="B"; back="A"; view="Y"
-	hud.update_state({"hole":field_index+1,"title":c.title,"par":c.par,
+	var side_labels: Array = []; var side_portraits: Array = []
+	for i in game.world.players:
+		var actor: int = avatar_seat if i==(shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn) else game.world.actor(i)
+		side_labels.append(SIDE_NAMES[i]+" \u00b7 "+_actor_name(actor))
+		side_portraits.append(avatar_roster.portrait(actor))
+	hud.side_portraits=side_portraits
+	hud.update_state({"side_labels":side_labels,"thinking":game.solo_bot and game.world.actor()==1,"hole":field_index+1,"title":c.title,"par":c.par,
 		"players":game.world.players,"player":shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn,
 		"strokes":counts,"totals":totals,
 		"power":game.power,"angle":game.angle,"phase":game.phase,"paused":paused,
@@ -353,7 +366,7 @@ func _refresh() -> void:
 		"view":GolfCamera.TITLES[camera.view]})
 	if game.phase!="moving": hud.set_status("")
 	# Turn ownership gates input, not the opponent's presence on the green.
-	anchor.visible=(game.phase in ["aim","moving"]) and not paused
+	anchor.visible=(game.phase in ["aim","moving","waiting_turn"]) and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
 	aim_root.visible=game.phase=="aim" and not paused
 	if game.phase=="aim":
@@ -367,31 +380,54 @@ func _refresh() -> void:
 				point.y=_ground(point)+0.012
 				aim_root.get_child(i).position=point
 	audio.set_state(audio_focused,paused)
-	var state: String = "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
-	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio"]
+	var state: String = "setup" if local_setup else "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
+	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio","setup"]
 	modal_shade.visible=popup.visible
 	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
+		if state=="setup" and game.online:
+			setup_count=game.participant_count; setup_teams=setup_count not in [2,4]; _default_teams()
 		last_popup=state
+		popup.offset_top=-250 if state=="setup" else -182; popup.offset_bottom=250 if state=="setup" else 182
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
 		if state=="menu":
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
-			button(popup_buttons,"Solo round",func(): _start_local(1))
-			button(popup_buttons,"Two players · pass the pad",func(): _start_local(2))
+			button(popup_buttons,"Solo · island rival",func(): field_index=-1; paused=false; game.local(2,[],true))
+			button(popup_buttons,"Local match",func(): local_setup=true; setup_count=2; setup_teams=false; _default_teams(); _refresh())
 			button(popup_buttons,"Graphics",_open_graphics)
 			button(popup_buttons,"Sound",_open_audio)
 			button(popup_buttons,"Exit",_quit_game)
 		elif state=="handoff":
-			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.world.players==2 else "Aim with left/right. Power with up/down."]
+			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.participant_count>1 and not game.solo_bot else "Aim with left/right. Power with up/down."]
 			button(popup_buttons,"Ready",func(): game.accept_turn())
 		elif state=="waiting":
 			popup_title.text="Connecting match"; popup_text.text=game.info
 			button(popup_buttons,"Back",func(): game.leave())
+		elif state=="setup":
+			popup_title.text="Players & teams"
+			var options := HBoxContainer.new(); popup_buttons.add_child(options)
+			setup_count_button=button(options,"",_cycle_count)
+			setup_count_button.disabled=game.online
+			setup_mode_button=button(options,"",_toggle_teams)
+			setup_grid=GridContainer.new(); setup_grid.columns=2; popup_buttons.add_child(setup_grid)
+			for i in 8:
+				button(setup_grid,"",func(): _cycle_team(i)).size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			var actions := HBoxContainer.new(); popup_buttons.add_child(actions)
+			setup_start_button=button(actions,"Start round",_start_configured)
+			button(actions,"Back",func(): local_setup=false; game.leave() if game.online else _refresh())
+			for control in _popup_controls():
+				control.custom_minimum_size.y=38
+				control.add_theme_font_size_override("font_size",18)
+				control.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		elif state=="result":
 			popup_title.text="Round complete"
-			popup_text.text="Mint: %s = %d strokes" % [" · ".join(game.world.scores[0].map(func(n): return str(n))),game.world.total(0)]
-			if game.world.players==2:
-				popup_text.text+="\nCoral: %s = %d strokes\n%s" % [" · ".join(game.world.scores[1].map(func(n): return str(n))),game.world.total(1),"A draw!" if game.world.total(0)==game.world.total(1) else "Mint wins!" if game.world.total(0)<game.world.total(1) else "Coral wins!"]
+			var lines: Array = []; var winners: Array = []; var lowest := 100000
+			for i in game.world.players:
+				var total: int = game.world.total(i)
+				lines.append("%s: %s = %d"%[SIDE_NAMES[i]," \u00b7 ".join(game.world.scores[i].map(func(n): return str(n))),total])
+				if total<lowest: lowest=total; winners=[SIDE_NAMES[i]]
+				elif total==lowest: winners.append(SIDE_NAMES[i])
+			popup_text.text="\n".join(lines)+"\n"+(winners[0]+" wins!" if winners.size()==1 else "Draw: "+" / ".join(winners))
 			button(popup_buttons,"Play again",func(): game.rematch())
 			button(popup_buttons,"Main menu",func(): game.leave())
 		elif state=="paused":
@@ -434,6 +470,8 @@ func _refresh() -> void:
 		var controls := _popup_controls()
 		if not controls.is_empty(): controls[0].grab_focus()
 	elif not popup.visible: last_popup=""
+	if state=="setup":
+		_refresh_setup()
 	if state=="paused":
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
 	if game.phase=="waiting" and not paused: popup_text.text=game.info
@@ -452,7 +490,7 @@ func _refresh() -> void:
 			audio_sliders[i].set_value_no_signal(value)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
 	if state=="result" and game.voted:
-		popup_text.text="Rematch requested. Waiting for your friend…"
+		popup_text.text="Rematch requested. Waiting for all players…"
 		popup_buttons.get_child(0).disabled=true
 
 func _open_graphics() -> void:
@@ -486,10 +524,10 @@ func _save_graphics() -> void:
 func _popup_controls() -> Array[Control]:
 	var result: Array[Control] = []
 	for child in popup_buttons.get_children():
-		if child is Button: result.append(child)
+		if child is Button and child.visible and not child.disabled: result.append(child)
 		elif child is Container:
 			for control in child.get_children():
-				if control is Slider: result.append(control)
+				if control.visible and (control is Slider or control is Button and not control.disabled): result.append(control)
 	return result
 
 func _start_local(count: int) -> void:
@@ -555,6 +593,7 @@ func _process(delta: float) -> void:
 			if rolling_time>(shot.path.size()-1)/float(shot.hz)+(2.8 if shot.sunk else 0.85):
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
+	if not paused and audio_focused: game.tick_bot(delta)
 	_poll_stick(delta)
 	_poll_camera_keys(delta)
 	if game.phase=="aim" and not paused: anchor.step_turn(delta)
@@ -570,7 +609,7 @@ func _process(delta: float) -> void:
 	if not paused:
 		if rolling and is_instance_valid(anchor.motion) and anchor.motion.celebration>=0:
 			camera.celebration_frame(delta,anchor.global_position,anchor.global_basis)
-		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"],avatar_binding.eye_height())
+		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving","waiting_turn"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
 	var direction := Vector2.ZERO
@@ -637,6 +676,7 @@ func _primary() -> void:
 func _pause() -> void:
 	if audio_open: _close_audio(); return
 	if graphics_open: _close_graphics(); return
+	if local_setup: local_setup=false; _refresh(); return
 	if game.phase=="menu": return
 	paused=!paused; _refresh()
 
@@ -686,7 +726,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and not event.pressed: touches.erase(event.index)
 
 func _camera_allowed() -> bool:
-	return not paused and game.phase in ["aim","moving"]
+	return not paused and game.phase in ["aim","moving","waiting_turn"]
 
 func _cycle_view() -> void:
 	if not _camera_allowed(): return
@@ -727,3 +767,67 @@ func _unhandled_input(event: InputEvent) -> void:
 			if before>20 and after>20: camera.magnify(log(after/before))
 		touches[event.index]=event.position
 		get_viewport().set_input_as_handled()
+
+func _actor_name(actor: int) -> String:
+	if game.solo_bot and actor==1: return "RIVAL"
+	if actor==(game.seat if game.online else 0): return "YOU"
+	return _seat_label(actor)
+
+func _seat_label(actor: int) -> String:
+	var members: Array = game.bridge.session.get("members",[])
+	return "P%d"%int(members[actor].seat if game.online and actor<members.size() else actor+1)
+
+func _default_teams() -> void:
+	var roster: Array = Match.Rules.default_roster(setup_count)
+	if setup_teams and setup_count==4: roster=[[0,1],[2,3]]
+	setup_assignment.resize(setup_count)
+	for i in roster.size():
+		for member in roster[i]: setup_assignment[member]=i
+
+func _setup_roster() -> Array:
+	if not setup_teams: return Match.Rules.default_roster(setup_count)
+	var roster: Array = []
+	for team in 4:
+		var seats: Array = []
+		for i in setup_count:
+			if setup_assignment[i]==team: seats.append(i)
+		if not seats.is_empty(): roster.append(seats)
+	return roster
+
+func _cycle_count() -> void:
+	var counts := [2,4,5,6,7,8]
+	setup_count=counts[(counts.find(setup_count)+1)%counts.size()]
+	setup_teams=setup_count>4 or setup_teams and setup_count==4
+	_default_teams(); _refresh()
+
+func _toggle_teams() -> void:
+	if setup_count==4: setup_teams=not setup_teams; _default_teams(); _refresh()
+
+func _cycle_team(member: int) -> void:
+	if not setup_teams or member>=setup_count: return
+	setup_assignment[member]=(setup_assignment[member]+1)%mini(4,setup_count/2)
+	_refresh()
+
+func _refresh_setup() -> void:
+	var valid: bool = Match.Rules.valid_roster(_setup_roster(),setup_count)
+	popup_text.text="One ball per team \u00b7 take turns within your team.\nTap a player to change teams." if setup_teams else "Everyone plays their own ball.\nFewest strokes wins."
+	if not valid: popup_text.text="Each team needs 2 or 3 players.\nUnequal teams are welcome: 2 versus 3."
+	setup_count_button.text="Players: %d"%setup_count
+	setup_mode_button.text="Teams" if setup_teams else "Individual"
+	setup_mode_button.disabled=setup_count!=4
+	for i in 8:
+		var control: Button = setup_grid.get_child(i)
+		control.visible=i<setup_count
+		if i<setup_count:
+			control.text="%s · %s"%[_seat_label(i),SIDE_NAMES[setup_assignment[i]]]
+			control.disabled=not setup_teams
+	setup_start_button.disabled=not valid
+	var controls := _popup_controls()
+	if not controls.is_empty() and get_viewport().gui_get_focus_owner() not in controls: controls[0].grab_focus()
+
+func _start_configured() -> void:
+	var roster := _setup_roster()
+	if not Match.Rules.valid_roster(roster,setup_count): return
+	local_setup=false; field_index=-1; paused=false
+	if game.online: game.start_group(roster)
+	else: game.local(setup_count,roster)

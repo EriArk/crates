@@ -16,9 +16,42 @@ var strokes: Array = []
 var finished: Array = []
 var scores: Array = []
 var complete := false
+var roster: Array = [] # Ball/team -> participant seats, immutable for a round.
+var rotations: Array = [] # Carries across holes, including a teammate's last putt.
+
+static func valid_roster(value: Array, count: int) -> bool:
+	if count<1 or count>8 or value.is_empty() or value.size()>4: return false
+	var seen: Array = []
+	var teams: bool = value.size()!=count
+	if teams and count<4: return false
+	if not teams and count not in [1,2,4]: return false
+	for group in value:
+		if not group is Array or group.size()<(2 if teams else 1) or group.size()>(3 if teams else 1): return false
+		for member in group:
+			if not (member is int or member is float) or not is_finite(float(member)) or member!=int(member) or member<0 or member>=count or seen.has(int(member)): return false
+			seen.append(int(member))
+	return seen.size()==count
+
+static func default_roster(count: int) -> Array:
+	if count in [1,2,4]:
+		var result: Array = []
+		for i in count: result.append([i])
+		return result
+	return {5:[[0,1],[2,3,4]],6:[[0,1,2],[3,4,5]],7:[[0,1],[2,3],[4,5,6]],8:[[0,1],[2,3,4],[5,6,7]]}.get(count,[]).duplicate(true)
+
+func actor(ball: int = -1) -> int:
+	var index := turn if ball<0 else ball
+	return roster[index][rotations[index]%roster[index].size()]
+
+func setup_roster(value: Array, first: int = 0) -> void:
+	setup(value.size(),first)
+	roster=[]
+	for group in value: roster.append(group.map(func(member): return int(member)))
 
 func setup(count: int, first: int = 0) -> void:
 	players = count
+	roster=[]; rotations=[]
+	for i in players: roster.append([i]); rotations.append(0)
 	starter = first % players
 	hole = 0
 	ply = 0
@@ -66,11 +99,14 @@ func fire_units(angle_units: int, power_units: int) -> Dictionary:
 	if complete or angle_units<0 or angle_units>=36000 or power_units<1000 or power_units>10000:
 		return {}
 	var shooter := turn
+	var participant := actor()
 	var result := trace_units(Courses.get_course(hole), balls[turn], angle_units, power_units)
 	balls[turn] = result.position.duplicate()
 	strokes[turn] += 1
 	finished[turn] = result.sunk or strokes[turn] >= CAP
 	result["player"] = shooter
+	result["actor"] = participant
+	rotations[shooter]+=1
 	result["angle"] = angle_units/100.0
 	result["hole"] = hole
 	result["capped"] = not result.sunk and finished[turn]
@@ -94,7 +130,13 @@ func fire_units(angle_units: int, power_units: int) -> Dictionary:
 	return result
 
 func snapshot() -> Array:
-	return [players,hole,turn,starter,ply,balls,strokes,finished,scores,complete].duplicate(true)
+	return [players,hole,turn,starter,ply,balls,strokes,finished,scores,complete,roster,rotations].duplicate(true)
+
+func copy():
+	var candidate = get_script().new()
+	for key in ["players","hole","turn","starter","ply","complete"]: candidate.set(key,get(key))
+	for key in ["balls","strokes","finished","scores","roster","rotations"]: candidate.set(key,get(key).duplicate(true))
+	return candidate
 
 func digest() -> String:
 	return JSON.stringify([PHYSICS_REVISION,snapshot()]).sha256_text()

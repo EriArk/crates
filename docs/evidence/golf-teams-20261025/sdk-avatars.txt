@@ -1,0 +1,112 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.11.1, Qt 6.11.1 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 16.1.0), windows 10
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::groupGolf(4) Creating group
+QINFO  : HostIntegration::groupGolf(4) Selecting game
+QINFO  : HostIntegration::groupGolf(4) Preparing group
+QINFO  : HostIntegration::groupGolf(4) Launched group
+QINFO  : HostIntegration::groupGolf(4) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+
+QINFO  : HostIntegration::groupGolf(4) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+
+QINFO  : HostIntegration::groupGolf(4) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+
+QINFO  : HostIntegration::groupGolf(4) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+
+QINFO  : HostIntegration::groupGolf(4) ?
+
+QINFO  : HostIntegration::groupGolf(4) ?
+
+QINFO  : HostIntegration::groupGolf(4) ?
+
+QINFO  : HostIntegration::groupGolf(4) ?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=A little green. A good time.?
+GOLF phase=waiting sync= info=Connecting to TrainerOS…?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=A little green. A good time.?
+GOLF phase=waiting sync= info=Connecting to TrainerOS…?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=A little green. A good time.?
+GOLF phase=waiting sync= info=Connecting to TrainerOS…?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=A little green. A good time.?
+GOLF phase=waiting sync= info=Connecting to TrainerOS…?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=Connected to TrainerOS.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=Connected to TrainerOS.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=Connected to TrainerOS.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=Connected to TrainerOS.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=setup sync= info=The host is choosing players and teams.?
+GOLF phase=waiting sync=ready info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=result sync= info=The host is choosing players and teams.?
+GOLF phase=result sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=result sync= info=The host is choosing players and teams.?
+GOLF phase=result sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=result sync= info=The host is choosing players and teams.?
+GOLF phase=result sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=result sync= info=The host is choosing players and teams.?
+GOLF phase=result sync= info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=ready info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=waiting sync=begin info=The host is choosing players and teams.?
+
+QINFO  : HostIntegration::groupGolf(4) GROUP AVATARS PASS unique peers=3?
+
+QINFO  : HostIntegration::groupGolf(4) GROUP AVATARS PASS unique peers=3?
+
+QINFO  : HostIntegration::groupGolf(4) GROUP AVATARS PASS unique peers=3?
+
+QINFO  : HostIntegration::groupGolf(4) GROUP AVATARS PASS unique peers=3?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=menu sync= info=The host is choosing players and teams.?
+GOLF phase=menu sync= info=A player left. Return to Lobby for a fresh round.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=menu sync= info=The host is choosing players and teams.?
+GOLF phase=menu sync= info=A player left. Return to Lobby for a fresh round.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=menu sync= info=The host is choosing players and teams.?
+GOLF phase=menu sync= info=A player left. Return to Lobby for a fresh round.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF phase=menu sync= info=The host is choosing players and teams.?
+GOLF phase=menu sync= info=Trainer changed or TrainerOS closed. Return to Lobby for a fresh game.?
+
+QINFO  : HostIntegration::groupGolf(4) GOLF SDK/TLS PASS players= 4 three holes, identical scores, all-player rematch, rotated starter, revocation, retained lobby
+QINFO  : HostIntegration::groupGolf(4)
+QINFO  : HostIntegration::groupGolf(4)
+QINFO  : HostIntegration::groupGolf(4)
+QINFO  : HostIntegration::groupGolf(4)
+PASS   : HostIntegration::groupGolf(4)
+QINFO  : HostIntegration::randomStockRival() Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org?
+?
+STOCK RIVAL PASS?
+
+PASS   : HostIntegration::randomStockRival()
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped, 0 blacklisted, 63765ms
+********* Finished testing of HostIntegration *********
