@@ -7,6 +7,9 @@ signal record(data: Dictionary)
 signal closed
 signal identity_revoked
 signal sdk_record(data: Dictionary)
+signal connected
+var capabilities: Dictionary = {}
+var ignored: Array = []
 var app_id := "art.abysstail.pocket-golf"
 var activity_title := "Pocket Golf"
 var game_protocol := "pocket-golf.6"
@@ -66,17 +69,21 @@ func disconnect_host() -> void:
 	pending.clear()
 	buffer.clear()
 	outgoing.clear()
+	capabilities.clear(); ignored.clear()
 
 func fail(reason: String) -> void:
+	var abandoned := pending.values().duplicate()
 	disconnect_host()
 	closed.emit()
 	status.emit(reason)
+	for item in abandoned:
+		if item.get("callback",Callable()).is_valid(): item.callback.call({},"connection_lost")
 
-func request(method: String, params: Dictionary = {}) -> bool:
+func request(method: String, params: Dictionary = {}, callback: Callable = Callable()) -> bool:
 	if not active or pending.size()>=64: return false
 	serial += 1
 	var id := str(serial)
-	pending[id] = {"method":method,"deadline":Time.get_ticks_msec()+5000}
+	pending[id] = {"method":method,"deadline":Time.get_ticks_msec()+(20000 if callback.is_valid() else 5000),"callback":callback}
 	outgoing.append_array((JSON.stringify({"id":id,"method":method,"params":params})+"\n").to_utf8_buffer())
 	return true
 
@@ -143,8 +150,15 @@ func _process(_delta: float) -> void:
 	if buffer.size()>=65536:
 		fail("TrainerOS frame is too large.")
 		return
-	for request in pending.values():
-		if Time.get_ticks_msec()>request.deadline:
+	for id in pending.keys():
+		if not pending.has(id): continue
+		var item: Dictionary = pending[id]
+		if Time.get_ticks_msec()>item.deadline:
+			if item.get("callback",Callable()).is_valid():
+				pending.erase(id); ignored.append(id)
+				if ignored.size()>64: ignored.pop_front()
+				item.callback.call({},"timeout")
+				continue
 			fail("TrainerOS response timed out. Reconnect to start a new session.")
 			return
 
@@ -187,11 +201,18 @@ func _packet(value: Dictionary) -> void:
 			if channel==grant: request("network.consume",{"channel":grant,"sequence":value.sequence})
 		return
 	var id = value.get("id","")
+	if ignored.has(id): ignored.erase(id); return
 	if not pending.has(id):
 		fail("Unexpected TrainerOS response.")
 		return
 	var method: String = pending[id].method
+	var callback: Callable = pending[id].get("callback",Callable())
 	pending.erase(id)
+	if callback.is_valid():
+		if value.has("error"): callback.call({},str(value.error.get("code","backend_unavailable")))
+		elif value.get("result") is Dictionary: callback.call(value.result,"")
+		else: callback.call({},"invalid_response")
+		return
 	if value.has("error"):
 		fail("TrainerOS could not complete the request. Reconnect from Lobby.")
 		return
@@ -204,7 +225,9 @@ func _packet(value: Dictionary) -> void:
 		if result.get("protocol")!=1 or not caps is Dictionary or caps.get("lobby.activity")!=1 or caps.get("network.records")!=1:
 			fail("This TrainerOS build needs native game networking support.")
 			return
+		capabilities=caps.duplicate(true)
 		request("activity.register",{"title":activity_title,"protocol":game_protocol})
 	elif method=="activity.register":
 		registered = true
 		status.emit("Connected to TrainerOS.")
+		connected.emit()

@@ -1,0 +1,3 @@
+FROM traineros-account-ci:20261025-ui
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends python3-cryptography magic-wormhole && rm -rf /var/lib/apt/lists/*

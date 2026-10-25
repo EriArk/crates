@@ -9,6 +9,8 @@ signal round_started
 var world = Rules.new()
 var bridge = Client.new()
 var bot = Bot.new()
+var scorecards = preload("res://scripts/scorecards.gd").new()
+var score_identities: Dictionary = {}
 var phase := "menu"
 var online := false
 var solo_bot := false
@@ -35,6 +37,8 @@ var heartbeat_at := 0
 
 func _ready() -> void:
 	add_child(bridge)
+	add_child(scorecards); scorecards.bind(bridge)
+	scorecards.changed.connect(func(): changed.emit())
 	bridge.status.connect(func(text): info=text; changed.emit())
 	bridge.closed.connect(func():
 		if online:
@@ -46,6 +50,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not online: return
 	var now := Time.get_ticks_msec()
+	if sync=="scorecard" and now>deadline:
+		scorecards.new_round(chosen_roster,seat); _start_play(""); return
 	if not sync.is_empty() and now>deadline: invalid(); return
 	if now>=heartbeat_at:
 		heartbeat_at=now+1000
@@ -69,6 +75,7 @@ func local(count: int, roster: Array = [], opponent: bool = false) -> void:
 	var next: Array = Rules.default_roster(count) if roster.is_empty() else roster
 	if not Rules.valid_roster(next,count): return
 	online=false; solo_bot=opponent and count==2; seat=0; host=false
+	scorecards.reset(); scorecards.message="Local round · outside the shared tables"
 	bridge.disconnect_host(); members.clear()
 	participant_count=count; chosen_roster=next.duplicate(true)
 	round_id=1; world.setup_roster(chosen_roster)
@@ -79,8 +86,11 @@ func join() -> void:
 	online=true; solo_bot=false; phase="waiting"; changed.emit(); bridge.connect_host()
 
 func leave() -> void:
+	if host: scorecards.cancel_waiting()
+	scorecards.reset()
 	online=false; solo_bot=false; bridge.close_channel()
 	phase="menu"; sync=""; members.clear(); bot.cancel()
+	info="A little green. A good time."
 	peer_preview.clear(); last_preview.clear(); changed.emit()
 
 func can_fire() -> bool:
@@ -131,9 +141,13 @@ func _begin_turn_if_ready() -> void:
 	if not host or ready_seats.size()!=participant_count: return
 	if not send({"type":"turn","hash":world.digest()}): return
 	ready_seats.clear(); sync=""; phase="result" if world.complete else "aim"; changed.emit()
+	if world.complete: scorecards.finish(world.scores)
 
 func rematch() -> void:
 	if phase!="result" or voted: return
+	if scorecards.busy: return
+	# Once voted, do not let an old-result poll overtake the next round's grant/RPC.
+	scorecards.poll_at=0
 	if not online:
 		round_id+=1; world.setup_roster(chosen_roster,(round_id-1)%chosen_roster.size())
 		_reset(); phase="handoff"; round_started.emit(); changed.emit(); return
@@ -174,6 +188,7 @@ func start_group(roster: Array) -> void:
 
 func _host_round() -> void:
 	round_id+=1; world.setup_roster(chosen_roster,(round_id-1)%chosen_roster.size()); _reset()
+	scorecards.new_round(chosen_roster,seat); score_identities.clear()
 	phase="waiting"; sync="ready"; deadline=Time.get_ticks_msec()+15000; ready_seats=[seat]
 	send({"type":"start","roster":chosen_roster,"hash":world.digest()})
 	round_started.emit(); changed.emit()
@@ -200,16 +215,35 @@ func _receive_member(member: String, data: Dictionary) -> void:
 		if data.get("round")!=round_id+1 or not (round_id==0 or world.complete and voted) or not roster is Array or not Rules.valid_roster(roster,participant_count): invalid(); return
 		var candidate = Rules.new(); candidate.setup_roster(roster,round_id%roster.size())
 		if data.get("hash")!=candidate.digest(): invalid(); return
-		round_id+=1; chosen_roster=roster.duplicate(true); world=candidate; _reset()
-		phase="waiting"; sync="begin"; deadline=Time.get_ticks_msec()+15000
+		round_id+=1; chosen_roster=candidate.roster.duplicate(true); world=candidate; _reset()
+		scorecards.new_round(chosen_roster,members.find(bridge.session.hostMember))
+		phase="waiting"; sync="begin"; deadline=Time.get_ticks_msec()+180000
 		send({"type":"ready","hash":world.digest()}); round_started.emit(); changed.emit(); return
 	if data.get("round")!=round_id: invalid(); return
+	if kind=="score_offer" and not host and from_host:
+		if sync!="begin" or data.get("ruleset")!=scorecards.RULESET or not scorecards.uuid_valid(data.get("match_id")): invalid(); return
+		info="Connecting shared results…"; changed.emit()
+		scorecards.join_round(data.match_id,chosen_roster,seat,func(_result,error):
+			if online and sync=="begin": send({"type":"score_joined","player":scorecards.player if error.is_empty() else ""}))
+		return
+	if kind=="score_joined" and host:
+		if sync!="scorecard": return # Late optional-service answer after casual fallback.
+		if score_identities.has(sender): invalid(); return
+		if not scorecards.uuid_valid(data.get("player")): _start_play(""); return
+		score_identities[sender]=data.player
+		if score_identities.size()==participant_count:
+			scorecards.start_round(chosen_roster,score_identities,func(_result,error):
+				_start_play(scorecards.match_id if error.is_empty() else ""))
+		return
 	if kind=="ready" and host and sync=="ready" and not ready_seats.has(sender) and data.get("hash")==world.digest():
 		ready_seats.append(sender)
 		if ready_seats.size()==participant_count:
-			if send({"type":"begin","hash":world.digest()}): sync=""; ready_seats.clear(); phase="aim"; changed.emit()
+			_prepare_scores()
 		return
 	if kind=="begin" and not host and from_host and sync=="begin" and data.get("hash")==world.digest():
+		var key = data.get("match_id","")
+		if not key is String or not key.is_empty() and key!=scorecards.match_id: invalid(); return
+		scorecards.activate(key)
 		sync=""; phase="aim"; changed.emit(); return
 	if kind=="aim":
 		if not _valid_aim(data): invalid(); return
@@ -225,9 +259,27 @@ func _receive_member(member: String, data: Dictionary) -> void:
 	if kind=="settled" and host and phase in ["moving","waiting_turn"] and not ready_seats.has(sender) and data.get("hash")==world.digest():
 		ready_seats.append(sender); _begin_turn_if_ready(); return
 	if kind=="turn" and not host and from_host and sync=="settled" and data.get("hash")==world.digest():
-		sync=""; phase="result" if world.complete else "aim"; changed.emit(); return
+		sync=""; phase="result" if world.complete else "aim"
+		if world.complete: scorecards.finish(world.scores)
+		changed.emit(); return
 	if kind=="rematch" and host and world.complete and phase in ["result","waiting_turn","moving"] and data.get("hash")==world.digest(): _vote(sender); return
 	invalid()
+
+func _prepare_scores() -> void:
+	sync="scorecard"; deadline=Time.get_ticks_msec()+120000
+	info="Connecting shared results…"; changed.emit()
+	scorecards.create_round(chosen_roster,func(_result,error):
+		if not online or sync!="scorecard": return
+		if not error.is_empty(): _start_play(""); return
+		score_identities={seat:scorecards.player}
+		send({"type":"score_offer","match_id":scorecards.match_id,"ruleset":scorecards.RULESET}))
+
+func _start_play(key: String) -> void:
+	if not online or not host or sync!="scorecard": return
+	if key.is_empty(): scorecards.cancel_waiting()
+	if not send({"type":"begin","hash":world.digest(),"match_id":key}): return
+	scorecards.activate(key)
+	sync=""; ready_seats.clear(); phase="aim"; changed.emit()
 
 func _valid_shot(data: Dictionary) -> bool:
 	return not world.complete and _valid_aim(data) and data.get("actor")==world.actor() and data.get("ply")==world.ply and data.get("before")==world.digest()

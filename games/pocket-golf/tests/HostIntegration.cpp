@@ -4,6 +4,9 @@
 #include <QSettings>
 #include <QProcess>
 #include <QScopeGuard>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include "features/accounts/BackendAccount.h"
 #include <vector>
 #include <algorithm>
 #include "platform/sdk/PlatformHost.h"
@@ -20,16 +23,34 @@ private slots:
         const auto python=qEnvironmentVariable("TRAINEROS_TEST_RECORD_PYTHON"),godot=qEnvironmentVariable("GOLF_TEST_GODOT"),project=qEnvironmentVariable("GOLF_TEST_PROJECT");
         QVERIFY(!python.isEmpty()&&!godot.isEmpty()&&!project.isEmpty());
         QTemporaryDir dir;QSettings::setDefaultFormat(QSettings::IniFormat);QSettings::setPath(QSettings::IniFormat,QSettings::UserScope,dir.path());
-        struct Node {LobbyCoordinator lobby;LobbyRuntime runtime{lobby};ControlsDashboard controls;PlatformHost host{controls};std::unique_ptr<SdkNetwork> network;QProcess process;QString endpoint,report;QByteArray output;bool registered=false;};
+        struct Node {LobbyCoordinator lobby;LobbyRuntime runtime{lobby};ControlsDashboard controls;PlatformHost host{controls};BackendAccount account;QNetworkAccessManager http;QByteArray saved;std::unique_ptr<SdkNetwork> network;QProcess process;QString endpoint,report;QByteArray output;bool registered=false;};
+        const auto fixtures=qEnvironmentVariable("GOLF_TEST_BACKEND_FIXTURES");
+        const bool casual=qEnvironmentVariableIsSet("GOLF_TEST_CASUAL");
         std::vector<std::unique_ptr<Node>> nodes;QStringList ids;
         for(int i=0;i<count;++i){ids<<QString::number(100+i);auto n=std::make_unique<Node>();n->lobby.configure(ids[i],"P"+QString::number(i),true);n->runtime.configure(ids[i],true);
             n->network=std::make_unique<SdkNetwork>(n->lobby,n->runtime,python,QString::fromUtf8(SDK_SOURCE)+"/packaging/emulators/melonds/secure-channel.py","127.0.0.1");
-            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.pocket-golf"},{"title","Pocket Golf"},{"protocol","pocket-golf.7"},{"seats",8},{"local","crates:pocket-golf"}}});
+            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.pocket-golf"},{"title","Pocket Golf"},{"protocol","pocket-golf.8"},{"seats",8},{"local","crates:pocket-golf"}}});
             n->controls.setOwner(ids[i]);n->host.setContext({{"profile",ids[i]}});n->host.setNetwork(n->network.get());
+            if(!fixtures.isEmpty()&&!(casual&&i==count-1)){
+                QFile input(fixtures+"/player-"+QString::number(i)+".json");QVERIFY(input.open(QIODevice::ReadOnly));
+                const auto config=QJsonDocument::fromJson(input.readAll()).object();
+                QCOMPARE(config["origin"].toString(),QString("http://127.0.0.1:19091"));
+                auto* node=n.get();node->saved=QJsonDocument(QJsonObject{{"refresh_token",config["refresh_token"]}}).toJson();
+                node->account.setServices({[node,this](QByteArray method,QString path,QJsonObject body,QByteArray auth,BackendAccount::Reply done){
+                    QNetworkRequest request(QUrl("http://127.0.0.1:19091"+path));request.setHeader(QNetworkRequest::ContentTypeHeader,"application/json");request.setTransferTimeout(15000);
+                    if(!auth.isEmpty())request.setRawHeader("Authorization","Bearer "+auth);
+                    auto* reply=node->http.sendCustomRequest(request,method,body.isEmpty()?QByteArray():QJsonDocument(body).toJson(QJsonDocument::Compact));
+                    connect(reply,&QNetworkReply::finished,this,[reply,done=std::move(done)]{done(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(),QJsonDocument::fromJson(reply->readAll()).object());reply->deleteLater();});
+                },[node](QString,auto done){done(true,node->saved);},[node](QString,QByteArray bytes,auto done){node->saved=bytes;done(true);},{}});
+                node->host.setBackend(&node->account);node->account.configure(ids[i]);
+                QTRY_COMPARE_WITH_TIMEOUT(node->account.snapshot()["state"].toString(),QString("signed_in"),15000);
+                node->host.setContext({{"profile",ids[i]},{"account",node->account.snapshot()}});
+            }
             if(count==4||count==8){auto a=AvatarAssets::defaults();a["shirtColor"]=AvatarAssets::choices("shirtColor")[i%6];a["hair"]=AvatarAssets::choices("hair")[i/6];
                 auto descriptor=AvatarAssets::resolve(a,{},dir.filePath("avatar-"+ids[i]));QVERIFY(!descriptor.contains("error"));descriptor["profile"]=ids[i];n->host.setAvatar(descriptor,true);}
             n->endpoint=dir.filePath(ids[i]+"/endpoint.json");n->report=dir.filePath(ids[i]+".json");QVERIFY(n->host.start(n->endpoint));
             n->process.setProcessChannelMode(QProcess::MergedChannels);
+            auto environment=QProcessEnvironment::systemEnvironment();environment.insert("XDG_DATA_HOME",dir.filePath(ids[i]+"/data"));n->process.setProcessEnvironment(environment);
             connect(&n->process,&QProcess::readyReadStandardOutput,this,[node=n.get()]{auto bytes=node->process.readAllStandardOutput();node->output+=bytes;node->registered=node->output.contains("Connected to TrainerOS.");qInfo().noquote()<<bytes;});
             auto* node=n.get();n->network->launchInstalled=[node,godot,project](QString local){if(local!="crates:pocket-golf")return false;if(node->process.state()!=QProcess::NotRunning)return true;
                 node->process.start(godot,{"--headless","--path",project,"--script","tests/network_peer.gd","--","--sdk-endpoint="+node->endpoint,"--report="+node->report});return node->process.waitForStarted();};nodes.push_back(std::move(n));}
@@ -46,6 +67,8 @@ private slots:
         auto report=[](const QString& path){QFile f(path);if(!f.open(QIODevice::ReadOnly))return QJsonObject{};return QJsonDocument::fromJson(f.readAll()).object();};
         QTRY_VERIFY_WITH_TIMEOUT(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="rematch";}),120000);
         QSet<int> seats;for(auto& n:nodes){const auto r=report(n->report);QCOMPARE(r["result"],report(nodes[0]->report)["result"]);QCOMPARE(r["scores"],report(nodes[0]->report)["scores"]);QCOMPARE(r["starter"].toInt(),1);seats.insert(r["seat"].toInt());}QCOMPARE(seats.size(),count);
+        if(!fixtures.isEmpty()&&!casual)for(auto& n:nodes){const auto r=report(n->report);QCOMPARE(r["decision"].toString(),QString("confirmed"));QVERIFY(!r["server_match"].toString().isEmpty());QCOMPARE(r["server_match"],report(nodes[0]->report)["server_match"]);QVERIFY(r["next_match"]!=r["server_match"]);QVERIFY(r["board_rows"].toInt()>=r["roster"].toArray().size());}
+        else for(auto& n:nodes)QVERIFY(report(n->report)["next_match"].toString().isEmpty());
         nodes[count-1]->host.setContext({{"profile","other"}});
         QTRY_VERIFY_WITH_TIMEOUT(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="revoked";}),15000);
         for(auto& n:nodes){QTRY_COMPARE_WITH_TIMEOUT(n->process.state(),QProcess::NotRunning,30000);QCOMPARE(n->process.exitCode(),0);}QCOMPARE(nodes[0]->lobby.state()["members"].toArray().size(),count);

@@ -4,14 +4,23 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play against an island
 rival, pass a controller locally, or join a group through TrainerOS Lobby.
 
+**Prepared 0.1.22 connects online rounds to shared records and wins.** Every
+participant joins and confirms the full scorecard through the TrainerOS account;
+teams retain one shared ball and score. Menu / result → Shared tables includes
+individual/team records, wins, pagination and explicit pending-result retry.
+An unavailable service leaves a casual match; local/bot scores are not submitted.
+Requires combined group + Play SDK and `pocket-golf.8`. See
+[shared results, recovery and trust](docs/SHARED_RESULTS.md). Packages are prepared
+on the server; this does not publish or install them on handhelds.
+
 **0.1.21 adds individual matches for 2 or 4, and teams for 4-8 people.** Each
 team has 2 or 3 members sharing one ball and one score. Teammates alternate shots,
 including across holes. Unequal sides (such as 2 versus 3) are valid. The local
 match setup or online host chooses teams inside the game. Solo now includes a
 computer rival with a fresh random standard SDK appearance for each round.
 The rival plans on a worker thread using the same terrain and collision rules.
-See [teams, rival and SDK contract](docs/TEAMS.md). Requires `pocket-golf.7` and
-SDK `network.group: 1`; prior duet protocols cannot join. Handheld testing and
+See [teams, rival and SDK contract](docs/TEAMS.md). That update introduced
+`pocket-golf.7` and SDK `network.group: 1`; 0.1.22 uses `.8`. Handheld testing and
 publication remain deferred by the owner.
 
 

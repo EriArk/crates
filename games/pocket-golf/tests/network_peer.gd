@@ -13,6 +13,11 @@ var strokes: Array = []
 var prepared_ply := -1
 var fire_at := 0
 var saw_preview := false
+var backend := false
+var server_match := ""
+var decision := ""
+var board_rows := 0
+var board_requested := false
 var appearances
 var avatar_binding
 class AvatarEndpoint extends Node:
@@ -22,6 +27,7 @@ class AvatarEndpoint extends Node:
 func _initialize() -> void: call_deferred("run")
 
 func run() -> void:
+	backend=not OS.get_environment("GOLF_TEST_BACKEND_FIXTURES").is_empty() and OS.get_environment("GOLF_TEST_CASUAL").is_empty()
 	game=Match.new()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--sdk-endpoint="): game.bridge.endpoint_override=arg.trim_prefix("--sdk-endpoint=")
@@ -57,6 +63,14 @@ func _process(_delta: float) -> bool:
 			prepared_ply=game.world.ply; fire_at=Time.get_ticks_msec()+80
 		elif Time.get_ticks_msec()>=fire_at: game.fire()
 	elif game.phase=="result" and not game.voted:
+		if backend:
+			if game.scorecards.decision!="confirmed": return false
+			if not board_requested and not game.scorecards.busy:
+				board_requested=true
+				game.scorecards.fetch_board("individual" if game.world.players==game.participant_count else "teams","records")
+			if game.scorecards.busy or game.scorecards.board.is_empty(): return false
+			server_match=game.scorecards.match_id; decision=game.scorecards.decision
+			board_rows=game.scorecards.board.items.size()
 		completed=true; result_hash=game.world.digest(); strokes=game.world.scores.duplicate(true)
 		game.rematch()
 	elif completed and game.round_id==2 and game.phase=="aim" and stage==0:
@@ -71,7 +85,7 @@ func _process(_delta: float) -> bool:
 				hashes.append(descriptor.sha256)
 			print("GROUP AVATARS PASS unique peers=",hashes.size())
 		stage=1
-		write_report({"stage":"rematch","result":result_hash,"scores":strokes,"starter":game.world.turn,"roster":game.world.roster,"seat":game.seat})
+		write_report({"stage":"rematch","result":result_hash,"scores":strokes,"starter":game.world.turn,"roster":game.world.roster,"seat":game.seat,"decision":decision,"server_match":server_match,"next_match":game.scorecards.match_id,"board_rows":board_rows})
 	elif stage==1 and game.phase=="menu":
 		stage=2
 		write_report({"stage":"revoked","result":result_hash,"scores":strokes,"starter":1})

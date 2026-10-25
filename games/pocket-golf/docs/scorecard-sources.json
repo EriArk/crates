@@ -1,0 +1,12 @@
+{
+    "ruleset":  "pocket-golf.island.analog5.v1",
+    "normalization":  "UTF-8, LF",
+    "source_sha256":  {
+                          "scripts/rules.gd":  "5393df298b6ef15425227ea5fc00df48ba896ddf0592bceb4ee5f7632aef4f00",
+                          "scripts/courses.gd":  "49b124925644e9314bb8c2d5608ef565d8b54e4aa845c48b27a1a3bb7e55db3c",
+                          "scripts/ball_physics.gd":  "2c5c1716f62c15b5941602e02ba167f0afbf3705c87a26562dcb5165689449d9",
+                          "scripts/green_surface.gd":  "c5a649f8c0160d6c0dd18fe98d133e9c96b96ae9fdaeb2750fff6721c81e50ab",
+                          "scripts/dimensions.gd":  "61d5e85786a48e40818bfa17bf7eb61d9582cc353fb1a0cc3062c95b4a255d5f"
+                      },
+    "content_id":  "island-ad79aeae2d38dd08c43b123c6a99de5c2136f1ea5fc239fb"
+}

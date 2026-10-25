@@ -1,0 +1,9 @@
+Test project /work/build-trixie
+    Start 3: platform_sdk
+1/2 Test #3: platform_sdk .....................   Passed    2.72 sec
+    Start 4: sdk_network
+2/2 Test #4: sdk_network ......................   Passed   12.61 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =  15.33 sec

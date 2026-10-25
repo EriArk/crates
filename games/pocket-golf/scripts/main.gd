@@ -73,6 +73,10 @@ var popup_title: Label
 var popup_text: Label
 var popup_buttons: VBoxContainer
 var last_popup := ""
+var boards_open := false
+var board_mode := "individual"
+var board_kind := "records"
+var result_text := ""
 var ball_materials: Array = []
 var capture_dir := ""
 
@@ -321,6 +325,7 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	node.pressed.connect(func(): audio.cue("ui")); node.pressed.connect(action); return node
 
 func _refresh() -> void:
+	if boards_open and game.phase not in ["menu","result"]: boards_open=false
 	if presentation_phase!=game.phase:
 		if game.phase!="moving": anchor.reset_motion(); audio.clear_shot()
 		if game.phase=="menu": audio.reset()
@@ -380,22 +385,26 @@ func _refresh() -> void:
 				point.y=_ground(point)+0.012
 				aim_root.get_child(i).position=point
 	audio.set_state(audio_focused,paused)
-	var state: String = "setup" if local_setup else "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
-	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio","setup"]
+	var state: String = "boards" if boards_open else "setup" if local_setup else "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
+	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio","setup","boards"]
 	modal_shade.visible=popup.visible
 	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
 		if state=="setup" and game.online:
 			setup_count=game.participant_count; setup_teams=setup_count not in [2,4]; _default_teams()
 		last_popup=state
-		popup.offset_top=-250 if state=="setup" else -182; popup.offset_bottom=250 if state=="setup" else 182
+		var half_height := 250 if state in ["setup","boards"] else 230 if state=="result" else 200
+		popup.offset_top=-half_height; popup.offset_bottom=half_height
+		popup_text.add_theme_font_size_override("font_size",18 if state=="boards" else 20)
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
 		if state=="menu":
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
 			button(popup_buttons,"Solo · island rival",func(): field_index=-1; paused=false; game.local(2,[],true))
 			button(popup_buttons,"Local match",func(): local_setup=true; setup_count=2; setup_teams=false; _default_teams(); _refresh())
-			button(popup_buttons,"Graphics",_open_graphics)
-			button(popup_buttons,"Sound",_open_audio)
+			button(popup_buttons,"Shared tables",_open_boards)
+			var settings_row := HBoxContainer.new(); popup_buttons.add_child(settings_row)
+			button(settings_row,"Graphics",_open_graphics).size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			button(settings_row,"Sound",_open_audio).size_flags_horizontal=Control.SIZE_EXPAND_FILL
 			button(popup_buttons,"Exit",_quit_game)
 		elif state=="handoff":
 			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.participant_count>1 and not game.solo_bot else "Aim with left/right. Power with up/down."]
@@ -427,9 +436,24 @@ func _refresh() -> void:
 				lines.append("%s: %s = %d"%[SIDE_NAMES[i]," \u00b7 ".join(game.world.scores[i].map(func(n): return str(n))),total])
 				if total<lowest: lowest=total; winners=[SIDE_NAMES[i]]
 				elif total==lowest: winners.append(SIDE_NAMES[i])
-			popup_text.text="\n".join(lines)+"\n"+(winners[0]+" wins!" if winners.size()==1 else "Draw: "+" / ".join(winners))
+			result_text="\n".join(lines)+"\n"+(winners[0]+" wins!" if winners.size()==1 else "Draw: "+" / ".join(winners))
 			button(popup_buttons,"Play again",func(): game.rematch())
+			button(popup_buttons,"Shared tables",_open_boards)
 			button(popup_buttons,"Main menu",func(): game.leave())
+		elif state=="boards":
+			popup_title.text="Island clubhouse"
+			var filters := HBoxContainer.new(); popup_buttons.add_child(filters)
+			button(filters,"",func(): board_mode="teams" if board_mode=="individual" else "individual"; _load_board())
+			button(filters,"",func(): board_kind="wins" if board_kind=="records" else "records"; _load_board())
+			var pages := HBoxContainer.new(); popup_buttons.add_child(pages)
+			button(pages,"Previous",func(): _load_board(maxi(0,int(game.scorecards.board.get("offset",0))-5),game.scorecards.board.get("revision","")))
+			button(pages,"Next",func(): _load_board(int(game.scorecards.board.get("next_offset",0)),game.scorecards.board.get("revision","")))
+			var actions := HBoxContainer.new(); popup_buttons.add_child(actions)
+			button(actions,"Retry result",func(): game.scorecards.retry_result())
+			button(actions,"Back",func(): boards_open=false; _refresh())
+			for control in _popup_controls():
+				control.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+				control.add_theme_font_size_override("font_size",18)
 		elif state=="paused":
 			popup_title.text="Take a breather"
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
@@ -474,7 +498,8 @@ func _refresh() -> void:
 		_refresh_setup()
 	if state=="paused":
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
-	if game.phase=="waiting" and not paused: popup_text.text=game.info
+	if state=="waiting": popup_text.text=game.info
+	if state=="boards": _refresh_boards()
 	if state=="graphics":
 		popup_text.text="Applies now · saved on this device\nContrast: 100% = original image" if graphics_notice.is_empty() else graphics_notice
 		popup_buttons.get_child(0).text="Quality: "+Graphics.TITLES[graphics.quality]
@@ -489,9 +514,36 @@ func _refresh() -> void:
 			audio_labels[i].text=("Music" if i==0 else "Effects")+(": Off" if value==0 else ": %d%%"%value)
 			audio_sliders[i].set_value_no_signal(value)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
-	if state=="result" and game.voted:
-		popup_text.text="Rematch requested. Waiting for all players…"
-		popup_buttons.get_child(0).disabled=true
+	if state=="result":
+		popup_text.text=("Rematch requested. Waiting for all players…" if game.voted else result_text)+"\n"+game.scorecards.message
+		popup_buttons.get_child(0).disabled=game.voted or game.scorecards.busy
+		popup_buttons.get_child(1).disabled=game.voted or game.scorecards.busy
+
+func _open_boards() -> void:
+	boards_open=true; _refresh(); _load_board()
+
+func _load_board(offset: int = 0, revision: String = "") -> void:
+	game.scorecards.fetch_board(board_mode,board_kind,offset,revision)
+
+func _refresh_boards() -> void:
+	var data: Dictionary = game.scorecards.board
+	var lines: Array = ["Fewest strokes" if board_kind=="records" else "Outright wins · draws stay draws"]
+	for row in data.get("items",[]):
+		var names: Array = []
+		for id in row.get("members",[]): names.append("You" if id==game.scorecards.player else "P "+str(id).substr(0,6))
+		lines.append("%d.  %s   ·   %d"%[row.place," / ".join(names),row.value])
+	if data.get("items",[]).is_empty() and not data.is_empty(): lines.append("Be the first to finish a confirmed round.")
+	lines.append(""); lines.append(game.scorecards.board_message)
+	if game.scorecards.poll_at>0: lines.append(game.scorecards.message)
+	popup_text.text="\n".join(lines)
+	var filters := popup_buttons.get_child(0)
+	filters.get_child(0).text="Teams" if board_mode=="teams" else "Individual"
+	filters.get_child(1).text="Wins" if board_kind=="wins" else "Records"
+	for child in filters.get_children(): child.disabled=game.scorecards.busy
+	var pages := popup_buttons.get_child(1)
+	pages.get_child(0).disabled=game.scorecards.busy or data.get("offset",0)==0
+	pages.get_child(1).disabled=game.scorecards.busy or data.get("next_offset")==null
+	popup_buttons.get_child(2).get_child(0).disabled=game.scorecards.busy
 
 func _open_graphics() -> void:
 	graphics_open=true; graphics_notice=""; _refresh()
@@ -674,6 +726,7 @@ func _primary() -> void:
 	elif not paused: game.fire()
 
 func _pause() -> void:
+	if boards_open: boards_open=false; _refresh(); return
 	if audio_open: _close_audio(); return
 	if graphics_open: _close_graphics(); return
 	if local_setup: local_setup=false; _refresh(); return

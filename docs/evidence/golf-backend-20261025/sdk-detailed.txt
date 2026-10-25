@@ -1,0 +1,65 @@
+Start testing: Oct 25 21:37 UTC
+----------------------------------------------------------
+3/97 Testing: platform_sdk
+3/97 Test: platform_sdk
+Command: "/work/build-trixie/trainer_platform_tests"
+Directory: /work/build-trixie
+"platform_sdk" start time: Oct 25 21:37 UTC
+Output:
+----------------------------------------------------------
+********* Start testing of PlatformHostTests *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : PlatformHostTests::initTestCase()
+PASS   : PlatformHostTests::backendGameFacadeUsesRealSdkSocketAndHidesCredentials()
+PASS   : PlatformHostTests::discoveryAndExclusiveEndpoint()
+PASS   : PlatformHostTests::localAvatarSubscriptionAndRevocation()
+PASS   : PlatformHostTests::accountIdentityChangeRevokesOldClient()
+PASS   : PlatformHostTests::asynchronousAvatarRecipes()
+SKIP   : PlatformHostTests::realGodotAvatarConsumer() External Godot and local pack required
+   Loc: [/work/source/tests/PlatformHostTests.cpp(143)]
+PASS   : PlatformHostTests::authVersionAndMalformedInput()
+PASS   : PlatformHostTests::widgetActivationAndCrashCleanup()
+PASS   : PlatformHostTests::namespaceAndStaleContext()
+PASS   : PlatformHostTests::pipelinedFramesAreNotOneOversizedMessage()
+PASS   : PlatformHostTests::subscribeUnsubscribeAndNoProfile()
+PASS   : PlatformHostTests::layoutSurvivesReconnectWithoutChangingBuiltins()
+PASS   : PlatformHostTests::realPythonProcess()
+PASS   : PlatformHostTests::cleanupTestCase()
+Totals: 14 passed, 0 failed, 1 skipped, 0 blacklisted, 2608ms
+********* Finished testing of PlatformHostTests *********
+<end of output>
+Test time =   2.72 sec
+----------------------------------------------------------
+Test Passed.
+"platform_sdk" end time: Oct 25 21:38 UTC
+"platform_sdk" time elapsed: 00:00:02
+----------------------------------------------------------
+
+4/97 Testing: sdk_network
+4/97 Test: sdk_network
+Command: "/work/build-trixie/trainer_sdk_network_tests"
+Directory: /work/build-trixie
+"sdk_network" start time: Oct 25 21:38 UTC
+Output:
+----------------------------------------------------------
+********* Start testing of SdkNetworkTests *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : SdkNetworkTests::initTestCase()
+QINFO  : SdkNetworkTests::sixteenPeersCreditIsolationAndCleanup() 16 peers connected (real TLS helpers), ms 8101
+PASS   : SdkNetworkTests::sixteenPeersCreditIsolationAndCleanup()
+PASS   : SdkNetworkTests::pairedProcessesAndFreshSession()
+PASS   : SdkNetworkTests::installedGamesLaunchOnlyAfterLobbyStart()
+SKIP   : SdkNetworkTests::pairedGolfAvatars() Godot, Pocket Golf checkout and avatar pack required
+   Loc: [/work/source/tests/SdkNetworkTests.cpp(73)]
+PASS   : SdkNetworkTests::cleanupTestCase()
+Totals: 5 passed, 0 failed, 1 skipped, 0 blacklisted, 12548ms
+********* Finished testing of SdkNetworkTests *********
+<end of output>
+Test time =  12.61 sec
+----------------------------------------------------------
+Test Passed.
+"sdk_network" end time: Oct 25 21:38 UTC
+"sdk_network" time elapsed: 00:00:12
+----------------------------------------------------------
+
+End testing: Oct 25 21:38 UTC

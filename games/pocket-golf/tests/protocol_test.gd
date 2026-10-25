@@ -5,7 +5,7 @@ const Client = preload("res://scripts/group_client.gd")
 var failures := 0
 class QueuedClient extends Client:
 	var requests: Array = []
-	func request(method: String, params: Dictionary = {}) -> bool:
+	func request(method: String, params: Dictionary = {}, _callback: Callable = Callable()) -> bool:
 		if pending.size()>=64: return false
 		requests.append([method,params.duplicate(true)]); pending[str(requests.size())]={}
 		return true

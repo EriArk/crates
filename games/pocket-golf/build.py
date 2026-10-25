@@ -7,6 +7,8 @@ p.add_argument('--godot',type=pathlib.Path,required=True)
 p.add_argument('--templates',type=pathlib.Path,required=True,help='Extracted export_templates.tpz templates directory')
 p.add_argument('--output',type=pathlib.Path,required=True)
 a=p.parse_args();root=pathlib.Path(__file__).resolve().parent
+from tools.verify_scorecard_rules import verify
+verify(root)
 godot=a.godot.resolve();templates=a.templates.resolve();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 version=subprocess.check_output([str(godot),'--version'],text=True).strip()
 if not version.startswith('4.7.2.stable.'):p.error('Use pinned Godot 4.7.2 stable')
