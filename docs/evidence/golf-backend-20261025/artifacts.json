@@ -1,6 +1,28 @@
 {
   "version": "0.1.22",
+  "source_commit": "86d3683c227aa7955547097d54077e79f57ba9d0",
   "published": false,
   "handhelds_updated": false,
-  "files": []
+  "files": [
+    {
+      "name": "pocket-golf-0.1.22-aarch64.tar.gz",
+      "bytes": 49604687,
+      "sha256": "0fb2a3715161ac1d9c5597ba23cd1453825c4b93be64d3b9206b1698c2c5473f"
+    },
+    {
+      "name": "pocket-golf-0.1.22-source.tar.gz",
+      "bytes": 21959831,
+      "sha256": "5c045544ecc741b3d765ce9f7b5a1177d9fb40d250ffe90684926d2f3493a231"
+    },
+    {
+      "name": "pocket-golf-0.1.22-windows-preview.zip",
+      "bytes": 60176478,
+      "sha256": "1934fdd3d32175e7c607b3a2c38d94d1536c547aaabbc2b6555f2e5116ec23b3"
+    },
+    {
+      "name": "pocket-golf-0.1.22-x86_64.tar.gz",
+      "bytes": 50392598,
+      "sha256": "6a7f0dcfbc7e337483e1e64b38bbf7990aa9f0a67c34d55b8832c09692a69b67"
+    }
+  ]
 }
