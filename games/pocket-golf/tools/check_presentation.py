@@ -13,7 +13,8 @@ try:
     if not select.select([read],[],[],15)[0]:raise RuntimeError('Display startup timed out')
     with os.fdopen(read) as pipe:number=pipe.readline().strip()
     if not number:raise RuntimeError('Display failed')
-    result=subprocess.run(['/godot','--path','/work/source','--audio-driver','Dummy','--rendering-method','gl_compatibility','--script','tests/scorecards_ui_test.gd'],
+    command=[os.environ['GOLF_UI_RUNNER'],'boardPortraits'] if os.environ.get('GOLF_UI_RUNNER') else ['/godot','--path','/work/source','--audio-driver','Dummy','--rendering-method','gl_compatibility','--script','tests/scorecards_ui_test.gd']
+    result=subprocess.run(command,
         env=dict(os.environ,DISPLAY=':'+number,LIBGL_ALWAYS_SOFTWARE='1',GOLF_SCORE_CAPTURE='/work/evidence/captures'),
         capture_output=True,text=True,timeout=180)
     print(result.stdout+result.stderr)

@@ -15,7 +15,7 @@ p.add_argument('--players',type=int,nargs='+',default=[2,4,5,8])
 p.add_argument('--casual',action='store_true',help='Last peer has no Backend account/capability')
 a=p.parse_args();golf=a.golf.resolve();native=a.native.resolve();backend=a.backend.resolve()
 evidence=golf/'evidence';evidence.mkdir(exist_ok=True)
-image='traineros-backend-test:play-20261025';native_image='traineros-golf-backend-ci:20261025'
+image=os.environ.get('GOLF_BACKEND_TEST_IMAGE','traineros-backend-test:play-20261025');native_image='traineros-golf-backend-ci:20261025'
 def run(cmd,**kwargs):return subprocess.run(cmd,stdin=subprocess.DEVNULL,**kwargs)
 for count in a.players:
     if count not in [2,4,5,8]:p.error('Use supported fixture counts')

@@ -75,6 +75,17 @@ private slots:
         qInfo()<<"GOLF SDK/TLS PASS players="<<count<<"three holes, identical scores, all-player rematch, rotated starter, revocation, retained lobby";
         for(auto& n:nodes)n->lobby.leave();
     }
+    void boardPortraits(){
+        const auto godot=qEnvironmentVariable("GOLF_TEST_GODOT"),project=qEnvironmentVariable("GOLF_TEST_PROJECT");
+        QTemporaryDir dir;ControlsDashboard controls;controls.setOwner("owner");PlatformHost host(controls);host.setContext({{"profile","owner"}});
+        auto avatar=AvatarAssets::resolve(AvatarAssets::defaults(),{},dir.filePath("avatars"));QVERIFY(!avatar.contains("error"));avatar["profile"]="owner";host.setAvatar(avatar,true);
+        const auto endpoint=dir.filePath("endpoint.json");QVERIFY(host.start(endpoint));
+        QProcess proc;proc.setProcessChannelMode(QProcess::MergedChannels);
+        auto env=QProcessEnvironment::systemEnvironment();env.insert("TRAINEROS_SDK_ENDPOINT",endpoint);env.insert("GOLF_TEST_BOARD_PORTRAITS","1");proc.setProcessEnvironment(env);
+        proc.start(godot,{"--path",project,"--audio-driver","Dummy","--rendering-method","gl_compatibility","--script","tests/scorecards_ui_test.gd"});QVERIFY(proc.waitForStarted());
+        const auto cleanup=qScopeGuard([&]{if(proc.state()!=QProcess::NotRunning){proc.kill();proc.waitForFinished();}qInfo().noquote()<<proc.readAll();});
+        QTRY_COMPARE_WITH_TIMEOUT(proc.state(),QProcess::NotRunning,120000);QCOMPARE(proc.exitCode(),0);
+    }
     void randomStockRival(){
         const auto godot=qEnvironmentVariable("GOLF_TEST_GODOT"),project=qEnvironmentVariable("GOLF_TEST_PROJECT");
         QTemporaryDir dir;ControlsDashboard controls;controls.setOwner("owner");PlatformHost host(controls);host.setContext({{"profile","owner"}});

@@ -72,6 +72,9 @@ var popup: PanelContainer
 var popup_title: Label
 var popup_text: Label
 var popup_buttons: VBoxContainer
+var board_rows: VBoxContainer
+var board_profiles = preload("res://scripts/board_profiles.gd").new()
+var board_signature := ""
 var last_popup := ""
 var boards_open := false
 var board_mode := "individual"
@@ -99,6 +102,10 @@ func _ready() -> void:
 	avatar_binding.start(anchor,_placeholder,game.bridge.endpoint_override)
 	avatar_binding.portraits_changed.connect(func(): hud.set_portraits(avatar_binding.local_portrait,avatar_binding.peer_portrait))
 	add_child(avatar_roster)
+	add_child(board_profiles); board_profiles.start(game.bridge.endpoint_override)
+	board_profiles.changed.connect(func():
+		if boards_open: _render_board_rows())
+	game.bridge.identity_revoked.connect(board_profiles.clear)
 	avatar_roster.start(avatar_binding,game)
 	avatar_roster.changed.connect(_refresh)
 	game.bridge.identity_revoked.connect(avatar_binding.disconnect_identity)
@@ -315,6 +322,7 @@ func _setup_ui() -> void:
 	var column := VBoxContainer.new(); column.add_theme_constant_override("separation",12); popup.add_child(column)
 	popup_title=Label.new(); popup_title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; popup_title.add_theme_font_size_override("font_size",30); column.add_child(popup_title)
 	popup_text=Label.new(); popup_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; popup_text.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; popup_text.custom_minimum_size=Vector2(375,48); column.add_child(popup_text)
+	board_rows=VBoxContainer.new(); board_rows.add_theme_constant_override("separation",2); column.add_child(board_rows); board_rows.hide()
 	popup_buttons=VBoxContainer.new(); popup_buttons.add_theme_constant_override("separation",8); column.add_child(popup_buttons)
 
 func label(parent: Node, text: String, pos: Vector2, size: int) -> Label:
@@ -393,8 +401,11 @@ func _refresh() -> void:
 		if state=="setup" and game.online:
 			setup_count=game.participant_count; setup_teams=setup_count not in [2,4]; _default_teams()
 		last_popup=state
+		board_rows.visible=state=="boards"
+		if state!="boards": board_profiles.clear(); board_signature=""
 		var half_height := 250 if state in ["setup","boards"] else 230 if state=="result" else 200
 		popup.offset_top=-half_height; popup.offset_bottom=half_height
+		popup.offset_left=-340 if state=="boards" else -220; popup.offset_right=340 if state=="boards" else 220
 		popup_text.add_theme_font_size_override("font_size",18 if state=="boards" else 20)
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
 		if state=="menu":
@@ -454,6 +465,7 @@ func _refresh() -> void:
 			for control in _popup_controls():
 				control.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 				control.add_theme_font_size_override("font_size",18)
+				control.custom_minimum_size.y=36
 		elif state=="paused":
 			popup_title.text="Take a breather"
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
@@ -528,12 +540,13 @@ func _load_board(offset: int = 0, revision: String = "") -> void:
 func _refresh_boards() -> void:
 	var data: Dictionary = game.scorecards.board
 	var lines: Array = ["Fewest strokes" if board_kind=="records" else "Outright wins · draws stay draws"]
-	for row in data.get("items",[]):
-		var names: Array = []
-		for id in row.get("members",[]): names.append("You" if id==game.scorecards.player else "P "+str(id).substr(0,6))
-		lines.append("%d.  %s   ·   %d"%[row.place," / ".join(names),row.value])
+	var signature := JSON.stringify(data)
+	if signature!=board_signature:
+		board_signature=signature
+		board_profiles.show_profiles(data.get("profiles",{}))
+		_render_board_rows()
 	if data.get("items",[]).is_empty() and not data.is_empty(): lines.append("Be the first to finish a confirmed round.")
-	lines.append(""); lines.append(game.scorecards.board_message)
+	lines.append(game.scorecards.board_message)
 	if game.scorecards.poll_at>0: lines.append(game.scorecards.message)
 	popup_text.text="\n".join(lines)
 	var filters := popup_buttons.get_child(0)
@@ -544,6 +557,28 @@ func _refresh_boards() -> void:
 	pages.get_child(0).disabled=game.scorecards.busy or data.get("offset",0)==0
 	pages.get_child(1).disabled=game.scorecards.busy or data.get("next_offset")==null
 	popup_buttons.get_child(2).get_child(0).disabled=game.scorecards.busy
+
+func _render_board_rows() -> void:
+	if board_rows==null: return
+	for child in board_rows.get_children(): board_rows.remove_child(child); child.queue_free()
+	var profiles: Dictionary = game.scorecards.board.get("profiles",{})
+	for entry in game.scorecards.board.get("items",[]):
+		var row := HBoxContainer.new(); row.custom_minimum_size.y=32; board_rows.add_child(row)
+		var rank_label := Label.new(); rank_label.text=str(entry.place)+"."; rank_label.custom_minimum_size.x=24; row.add_child(rank_label)
+		for id in entry.get("members",[]):
+			var profile: Dictionary = profiles.get(id,{})
+			var member := HBoxContainer.new(); member.size_flags_horizontal=Control.SIZE_EXPAND_FILL; row.add_child(member)
+			var face := TextureRect.new(); face.custom_minimum_size=Vector2(28,28); face.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+			face.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED; face.texture=board_profiles.texture(profile); member.add_child(face)
+			if face.texture==null:
+				var fallback := Label.new(); fallback.text="●"; fallback.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+				fallback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); fallback.add_theme_color_override("font_color",Color("9ac8b0")); face.add_child(fallback)
+			var name_label := Label.new(); name_label.text=str(profile.get("display_name","Player"))
+			if id==game.scorecards.player: name_label.text+=" (you)"
+			name_label.tooltip_text=name_label.text; name_label.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+			name_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL; name_label.add_theme_font_size_override("font_size",17); member.add_child(name_label)
+		var value_label := Label.new(); value_label.text=str(entry.value); value_label.custom_minimum_size.x=28
+		value_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT; row.add_child(value_label)
 
 func _open_graphics() -> void:
 	graphics_open=true; graphics_notice=""; _refresh()

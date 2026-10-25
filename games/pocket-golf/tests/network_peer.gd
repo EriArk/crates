@@ -71,6 +71,12 @@ func _process(_delta: float) -> bool:
 			if game.scorecards.busy or game.scorecards.board.is_empty(): return false
 			server_match=game.scorecards.match_id; decision=game.scorecards.decision
 			board_rows=game.scorecards.board.items.size()
+			var profiles: Dictionary = game.scorecards.board.get("profiles",{})
+			if profiles.size()!=game.participant_count: printerr("Missing public profiles"); quit(1); return false
+			for profile in profiles.values():
+				if not str(profile.get("display_name","")).begins_with("Test player "): printerr("Missing verified name"); quit(1); return false
+				if game.participant_count in [4,8] and not profile.get("avatar") is Dictionary: printerr("Missing shared avatar recipe"); quit(1); return false
+			print("BOARD PROFILES PASS players=",profiles.size())
 		completed=true; result_hash=game.world.digest(); strokes=game.world.scores.duplicate(true)
 		game.rematch()
 	elif completed and game.round_id==2 and game.phase=="aim" and stage==0:

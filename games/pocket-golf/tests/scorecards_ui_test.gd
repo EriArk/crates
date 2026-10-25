@@ -20,10 +20,28 @@ func run() -> void:
 	await create_timer(.2).timeout; ui.set_process(false); ui.game.set_process(false)
 	await capture("menu")
 	ui.boards_open=true; ui.board_mode="teams"; ui._refresh()
-	ui.game.scorecards.board={"items":[],"offset":0,"next_offset":5,"revision":"2"}
+	ui.game.scorecards.board={"items":[],"offset":0,"next_offset":5,"revision":"2","profiles":{
+		"11111111-a":{"display_name":"Sakura"},"22222222-b":{"display_name":"Alexandra Longname"},"33333333-c":{"display_name":"River"}}}
 	for i in 5:
 		ui.game.scorecards.board.items.append({"place":i+1,"value":7+i,"members":["11111111-a","22222222-b","33333333-c"]})
+	var portraits := OS.has_environment("GOLF_TEST_BOARD_PORTRAITS")
+	if portraits:
+		for i in 100:
+			if not ui.avatar_roster.local_recipe.is_empty(): break
+			await create_timer(.1).timeout
+		check(not ui.avatar_roster.local_recipe.is_empty(),"SDK supplied avatar recipe")
+		var count := 0
+		for profile in ui.game.scorecards.board.profiles.values():
+			profile.avatar=ui.avatar_roster.local_recipe.duplicate(true)
+			profile.avatar.appearance.hair=["bob","crop","ponytail"][count]; count+=1
 	ui.game.scorecards.board_message="Confirmed by every participant"; ui._refresh()
+	if portraits:
+		for i in 150:
+			if ui.board_profiles.textures.size()==3: break
+			await create_timer(.1).timeout
+		check(ui.board_profiles.textures.size()==3 and ui.board_profiles.textures.values().all(func(t):return t!=null),"three SDK portraits rendered")
+	check(ui.board_rows.get_child_count()==5,"five visible teams")
+	check(ui.board_rows.get_child(0).get_child(1).get_child(1).text=="Sakura","server display name replaces UUID")
 	check(ui._popup_controls().size()==5,"controller skips unavailable Previous")
 	ui._direction(0,1); check(ui.get_viewport().gui_get_focus_owner()!=null,"table controller focus")
 	await capture("shared-teams")
