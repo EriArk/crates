@@ -23,7 +23,8 @@ Item {
     onBallXChanged:{var t=tail.slice(-9);t.push({x:ballX,y:ballY});tail=t;canvas.requestPaint()}
     onBallYChanged:canvas.requestPaint()
     Canvas {
-        id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*960/540);height:width*540/960
+        id:canvas;objectName:"boardCanvas";anchors.centerIn:parent;width:960;height:540
+        scale:Math.min(parent.width/width,parent.height/height)
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
         onPaint:{
             if(board.sceneData.tick===undefined)return
@@ -40,5 +41,5 @@ Item {
             if(s.serve>0&&s.tick>=60){c.font="bold 24px \""+Qt.application.font.family+"\"";c.fillText("SERVE",480,340)}
         }
     }
-    ImpactFx { id:fx;anchors.fill:canvas }
+    ImpactFx { id:fx;anchors.centerIn:parent;width:canvas.width;height:canvas.height;scale:canvas.scale }
 }

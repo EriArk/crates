@@ -4,6 +4,7 @@
 #include "ArcadeBridge.h"
 #include <QElapsedTimer>
 #include <QVariantMap>
+#include <QSet>
 
 class ArcadeGame final : public QObject {
     Q_OBJECT
@@ -63,6 +64,17 @@ private:
     QString phase_="menu",status_="Play offline, or meet your friend in TrainerOS Lobby.",sync_;
     bool online_=false,couch_=false,host_=false,localVote_=false,peerVote_=false;
     int seat_=0,round_=0,inputSeq_=0,peerSeq_=0,lastInput_=-1;
+    QStringList members_;
+    QString hostMember_;
+    QSet<QString> readyMembers_,votes_;
+    QHash<QString,int> groupSequence_;
+    QHash<QString,qint64> groupSeen_;
+    QElapsedTimer groupClock_;
+    QJsonArray sentCells_;
+    bool group() const{return online_&&identity_.kind==arcade::Kind::Tanks;}
+    void groupReady(const QJsonObject&);
+    void receiveGroup(const QString&,const QJsonObject&);
+    void resetRules(quint32);
     void tick();
     void startRound(quint32 seed);
     void begin();

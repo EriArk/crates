@@ -1,7 +1,8 @@
 # Chain Reaction
 
-**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
-[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+**Prepared handheld update 0.1.3:** bounded painting resolution, height-scaled HUD and larger game menus.
+[Changes, checks and delivery limits](../docs/handheld-repair.md).
+
 
 Swap coloured tiles, build cascades and send blocks to your rival.
 

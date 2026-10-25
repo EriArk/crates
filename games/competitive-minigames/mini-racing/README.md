@@ -1,7 +1,8 @@
 # Brick Racing
 
-**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
-[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+**Prepared handheld update 0.1.3:** bounded painting resolution, height-scaled HUD and larger game menus.
+[Changes, checks and delivery limits](../docs/handheld-repair.md).
+
 
 Shared-road racing on a monochrome block display.
 
@@ -14,11 +15,13 @@ views keep each player's car visible even after an accident; the rival in either
 view is the same live car, not a ghost or an independent race.
 
 - Left/right changes lanes; Up accelerates, Down brakes.
-- **Boost** gives a short burst, then recharges. Following the other car in the
-  same lane at a safe distance recharges it twice as fast: drafting sets up a pass.
+- **Boost** toggles on/off with a tap and has unlimited energy. It stays selected
+  through recovery; Down brakes even with boost enabled. There are **five lanes**.
 - A car behind another is limited by its speed until it passes. Side changes
   cannot overlap the rival; crashing cars become passable during recovery.
-- Obstacles cost a one-second stop, not elimination. Both players stay involved.
+- Each driver starts with **three lives**. An obstacle removes one life and stops
+  the car for **0.6 seconds**. Losing the last life loses the race; simultaneous
+  elimination draws. The same gate cannot remove another life during recovery.
 - First to 2000 distance units wins. When both cross in the same tick, the fraction
   of the final movement decides; exact equality draws. After two minutes, the
   greater distance wins. Rematch generates a new shared course.
@@ -28,8 +31,8 @@ rubber-band teleporting, weapons, ranked results or automatic reward submission.
 
 ## Modes and controls
 
-**Two on this device** uses simultaneous independent controls; **Play with a
-friend** uses the existing TrainerOS GameHub Lobby/SDK channel. Both players must
+**Two on this device** uses simultaneous independent controls. Online play starts
+from the existing TrainerOS Lobby/SDK channel, using **mini-racing.3** on both ends. Both players must
 agree to an online rematch. Exit ends the round and keeps the Lobby; rejoin starts
 a fresh round. **Practice with bot** remains available for learning the controls.
 
@@ -57,7 +60,7 @@ python3 games/competitive-minigames/arcade-common/package.py mini-racing build/b
 
 C++20, Qt 6.4+ Quick/Network and SDL2. Original SVG/Canvas art and code are
 GPL-3.0-or-later; [LICENSE](LICENSE). No borrowed ROMs, sprites or sounds.
-Prepared for Experimental 0.1.0; publication and device acceptance belong to the
+Experimental preparation 0.1.3; publication and device acceptance belong to the
 main workflow. [Preparation handoff](../docs/brick-duo-preparation.md) records scope
 and checks; [shared integration](../arcade-common/README.md) documents SDK limits.
 The [initial concept](docs/idea.md) remains as history.

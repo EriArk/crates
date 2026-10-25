@@ -1,5 +1,8 @@
 # Pocket Artillery
 
+**Prepared handheld update 0.1.4:** bounded painting resolution, height-scaled HUD and larger game menus.
+[Changes, checks and delivery limits](../docs/handheld-repair.md).
+
 A two-player artillery duel: aim, set the power and fire across destructible hills.
 Shells carve craters; explosions and falls damage the tanks. The last surviving
 tank wins. A round ends in a draw after 60 shots if both tanks survive.

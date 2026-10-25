@@ -14,7 +14,7 @@
 int main(int argc,char** argv){
     QGuiApplication app(argc,argv);
     const auto kind=arcade::Kind(ARCADE_KIND);
-    app.setApplicationName(arcade::identity(kind).title);app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.2");
+    app.setApplicationName(arcade::identity(kind).title);app.setOrganizationName("AbyssTail");app.setApplicationVersion("0.1.3");
 #ifdef Q_OS_WIN
     app.setFont(QFont("Segoe UI"));
 #else

@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QStandardPaths>
 #include <QJsonDocument>
+#include <QSet>
 
 ArcadeBridge::ArcadeBridge(arcade::Identity identity,QString endpoint,QObject* parent):QObject(parent),identity_(identity),endpoint_(endpoint){
     if(endpoint_.isEmpty())endpoint_=qEnvironmentVariable("TRAINEROS_SDK_ENDPOINT");
@@ -31,7 +32,7 @@ void ArcadeBridge::connectHost(){
 }
 void ArcadeBridge::disconnectHost(){
     closing_=true;deadline_.stop();socket_.abort();pending_.clear();input_.clear();token_.clear();registered_=false;
-    if(!channel_.isEmpty()){channel_.clear();emit closed();}
+    if(!channel_.isEmpty()){channel_.clear();channels_.clear();sequences_.clear();outstanding_.clear();emit closed();}
 }
 void ArcadeBridge::fail(const QString& reason){
     const bool hadChannel=!channel_.isEmpty();
@@ -45,12 +46,20 @@ void ArcadeBridge::call(const QString& method,const QJsonObject& args){
     socket_.write(QJsonDocument(QJsonObject{{"id",id},{"method",method},{"params",args}}).toJson(QJsonDocument::Compact)+'\n');
 }
 void ArcadeBridge::openLobby(){if(registered_)call("activity.open");}
-void ArcadeBridge::closeChannel(){if(!channel_.isEmpty()){call("network.close",{{"channel",channel_}});channel_.clear();emit closed();}}
+void ArcadeBridge::closeChannel(){if(!channel_.isEmpty()){call("network.close",{{"channel",channel_}});channel_.clear();channels_.clear();sequences_.clear();outstanding_.clear();emit closed();}}
 bool ArcadeBridge::send(const QJsonObject& record){
     if(channel_.isEmpty()||pending_.size()>32)return false;
     const auto bytes=QJsonDocument(record).toJson(QJsonDocument::Compact);
     if(bytes.size()>16384)return false;
     call("network.send",{{"channel",channel_},{"data",QString::fromLatin1(bytes.toBase64())}});return true;
+}
+bool ArcadeBridge::sendTo(const QString& peer,const QJsonObject& record){
+    const auto channel=channels_.value(peer);if(channel.isEmpty()||outstanding_.value(channel)>=32||pending_.size()>512)return false;
+    const auto bytes=QJsonDocument(record).toJson(QJsonDocument::Compact);if(bytes.size()>16384)return false;
+    ++outstanding_[channel];call("network.send",{{"channel",channel},{"data",QString::fromLatin1(bytes.toBase64())}});return true;
+}
+bool ArcadeBridge::sendGroup(const QJsonObject& record){
+    if(channels_.isEmpty())return false;const auto peers=channels_.keys();for(const auto& peer:peers)if(!sendTo(peer,record))return false;return true;
 }
 void ArcadeBridge::receive(){
     input_+=socket_.readAll();if(input_.size()>262144){fail("Invalid TrainerOS frame.");return;}
@@ -68,14 +77,39 @@ void ArcadeBridge::packet(const QJsonObject& value){
         if(event=="host.stopping"||event=="context.revoked"){fail("Trainer changed or TrainerOS closed. Reconnect to continue.");return;}
         if(event=="network.ready"){
             const auto s=value["session"].toObject();
-            if(!channel_.isEmpty()||s["protocol"]!=identity_.id+".2"||s["delivery"]!="reliable-ordered"||s["channel"].toString().isEmpty()){fail("Incompatible game session.");return;}
+            if(identity_.kind==arcade::Kind::Tanks){
+                const auto members=s["members"].toArray(),channels=s["channels"].toArray();
+                QSet<QString> ids;QSet<int> seats;int previous=0;
+                for(const auto& v:members){const auto m=v.toObject();const auto id=m["id"].toString();int seat=m["seat"].toInt();
+                    if(id.isEmpty()||ids.contains(id)||!arcade::integer(m["seat"],1,16)||seat<=previous||m["connected"]!=true){fail("Invalid group seats.");return;}
+                    ids.insert(id);seats.insert(seat);previous=seat;}
+                const auto self=s["self"].toString(),host=s["hostMember"].toString();
+                if(!channel_.isEmpty()||s["protocol"]!="tanks.3"||s["delivery"]!="reliable-ordered"||!s["host"].isBool()||members.size()<2||members.size()>16||!ids.contains(self)||!ids.contains(host)||s["host"].toBool()!=(self==host)||channels.size()!=(self==host?members.size()-1:1)){fail("Incompatible group session.");return;}
+                QSet<QString> grants;
+                for(const auto& v:channels){const auto c=v.toObject();const auto peer=c["peer"].toString(),grant=c["channel"].toString();
+                    if(grant.isEmpty()||grants.contains(grant)||channels_.contains(peer)||peer==self||!ids.contains(peer)||(self!=host&&peer!=host)){channels_.clear();fail("Invalid group channel.");return;}
+                    channels_[peer]=grant;grants.insert(grant);sequences_[grant]=0;outstanding_[grant]=0;}
+                channel_=channels_.constBegin().value();emit groupReady(s);return;
+            }
+            if(!channel_.isEmpty()||s["protocol"]!=identity_.id+((identity_.kind==arcade::Kind::Racing||identity_.kind==arcade::Kind::Tanks)?".3":".2")||s["delivery"]!="reliable-ordered"||s["channel"].toString().isEmpty()){fail("Incompatible game session.");return;}
             if(!s["host"].isBool()){fail("Invalid game role.");return;}
             peer_=s["peer"].toString();
             if(peer_.isEmpty()){fail("Missing session peer.");return;}
             channel_=s["channel"].toString();receiveSequence_=0;emit ready(s["host"].toBool());return;
         }
         if(event=="network.closed"){
-            if(value["channel"]==channel_){channel_.clear();emit closed();emit status("Match disconnected. Your Lobby is still available.");}return;
+            if(value["channel"]==channel_||(!channels_.isEmpty()&&value["channel"].toString().isEmpty())){channel_.clear();channels_.clear();sequences_.clear();outstanding_.clear();emit closed();emit status("Match disconnected. Your Lobby is still available.");}return;
+        }
+        if(!channels_.isEmpty()&&event=="network.ack"){
+            const auto channel=value["channel"].toString();if(outstanding_.contains(channel)&&outstanding_[channel]>0)--outstanding_[channel];return;
+        }
+        if(!channels_.isEmpty()&&event=="network.data"){
+            const auto channel=value["channel"].toString(),peer=value["peer"].toString();
+            if(channels_.value(peer)!=channel||channel.isEmpty()){fail("Unexpected group sender.");return;}
+            const auto seq=value["sequence"].toString();if(seq!=QString::number(sequences_[channel]++)){fail("Group record out of order.");return;}
+            auto bytes=QByteArray::fromBase64(value["data"].toString().toLatin1(),QByteArray::AbortOnBase64DecodingErrors);QJsonParseError error;const auto doc=QJsonDocument::fromJson(bytes,&error);
+            if(bytes.size()>16384||error.error!=QJsonParseError::NoError||!doc.isObject()){fail("Invalid group record.");return;}
+            emit groupRecord(peer,doc.object());if(channels_.value(peer)==channel)call("network.consume",{{"channel",channel},{"sequence",seq}});return;
         }
         if(event=="network.data"){
             if(channel_.isEmpty()||value["channel"]!=channel_)return;
@@ -97,14 +131,14 @@ void ArcadeBridge::packet(const QJsonObject& value){
     const auto request=pending_.take(id);if(pending_.isEmpty())deadline_.stop();
     // Replies can cross a close/rejoin boundary. They belong to the old grant,
     // so neither an old failure nor an old success may affect the new match.
-    if(!request.channel.isEmpty()&&request.channel!=channel_)return;
+    if(!request.channel.isEmpty()&&request.channel!=channel_&&!channels_.values().contains(request.channel))return;
     const auto method=request.method;
     if(value.contains("error")){fail("TrainerOS: "+value["error"].toObject()["code"].toString()+". Reconnect to try again.");return;}
     const auto result=value["result"].toObject();
     if(method=="hello"){
         const auto caps=result["capabilities"].toObject();
-        if(result["protocol"]!=1||caps["lobby.activity"]!=1||caps["network.records"]!=1){fail("This TrainerOS build needs native game networking support.");return;}
-        call("activity.register",{{"title",identity_.title},{"protocol",identity_.id+".2"}});
+        if(result["protocol"]!=1||caps["lobby.activity"]!=1||caps["network.records"]!=1||(identity_.kind==arcade::Kind::Tanks&&caps["network.group"]!=1)){fail("This TrainerOS build needs native game networking support.");return;}
+        call("activity.register",{{"title",identity_.title},{"protocol",identity_.id+((identity_.kind==arcade::Kind::Racing||identity_.kind==arcade::Kind::Tanks)?".3":".2")}});
     }else if(method=="activity.register"){
         registered_=true;emit status("Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.");
     }

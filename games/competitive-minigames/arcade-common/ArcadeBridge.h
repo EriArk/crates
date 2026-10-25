@@ -19,11 +19,15 @@ public:
     void closeChannel();
     void disconnectHost();
     bool send(const QJsonObject& record);
+    bool sendTo(const QString& peer,const QJsonObject& record);
+    bool sendGroup(const QJsonObject& record);
     bool registered() const{return registered_;}
     QString channel() const{return channel_;}
 signals:
     void status(QString text);
     void ready(bool host);
+    void groupReady(QJsonObject session);
+    void groupRecord(QString peer,QJsonObject value);
     void record(QJsonObject value);
     void avatarRecord(QJsonObject value);
     void closed();
@@ -32,6 +36,9 @@ private:
     QTcpSocket socket_;
     QTimer deadline_;
     QString endpoint_,token_,channel_,peer_;
+    QHash<QString,QString> channels_;
+    QHash<QString,quint64> sequences_;
+    QHash<QString,int> outstanding_;
     struct Request {QString method,channel;};
     QHash<QString,Request> pending_;
     QByteArray input_;

@@ -18,7 +18,7 @@ p = argparse.ArgumentParser()
 p.add_argument('game', choices=titles)
 p.add_argument('executable', type=Path)
 p.add_argument('output', type=Path)
-p.add_argument('--version', default='0.1.2')
+p.add_argument('--version', default='0.1.3')
 a = p.parse_args()
 match = re.search(r'project\(CratesArcade VERSION ([0-9.]+)', (base/'CMakeLists.txt').read_text())
 if not match or a.version != match.group(1):
@@ -50,7 +50,7 @@ record = dict(id=a.game, title=titles[a.game], kind='game', version=a.version,
               size=archive.stat().st_size, unpackedSize=sum(map(len, files.values()))+1048576,
               sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), channel='Experimental',
               compatibility='untested',
-              compatibilityNote='Linux x86_64/ARM64 UI checks and paired SDK host checks passed. Physical controls and separate-network acceptance remain open.',
+              compatibilityNote='Prepared on Windows/Linux x86_64. ARM64, handheld performance, physical input and live pairing await the main workflow.',
               notes='Bot practice, local players, Lobby-first matches and shared avatar portraits. Optional Qt Quick 3D for portraits; Qt Quick, Network and SDL2 for play.',
               url=f'https://github.com/EriArk/crates/releases/download/{a.game}-v{a.version}/{name}')
 try:

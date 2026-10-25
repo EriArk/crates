@@ -4,10 +4,12 @@ import QtQuick.Window
 
 Window {
     id: window
-    width: 960; height: 600; minimumWidth: 640; minimumHeight: 440
-    visible: true; title: "Pocket Artillery"; color: "#f5f0e4"
+    width: 960; height: 540; minimumWidth: 640; minimumHeight: 440
+    visible: true; title: "Pocket Artillery"; color: "#152b33"
+    onActiveChanged:if(active)inputRouter.forceActiveFocus()
     property bool touchControls: true
-    property real cardScale:Math.max(1,Math.min(1.5,height/720))
+    property real cardScale:1
+    readonly property real uiScale:height/540
     property int padCount: 0
     property string primaryGlyph: "A"
     property string secondaryGlyph: "X"
@@ -42,7 +44,11 @@ Window {
         else game.fire()
     }
     Item {
-        anchors.fill: parent; focus: true
+        id:uiStage;objectName:"gameStage"
+        width:window.width/window.uiScale;height:540;scale:window.uiScale;transformOrigin:Item.TopLeft
+    Item {
+        id:inputRouter;anchors.fill: parent; focus: true
+        Component.onCompleted:forceActiveFocus()
         Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Tab) { if(!event.isAutoRepeat) window.toggleOverview(); event.accepted=true }
             if (event.key === Qt.Key_Escape) { if (!event.isAutoRepeat) window.back(); event.accepted = true }
@@ -64,80 +70,58 @@ Window {
     component Button: Rectangle {
         property string label
         property bool highlighted: false
-        property color tint: "#e2eadc"
+        property color tint: "#203d46"
         signal activated()
         radius: 12; color: enabled ? (touch.pressed ? Qt.darker(tint,1.1) : tint) : "#e5e1d7"
         border.width: highlighted ? 3 : 1; border.color: highlighted ? "#345b50" : "#c7cfc0"
         opacity: enabled ? 1 : 0.55
-        Text { anchors.centerIn: parent; text: parent.label; color: "#243d36"; font.pixelSize: 15; font.bold: true }
+        Text { anchors.centerIn: parent; text: parent.label; color: "#eff4e7"; font.pixelSize: 19; font.bold: true }
         MouseArea { id: touch; anchors.fill: parent; onClicked: parent.activated() }
-    }
-    Rectangle {
-        x: 0; y: 0; width: parent.width; height: 58; color: "#faf7ef"
-        Text { x: 16; y: 7; text: window.width<800?"ARTILLERY":"POCKET ARTILLERY"; font.pixelSize: 17; font.bold: true; color: "#294a40" }
-        Text { x: 16; y: 34; text: game.online ? "FRIEND DUEL  ·  YOU ARE " + (game.seat === 0 ? "MINT" : "CORAL") : "TWO PLAYERS  ·  ONE DEVICE"; font.pixelSize: 11; font.letterSpacing: 1; color: "#64776b" }
-        Button { anchors.right: parent.right; anchors.rightMargin: 12; y: 8; width: 76; height: 40; label: menu ? "Exit" : "Menu"; onActivated: window.back() }
-    }
-    Row {
-        x:12;y:62;spacing:8
-        Repeater {
-            model:2
-            PlayerCard {
-                required property int index
-                width:148*window.cardScale;height:48*window.cardScale
-                property bool own:index===(game.online?game.seat:0)
-                descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
-                label:own?"YOU":game.online?"FRIEND":"GUEST"
-                detail:index===0?"MINT":"CORAL"
-                accent:index===0?"#8eddb4":"#f4aa89"
-                current:!window.menu && !window.waiting && window.sceneData.turn===index
-            }
-        }
     }
     Battlefield {
         id: battlefield; objectName: "battlefield"
-        x: 8; y: 68+48*window.cardScale; width: parent.width-16; height: parent.height-y-(touchControls?108:62)
+        anchors.fill:parent
         closeAim: game.canFire && !window.asking && !window.wideView
         overview: window.wideView
         overviewKey: window.padCount > 0 ? window.secondaryGlyph : "Tab"
         onOverviewRequested: window.toggleOverview()
     }
     Connections { target: game; function onChanged() { if (!game.canFire) window.wideView=false } }
-    Rectangle {
-        visible: touchControls; x: 8; anchors.bottom: parent.bottom; anchors.bottomMargin: 12; width: parent.width-16; height: 90; radius: 16; color: "#faf7ef"
-        Text { x: 14; y: 8; text: game.message; font.pixelSize: 14; font.bold: true; color: "#385346" }
-        Row {
-            x: 12; y: 34; spacing: 6
-            Button { width: 40; height: 44; label: "−"; enabled: game.canFire&&!asking; onActivated: game.aim(-1) }
-            Text { width: window.width < 720 ? 76 : 106; height: 44; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "Angle "+game.angle+"°"; font.pixelSize: 14; color: "#344b40" }
-            Button { width: 40; height: 44; label: "+"; enabled: game.canFire&&!asking; onActivated: game.aim(1) }
-            Item { width: window.width<720?0:12; height: 44 }
-            Button { width: 40; height: 44; label: "−"; enabled: game.canFire&&!asking; onActivated: game.charge(-1) }
-            Text { width: window.width < 720 ? 76 : 106; height: 44; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; text: "Power "+game.power; font.pixelSize: 14; color: "#344b40" }
-            Button { width: 40; height: 44; label: "+"; enabled: game.canFire&&!asking; onActivated: game.charge(1) }
-        }
-        Button { objectName: "fireButton"; anchors.right: parent.right; anchors.rightMargin: 12; y: 34; width: window.width<720?130:170; height: 44; label: "FIRE  ↵"; tint: "#edb59b"; enabled: game.canFire&&!asking; onActivated: game.fire() }
+    Row {
+        z:5;anchors.right:parent.right;anchors.rightMargin:12;y:10;spacing:8
+        Button {width:66;height:42;label:"Touch";visible:window.overlay;highlighted:touchControls;onActivated:touchControls=!touchControls}
+        Button {width:44;height:42;radius:21;label:menu?"×":"Ⅱ";onActivated:window.back()}
     }
-    Button { anchors.right:parent.right;anchors.rightMargin:96;y:8;width:74;height:40;label:touchControls?"Hide pad":"Touch";onActivated:touchControls=!touchControls }
-    Column { visible:!touchControls;anchors.bottom:parent.bottom;anchors.bottomMargin:8;anchors.horizontalCenter:parent.horizontalCenter;spacing:4
-        Text { anchors.horizontalCenter:parent.horizontalCenter;text:game.message;color:"#314f42";font.pixelSize:window.width<800?14:18;font.bold:true }
-        Text { anchors.horizontalCenter:parent.horizontalCenter;text:padCount>0?"Stick / D-pad: aim and power     "+primaryGlyph+": fire     "+secondaryGlyph+": view     "+backGlyph+" / Start: menu":"Left / right: angle     Up / down: power     Enter: fire     Tab: view     Esc: menu";color:"#597060";font.pixelSize:13 }
+    // Aim controls float over the ground, disappear during flight, and never resize it.
+    Row {
+        visible:touchControls&&game.canFire&&!overlay;x:18;anchors.bottom:parent.bottom;anchors.bottomMargin:18;spacing:8
+        Button {width:48;height:48;label:"←";onActivated:game.aim(-1)}
+        Button {width:48;height:48;label:"→";onActivated:game.aim(1)}
+        Button {width:48;height:48;label:"−";onActivated:game.charge(-1)}
+        Button {width:48;height:48;label:"+";onActivated:game.charge(1)}
+    }
+    Button {
+        objectName:"fireButton";visible:game.canFire&&!overlay
+        anchors.right:parent.right;anchors.rightMargin:18;anchors.bottom:parent.bottom;anchors.bottomMargin:18
+        width:touchControls?88:126;height:touchControls?72:48;radius:touchControls?36:24
+        label:touchControls?"FIRE":(padCount?primaryGlyph:"↵")+"  FIRE";tint:"#785443";onActivated:game.fire()
     }
     Rectangle {
-        visible: overlay; x: 8; y: 68+48*window.cardScale; width: parent.width-16; height: parent.height-y-(touchControls?108:62); radius: 18; color: "#77405145"
+        visible: overlay; anchors.fill:parent; color: "#c0152b33"
         MouseArea { anchors.fill: parent } // No click-through into the battlefield.
         Rectangle {
-            width: Math.min(parent.width-28,540); height: Math.min(parent.height-16,270); radius: 20; anchors.centerIn: parent; color: "#faf7ee"; border.color: "#d6dcc9"
-            Text { x:20; y:16; width:parent.width-40; horizontalAlignment:Text.AlignHCenter; text: asking?"Leave this duel?":menu?"A little friendly fire":game.message; wrapMode:Text.WordWrap; font.pixelSize:window.height<500?22:27; font.bold:true; color:"#2e5041" }
+            width: Math.min(parent.width-48,640); height:400; radius: 20; anchors.centerIn: parent; color: "#203d46"; border.color: "#4e7a80"
+            Text { x:20; y:16; width:parent.width-40; horizontalAlignment:Text.AlignHCenter; text: asking?"Leave this duel?":menu?"A little friendly fire":game.message; wrapMode:Text.WordWrap; font.pixelSize:30; font.bold:true; color:"#eff4e7" }
             Text {
-                x:24; y:window.height<500?50:63; width:parent.width-48; height:parent.height-124; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter; wrapMode:Text.WordWrap; color:"#5b6e60"; font.pixelSize:14
+                x:24; y:72; width:parent.width-48; height:parent.height-124; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter; wrapMode:Text.WordWrap; color:"#eff4e7"; font.pixelSize:20
                 text: asking?"This round will end. Your TrainerOS Lobby stays open.":menu?"Arc a shell over the hills. Carve a crater.\nLast tank standing wins.\n\n"+game.connection:waiting?game.connection:game.phase==="handoff"?"Left / right: angle · Up / down: power\nConfirm: fire · Back: menu\nHold a direction to adjust. Touch controls are optional.":game.voted?"Rematch requested. Waiting for your friend…":game.online?"Another round starts when both players agree.":"Try a new landscape. The starting player alternates."
             }
             Row {
                 anchors.bottom:parent.bottom; anchors.bottomMargin:14; anchors.horizontalCenter:parent.horizontalCenter; spacing:10
-                Button { objectName:"primaryButton"; width:menu?Math.min(210,(window.width-100)/2):210; height:44; highlighted:!menu||selected===0; label:asking?"Leave duel":menu?"Play on one device":waiting?"Cancel":game.phase==="handoff"?"Ready to aim":game.voted?"Rematch requested":"Play again"; enabled:!(!asking&&game.phase==="result"&&game.voted); onActivated:{if(menu)selected=0;window.primary()} }
-                Button { visible:menu||asking; width:menu?Math.min(210,(window.width-100)/2):140; height:44; highlighted:menu&&selected===1; label:asking?"Keep playing":"Exit"; tint:"#efcfb9"; onActivated:{if(asking)asking=false;else{selected=1;Qt.quit()}} }
+                Button { objectName:"primaryButton"; width:menu?Math.min(210,(window.width-100)/2):210; height:52; highlighted:!menu||selected===0; label:asking?"Leave duel":menu?"Play on one device":waiting?"Cancel":game.phase==="handoff"?"Ready to aim":game.voted?"Rematch requested":"Play again"; enabled:!(!asking&&game.phase==="result"&&game.voted); onActivated:{if(menu)selected=0;window.primary()} }
+                Button { visible:menu||asking; width:menu?Math.min(210,(window.width-100)/2):140; height:52; highlighted:menu&&selected===1; label:asking?"Keep playing":"Exit"; tint:"#efcfb9"; onActivated:{if(asking)asking=false;else{selected=1;Qt.quit()}} }
             }
         }
+    }
     }
 }

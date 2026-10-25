@@ -19,6 +19,23 @@ QQuickItem* visualItem(QQuickItem* parent,const QString& name){
 class GameTests final:public QObject {
     Q_OBJECT
 private slots:
+    void handheldScaleAndRaster(){
+        Game game;QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);
+        window->setProperty("touchControls",false);QSizeF raster;
+        for(QSize size:{QSize(1280,720),QSize(1920,1080),QSize(2560,1440)}){
+            window->resize(size);QTest::qWait(100);
+            auto* canvas=visualItem(window->contentItem(),"boardCanvas");auto* stage=visualItem(window->contentItem(),"gameStage");QVERIFY(canvas&&stage);
+            QVERIFY(canvas->width()<=960&&canvas->height()<=540);
+            if(raster.isEmpty())raster=canvas->size();else QCOMPARE(canvas->size(),raster);
+            QCOMPARE(stage->height(),540.0);
+            auto* field=visualItem(window->contentItem(),"battlefield");QVERIFY(field);QCOMPARE(field->position(),QPointF(0,0));QCOMPARE(field->size(),stage->size());
+            window->setProperty("touchControls",true);QTest::qWait(10);QCOMPARE(field->size(),stage->size());window->setProperty("touchControls",false);
+            QVERIFY(window->grabWindow().save("artillery-menu-"+QString::number(size.height())+".png"));
+        }
+        window->resize(1280,720);game.local();game.acceptTurn();QTest::qWait(200);
+        QVERIFY(window->grabWindow().save("artillery-handheld.png"));game.leave();
+    }
     void controllerAndReadableFlight(){
         Game game;QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
         auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());ControllerInput input(window);VirtualPad pad;

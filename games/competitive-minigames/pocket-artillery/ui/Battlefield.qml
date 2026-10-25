@@ -38,10 +38,10 @@ Rectangle {
     onSceneDataChanged:repaint()
     onCloseAimChanged:repaint()
     Connections {target:game;function onChanged(){stage.repaint()}}
-    radius:18;color:"#c9ded7";clip:true
+    radius:0;color:"#c9ded7";clip:true
 
     Canvas {
-        id:canvas;anchors.fill:parent
+        id:canvas;objectName:"boardCanvas";anchors.fill:parent
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
         onPaint:{
             var s=stage.sceneData;if(!s.terrain)return
@@ -118,11 +118,12 @@ Rectangle {
         model:2
         Rectangle {
             required property int index
-            x:index===0?12:stage.width-width-12;y:12;width:Math.min(150,stage.width*0.23);height:48;radius:12;color:"#f3f4e8"
-            border.width:game.canFire&&stage.sceneData.turn===index?2:0;border.color:index===0?"#6dae88":"#cc8773"
-            Text {objectName:"health"+index;x:12;y:8;text:(index===0?"MINT":"CORAL")+"  "+(index===0?stage.sceneData.hp0:stage.sceneData.hp1);font.pixelSize:13;font.bold:true;color:"#344d40"}
-            Rectangle {x:12;y:31;width:parent.width-24;height:6;radius:3;color:"#d7ddca"
-                Rectangle {width:parent.width*(index===0?stage.sceneData.hp0:stage.sceneData.hp1)/100;height:6;radius:3;color:index===0?"#63b58c":"#db8e77";Behavior on width {NumberAnimation {duration:260}}}
+            x:12;y:12+index*60;width:160;height:52;radius:26;color:"#de203d36"
+            border.width:game.canFire&&stage.sceneData.turn===index?2:0;border.color:index===0?"#8eddb4":"#f4aa89"
+            AvatarPortrait {x:6;y:6;width:40;height:40;descriptor:index===(game.online?game.seat:0)?game.avatars.local:game.online?game.avatars.peer:({})}
+            Text {objectName:"health"+index;x:52;y:7;text:(index===0?"MINT":"CORAL")+"  "+(index===0?stage.sceneData.hp0:stage.sceneData.hp1);font.pixelSize:16;font.bold:true;color:"#eff4e7"}
+            Rectangle {x:52;y:34;width:94;height:6;radius:3;color:"#567269"
+                Rectangle {width:parent.width*(index===0?stage.sceneData.hp0:stage.sceneData.hp1)/100;height:6;radius:3;color:index===0?"#8eddb4":"#f4aa89";Behavior on width {NumberAnimation {duration:260}}}
             }
         }
     }
