@@ -1,0 +1,25 @@
+{
+  "source_commit": "ced2e80",
+  "artifacts": [
+    {
+      "file": "pocket-golf-0.1.23-aarch64.tar.gz",
+      "bytes": 49607700,
+      "sha256": "c68d94a5d4326dc9e4a776d2bc844113e7b3c4803e2c04fa4644af1496ba48aa"
+    },
+    {
+      "file": "pocket-golf-0.1.23-source.tar.gz",
+      "bytes": 21961934,
+      "sha256": "ec89f8875316758de0897a66319dc88795d14260e354c8867e355cea71c345db"
+    },
+    {
+      "file": "pocket-golf-0.1.23-windows-preview.zip",
+      "bytes": 60180258,
+      "sha256": "fd9143f255a07300b4c5d91a2d37f9dffd824acc7cf5945daa9ed2990903e788"
+    },
+    {
+      "file": "pocket-golf-0.1.23-x86_64.tar.gz",
+      "bytes": 50396366,
+      "sha256": "3eccbbe2d17a54e239923910e1c284cd846365ad82047eede05dd5724c5e2dd7"
+    }
+  ]
+}
