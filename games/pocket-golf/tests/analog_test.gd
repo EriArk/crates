@@ -5,9 +5,9 @@ const Aim = preload("res://scripts/aim_input.gd")
 var failures := 0
 class Wire extends Match.Client:
 	var peer
-	var records: Array = []
+	var sent: Array = []
 	func send(data: Dictionary) -> bool:
-		records.append(data.duplicate(true))
+		sent.append(data.duplicate(true))
 		if peer!=null: peer._receive_member(session.get("self","a"),JSON.parse_string(JSON.stringify(data)))
 		return true
 func check(ok: bool, label: String) -> void:
@@ -53,16 +53,16 @@ func run() -> void:
 	for tick in 90: b._process(1.0/60)
 	check(is_equal_approx(b.angle,1.37) and is_equal_approx(b.power,74.37),"peer sees fine aim and power before putt")
 	check(b.world.digest()==before,"preview leaves authoritative state untouched")
-	var count: int = a.bridge.records.size()
+	var count: int = a.bridge.sent.size()
 	for tick in 60:
 		a.adjust_continuous(0.037,0.013); a._process(1.0/60)
-	check(a.bridge.records.size()-count<=15,"preview traffic bounded at 15 Hz")
-	count=a.bridge.records.size()
+	check(a.bridge.sent.size()-count<=15,"preview traffic bounded at 15 Hz")
+	count=a.bridge.sent.size()
 	for tick in 60: a._process(1.0/60)
-	check(a.bridge.records.size()-count<=1,"idle preview sends no repeats")
+	check(a.bridge.sent.size()-count<=1,"idle preview sends no repeats")
 	a.bridge.pending={1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{}}
-	a.adjust_continuous(1,0); count=a.bridge.records.size(); a._process(1)
-	check(a.bridge.records.size()==count,"backpressure drops obsolete cosmetic updates")
+	a.adjust_continuous(1,0); count=a.bridge.sent.size(); a._process(1)
+	check(a.bridge.sent.size()==count,"backpressure drops obsolete cosmetic updates")
 	a.bridge.pending.clear()
 	# Fire before the next preview: the putt itself carries exact authoritative aim.
 	a.adjust_continuous(0.23,0.17); a.fire()

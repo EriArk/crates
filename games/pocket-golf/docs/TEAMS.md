@@ -62,6 +62,11 @@ JSON numeric roster values are normalized to integers before hashing.
 After each shot, every participant acknowledges completion of its presentation
 before the next turn opens. Aim previews remain cosmetic and coalesced at 15 Hz.
 Heartbeats detect a stopped game; membership or context loss ends the match.
+Outgoing records are queued (maximum 256), with at most 24 unacknowledged records
+per channel. Incoming consumption acknowledgements drain first; local RPC requests
+retain headroom below the client's 64-request limit. Cosmetic updates can be
+coalesced away under pressure. This prevents a simultaneous seven-way avatar
+fan-out from losing a required acknowledgement and breaking subsequent sequences.
 Host migration, mid-round joins, round restoration and anti-cheat certification
 are outside this increment. Same-machine TLS checks do not prove internet/NAT
 connectivity, performance on eight physical devices or handheld acceptance.
@@ -79,6 +84,8 @@ connectivity, performance on eight physical devices or handheld acceptance.
   2/4/5/8, complete rounds, matching scores, all-player rematch and retained Lobby;
   group avatar attribution/lifetime and random stock rival assembly are separate
   checks. Configure against the matching prepared SDK core.
+  The final maximum-avatar fixture pre-registers eight desktop engines before
+  admission; it does not measure eight simultaneous cold starts or physical FPS.
 - Analog, HUD, camera, audio/motion and effects regressions remain in the project.
 
 Current evidence and artifact locations are in

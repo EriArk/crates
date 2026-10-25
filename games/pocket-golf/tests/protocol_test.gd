@@ -3,6 +3,12 @@ extends SceneTree
 const Match = preload("res://scripts/match.gd")
 const Client = preload("res://scripts/group_client.gd")
 var failures := 0
+class QueuedClient extends Client:
+	var requests: Array = []
+	func request(method: String, params: Dictionary = {}) -> bool:
+		if pending.size()>=64: return false
+		requests.append([method,params.duplicate(true)]); pending[str(requests.size())]={}
+		return true
 func check(ok: bool, what: String) -> void:
 	if not ok: failures+=1; printerr("FAIL ",what)
 func _initialize() -> void: call_deferred("run")
@@ -36,6 +42,21 @@ func run() -> void:
 	client.active=true; client.registered=true
 	client._packet({"event":"context.revoked"})
 	check(not client.active and client.channels.is_empty(),"profile revokes all grants")
-	game.queue_free(); client.queue_free(); await process_frame
+	var queued := QueuedClient.new()
+	queued.channel="grant"; queued.channels={"peer":"grant"}; queued.sequences={"grant":0}
+	for i in 64: queued.pending[str(i)]={}
+	for i in 3:
+		queued._packet({"event":"network.data","channel":"grant","peer":"peer","sequence":str(i),"data":Marshalls.utf8_to_base64('{"type":"ping"}')})
+	check(queued.consumes.size()==3 and queued.requests.is_empty(),"full RPC queue retains every consumption acknowledgement")
+	queued.pending.clear()
+	for i in 40: check(queued.send_to("peer",{"n":i}),"bounded send admission")
+	queued._drain_queues()
+	check(queued.requests[0]==["network.consume",{"channel":"grant","sequence":"0"}] and queued.requests[2][1].sequence=="2","consumes drain first and in sequence")
+	check(queued.outstanding.grant==21 and queued.records.size()==19,"bulk fan-out leaves request headroom")
+	queued.pending.clear(); queued._drain_queues()
+	check(queued.outstanding.grant==24 and queued.records.size()==16,"channel credits bound unacknowledged records")
+	queued.pending.clear(); queued._packet({"event":"network.ack","channel":"grant"}); queued._drain_queues()
+	check(queued.outstanding.grant==24 and queued.records.size()==15,"credit returns permit exactly one further send")
+	queued.free(); game.queue_free(); client.queue_free(); await process_frame
 	print("PROTOCOL ","PASS" if failures==0 else "FAIL")
 	quit(0 if failures==0 else 1)
