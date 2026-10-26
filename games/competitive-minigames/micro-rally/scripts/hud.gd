@@ -40,6 +40,8 @@ func menu(mode: String) -> void:
 	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
 	menu_mode=mode
 	panel.visible=true; buttons.clear()
+	panel.custom_minimum_size=Vector2(760,490) if mode=="results" else Vector2(390,490)
+	panel.size=panel.custom_minimum_size
 	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
 	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
 	if mode=="main":
@@ -75,9 +77,12 @@ func menu(mode: String) -> void:
 		list.add_child(label("ФИНИШ!",38,GOLD))
 		list.add_child(label("Грязевая долина",24))
 		var rank = game.standings()
-		for i in mini(rank.size(),6):
+		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
+		var left = VBoxContainer.new(); var right = VBoxContainer.new(); columns.add_child(left); columns.add_child(right)
+		for i in rank.size():
 			var car: Node3D=rank[i]
-			list.add_child(label(str(i+1)+"  "+("Вы" if car.index==0 else "Гонщик "+str(car.index))+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "на трассе"),19,GOLD if car.index==0 else PAPER))
+			var column = left if i<8 else right
+			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "не финишировал"),19,GOLD if car.index==0 else PAPER))
 		list.add_child(label("Это первый этап будущего кубка.\nПриз кубка пока не разыгрывается.",16,Color("bed0c6")))
 		button(list,"Реванш",game.start_race); button(list,"К кубкам",game.return_menu)
 	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
@@ -135,7 +140,7 @@ func _draw() -> void:
 		var text = str(maxi(1,ceili(game.countdown)))
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
 	if car.disabled_time>0: write("ВОССТАНОВЛЕНИЕ",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
-	if not message.is_empty(): write(message,Vector2(240,87),18)
+	if not message.is_empty(): write(message,Vector2(240,106),18,GOLD)
 	if game.show_metrics: write("%.0f FPS · %d машин" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
 
 func _plate() -> StyleBoxFlat:

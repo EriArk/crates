@@ -9,7 +9,8 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-parser.add_argument('--test', action='append', choices=['drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd'])
+TESTS=['drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd']
+parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
@@ -42,7 +43,7 @@ base=['docker','run','--rm','--network','none','--user','1000:1000','-e','HOME=/
       IMAGE,'/work/engine/godot','--headless','--path','/work/snapshots/'+identity]
 remote(base+['--editor','--import','--quit'],'import.log')
 if args.tests or args.test:
-    for test in (['drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd'] if args.tests else args.test):
+    for test in (TESTS if args.tests else args.test):
         if (ROOT/'tests'/test).exists():
             print(remote(base+['--fixed-fps','60','--script','res://tests/'+test],test+'.log')[-1000:],flush=True)
 if args.export:

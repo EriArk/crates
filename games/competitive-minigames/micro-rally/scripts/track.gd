@@ -120,15 +120,23 @@ func _build_road() -> void:
 	add_child(node); node.create_trimesh_collision()
 	# Planked bridges wherever the authored route crosses the creek.
 	for i in COUNT:
-		if absf(points[i].x+30)>4.6: continue
-		var forward = tangents[i]; var side = Vector3(-forward.z,0,forward.x)
-		var plank = Art.box(self,Vector3(WIDTH+0.3,0.15,1.8),points[i]+Vector3.UP*0.11,Color("8e6843"))
-		plank.rotation.y=atan2(-forward.x,-forward.z)
+		var j = (i+1)%COUNT; var center = points[i].lerp(points[j],0.5)
+		if absf(center.x+30)>9.0: continue
+		var span = points[j]-points[i]
+		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)
+		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)
+		var plank = Art.box(self,Vector3(WIDTH+0.3,0.15,span.length()+0.12),center+Vector3.UP*0.11,Color("8e6843"))
+		plank.look_at(plank.position+span,Vector3.UP)
 		for s in [-1,1]:
-			var pos = points[i]+side*(WIDTH*0.5+0.35)*s
-			Art.box(self,Vector3(0.22,1.5,0.22),pos+Vector3.UP*0.65,Color("634a35"))
-			var rail = Art.box(self,Vector3(0.15,0.2,2.1),pos+Vector3.UP*1.25,Color("a27a50")); rail.rotation.y=plank.rotation.y
-			Art.collider(self,Vector3(0.4,1.5,0.4),pos+Vector3.UP*0.65)
+			var a = points[i]+side_a*(WIDTH*0.5+0.15)*s; var b = points[j]+side_b*(WIDTH*0.5+0.15)*s
+			var pos = a.lerp(b,0.5); var edge = b-a
+			Art.box(self,Vector3(0.22,1.5,0.22),a+Vector3.UP*0.65,Color("634a35"))
+			for height in [0.45,1.1]:
+				var rail = Art.box(self,Vector3(0.18,0.2,edge.length()+0.12),pos+Vector3.UP*height,Color("a27a50"))
+				rail.look_at(rail.position+edge,Vector3.UP)
+			var barrier = Art.collider(self,Vector3(0.36,1.5,edge.length()+0.18),pos+Vector3.UP*0.65)
+			barrier.look_at(barrier.position+edge,Vector3.UP)
+			barrier.add_to_group("bridge_rail"); barrier.set_meta("route_index",i); barrier.set_meta("side",s)
 
 func _build_stream() -> void:
 	var plane = PlaneMesh.new(); plane.size=Vector2(10,210); plane.subdivide_depth=30

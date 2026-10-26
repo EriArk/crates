@@ -47,6 +47,8 @@ func run() -> void:
 	check(b.health==91 and b.shield==11,"Shot first consumes active shield")
 	b.immune=0; b.shield=0; b.take_damage(200)
 	check(b.health==0 and b.disabled_time>0,"Destruction starts timed recovery without fragmentation")
+	# The starting grid is intentionally still occupied; recover on a free course segment.
+	b.checkpoint=80; b.passed=80
 	game._recover(b); check(b.health==100 and b.immune>0,"Recovery restores health and short protection")
 	a.aim=Vector3.RIGHT; game.controls.read(a,game.camera)
 	check(a.aim==Vector3.RIGHT,"Releasing aim preserves its direction")

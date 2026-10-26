@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RigidBody3D
 const Art = preload("art.gd")
+const BotDriver = preload("bot_driver.gd")
 const COLORS = [Color("ff8a28"),Color("27bec0"),Color("db4472"),Color("ad75ed"),Color("8dc84e"),Color("e7c13e"),Color("4c89d9"),Color("eeeece")]
 var index = 0
 var model_id = "hatchback-sports"
@@ -39,6 +40,13 @@ var paint_materials: Array[ShaderMaterial] = []
 var last_forward = Vector3.FORWARD
 var surface_grip = 1.0
 var lamp_material: StandardMaterial3D
+var body_shape: BoxShape3D
+var bot = BotDriver.new()
+var ghost_time = 0.0
+var recovery_lock = 0.0
+var recovery_count = 0
+var fall_count = 0
+var did_not_finish = false
 
 func _ready() -> void:
 	mass=65; linear_damp=0.14; angular_damp=4.0; can_sleep=false
@@ -46,6 +54,7 @@ func _ready() -> void:
 	contact_monitor=true; max_contacts_reported=4
 	collision_layer=2; collision_mask=3
 	var collider = CollisionShape3D.new(); var shape = BoxShape3D.new(); shape.size=Vector3(1.75,0.9,3.25)
+	body_shape=shape
 	collider.shape=shape; add_child(collider)
 	physics_material_override=PhysicsMaterial.new(); physics_material_override.friction=0.15; physics_material_override.bounce=0.08
 	visual=Node3D.new(); visual.scale=Vector3.ONE*1.4; visual.position.y=0.252; add_child(visual)
@@ -74,6 +83,8 @@ func _ready() -> void:
 
 func reset_at(pose: Transform3D) -> void:
 	reset_pose=pose; reset_pending=true; immune=2.0
+	ghost_time=2.0; collision_layer=4; collision_mask=1
+	bot.reversing=0; stuck_time=0; recovery_lock=2.0
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if reset_pending:
@@ -118,6 +129,13 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 
 func tick(delta: float) -> void:
 	immune=maxf(0,immune-delta); disabled_time=maxf(0,disabled_time-delta); fire_cooldown=maxf(0,fire_cooldown-delta)
+	recovery_lock=maxf(0,recovery_lock-delta)
+	if ghost_time>0:
+		ghost_time=maxf(0,ghost_time-delta)
+		if ghost_time<=0 and finish_time<0:
+			var query = PhysicsShapeQueryParameters3D.new(); query.shape=body_shape; query.transform=global_transform; query.collision_mask=6; query.exclude=[get_rid()]; query.margin=0.15
+			if get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): collision_layer=2; collision_mask=3
+			else: ghost_time=0.1; immune=maxf(immune,0.1)
 	shield=maxf(0,shield-delta*2.0)
 	shield_mesh.visible=shield>0 or immune>0
 	if aim.length_squared()>0.1: turret.global_rotation.y=atan2(-aim.x,-aim.z)
@@ -126,30 +144,25 @@ func tick(delta: float) -> void:
 	for paint in paint_materials: paint.set_shader_parameter("damage",clampf((100-health)*0.008+0.12,0.12,0.9))
 	var nearest_index: int=track.nearest(position,checkpoint)
 	var advance = posmod(nearest_index-checkpoint,track.COUNT)
-	if advance<12:
+	var road_delta: Vector3=position-track.points[nearest_index]
+	var on_course = Vector2(road_delta.x,road_delta.z).length()<track.WIDTH*0.5+1.5 and absf(road_delta.y)<2.5
+	if advance<12 and on_course and not reset_pending:
 		passed+=advance; checkpoint=nearest_index; laps=passed/track.COUNT
 	offroad=track.road_distance(position,nearest_index)>track.WIDTH*0.5+0.5
-	if linear_velocity.length()<1 and throttle>0.5: stuck_time+=delta
+	if linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
 	else: stuck_time=0
 
-func bot_drive() -> void:
-	var target: Vector3=track.points[(checkpoint+7)%track.COUNT]
-	var tangent: Vector3=track.tangents[(checkpoint+7)%track.COUNT]
-	var lane = (float(index%5)-2.0)*1.45
-	target+=Vector3(-tangent.z,0,tangent.x)*lane
-	desired=target-position; desired.y=0; desired=desired.normalized()
-	var angle = absf(last_forward.signed_angle_to(desired,Vector3.UP))
-	throttle=1.0 if angle<0.8 else 0.55
-	brake=0.7 if angle>0.75 and linear_velocity.length()>11 else 0.0
-	handbrake=angle>0.8 and index%4==3
-	boosting=angle<0.15 and boost>40 and index%4!=2
-	aim=desired; firing=false
+func bot_drive(others: Array = [], delta: float = 1.0/60.0) -> void:
+	bot.drive(self,others,delta)
+
+func driver_title() -> String:
+	return "Вы" if index==0 else BotDriver.STYLES[index%4]+" "+str(index)
 
 func activate_shield() -> void:
 	if shield_item and disabled_time<=0: shield=100; shield_item=false
 
 func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO) -> bool:
-	if immune>0 or disabled_time>0: return false
+	if immune>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
 	var absorbed = minf(shield,amount); shield-=absorbed; amount-=absorbed
 	health=maxf(0,health-amount)
 	apply_central_impulse(impulse.limit_length(150))
