@@ -9,6 +9,12 @@ var length = 0.0
 var rng = RandomNumberGenerator.new()
 var pickup_spots: Array[Vector3] = []
 var terrain_vertices = PackedVector3Array()
+var road_material: ShaderMaterial
+var spatial_candidates: Dictionary = {}
+const SEARCH_CELL = 8.0
+
+func set_wetness(value: float) -> void:
+	if road_material!=null: road_material.set_shader_parameter("wetness",clampf(value,0,1))
 
 func _init() -> void:
 	# Closed authored valley route: broad sweep, bridge, climb, hairpin, return.
@@ -27,6 +33,23 @@ func base_height(x: float, z: float) -> float:
 
 func nearest(p: Vector3, hint: int = -1) -> int:
 	var best = 0; var distance = INF
+	if hint<0:
+		var cell = Vector2i(floori(p.x/SEARCH_CELL),floori(p.z/SEARCH_CELL))
+		if not spatial_candidates.has(cell):
+			var center = (Vector2(cell)+Vector2(0.5,0.5))*SEARCH_CELL
+			var center_distance = INF
+			for point in points: center_distance=minf(center_distance,center.distance_squared_to(Vector2(point.x,point.z)))
+			# Triangle inequality: any possible winner lies within d(center)+2r.
+			# Keep original index order so ties match the exhaustive search exactly.
+			var radius = sqrt(center_distance)+SEARCH_CELL*sqrt(2.0)+0.0001
+			var candidates = PackedInt32Array()
+			for i in COUNT:
+				if center.distance_squared_to(Vector2(points[i].x,points[i].z))<=radius*radius: candidates.append(i)
+			spatial_candidates[cell]=candidates
+		for i in spatial_candidates[cell]:
+			var d = Vector2(p.x-points[i].x,p.z-points[i].z).length_squared()
+			if d<distance: distance=d; best=i
+		return best
 	var start = 0 if hint<0 else hint-22
 	var end = COUNT if hint<0 else hint+23
 	for n in range(start,end):
@@ -93,7 +116,7 @@ func _build_road() -> void:
 		distance=next
 	surface.generate_normals(); surface.index()
 	var node = MeshInstance3D.new(); node.mesh=surface.commit()
-	var mat = ShaderMaterial.new(); mat.shader=preload("res://shaders/road.gdshader"); node.material_override=mat
+	road_material=ShaderMaterial.new(); road_material.shader=preload("res://shaders/road.gdshader"); node.material_override=road_material
 	add_child(node); node.create_trimesh_collision()
 	# Planked bridges wherever the authored route crosses the creek.
 	for i in COUNT:

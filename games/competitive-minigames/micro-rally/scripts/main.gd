@@ -7,6 +7,10 @@ const Controls = preload("controls.gd")
 const Hud = preload("hud.gd")
 const Art = preload("art.gd")
 const Audio = preload("audio.gd")
+const Conditions = preload("stage_conditions.gd")
+const Weather = preload("weather.gd")
+var conditions = Conditions.new()
+var weather: Node3D
 var track: Node3D
 var cars: Array[Node3D] = []
 var effects: Node3D
@@ -33,8 +37,15 @@ func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps=60
 	get_viewport().size_changed.connect(_resolution)
-	_resolution(); _lighting()
+	_resolution()
+	var selected_conditions = conditions.descriptor()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--time="): selected_conditions.time=arg.trim_prefix("--time=")
+		elif arg.begins_with("--weather="): selected_conditions.weather=arg.trim_prefix("--weather=")
+	if not conditions.configure(selected_conditions): push_warning("Invalid stage conditions: using clear daytime")
+	weather=Weather.new(); add_child(weather); weather.apply(conditions)
 	track=Track.new(); add_child(track); track.build()
+	track.set_wetness(conditions.wetness())
 	effects=Effects.new(); effects.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(effects)
 	sound=Audio.new(); add_child(sound)
 	camera=Camera3D.new(); camera.fov=48; camera.near=0.15; camera.far=160; add_child(camera)
@@ -57,28 +68,27 @@ func _resolution() -> void:
 	var viewport = get_viewport(); var pixels = DisplayServer.window_get_size()
 	viewport.scaling_3d_scale=clampf(720.0/maxf(720,pixels.y),0.35,1.0)
 
-func _lighting() -> void:
-	var env = WorldEnvironment.new(); env.environment=Environment.new()
-	var e = env.environment
-	e.background_mode=Environment.BG_COLOR; e.background_color=Color("a8bbb0")
-	var compatibility = RenderingServer.get_current_rendering_method()=="gl_compatibility"
-	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR; e.ambient_light_color=Color("b7c9d1"); e.ambient_light_energy=0.30 if compatibility else 0.46
-	e.tonemap_mode=Environment.TONE_MAPPER_LINEAR if compatibility else Environment.TONE_MAPPER_ACES
-	e.fog_enabled=true; e.fog_mode=Environment.FOG_MODE_DEPTH; e.fog_depth_begin=95; e.fog_depth_end=200
-	e.fog_light_color=Color("83a29c"); e.fog_density=0.15
-	add_child(env)
-	var sun = DirectionalLight3D.new(); sun.name="Sun"
-	sun.rotation_degrees=Vector3(-40,-55,0)
-	sun.light_color=Color("ffebcb"); sun.light_energy=0.50 if compatibility else 0.90; sun.shadow_enabled=true
-	sun.directional_shadow_max_distance=85; sun.shadow_bias=0.08; sun.shadow_normal_bias=1.5
-	sun.directional_shadow_blend_splits=true; sun.directional_shadow_split_1=0.12; sun.directional_shadow_split_2=0.30; sun.directional_shadow_split_3=0.65; sun.shadow_blur=1.2
-	add_child(sun)
+func set_conditions(data: Dictionary) -> bool:
+	if state!="menu" or not conditions.configure(data): return false
+	weather.apply(conditions); track.set_wetness(conditions.wetness())
+	for car in cars: car.surface_grip=conditions.grip()
+	return true
+
+func cycle_time() -> void:
+	var data = conditions.descriptor()
+	data.time=Conditions.TIMES[(Conditions.TIMES.find(data.time)+1)%Conditions.TIMES.size()]
+	if set_conditions(data): hud.menu("conditions")
+
+func cycle_weather() -> void:
+	var data = conditions.descriptor()
+	data.weather=Conditions.WEATHERS[(Conditions.WEATHERS.find(data.weather)+1)%Conditions.WEATHERS.size()]
+	if set_conditions(data): hud.menu("conditions")
 
 func _spawn_cars() -> void:
 	for car in cars: remove_child(car); car.queue_free()
 	cars.clear()
 	for i in bot_count+1:
-		var car = Car.new(); car.index=i; car.track=track
+		var car = Car.new(); car.index=i; car.track=track; car.surface_grip=conditions.grip()
 		car.model_id=["hatchback-sports","sedan-sports","suv"][selected_car] if i==0 else ["hatchback-sports","suv","sedan-sports","race"][i%4]
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
 		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
@@ -162,7 +172,7 @@ func _physics_process(delta: float) -> void:
 		car.tick(delta)
 		if car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
 		if car.firing and state=="race": _shoot(car)
-		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car)
+		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car,conditions.wetness())
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed
 			if car.index==0:
@@ -214,6 +224,7 @@ func _shoot(car: Node3D) -> void:
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
 	_camera(delta)
+	weather.update(delta,cars[0].position,state in ["menu","race","countdown"])
 	sound.engine(cars[0].linear_velocity.length(),state=="race")
 	if state=="race" and cars[0].boosting: hud.portrait.set_mood("excited")
 	capture_time+=delta
@@ -246,8 +257,11 @@ func standings() -> Array:
 func _save_best() -> void:
 	# Local first-stage result only. Never grants a full-cup prize or global rank.
 	var file = ConfigFile.new(); file.load("user://valley.cfg")
-	var previous = float(file.get_value("records","best_seconds",INF))
-	if elapsed<previous: file.set_value("records","best_seconds",elapsed)
-	file.set_value("records","completed_runs",int(file.get_value("records","completed_runs",0))+1)
+	var section = "records/"+conditions.record_key()
+	var legacy = float(file.get_value("records","best_seconds",INF)) if conditions.time_of_day=="day" and conditions.weather=="clear" else INF
+	var previous = float(file.get_value(section,"best_seconds",legacy))
+	if elapsed<previous: file.set_value(section,"best_seconds",elapsed)
+	file.set_value(section,"completed_runs",int(file.get_value(section,"completed_runs",0))+1)
+	file.set_value(section,"conditions",conditions.descriptor())
 	if file.save("user://valley.cfg.pending")==OK:
 		DirAccess.rename_absolute("user://valley.cfg.pending","user://valley.cfg")

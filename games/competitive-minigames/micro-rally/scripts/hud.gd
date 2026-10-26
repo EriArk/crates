@@ -9,6 +9,7 @@ var panel: PanelContainer
 var message = ""
 var buttons: Array[Button] = []
 var fps_label = ""
+var menu_mode = ""
 const INK = Color(0.025,0.045,0.045,0.86)
 const PAPER = Color("fff6d8")
 const GOLD = Color("ffcc42")
@@ -17,7 +18,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter=Control.MOUSE_FILTER_IGNORE; font=ThemeDB.fallback_font
 	portrait=Portrait.new(); add_child(portrait)
-	panel=PanelContainer.new(); panel.position=Vector2(46,90); panel.custom_minimum_size=Vector2(390,490)
+	panel=PanelContainer.new(); panel.position=Vector2(40,42); panel.custom_minimum_size=Vector2(390,490)
 	var style = StyleBoxFlat.new(); style.bg_color=Color(0.025,0.055,0.06,0.93); style.set_corner_radius_all(24)
 	style.content_margin_left=25; style.content_margin_right=25; style.content_margin_top=24; style.content_margin_bottom=24
 	panel.add_theme_stylebox_override("panel",style); add_child(panel)
@@ -36,18 +37,28 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	return b
 
 func menu(mode: String) -> void:
+	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
+	menu_mode=mode
 	panel.visible=true; buttons.clear()
 	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
-	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",12); panel.add_child(list)
+	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
 	if mode=="main":
-		list.add_child(label("MICRO RALLY",38,GOLD)); list.add_child(label("CUPS / КУБКИ",18))
-		list.add_child(label("ЛЕСНОЙ ВЫЗОВ",27)); list.add_child(label("01  Грязевая долина",22))
-		list.add_child(label("Первый игровой участок\n4 круга · до 16 машин",18,Color("bed0c6")))
+		list.add_child(label("MICRO RALLY",34,GOLD)); list.add_child(label("КУБОК: ЛЕСНОЙ ВЫЗОВ",20))
+		list.add_child(label("01  Грязевая долина",22))
+		list.add_child(label("4 круга · до 16 машин",18,Color("bed0c6")))
 		button(list,"В гонку",game.start_race)
 		button(list,"Машина: "+game.car_title(),game.cycle_car)
 		button(list,"Соперники: "+str(game.bot_count),game.cycle_bots)
+		button(list,game.conditions.title(),func(): menu("conditions"))
 		button(list,"Управление",func(): menu("controls"))
 		button(list,"Выйти",game.quit_game)
+	elif mode=="conditions":
+		list.add_child(label("УСЛОВИЯ ЗАЕЗДА",28,GOLD))
+		list.add_child(label("Грязевая долина",22))
+		button(list,"Время: "+game.conditions.time_title(),game.cycle_time)
+		button(list,"Погода: "+game.conditions.weather_title(),game.cycle_weather)
+		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nУсловия одинаковы для всех\nи сохраняются на весь заезд.\nРекорды разделены по условиям.",18,Color("bed0c6")))
+		button(list,"Назад",func(): menu("main"))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
 		list.add_child(label("Левый стик — направление\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
@@ -68,7 +79,7 @@ func menu(mode: String) -> void:
 			list.add_child(label(str(i+1)+"  "+("Вы" if car.index==0 else "Гонщик "+str(car.index))+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "на трассе"),19,GOLD if car.index==0 else PAPER))
 		list.add_child(label("Это первый этап будущего кубка.\nПриз кубка пока не разыгрывается.",16,Color("bed0c6")))
 		button(list,"Реванш",game.start_race); button(list,"К кубкам",game.return_menu)
-	if not buttons.is_empty(): buttons[0].grab_focus()
+	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
 
 func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) -> void:
 	draw_string(font,pos+Vector2(1,2),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size_value,Color(0,0,0,0.65))
@@ -92,6 +103,7 @@ func _draw() -> void:
 	var seconds = int(game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
 	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps],Vector2(238,53),24)
+	write(game.conditions.title(),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
 	var center = Vector2(size.x*0.5,size.y-72)
 	draw_circle(center,55,INK)

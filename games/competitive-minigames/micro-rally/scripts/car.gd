@@ -37,6 +37,7 @@ var dirt_mesh: MeshInstance3D
 var damage_material: StandardMaterial3D
 var paint_materials: Array[ShaderMaterial] = []
 var last_forward = Vector3.FORWARD
+var surface_grip = 1.0
 
 func _ready() -> void:
 	mass=65; linear_damp=0.14; angular_damp=4.0; can_sleep=false
@@ -89,7 +90,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var force = clampf((0.72-height)*1600.0-state.linear_velocity.y*130.0,0,2200)
 		state.apply_central_force(Vector3.UP*force)
 	if not grounded: return
-	var grip = (2.8 if offroad else 5.6)*(0.25 if handbrake else 1.0)
+	var grip = (2.8 if offroad else 5.6)*(0.25 if handbrake else 1.0)*surface_grip
 	state.apply_central_force(-right*side_speed*mass*grip)
 	var engine = throttle*mass*13.0
 	if disabled_time>0: engine=0
@@ -99,7 +100,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var top_speed = (12.0 if offroad else 19.0)+(8.0 if boosting and boost>0 else 0.0)
 	if speed<top_speed: state.apply_central_force(forward*engine)
 	if brake>0:
-		if speed>0.6: state.apply_central_force(-forward*brake*mass*22)
+		if speed>0.6: state.apply_central_force(-forward*brake*mass*22*surface_grip)
 		elif speed>-5: state.apply_central_force(-forward*brake*mass*7)
 	if throttle<0.05 and brake<0.05: state.apply_central_force(-forward*speed*mass*0.6)
 	if handbrake: state.apply_central_force(-forward*speed*mass*0.9)

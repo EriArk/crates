@@ -16,12 +16,16 @@ func _ready() -> void:
 	dust_material=StandardMaterial3D.new(); dust_material.albedo_texture=texture; dust_material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA; dust_material.billboard_mode=BaseMaterial3D.BILLBOARD_ENABLED
 	dust_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED; dust_material.no_depth_test=false
 
-func dust(car: Node3D) -> void:
+func dust(car: Node3D, wetness: float = 0.0) -> void:
 	if particles.size()>=LIMIT: return
 	var node = MeshInstance3D.new(); node.mesh=dust_quad
-	node.material_override=dust_material; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.material_override=dust_material
+	if wetness>0.5:
+		node.mesh=sphere; node.material_override=Art.material(Color("64533e"))
+	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(node); node.position=car.position+car.transform.basis.z*1.1-Vector3.UP*0.4
-	particles.append({"node":node,"life":0.65,"total":0.65,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1)),"grow":true})
+	var life = 0.24 if wetness>0.5 else 0.65
+	particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1)),"grow":wetness<0.5})
 
 func beam(from: Vector3, to: Vector3, color: Color = Color("ffd07a")) -> void:
 	if particles.size()>=LIMIT: return
