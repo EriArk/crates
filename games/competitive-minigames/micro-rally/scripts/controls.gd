@@ -45,6 +45,7 @@ func read(car: Node3D, camera: Camera3D) -> void:
 		if released: neutral_required=false
 		return
 	if shielding: car.activate_shield()
+	car.shield_pressed=shielding
 	if steer.length()>0.18: car.desired=Vector3(steer.x,0,steer.y).normalized()
 	else: car.desired=Vector3.ZERO
 	if aiming.length()>0.22: car.aim=Vector3(aiming.x,0,aiming.y).normalized()
@@ -56,4 +57,5 @@ func read(car: Node3D, camera: Camera3D) -> void:
 			car.aim=(target-car.position).normalized()
 
 func neutral(car: Node3D) -> void:
+	car.shield_pressed=false
 	car.throttle=0; car.brake=0; car.boosting=false; car.firing=false; car.handbrake=false; car.desired=Vector3.ZERO

@@ -4,6 +4,10 @@ const Art = preload("art.gd")
 const BotDriver = preload("bot_driver.gd")
 const COLORS = [Color("ff8a28"),Color("27bec0"),Color("db4472"),Color("ad75ed"),Color("8dc84e"),Color("e7c13e"),Color("4c89d9"),Color("eeeece")]
 var index = 0
+var local_player = false
+var human = false
+var replica = false
+var shield_pressed = false
 var model_id = "hatchback-sports"
 var track: Node3D
 var checkpoint = 0
@@ -137,11 +141,7 @@ func tick(delta: float) -> void:
 			if get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): collision_layer=2; collision_mask=3
 			else: ghost_time=0.1; immune=maxf(immune,0.1)
 	shield=maxf(0,shield-delta*2.0)
-	shield_mesh.visible=shield>0 or immune>0
-	if aim.length_squared()>0.1: turret.global_rotation.y=atan2(-aim.x,-aim.z)
-	damage_material.albedo_color.a=clampf((100-health)*0.006+0.12,0.12,0.7)
-	dirt_mesh.visible=false
-	for paint in paint_materials: paint.set_shader_parameter("damage",clampf((100-health)*0.008+0.12,0.12,0.9))
+	update_visuals()
 	var nearest_index: int=track.nearest(position,checkpoint)
 	var advance = posmod(nearest_index-checkpoint,track.COUNT)
 	var road_delta: Vector3=position-track.points[nearest_index]
@@ -152,13 +152,21 @@ func tick(delta: float) -> void:
 	if linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
 	else: stuck_time=0
 
+func update_visuals() -> void:
+	shield_mesh.visible=shield>0 or immune>0
+	if aim.length_squared()>0.1: turret.global_rotation.y=atan2(-aim.x,-aim.z)
+	damage_material.albedo_color.a=clampf((100-health)*0.006+0.12,0.12,0.7)
+	dirt_mesh.visible=false
+	for paint in paint_materials: paint.set_shader_parameter("damage",clampf((100-health)*0.008+0.12,0.12,0.9))
+
 func bot_drive(others: Array = [], delta: float = 1.0/60.0) -> void:
 	bot.drive(self,others,delta)
 
 func driver_title() -> String:
-	return "Вы" if index==0 else BotDriver.STYLES[index%4]+" "+str(index)
+	return "Вы" if local_player else "Игрок "+str(index+1) if human else BotDriver.STYLES[index%4]+" "+str(index)
 
 func activate_shield() -> void:
+	if replica: return
 	if shield_item and disabled_time<=0: shield=100; shield_item=false
 
 func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO) -> bool:

@@ -17,7 +17,7 @@ const GOLD = Color("ffcc42")
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter=Control.MOUSE_FILTER_IGNORE; font=ThemeDB.fallback_font
-	portrait=Portrait.new(); add_child(portrait)
+	portrait=Portrait.new(); portrait.shared_sdk=game.net.bridge; add_child(portrait)
 	panel=PanelContainer.new(); panel.position=Vector2(40,42); panel.custom_minimum_size=Vector2(390,490)
 	var style = StyleBoxFlat.new(); style.bg_color=Color(0.025,0.055,0.06,0.93); style.set_corner_radius_all(24)
 	style.content_margin_left=25; style.content_margin_right=25; style.content_margin_top=24; style.content_margin_bottom=24
@@ -73,6 +73,18 @@ func menu(mode: String) -> void:
 		button(list,"Вернуть машину на трассу",func(): game.recover_player(); game.resume_race())
 		button(list,"Начать заново",game.start_race)
 		button(list,"К кубкам",game.return_menu)
+	elif mode=="net_pause":
+		list.add_child(label("СЕТЕВОЙ ЗАЕЗД",30,GOLD))
+		list.add_child(label("Гонка продолжается.\nВаша машина отпустила газ.",19))
+		button(list,"Продолжить",game.resume_race)
+		button(list,"Вернуть машину",func(): game.recover_player(); game.resume_race())
+		button(list,"Покинуть заезд",game.return_menu)
+	elif mode=="disconnected":
+		list.add_child(label("ЗАЕЗД ПРЕРВАН",28,GOLD))
+		var reason = label(message,19); reason.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; reason.custom_minimum_size.x=330; list.add_child(reason)
+		if game.net.bridge.registered: button(list,"Вернуться в лобби",func(): game.net.bridge.open_lobby())
+		else: button(list,"Вернуться в TrainerOS",game.quit_game)
+		button(list,"Одиночная игра",func(): menu("main"))
 	elif mode=="results":
 		list.add_child(label("ФИНИШ!",38,GOLD))
 		list.add_child(label("Грязевая долина",24))
@@ -82,9 +94,11 @@ func menu(mode: String) -> void:
 		for i in rank.size():
 			var car: Node3D=rank[i]
 			var column = left if i<8 else right
-			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "не финишировал"),19,GOLD if car.index==0 else PAPER))
+			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "не финишировал"),19,GOLD if car.local_player else PAPER))
 		list.add_child(label("Это первый этап будущего кубка.\nПриз кубка пока не разыгрывается.",16,Color("bed0c6")))
-		button(list,"Реванш",game.start_race); button(list,"К кубкам",game.return_menu)
+		if game.net.online and game.net.voted: list.add_child(label("Реванш: ожидаем остальных участников…",19,GOLD))
+		else: button(list,"Реванш",game.start_race)
+		button(list,"К кубкам",game.return_menu)
 	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
 
 func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) -> void:
@@ -98,10 +112,13 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	if game==null or game.cars.is_empty(): return
-	var car: Node3D=game.cars[0]
+	var car: Node3D=game.player()
 	if game.state=="menu":
 		write("DIRTY VALLEY",Vector2(size.x-340,size.y-65),28,GOLD)
 		write("MICRO RALLY / FIRST DRIVE",Vector2(size.x-340,size.y-35),16)
+		return
+	if game.state=="network_wait":
+		write(message,Vector2(40,size.y*0.5),26,GOLD)
 		return
 	var rank: Array=game.standings()
 	draw_style_box(_plate(),Rect2(22,20,194,108))
@@ -153,4 +170,4 @@ func _map() -> void:
 	path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
 	for c in game.cars:
 		var p: Vector2=origin+Vector2(c.position.x+78,c.position.z+80)*scale_value
-		draw_circle(p,5 if c.index==0 else 3.5,Car.COLORS[c.index%8])
+		draw_circle(p,5 if c.local_player else 3.5,Car.COLORS[c.index%8])

@@ -9,6 +9,9 @@ const Art = preload("art.gd")
 const Audio = preload("audio.gd")
 const Conditions = preload("stage_conditions.gd")
 const Weather = preload("weather.gd")
+const RaceSession = preload("race_session.gd")
+var net = RaceSession.new()
+var player_index = 0
 var conditions = Conditions.new()
 var weather: Node3D
 var track: Node3D
@@ -41,6 +44,7 @@ var race_limit_seconds = 600.0 # Dirty Valley only; future cup stages own their 
 func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps=60
+	net.game=self; add_child(net)
 	get_viewport().size_changed.connect(_resolution)
 	_resolution()
 	var selected_conditions = conditions.descriptor()
@@ -71,6 +75,9 @@ func _ready() -> void:
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
 	if demo_auto: start_race()
 	_camera(1,true)
+	net.call_deferred("connect_platform")
+
+func player() -> Node3D: return cars[player_index]
 
 func _resolution() -> void:
 	# UI retains display resolution. Only the 3D viewport has a 720p pixel budget.
@@ -107,8 +114,8 @@ func _spawn_cars() -> void:
 	for car in cars: remove_child(car); car.queue_free()
 	cars.clear()
 	for i in bot_count+1:
-		var car = Car.new(); car.index=i; car.track=track; car.surface_grip=conditions.grip()
-		car.model_id=["hatchback-sports","sedan-sports","suv"][selected_car] if i==0 else ["hatchback-sports","suv","sedan-sports","race"][i%4]
+		var car = Car.new(); car.index=i; car.local_player=i==player_index; car.human=net.online and i<net.members.size(); car.track=track; car.surface_grip=conditions.grip()
+		car.model_id=["hatchback-sports","sedan-sports","suv"][selected_car] if i==0 and not net.online else ["hatchback-sports","suv","sedan-sports","race"][i%4]
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
 		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
 		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
@@ -128,6 +135,7 @@ func _spawn_pickups() -> void:
 		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1})
 
 func start_race() -> void:
+	if net.online and not net.starting: net.rematch(); return
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
 	controls.neutral_required=true
@@ -140,13 +148,27 @@ func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spa
 func quit_game() -> void: get_tree().paused=false; get_tree().quit()
 
 func return_menu() -> void:
+	if net.online: net.leave()
+	player_index=0
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); hud.menu("main")
 	weather.apply(conditions); _update_conditions(0)
 
 func resume_race() -> void:
+	if net.online:
+		net.overlay=false; hud.panel.hide(); controls.neutral_required=true; return
 	get_tree().paused=false; state="race"; hud.panel.hide(); controls.neutral_required=true
 
-func recover_player() -> void: _recover(cars[0])
+func recover_player() -> void:
+	if net.online: net.recover()
+	else: _recover(player())
+
+func network_ended(reason: String) -> void:
+	return_menu(); hud.message=reason; hud.menu("disconnected")
+
+func network_pause() -> void:
+	net.overlay=not net.overlay; controls.neutral(player()); controls.neutral_required=true
+	if net.overlay: hud.menu("net_pause")
+	else: hud.panel.hide()
 
 func _recover(car: Node3D) -> bool:
 	if car.finish_time>=0 or car.reset_pending or car.recovery_lock>0: return false
@@ -173,12 +195,14 @@ func _recover(car: Node3D) -> bool:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		if net.online and net.overlay: resume_race(); return
 		if state=="menu": hud.menu("main")
 		elif state=="pause": resume_race(); return
 	if event is InputEventMouseMotion: controls.mouse_aim=true
 	var pause_pressed = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode==KEY_ESCAPE) or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_START)
 	if pause_pressed:
-		if state=="race": state="pause"; controls.neutral(cars[0]); get_tree().paused=true; hud.menu("pause")
+		if net.online and state in ["race","countdown"]: network_pause(); return
+		if state=="race": state="pause"; controls.neutral(player()); get_tree().paused=true; hud.menu("pause")
 		elif state=="pause": resume_race()
 		elif state=="menu": hud.menu("main")
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -187,9 +211,13 @@ func _input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and state=="race" and not demo_auto:
-		controls.neutral(cars[0]); state="pause"; get_tree().paused=true; hud.menu("pause")
+		if net.online:
+			if not net.overlay: network_pause()
+			return
+		controls.neutral(player()); state="pause"; get_tree().paused=true; hud.menu("pause")
 
 func _physics_process(delta: float) -> void:
+	if net.online and not net.host: net.tick_client(delta); return
 	if state=="countdown":
 		countdown-=delta
 		if countdown<=0:
@@ -202,21 +230,25 @@ func _physics_process(delta: float) -> void:
 	effect_clock+=delta
 	for car in cars:
 		if car.finish_time>=0: continue
-		if car.index==0 and state=="race" and not demo_auto: controls.read(car,camera)
+		if net.online and car.human and not car.local_player: net.apply_remote(car)
+		elif car.local_player and net.online and net.overlay: controls.neutral(car)
+		elif car.local_player and state=="race" and not demo_auto: controls.read(car,camera)
 		else:
 			car.bot_drive(cars,delta); car.bot.combat(car,cars,delta)
 		car.tick(delta)
 		if car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
 		if car.firing and state=="race": _shoot(car)
-		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car,current_wetness)
+		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(player().position)<45: effects.dust(car,current_wetness)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed; controls.neutral(car); car.freeze=true; car.collision_layer=0; car.collision_mask=1
-			if car.index==0:
-				finish_deadline=elapsed+45; hud.portrait.set_mood("victory"); _save_best()
+			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+45
+			if car.local_player:
+				hud.portrait.set_mood("victory")
+				if not net.online: finish_deadline=elapsed+45; _save_best()
 	if state=="race":
 		if cars.all(func(c): return c.finish_time>=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
 			finish_race(); return
-		if cars[0].finish_time>=0: hud.message="Финиш! Соперникам осталось %d с" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
+		if player().finish_time>=0: hud.message="Финиш! Соперникам осталось %d с" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
 	for pickup in pickups:
 		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
 		pickup.node.rotation.y+=delta
@@ -228,19 +260,20 @@ func _physics_process(delta: float) -> void:
 				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20)
 				else: car.ammo=mini(36,car.ammo+12)
 				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
-				if car.index==0: sound.pickup.play()
+				if car.local_player: sound.pickup.play()
 				break
 	if effect_clock>0.09: effect_clock=0
 
 func finish_race() -> void:
-	state="results"; get_tree().paused=true; hud.message=""
+	state="results"; get_tree().paused=not net.online; hud.message=""
+	if net.online: net.phase="results"; net.overlay=false
 	for car in cars:
-		car.did_not_finish=car.finish_time<0; controls.neutral(car)
+		car.did_not_finish=car.finish_time<0; controls.neutral(car); car.freeze=true
 	hud.menu("results")
 
 func _shoot(car: Node3D) -> void:
 	if car.fire_cooldown>0 or car.ammo<=0 or car.disabled_time>0 or car.finish_time>=0 or car.ghost_time>0: return
-	car.fire_cooldown=0.28 if car.index==0 else 0.55; car.ammo-=1
+	car.fire_cooldown=0.28 if car.local_player or car.human else 0.55; car.ammo-=1
 	car.bot.shots+=1
 	var from: Vector3=car.position+Vector3.UP*0.2+car.aim*0.9
 	var to: Vector3=from+car.aim*34
@@ -250,18 +283,18 @@ func _shoot(car: Node3D) -> void:
 		to=hit.position
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
 			hit.collider.take_damage(9,car.aim*75)
-			if hit.collider.index==0: hud.portrait.set_mood("hurt")
+			if hit.collider.local_player: hud.portrait.set_mood("hurt")
 		effects.burst(to,Color("ffbb51"))
-	effects.beam(from,to)
-	if car.index==0: sound.shot.play()
+	effects.beam(from,to); net.shot(car,from,to)
+	if car.local_player: sound.shot.play()
 
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
 	_camera(delta)
-	weather.update(delta,cars[0].position,state in ["menu","race","countdown"])
-	weather.update_headlights(cars,delta)
-	sound.engine(cars[0].linear_velocity.length(),state=="race" and cars[0].finish_time<0)
-	if state=="race" and cars[0].boosting: hud.portrait.set_mood("excited")
+	weather.update(delta,player().position,state in ["menu","race","countdown"])
+	weather.update_headlights(cars,delta,player_index)
+	sound.engine(player().linear_velocity.length(),state=="race" and player().finish_time<0)
+	if state=="race" and player().boosting: hud.portrait.set_mood("excited")
 	capture_time+=delta
 	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)
 	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>10) and not screenshot_done:
@@ -269,17 +302,17 @@ func _process(delta: float) -> void:
 		await RenderingServer.frame_post_draw
 		var error = get_viewport().get_texture().get_image().save_png(capture_path)
 		print("CAPTURE ",error," ",capture_path)
-		print("METRICS ",JSON.stringify({"frames":performance_frames.size(),"cars":cars.size(),"fps":Engine.get_frames_per_second(),"renderer":RenderingServer.get_current_rendering_method(),"scale":get_viewport().scaling_3d_scale,"player_position":str(cars[0].position),"passed":cars[0].passed}))
+		print("METRICS ",JSON.stringify({"frames":performance_frames.size(),"cars":cars.size(),"fps":Engine.get_frames_per_second(),"renderer":RenderingServer.get_current_rendering_method(),"scale":get_viewport().scaling_3d_scale,"player_position":str(player().position),"passed":player().passed}))
 		get_tree().quit()
 
 func _camera(delta: float, snap: bool = false) -> void:
-	var target: Vector3=cars[0].position
-	var lookahead: Vector3=cars[0].linear_velocity.limit_length(12)*0.20
+	var target: Vector3=player().position
+	var lookahead: Vector3=player().linear_velocity.limit_length(12)*0.20
 	lookahead.y=0; target+=lookahead
 	var desired_pos = target+Vector3(0,29,23)
 	camera.position=desired_pos if snap else camera.position.lerp(desired_pos,1-exp(-delta*5))
 	camera.rotation_degrees=Vector3(-51.6,0,0)
-	var focus: Vector2=camera.unproject_position(cars[0].position)
+	var focus: Vector2=camera.unproject_position(player().position)
 	tilt_shift.set_shader_parameter("focus_y",clampf(focus.y/get_viewport().get_visible_rect().size.y,0.4,0.65))
 
 func standings() -> Array:

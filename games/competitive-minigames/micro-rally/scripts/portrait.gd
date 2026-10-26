@@ -7,16 +7,30 @@ var view: SubViewport
 var model: Node3D
 var mood = "focused"
 var timer = 0.0
+var shared_sdk: Node
 
 func _ready() -> void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
 	expand_mode=TextureRect.EXPAND_IGNORE_SIZE; stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var shader = Shader.new(); shader.code="shader_type canvas_item; void fragment(){ vec2 p=UV*2.0-1.0; if(dot(p,p)>1.0) discard; COLOR=texture(TEXTURE,UV); }"
 	var mask = ShaderMaterial.new(); mask.shader=shader; material=mask
+	if shared_sdk!=null:
+		shared_sdk.connected.connect(_subscribe_shared)
+		shared_sdk.avatar_changed.connect(_appearance)
+		shared_sdk.closed.connect(func():
+			if not shared_sdk.registered: _clear())
+		return
 	client=Client.new(); client.app_id="art.abysstail.micro-rally"; add_child(client)
 	client.appearance_changed.connect(_appearance)
 	client.unavailable.connect(func(_reason): _clear())
 	client.connect_host()
+
+func _subscribe_shared() -> void:
+	if shared_sdk.capabilities.get("avatar.local")!=1: return
+	shared_sdk.request("avatar.subscribe",{},func(result,error):
+		if error.is_empty() and result.get("avatar") is Dictionary: _appearance(result.avatar))
+	shared_sdk.request("avatar.get",{},func(result,error):
+		if error.is_empty() and result.get("avatar") is Dictionary: _appearance(result.avatar))
 
 func _clear() -> void:
 	texture=null

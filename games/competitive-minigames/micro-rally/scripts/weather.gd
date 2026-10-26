@@ -76,12 +76,12 @@ func set_sample(sample: Dictionary) -> void:
 	var intensity = lerpf(a.rain,b.rain,t)
 	rainy=intensity>0.001; rain.visible=rainy; rain_material.set_shader_parameter("intensity",intensity)
 
-func update_headlights(cars: Array, delta: float) -> void:
+func update_headlights(cars: Array, delta: float, player_index: int = 0) -> void:
 	if cars.is_empty(): return
-	light_cars[0]=cars[0]
-	var focus: Vector3=cars[0].position
+	light_cars[0]=cars[player_index]
+	var focus: Vector3=cars[player_index].position
 	for i in range(1,HEADLIGHT_LIMIT):
-		if not is_instance_valid(light_cars[i]) or light_cars[i] not in cars or light_cars[i].position.distance_to(focus)>40:
+		if not is_instance_valid(light_cars[i]) or light_cars[i] not in cars or light_cars[i]==light_cars[0] or light_cars[i].position.distance_to(focus)>40:
 			light_cars[i]=null; headlights[i].light_energy=0
 		if light_cars[i]==null:
 			var distance = 32.0
