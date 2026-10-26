@@ -52,7 +52,7 @@ func menu(mode: String) -> void:
 	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
 	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
 	if mode=="main":
-		list.add_child(label("MICRO RALLY",34,GOLD))
+		list.add_child(label("MICRO RALLY (альфа)",28,GOLD))
 		list.add_child(label("КУБКИ · ГАРАЖ · СЕТЕВАЯ ИГРА",17))
 		button(list,"Кубок: Лесной вызов",func(): menu("cup"))
 		button(list,"Гараж",game.cup.open_garage)
