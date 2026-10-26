@@ -38,5 +38,5 @@ func run() -> void:
 	check(game.state=="countdown","Late SDK identity does not interrupt a quick race")
 	check(game.cup.store.data.active.is_empty(),"SDK profile change isolates active cup")
 	game.cup._revoked(); check(not game.cup.store.writable,"Revoked profile cannot receive rewards")
-	game.queue_free(); await process_frame
+	await preload("audio_drain.gd").dispose(game,self)
 	print("CUP JOURNEY TEST failures=",failures); quit(1 if failures else 0)

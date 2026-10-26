@@ -99,7 +99,7 @@ func _receive(member: String, data: Dictionary) -> void:
 			pickup.cooldown=data.pickups[i]/1000.0; pickup.node.visible=pickup.cooldown<=0
 		for beam in data.get("beams",[]):
 			game.effects.beam(Vector3(beam[1],beam[2],beam[3])/100,Vector3(beam[4],beam[5],beam[6])/100)
-			if beam[0]==game.player_index: game.sound.shot.play()
+			game.sound.play_event("shot",(Vector3(beam[1],beam[2],beam[3])/100).distance_to(game.player().position))
 		if data.phase=="results" and phase!="results":
 			apply_targets(1.0,true); phase="results"; game.finish_race()
 		elif phase!="results": game.state=data.phase
@@ -151,7 +151,7 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		if car.local_player:
 			if s[8]<car.health: game.hud.portrait.set_mood("hurt")
 			elif s[14]>=0 and car.finish_time<0: game.hud.portrait.set_mood("victory")
-			if s[11]>car.ammo or ((int(s[12])&2)!=0 and not car.shield_item): game.sound.pickup.play()
+			if s[11]>car.ammo or ((int(s[12])&2)!=0 and not car.shield_item): game.sound.play_event("pickup")
 		car.health=s[8]; car.shield=s[9]; car.boost=s[10]; car.ammo=s[11]
 		car.immune=1 if (int(s[12])&1)!=0 else 0; car.shield_item=(int(s[12])&2)!=0
 		car.ghost_time=1 if (int(s[12])&8)!=0 else 0

@@ -1,0 +1,116 @@
+{
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sources": {
+    "race.wav": {
+      "author": "Umplix",
+      "page": "https://opengameart.org/content/super-wreck-roadway",
+      "download": "https://opengameart.org/sites/default/files/super_wreck_roadway_loop.wav",
+      "sha256": "7f78e33cab242279d1c674128280ebb9bf336300e1cd83d8de94fd5083d675cd"
+    },
+    "menu.wav": {
+      "author": "Umplix",
+      "page": "https://opengameart.org/content/rock-theme-3",
+      "download": "https://opengameart.org/sites/default/files/rock_theme_3_loop_.wav",
+      "sha256": "5bea1b0b251d920fc17fe24ae4d7bf3067962f8c301342526fbcac7376e55427"
+    },
+    "impact.zip": {
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "download": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    },
+    "scifi.zip": {
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/sci-fi-sounds",
+      "download": "https://kenney.nl/media/pages/assets/sci-fi-sounds/6b296f9ecf-1677589334/kenney_sci-fi-sounds.zip",
+      "sha256": "119340f351a5098ad814f78719438c0da355a9ce8a4c8a3af6a8d48aa3d49e04"
+    },
+    "jingles.zip": {
+      "author": "MintoDog",
+      "page": "https://opengameart.org/content/racing-game-finish-jingle",
+      "download": "https://opengameart.org/sites/default/files/ogg_racing_game_finish_jingle.zip",
+      "sha256": "200231e39cfe3b0722144c4cebed188727fa65222d8f8af7679ee30883078cd9"
+    }
+  },
+  "files": {
+    "race.ogg": {
+      "source": "race.wav",
+      "processing": "ffmpeg loudnorm I=-18 TP=-3 LRA=9; Vorbis q4 44100 Hz",
+      "sha256": "d34c34b5222afc3ec4444a38bb9afa873969001e117593f0c47c30333dd4cbeb",
+      "bytes": 2006845,
+      "seconds": 134.500023
+    },
+    "menu.ogg": {
+      "source": "menu.wav",
+      "processing": "ffmpeg loudnorm I=-18 TP=-3 LRA=9; Vorbis q4 44100 Hz",
+      "sha256": "86fac62b7c55e4685c6e960aa9a106dfc46fd8733bdb8291c7c687f5dd691b2c",
+      "bytes": 1017876,
+      "seconds": 65.0
+    },
+    "impact0.ogg": {
+      "source": "impact.zip",
+      "member": "Audio/impactMetal_medium_000.ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "a96f879fec0864a8938e0c745b6996a6c5679c16a234ce31a01cc995e8401003",
+      "bytes": 7117,
+      "seconds": 0.271769
+    },
+    "impact1.ogg": {
+      "source": "impact.zip",
+      "member": "Audio/impactMetal_medium_002.ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "7e89ce2ca0dbda95ea2b78d4b50791cab35c10d20e9f5ccd45dd0b00e99ff548",
+      "bytes": 5857,
+      "seconds": 0.119138
+    },
+    "wreck.ogg": {
+      "source": "scifi.zip",
+      "member": "Audio/explosionCrunch_000.ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69",
+      "bytes": 28274,
+      "seconds": 0.77746
+    },
+    "shield.ogg": {
+      "source": "scifi.zip",
+      "member": "Audio/forceField_000.ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "c2916f2a062c8ddd1aca2826d134fe90847037db31342726ffb0f9097afe339c",
+      "bytes": 25672,
+      "seconds": 0.954014
+    },
+    "win.ogg": {
+      "source": "jingles.zip",
+      "member": "ogg_Racing Game Finish & Jingle/Race Finish Best/Race Finish Best (Jingle).ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "7798f97d1e429c251f1e00be80637ba04bf7bb74692ccd043c5548e97346f319",
+      "bytes": 158541,
+      "seconds": 5.0
+    },
+    "finish.ogg": {
+      "source": "jingles.zip",
+      "member": "ogg_Racing Game Finish & Jingle/Race Finish Good/Race Finish Good (Jingle).ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "b4e09ba7b6ef8eccb937e45ee237eae0d382482e9e486042ac4cd37aae2fe4a6",
+      "bytes": 114539,
+      "seconds": 3.69229
+    },
+    "dnf.ogg": {
+      "source": "jingles.zip",
+      "member": "ogg_Racing Game Finish & Jingle/Race Finish Bad/Race Finish Bad (Jingle).ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "2aa4e465e5f49026dc78524725f1647a89e9ffb513ebc9af0a8d160167e6e89c",
+      "bytes": 191933,
+      "seconds": 5.999977
+    },
+    "final_lap.ogg": {
+      "source": "jingles.zip",
+      "member": "ogg_Racing Game Finish & Jingle/Final Lap (Jingle).ogg",
+      "processing": "unmodified Ogg file",
+      "sha256": "e571d1c435f6b11406659bbf5d5a3a6022e276014d85e097845c5e288abc64be",
+      "bytes": 161798,
+      "seconds": 4.949116
+    }
+  }
+}

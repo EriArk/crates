@@ -33,4 +33,4 @@ func run() -> void:
 	game.return_menu(); check(game.state=="menu","Return to cup menu")
 	game.start_race(); check(game.elapsed==0 and game.cars[0].laps==0,"Rematch resets race")
 	print("DRIVE TEST failures=",failures," progressed=",progressed)
-	game.queue_free(); await process_frame; quit(1 if failures else 0)
+	await preload("audio_drain.gd").dispose(game,self); quit(1 if failures else 0)

@@ -34,6 +34,7 @@ func run() -> void:
 		elif round_one:
 			await create_timer(0.5).timeout # Include late SDK replies after the close event.
 			report("revoked" if previous_stage=="rematch" else "failed")
+			await preload("audio_drain.gd").dispose(game,self)
 			quit(0 if previous_stage=="revoked" else 3); return
 	printerr("FAIL native peer timeout ",game.state," ",game.net.phase); quit(4)
 func report(stage: String) -> void:

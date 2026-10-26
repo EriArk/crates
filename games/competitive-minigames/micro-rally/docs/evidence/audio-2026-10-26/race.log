@@ -1,0 +1,5 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce GTX 1660 Ti
+
+CAPTURE 0 <capture>/race-final.png
+METRICS {"cars":16,"fps":60.0,"frames":420,"passed":46,"player_position":"(-68.61494, 3.280188, 20.04896)","renderer":"mobile","scale":1.0}

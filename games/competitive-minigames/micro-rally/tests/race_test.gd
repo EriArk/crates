@@ -29,5 +29,5 @@ func run() -> void:
 		check(game.effects.particles.size()<=game.effects.LIMIT,"Full race respects effect budget")
 	game.return_menu(); game.start_race()
 	check(game.elapsed==0 and game.cars.all(func(c): return c.finish_time<0),"Full-race rematch resets all finishers")
-	game.queue_free(); await process_frame
+	await preload("audio_drain.gd").dispose(game,self)
 	print("RACE TEST failures=",failures); quit(1 if failures else 0)

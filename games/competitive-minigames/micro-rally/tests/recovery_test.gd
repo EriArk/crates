@@ -55,4 +55,4 @@ func run() -> void:
 	check(game.hud.panel.size.x<root.size.x,"Full results stay inside viewport")
 	game.start_race(); check(game.cars.all(func(c): return not c.did_not_finish and c.finish_time<0),"Rematch clears DNF and finish state")
 	print("RECOVERY TEST failures=",failures," rails=",rails.size())
-	game.queue_free(); await process_frame; quit(1 if failures else 0)
+	await preload("audio_drain.gd").dispose(game,self); quit(1 if failures else 0)

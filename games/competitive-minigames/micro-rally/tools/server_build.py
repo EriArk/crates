@@ -9,7 +9,7 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-TESTS=['drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd']
+TESTS=['drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
 parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()
@@ -45,7 +45,8 @@ remote(base+['--editor','--import','--quit'],'import.log')
 if args.tests or args.test:
     for test in (TESTS if args.tests else args.test):
         if (ROOT/'tests'/test).exists():
-            print(remote(base+['--fixed-fps','60','--script','res://tests/'+test],test+'.log')[-1000:],flush=True)
+            extra=['--','--mix-output=/work/exports/'+identity+'/audio-preview.wav'] if test=='audio_mix_test.gd' else []
+            print(remote(base+['--fixed-fps','60','--script','res://tests/'+test]+extra,test+'.log')[-1000:],flush=True)
 if args.export:
     for preset,name in [('Windows','micro-rally.exe'),('Linux ARM64','micro-rally.arm64'),('Linux x86_64','micro-rally.x86_64')]:
         remote(base+['--export-release',preset,'/work/exports/'+identity+'/'+name],'export-'+name+'.log')

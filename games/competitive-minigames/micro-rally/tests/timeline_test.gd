@@ -56,5 +56,5 @@ func run() -> void:
 	game.set_conditions(saved); game.elapsed=88; game._save_best()
 	var record = ConfigFile.new(); record.load("user://valley.cfg")
 	check(record.get_value("records/"+game.conditions.record_key(),"best_seconds",0)==88.0,"Legacy dry best cannot become a dynamic-scenario best")
-	game.queue_free(); await process_frame
+	await preload("audio_drain.gd").dispose(game,self)
 	print("TIMELINE TEST failures=",failures); quit(1 if failures else 0)

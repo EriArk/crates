@@ -12,6 +12,8 @@ var buttons: Array[Button] = []
 var fps_label = ""
 var menu_mode = ""
 var controls_parent = "main"
+var audio_parent = "main"
+var audio_notice = ""
 const INK = Color(0.025,0.045,0.045,0.86)
 const PAPER = Color("fff6d8")
 const GOLD = Color("ffcc42")
@@ -35,10 +37,12 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	var normal = StyleBoxFlat.new(); normal.bg_color=Color("254244"); normal.set_corner_radius_all(10)
 	var focus = normal.duplicate(); focus.bg_color=Color("dca634"); focus.set_border_width_all(3); focus.border_color=Color("fff2b8")
 	b.add_theme_stylebox_override("normal",normal); b.add_theme_stylebox_override("focus",focus); b.add_theme_stylebox_override("hover",focus)
-	b.pressed.connect(action); parent.add_child(b); buttons.append(b)
+	b.pressed.connect(func(): game.sound.play_event("ui"); action.call())
+	parent.add_child(b); buttons.append(b)
 	return b
 
 func menu(mode: String) -> void:
+	if mode=="audio" and menu_mode!="audio": audio_parent=menu_mode; audio_notice=""
 	if mode=="controls": controls_parent="quick" if menu_mode=="quick" else "main"
 	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
 	menu_mode=mode
@@ -55,6 +59,7 @@ func menu(mode: String) -> void:
 		button(list,"Отдельный заезд",func(): menu("quick"))
 		if game.net.bridge.registered: button(list,"Играть с друзьями",game.net.bridge.open_lobby)
 		button(list,"Управление",func(): menu("controls"))
+		button(list,"Звук и музыка",func(): menu("audio"))
 		button(list,"Выйти",game.quit_game)
 	elif mode in ["cup","cup_replace","standings","garage"]:
 		CupMenu.build(self,list,mode)
@@ -76,6 +81,14 @@ func menu(mode: String) -> void:
 		button(list,game.conditions.scenario_title(),game.cycle_scenario)
 		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nОбщий сценарий для всех.\nПауза останавливает погоду.\nРекорды разделены по условиям.",18,Color("bed0c6")))
 		button(list,"Назад",func(): menu("quick"))
+	elif mode=="audio":
+		list.add_child(label("ЗВУК И МУЗЫКА",28,GOLD))
+		list.add_child(label("Гаражный рок · грязь · металл",19,Color("bed0c6")))
+		button(list,"Музыка: %d%%" % roundi(game.sound.music_volume*100),func(): cycle_audio("music"))
+		button(list,"Эффекты: %d%%" % roundi(game.sound.effects_volume*100),func(): cycle_audio("effects"))
+		list.add_child(label("Нажатие меняет громкость.\n0% — выключено.\n\nПеред важными сигналами\nмузыка становится тише.",19))
+		if not audio_notice.is_empty(): list.add_child(label(audio_notice,17,GOLD))
+		button(list,"Назад",func(): menu(audio_parent))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
 		list.add_child(label("Левый стик — направление\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
@@ -84,6 +97,7 @@ func menu(mode: String) -> void:
 	elif mode=="pause":
 		list.add_child(label("ПАУЗА",34,GOLD))
 		button(list,"Продолжить",game.resume_race)
+		button(list,"Звук и музыка",func(): menu("audio"))
 		button(list,"Вернуть машину на трассу",func(): game.recover_player(); game.resume_race())
 		button(list,"Начать заново",game.start_race)
 		button(list,"Выйти · этап с начала" if game.cup.running else "К кубкам",game.cup.leave_stage if game.cup.running else game.return_menu)
@@ -91,6 +105,7 @@ func menu(mode: String) -> void:
 		list.add_child(label("СЕТЕВОЙ ЗАЕЗД",30,GOLD))
 		list.add_child(label("Гонка продолжается.\nВаша машина отпустила газ.",19))
 		button(list,"Продолжить",game.resume_race)
+		button(list,"Звук и музыка",func(): menu("audio"))
 		button(list,"Вернуть машину",func(): game.recover_player(); game.resume_race())
 		button(list,"Покинуть заезд",game.return_menu)
 	elif mode=="disconnected":
@@ -124,7 +139,14 @@ func menu(mode: String) -> void:
 	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
 
 func back() -> void:
+	if menu_mode=="audio": menu(audio_parent); return
 	menu(controls_parent if menu_mode=="controls" else {"conditions":"quick","standings":"cup","cup_replace":"cup"}.get(menu_mode,"main"))
+
+func cycle_audio(kind: String) -> void:
+	var current=game.sound.music_volume if kind=="music" else game.sound.effects_volume
+	var value=fmod(roundf(current*4)+1,5)/4
+	audio_notice="" if game.sound.set_volume(kind,value) else "Не удалось сохранить настройки."
+	menu("audio")
 
 func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) -> void:
 	draw_string(font,pos+Vector2(1,2),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size_value,Color(0,0,0,0.65))

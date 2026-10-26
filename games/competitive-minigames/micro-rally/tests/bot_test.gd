@@ -32,4 +32,4 @@ func run() -> void:
 	check(a.bot.target_speed<=dry,"Wet-road planning never demands a higher corner speed")
 	check(a.position==before and a.linear_velocity==velocity,"AI only produces controls, never changes physical pose or velocity")
 	print("BOT TEST failures=",failures)
-	game.queue_free(); await process_frame; quit(1 if failures else 0)
+	await preload("audio_drain.gd").dispose(game,self); quit(1 if failures else 0)

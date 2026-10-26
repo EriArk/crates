@@ -2,7 +2,13 @@
 extends Node3D
 const Art = preload("art.gd")
 const LIMIT = 220
+const MARK_LIMIT = 96
 var particles: Array = []
+var marks: Array = []
+var skid_history: Dictionary = {}
+var mark_mesh: PlaneMesh
+var ring_mesh: TorusMesh
+var smoke_material: StandardMaterial3D
 var dust_clock = 0.0
 var sphere: SphereMesh
 var dust_quad: QuadMesh
@@ -15,6 +21,68 @@ func _ready() -> void:
 	var texture = GradientTexture2D.new(); texture.gradient=gradient; texture.fill=GradientTexture2D.FILL_RADIAL; texture.fill_from=Vector2(0.5,0.5); texture.fill_to=Vector2(1,0.5); texture.width=64; texture.height=64
 	dust_material=StandardMaterial3D.new(); dust_material.albedo_texture=texture; dust_material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA; dust_material.billboard_mode=BaseMaterial3D.BILLBOARD_ENABLED
 	dust_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED; dust_material.no_depth_test=false
+	smoke_material=dust_material.duplicate(); smoke_material.albedo_color=Color(0.25,0.25,0.25,0.9)
+	mark_mesh=PlaneMesh.new(); mark_mesh.size=Vector2.ONE
+	ring_mesh=TorusMesh.new(); ring_mesh.inner_radius=0.92; ring_mesh.outer_radius=1.04; ring_mesh.rings=20; ring_mesh.ring_segments=6
+
+func clear() -> void:
+	for p in particles: p.node.queue_free()
+	for mark in marks: mark.node.queue_free()
+	particles.clear(); marks.clear(); skid_history.clear()
+
+func flash(pos: Vector3, color: Color, scale_value: float = 1.0) -> void:
+	if particles.size()>=LIMIT: return
+	var node=MeshInstance3D.new(); node.mesh=sphere; node.material_override=Art.material(color,2.0)
+	add_child(node); node.position=pos; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	particles.append({"node":node,"life":0.11,"total":0.11,"velocity":Vector3.ZERO,"grow":false,"size":scale_value})
+
+func ring(pos: Vector3, color: Color) -> void:
+	if particles.size()>=LIMIT: return
+	var node=MeshInstance3D.new(); node.mesh=ring_mesh; node.material_override=Art.material(color,1.5)
+	add_child(node); node.position=pos; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	particles.append({"node":node,"life":0.4,"total":0.4,"velocity":Vector3.ZERO,"grow":true,"fade":true})
+
+func exhaust(car: Node3D) -> void:
+	for side in [-0.48,0.48]:
+		flash(car.position+car.basis.z*1.2+car.basis.x*side-Vector3.UP*0.12,Color("58dfff"),2.0)
+
+func wreck(pos: Vector3) -> void:
+	flash(pos,Color("ffb64b"),5.0); burst(pos,Color("ffb64b"))
+	for i in 7:
+		if particles.size()>=LIMIT: return
+		var node=MeshInstance3D.new(); node.mesh=dust_quad; node.material_override=smoke_material
+		add_child(node); node.position=pos; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		particles.append({"node":node,"life":1.1,"total":1.1,"velocity":Vector3(randf_range(-1,1),randf_range(1,3),randf_range(-1,1)),"grow":true,"fade":true})
+
+func skid(car: Node3D, _track: Node3D) -> void:
+	if not car.grounded: end_skid(car); return
+	var id=car.get_instance_id()
+	var old: Array=skid_history.get(id,[])
+	var contacts: Array=[]
+	for wheel in 2:
+		var side=-0.72 if wheel==0 else 0.72
+		var origin=car.position+car.basis.x*side+car.basis.z*0.65
+		var query=PhysicsRayQueryParameters3D.create(origin+Vector3.UP*0.3,origin-Vector3.UP*1.3,1)
+		var hit=get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty(): contacts.append(null); continue
+		var point: Vector3=hit.position+hit.normal*0.018
+		contacts.append(point)
+		if old.size()!=2 or old[wheel]==null: continue
+		var segment: Vector3=point-old[wheel]
+		# Join wheel contacts along the skid, not isolated bars along the car body.
+		if segment.length()<0.05 or segment.length()>3: continue
+		if marks.size()>=MARK_LIMIT: marks.pop_front().node.queue_free()
+		var node=MeshInstance3D.new(); node.mesh=mark_mesh; node.material_override=Art.material(Color("634c33"))
+		add_child(node); node.position=point.lerp(old[wheel],0.5)
+		var z: Vector3=segment.slide(hit.normal).normalized()
+		node.basis=Basis(hit.normal.cross(z).normalized(),hit.normal,z)
+		node.scale=Vector3(0.19,1,segment.length()+0.05)
+		node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		marks.append({"node":node,"life":6.0})
+	skid_history[id]=contacts
+
+func end_skid(car: Node3D) -> void:
+	skid_history.erase(car.get_instance_id())
 
 func dust(car: Node3D, wetness: float = 0.0) -> void:
 	if particles.size()>=LIMIT: return
@@ -28,6 +96,7 @@ func dust(car: Node3D, wetness: float = 0.0) -> void:
 	particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1)),"grow":wetness<0.5})
 
 func beam(from: Vector3, to: Vector3, color: Color = Color("ffd07a")) -> void:
+	flash(from,color,1.8)
 	if particles.size()>=LIMIT: return
 	var distance = from.distance_to(to)
 	if distance<0.01: return
@@ -44,8 +113,13 @@ func burst(pos: Vector3, color: Color) -> void:
 		particles.append({"node":node,"life":0.45,"total":0.45,"velocity":Vector3(randf_range(-4,4),randf_range(1,4),randf_range(-4,4)),"grow":false})
 
 func _process(delta: float) -> void:
+	for i in range(marks.size()-1,-1,-1):
+		marks[i].life-=delta
+		if marks[i].life<=0: marks[i].node.queue_free(); marks.remove_at(i)
+		else: marks[i].node.transparency=1-clampf(marks[i].life/2,0,1)
 	for i in range(particles.size()-1,-1,-1):
 		var p: Dictionary=particles[i]; p.life-=delta
 		if p.life<=0: p.node.queue_free(); particles.remove_at(i); continue
 		p.node.position+=p.velocity*delta
-		p.node.scale=Vector3.ONE*(0.6+(1.0-p.life/p.total)*2.0 if p.grow else p.life/p.total)
+		p.node.scale=Vector3.ONE*float(p.get("size",1.0))*(0.6+(1.0-p.life/p.total)*2.0 if p.grow else p.life/p.total)
+		if p.get("fade",false): p.node.transparency=1-p.life/p.total

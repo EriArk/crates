@@ -61,4 +61,4 @@ func run() -> void:
 	game.start_race(); check(game.state=="countdown" and not paused,"Rematch exits paused results")
 	game.return_menu(); check(game.state=="menu" and game.hud.buttons[0].has_focus(),"Return restores menu focus")
 	print("JOURNEY TEST failures=",failures)
-	game.queue_free(); await process_frame; quit(1 if failures else 0)
+	await preload("audio_drain.gd").dispose(game,self); quit(1 if failures else 0)

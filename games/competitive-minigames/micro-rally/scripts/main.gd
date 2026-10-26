@@ -7,6 +7,8 @@ const Controls = preload("controls.gd")
 const Hud = preload("hud.gd")
 const Art = preload("art.gd")
 const Audio = preload("audio.gd")
+const Feedback = preload("race_feedback.gd")
+var feedback = Feedback.new()
 const Conditions = preload("stage_conditions.gd")
 const Weather = preload("weather.gd")
 const RaceSession = preload("race_session.gd")
@@ -79,7 +81,7 @@ func _ready() -> void:
 	_camera(1,true)
 	net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -149,6 +151,7 @@ func start_race() -> void:
 	if not cup.running: laps=4
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
+	sound.reset_round(); feedback.reset(); effects.clear()
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
@@ -166,6 +169,7 @@ func return_menu() -> void:
 	cup.running=false; laps=4
 	player_index=0
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); hud.menu("main")
+	sound.reset_round(); feedback.reset(); effects.clear()
 	weather.apply(conditions); _update_conditions(0)
 
 func resume_race() -> void:
@@ -278,7 +282,7 @@ func _physics_process(delta: float) -> void:
 				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20)
 				else: car.ammo=mini(36,car.ammo+12)
 				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
-				if car.local_player: sound.pickup.play()
+				if car.local_player: sound.play_event("pickup")
 				break
 	if effect_clock>0.09: effect_clock=0
 
@@ -305,14 +309,14 @@ func _shoot(car: Node3D) -> void:
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")
 		effects.burst(to,Color("ffbb51"))
 	effects.beam(from,to); net.shot(car,from,to)
-	if car.local_player: sound.shot.play()
+	sound.play_event("shot",car.position.distance_to(player().position))
 
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
 	_camera(delta)
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)
-	sound.engine(player().linear_velocity.length(),state=="race" and player().finish_time<0)
+	sound.update(self,delta); feedback.update(self,delta)
 	if state=="race" and player().boosting: hud.portrait.set_mood("excited")
 	capture_time+=delta
 	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)

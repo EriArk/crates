@@ -65,5 +65,5 @@ func run() -> void:
 	client._packet({"id":"late","error":{"code":"channel_unavailable"}})
 	client._packet({"event":"network.data","channel":"g1","peer":"p1","sequence":"0","data":""})
 	check(client.registered,"Late closed-grant replies preserve SDK registration and avatar access")
-	client.free(); game.queue_free(); await process_frame
+	client.free(); await preload("audio_drain.gd").dispose(game,self)
 	print("NETWORK TEST failures=",failures); quit(1 if failures else 0)
