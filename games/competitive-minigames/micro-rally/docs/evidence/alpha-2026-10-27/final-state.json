@@ -1,0 +1,20 @@
+{
+  "odin": {
+    "installed_version": "0.1.0",
+    "title": "Micro Rally (альфа)",
+    "catalogue_revision": 37,
+    "sha256": "1b6e31ed4a14570ba14d95fe19503faa3ee5a5cb1f698daababf9ccd7ce0f96f",
+    "shell_running": true,
+    "game_process_stopped": true,
+    "volume": "Volume: 0.00"
+  },
+  "flip": {
+    "installed_version": "0.1.0",
+    "title": "Micro Rally (альфа)",
+    "catalogue_revision": 37,
+    "sha256": "1b6e31ed4a14570ba14d95fe19503faa3ee5a5cb1f698daababf9ccd7ce0f96f",
+    "shell_running": true,
+    "game_process_stopped": true,
+    "volume": "Volume: 0.20"
+  }
+}
