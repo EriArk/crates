@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+extends SceneTree
+var failures=0
+func check(ok: bool,label: String) -> void:
+	if not ok: failures+=1; push_error(label)
+func _initialize() -> void: call_deferred("run")
+func press() -> void:
+	var event=InputEventJoypadButton.new(); event.button_index=JOY_BUTTON_A; event.pressed=true; root.push_input(event)
+	event=event.duplicate(); event.pressed=false; root.push_input(event)
+func run() -> void:
+	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
+	game.cup.store.load_profile("journey","user://cup-journey/"+str(Time.get_ticks_usec()))
+	press(); await process_frame
+	check(game.hud.menu_mode=="cup","Primary controller action opens cup route")
+	press(); await process_frame
+	check(game.state=="countdown" and game.laps==5 and game.cup.running,"Cup starts real five-lap stage with fixed rules")
+	var id=game.cup.store.data.active.id; var roster=game.cup.store.data.active.roster.duplicate()
+	game.cup.leave_stage(); game.cup.start_stage()
+	check(game.cup.store.data.active.id==id and game.cup.store.data.active.roster==roster,"Interrupted stage restarts with same cup and roster")
+	for car in game.cars: car.finish_time=270+car.index; car.passed=1600
+	game.cup.store.fault="write"; game.finish_race()
+	check(not game.cup.pending_result.is_empty() and game.cup.store.data.active.results.is_empty(),"Failed finish save retains result for retry")
+	game.cup.store.fault=""; game.cup.retry_save()
+	check(game.cup.pending_result.is_empty() and game.cup.store.data.active.results.size()==1,"Retry commits exactly one result")
+	game.finish_race(); check(game.cup.store.data.active.results.size()==1 and game.cup.pending_result.is_empty(),"Repeated finish callback is harmless")
+	game.cup.leave_stage(); game.cup.start_stage()
+	check(game.state=="menu" and not game.cup.running and game.hud.menu_mode=="cup","Unbuilt Quarry cannot silently reuse Valley or award cup")
+	check(game.cup.store.data.wins==0,"Partial cup cannot grant prize")
+	game.hud.menu("standings"); await process_frame
+	check(game.hud.panel.size.y<=650,"Sixteen-driver standings fits handheld canvas")
+	game.hud.back(); check(game.hud.menu_mode=="cup","Controller Back returns from table to cup")
+	game.hud.menu("quick"); game.hud.menu("controls"); game.hud.back()
+	check(game.hud.menu_mode=="quick","Controls returns to the entry route")
+	game.cup.open_garage(); game.cup.browse_car(3); await process_frame
+	game.cup.select_car(); check(game.cup.store.data.selected=="swift","Locked prize remains preview-only")
+	check(game.hud.panel.size.y<=650,"Garage fits handheld canvas")
+	game.start_race(); game.cup._profile("different")
+	check(game.state=="countdown","Late SDK identity does not interrupt a quick race")
+	check(game.cup.store.data.active.is_empty(),"SDK profile change isolates active cup")
+	game.cup._revoked(); check(not game.cup.store.writable,"Revoked profile cannot receive rewards")
+	game.queue_free(); await process_frame
+	print("CUP JOURNEY TEST failures=",failures); quit(1 if failures else 0)

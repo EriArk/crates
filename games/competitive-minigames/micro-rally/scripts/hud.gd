@@ -2,6 +2,7 @@
 extends Control
 const Portrait = preload("portrait.gd")
 const Car = preload("car.gd")
+const CupMenu = preload("cup_menu.gd")
 var game: Node3D
 var portrait: TextureRect
 var font: Font
@@ -10,6 +11,7 @@ var message = ""
 var buttons: Array[Button] = []
 var fps_label = ""
 var menu_mode = ""
+var controls_parent = "main"
 const INK = Color(0.025,0.045,0.045,0.86)
 const PAPER = Color("fff6d8")
 const GOLD = Color("ffcc42")
@@ -37,15 +39,27 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	return b
 
 func menu(mode: String) -> void:
+	if mode=="controls": controls_parent="quick" if menu_mode=="quick" else "main"
 	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
 	menu_mode=mode
 	panel.visible=true; buttons.clear()
-	panel.custom_minimum_size=Vector2(760,490) if mode=="results" else Vector2(390,490)
+	panel.custom_minimum_size=Vector2(760,490) if mode in ["results","standings"] else Vector2(640,490) if mode in ["cup","cup_replace","garage"] else Vector2(390,490)
 	panel.size=panel.custom_minimum_size
 	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
 	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
 	if mode=="main":
-		list.add_child(label("MICRO RALLY",34,GOLD)); list.add_child(label("КУБОК: ЛЕСНОЙ ВЫЗОВ",20))
+		list.add_child(label("MICRO RALLY",34,GOLD))
+		list.add_child(label("КУБКИ · ГАРАЖ · СЕТЕВАЯ ИГРА",17))
+		button(list,"Кубок: Лесной вызов",func(): menu("cup"))
+		button(list,"Гараж",game.cup.open_garage)
+		button(list,"Отдельный заезд",func(): menu("quick"))
+		if game.net.bridge.registered: button(list,"Играть с друзьями",game.net.bridge.open_lobby)
+		button(list,"Управление",func(): menu("controls"))
+		button(list,"Выйти",game.quit_game)
+	elif mode in ["cup","cup_replace","standings","garage"]:
+		CupMenu.build(self,list,mode)
+	elif mode=="quick":
+		list.add_child(label("ОТДЕЛЬНЫЙ ЗАЕЗД",28,GOLD))
 		list.add_child(label("01  Грязевая долина",22))
 		list.add_child(label("4 круга · до 16 машин",18,Color("bed0c6")))
 		button(list,"В гонку",game.start_race)
@@ -53,7 +67,7 @@ func menu(mode: String) -> void:
 		button(list,"Соперники: "+str(game.bot_count),game.cycle_bots)
 		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
 		button(list,"Управление",func(): menu("controls"))
-		button(list,"Выйти",game.quit_game)
+		button(list,"Назад",func(): menu("main"))
 	elif mode=="conditions":
 		list.add_child(label("УСЛОВИЯ ЗАЕЗДА",28,GOLD))
 		list.add_child(label("Грязевая долина",22))
@@ -61,18 +75,18 @@ func menu(mode: String) -> void:
 		button(list,"Погода: "+game.conditions.weather_title(),game.cycle_weather)
 		button(list,game.conditions.scenario_title(),game.cycle_scenario)
 		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nОбщий сценарий для всех.\nПауза останавливает погоду.\nРекорды разделены по условиям.",18,Color("bed0c6")))
-		button(list,"Назад",func(): menu("main"))
+		button(list,"Назад",func(): menu("quick"))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
 		list.add_child(label("Левый стик — направление\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
 		list.add_child(label("Клавиатура: WASD — направление\n↑ / ↓ — газ / тормоз, мышь — огонь\nShift — boost, Space — ручник\nE — щит, R — вернуть машину",16,Color("bed0c6")))
-		button(list,"Назад",func(): menu("main"))
+		button(list,"Назад",back)
 	elif mode=="pause":
 		list.add_child(label("ПАУЗА",34,GOLD))
 		button(list,"Продолжить",game.resume_race)
 		button(list,"Вернуть машину на трассу",func(): game.recover_player(); game.resume_race())
 		button(list,"Начать заново",game.start_race)
-		button(list,"К кубкам",game.return_menu)
+		button(list,"Выйти · этап с начала" if game.cup.running else "К кубкам",game.cup.leave_stage if game.cup.running else game.return_menu)
 	elif mode=="net_pause":
 		list.add_child(label("СЕТЕВОЙ ЗАЕЗД",30,GOLD))
 		list.add_child(label("Гонка продолжается.\nВаша машина отпустила газ.",19))
@@ -95,11 +109,22 @@ func menu(mode: String) -> void:
 			var car: Node3D=rank[i]
 			var column = left if i<8 else right
 			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "не финишировал"),19,GOLD if car.local_player else PAPER))
-		list.add_child(label("Это первый этап будущего кубка.\nПриз кубка пока не разыгрывается.",16,Color("bed0c6")))
-		if game.net.online and game.net.voted: list.add_child(label("Реванш: ожидаем остальных участников…",19,GOLD))
-		else: button(list,"Реванш",game.start_race)
-		button(list,"К кубкам",game.return_menu)
+		if game.cup.running:
+			if not game.cup.pending_result.is_empty():
+				list.add_child(label(game.cup.store.notice,18,GOLD))
+				button(list,"Повторить сохранение",game.cup.retry_save)
+			else:
+				list.add_child(label("Очки этапа сохранены в общем зачёте.",18,GOLD))
+				button(list,"К этапам и зачёту",game.cup.leave_stage)
+		else:
+			list.add_child(label("Отдельный заезд · без очков и наград кубка",16,Color("bed0c6")))
+			if game.net.online and game.net.voted: list.add_child(label("Реванш: ожидаем остальных участников…",19,GOLD))
+			else: button(list,"Реванш",game.start_race)
+			button(list,"К кубкам",game.return_menu)
 	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
+
+func back() -> void:
+	menu(controls_parent if menu_mode=="controls" else {"conditions":"quick","standings":"cup","cup_replace":"cup"}.get(menu_mode,"main"))
 
 func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) -> void:
 	draw_string(font,pos+Vector2(1,2),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size_value,Color(0,0,0,0.65))

@@ -15,6 +15,7 @@ func run() -> void:
 	root.size=Vector2i(1280,720)
 	var game = load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	check(game.state=="menu" and game.hud.buttons[0].has_focus(),"Cup menu has controller focus")
+	game.hud.menu("quick")
 	pad(JOY_BUTTON_A,true); await process_frame; pad(JOY_BUTTON_A,false); await process_frame
 	check(game.state=="countdown","Viewport bottom face event starts race from focused menu")
 	for i in 190: await physics_frame

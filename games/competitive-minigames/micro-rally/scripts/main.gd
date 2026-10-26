@@ -10,7 +10,9 @@ const Audio = preload("audio.gd")
 const Conditions = preload("stage_conditions.gd")
 const Weather = preload("weather.gd")
 const RaceSession = preload("race_session.gd")
+const CupFlow = preload("cup_flow.gd")
 var net = RaceSession.new()
+var cup = CupFlow.new()
 var player_index = 0
 var conditions = Conditions.new()
 var weather: Node3D
@@ -28,7 +30,6 @@ var elapsed = 0.0
 var countdown = 3.0
 var laps = 4
 var bot_count = 15
-var selected_car = 0
 var effect_clock = 0.0
 var show_metrics = false
 var demo_auto = false
@@ -45,6 +46,7 @@ func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps=60
 	net.game=self; add_child(net)
+	cup.game=self; add_child(cup)
 	get_viewport().size_changed.connect(_resolution)
 	_resolution()
 	var selected_conditions = conditions.descriptor()
@@ -76,6 +78,8 @@ func _ready() -> void:
 	if demo_auto: start_race()
 	_camera(1,true)
 	net.call_deferred("connect_platform")
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -115,8 +119,13 @@ func _spawn_cars() -> void:
 	cars.clear()
 	for i in bot_count+1:
 		var car = Car.new(); car.index=i; car.local_player=i==player_index; car.human=net.online and i<net.members.size(); car.track=track; car.surface_grip=conditions.grip()
-		car.model_id=["hatchback-sports","sedan-sports","suv"][selected_car] if i==0 and not net.online else ["hatchback-sports","suv","sedan-sports","race"][i%4]
+		car.model_id=["hatchback-sports","suv","sedan-sports","race"][i%4]
+		if not net.online:
+			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
+			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
+		if car.local_player and not net.online:
+			for paint in car.paint_materials: paint.set_shader_parameter("paint",cup.store.color())
 		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
 		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
 		car.position=track.points[at]+side*(float(i%3)-1)*2.8+Vector3.UP*0.72
@@ -136,19 +145,25 @@ func _spawn_pickups() -> void:
 
 func start_race() -> void:
 	if net.online and not net.starting: net.rematch(); return
+	if net.online: cup.running=false
+	if not cup.running: laps=4
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
 
-func car_title() -> String: return ["Swift","Comet","Trail"][selected_car]
-func cycle_car() -> void: selected_car=(selected_car+1)%3; _spawn_cars(); hud.menu("main")
-func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("main")
+func car_title() -> String: return cup.Rules.title(cup.store.data.selected)
+func cycle_car() -> void:
+	var available=cup.Rules.CARS.filter(cup.store.owned)
+	cup.store.select_car(available[(available.find(cup.store.data.selected)+1)%available.size()]); _spawn_cars(); hud.menu("quick")
+func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("quick")
 func quit_game() -> void: get_tree().paused=false; get_tree().quit()
 
 func return_menu() -> void:
+	if not cup.pending_result.is_empty(): hud.menu("results"); return
 	if net.online: net.leave()
+	cup.running=false; laps=4
 	player_index=0
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); hud.menu("main")
 	weather.apply(conditions); _update_conditions(0)
@@ -196,7 +211,8 @@ func _recover(car: Node3D) -> bool:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if net.online and net.overlay: resume_race(); return
-		if state=="menu": hud.menu("main")
+		if state=="menu":
+			hud.back(); return
 		elif state=="pause": resume_race(); return
 	if event is InputEventMouseMotion: controls.mouse_aim=true
 	var pause_pressed = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode==KEY_ESCAPE) or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_START)
@@ -244,7 +260,9 @@ func _physics_process(delta: float) -> void:
 			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+45
 			if car.local_player:
 				hud.portrait.set_mood("victory")
-				if not net.online: finish_deadline=elapsed+45; _save_best()
+				if not net.online:
+					finish_deadline=elapsed+45
+					if not cup.running: _save_best()
 	if state=="race":
 		if cars.all(func(c): return c.finish_time>=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
 			finish_race(); return
@@ -269,6 +287,7 @@ func finish_race() -> void:
 	if net.online: net.phase="results"; net.overlay=false
 	for car in cars:
 		car.did_not_finish=car.finish_time<0; controls.neutral(car); car.freeze=true
+	if cup.running: cup.finish()
 	hud.menu("results")
 
 func _shoot(car: Node3D) -> void:

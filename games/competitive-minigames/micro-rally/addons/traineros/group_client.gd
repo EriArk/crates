@@ -3,6 +3,7 @@ extends "res://addons/traineros/client.gd"
 ## Adapter for SDK network.group v1; SDK owns admission and secure transport.
 signal member_record(member: String, data: Dictionary)
 signal avatar_changed(descriptor: Dictionary)
+signal profile_available(profile: String)
 var channels: Dictionary = {}
 var sequences: Dictionary = {}
 var outstanding: Dictionary = {}
@@ -140,6 +141,8 @@ func _packet(value: Dictionary) -> void:
 			status.emit("Для сетевой игры установите пакет Micro Rally через Crates."); return
 		push_warning("Rally SDK request "+str(pending.get(value.get("id"),{}).get("method"))+": "+str(value.error.get("code","unknown")))
 	if pending.get(value.get("id"),{}).get("method")=="hello" and not value.has("error"):
+		var context=value.get("result",{}).get("context",{})
+		if context is Dictionary and context.get("profile") is String: profile_available.emit(context.profile)
 		if value.get("result",{}).get("capabilities",{}).get("network.group")!=1:
 			var result = value.get("result",{})
 			if result.get("protocol")!=1 or not result.get("capabilities") is Dictionary: fail("Несовместимый TrainerOS."); return
