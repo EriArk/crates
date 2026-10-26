@@ -1,0 +1,29 @@
+config_version=5
+
+[application]
+config/name="Micro Rally"
+config/version="0.1.0"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+anti_aliasing/quality/msaa_3d=1
+lights_and_shadows/directional_shadow/size=2048
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.55,0.69,0.64,1)
+
+[physics]
+common/physics_ticks_per_second=60
+3d/default_gravity=14.0
+
+[audio]
+driver/enable_input=false

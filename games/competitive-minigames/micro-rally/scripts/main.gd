@@ -1,0 +1,253 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+extends Node3D
+const Track = preload("track.gd")
+const Car = preload("car.gd")
+const Effects = preload("effects.gd")
+const Controls = preload("controls.gd")
+const Hud = preload("hud.gd")
+const Art = preload("art.gd")
+const Audio = preload("audio.gd")
+var track: Node3D
+var cars: Array[Node3D] = []
+var effects: Node3D
+var camera: Camera3D
+var hud: Control
+var sound: Node
+var controls = Controls.new()
+var pickups: Array = []
+var state = "menu"
+var elapsed = 0.0
+var countdown = 3.0
+var laps = 4
+var bot_count = 15
+var selected_car = 0
+var effect_clock = 0.0
+var show_metrics = false
+var demo_auto = false
+var capture_path = ""
+var capture_time = 0.0
+var screenshot_done = false
+var performance_frames: Array[float] = []
+
+func _ready() -> void:
+	process_mode=Node.PROCESS_MODE_ALWAYS
+	Engine.max_fps=60
+	get_viewport().size_changed.connect(_resolution)
+	_resolution(); _lighting()
+	track=Track.new(); add_child(track); track.build()
+	effects=Effects.new(); effects.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(effects)
+	sound=Audio.new(); add_child(sound)
+	camera=Camera3D.new(); camera.fov=48; camera.near=0.15; camera.far=160; add_child(camera)
+	if RenderingServer.get_current_rendering_method()!="gl_compatibility":
+		var optics = CameraAttributesPractical.new()
+		optics.dof_blur_far_enabled=true; optics.dof_blur_far_distance=48; optics.dof_blur_far_transition=20
+		optics.dof_blur_amount=0.075; camera.attributes=optics
+	_spawn_cars(); _spawn_pickups()
+	var layer = CanvasLayer.new(); add_child(layer); hud=Hud.new(); hud.game=self; layer.add_child(hud)
+	for arg in OS.get_cmdline_user_args():
+		if arg=="--autodrive": demo_auto=true
+		elif arg=="--metrics": show_metrics=true
+		elif arg.begins_with("--capture="): capture_path=arg.trim_prefix("--capture=")
+		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
+	if demo_auto: start_race()
+	_camera(1,true)
+
+func _resolution() -> void:
+	# UI retains display resolution. Only the 3D viewport has a 720p pixel budget.
+	var viewport = get_viewport(); var pixels = DisplayServer.window_get_size()
+	viewport.scaling_3d_scale=clampf(720.0/maxf(720,pixels.y),0.35,1.0)
+
+func _lighting() -> void:
+	var env = WorldEnvironment.new(); env.environment=Environment.new()
+	var e = env.environment
+	e.background_mode=Environment.BG_COLOR; e.background_color=Color("a8bbb0")
+	var compatibility = RenderingServer.get_current_rendering_method()=="gl_compatibility"
+	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR; e.ambient_light_color=Color("b7c9d1"); e.ambient_light_energy=0.30 if compatibility else 0.46
+	e.tonemap_mode=Environment.TONE_MAPPER_LINEAR if compatibility else Environment.TONE_MAPPER_ACES
+	e.fog_enabled=true; e.fog_mode=Environment.FOG_MODE_DEPTH; e.fog_depth_begin=95; e.fog_depth_end=200
+	e.fog_light_color=Color("83a29c"); e.fog_density=0.15
+	add_child(env)
+	var sun = DirectionalLight3D.new(); sun.name="Sun"
+	sun.rotation_degrees=Vector3(-40,-55,0)
+	sun.light_color=Color("ffebcb"); sun.light_energy=0.50 if compatibility else 0.90; sun.shadow_enabled=true
+	sun.directional_shadow_max_distance=85; sun.shadow_bias=0.08; sun.shadow_normal_bias=1.5
+	sun.directional_shadow_blend_splits=true; sun.directional_shadow_split_1=0.12; sun.directional_shadow_split_2=0.30; sun.directional_shadow_split_3=0.65; sun.shadow_blur=1.2
+	add_child(sun)
+
+func _spawn_cars() -> void:
+	for car in cars: remove_child(car); car.queue_free()
+	cars.clear()
+	for i in bot_count+1:
+		var car = Car.new(); car.index=i; car.track=track
+		car.model_id=["hatchback-sports","sedan-sports","suv"][selected_car] if i==0 else ["hatchback-sports","suv","sedan-sports","race"][i%4]
+		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
+		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
+		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
+		car.position=track.points[at]+side*(float(i%3)-1)*2.8+Vector3.UP*0.72
+		car.rotation.y=atan2(-track.tangents[at].x,-track.tangents[at].z); car.aim=track.tangents[at]
+		car.freeze=state!="menu"
+
+func _spawn_pickups() -> void:
+	for item in pickups: item.node.queue_free()
+	pickups.clear()
+	for i in track.pickup_spots.size():
+		var node = MeshInstance3D.new(); var mesh = BoxMesh.new(); mesh.size=Vector3(0.85,0.85,0.85); node.mesh=mesh
+		node.material_override=Art.material(Color("50c9ff") if i%2 else Color("ffc44b"),0.6)
+		node.position=track.pickup_spots[i]; add_child(node)
+		var icon = Label3D.new(); icon.text="+" if i%2 else "III"; icon.font_size=65; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+		icon.position.y=0.75; node.add_child(icon)
+		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1})
+
+func start_race() -> void:
+	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
+	controls.neutral_required=true
+	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
+
+func car_title() -> String: return ["Swift","Comet","Trail"][selected_car]
+func cycle_car() -> void: selected_car=(selected_car+1)%3; _spawn_cars(); hud.menu("main")
+func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("main")
+func quit_game() -> void: get_tree().paused=false; get_tree().quit()
+
+func return_menu() -> void:
+	get_tree().paused=false; state="menu"; _spawn_cars(); hud.menu("main")
+
+func resume_race() -> void:
+	get_tree().paused=false; state="race"; hud.panel.hide(); controls.neutral_required=true
+
+func recover_player() -> void: _recover(cars[0])
+
+func _recover(car: Node3D) -> void:
+	var at: int=car.checkpoint
+	var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
+	var pos: Vector3=track.points[at]+side*4.8+Vector3.UP*0.85
+	for other in cars:
+		if other!=car and other.position.distance_to(pos)<3: pos-=side*8.5; break
+	var basis = Basis(Vector3.UP,atan2(-track.tangents[at].x,-track.tangents[at].z))
+	car.reset_at(Transform3D(basis,pos)); car.stuck_time=0
+	if car.health<=0: car.health=100; car.ammo=maxi(car.ammo,6)
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if state=="menu": hud.menu("main")
+		elif state=="pause": resume_race(); return
+	if event is InputEventMouseMotion: controls.mouse_aim=true
+	var pause_pressed = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode==KEY_ESCAPE) or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_START)
+	if pause_pressed:
+		if state=="race": state="pause"; controls.neutral(cars[0]); get_tree().paused=true; hud.menu("pause")
+		elif state=="pause": resume_race()
+		elif state=="menu": hud.menu("main")
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode==KEY_R and state=="race": recover_player()
+		elif event.physical_keycode==KEY_F3: show_metrics=not show_metrics
+
+func _notification(what: int) -> void:
+	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and state=="race" and not demo_auto:
+		controls.neutral(cars[0]); state="pause"; get_tree().paused=true; hud.menu("pause")
+
+func _physics_process(delta: float) -> void:
+	if state=="countdown":
+		countdown-=delta
+		if countdown<=0:
+			state="race"
+			for car in cars: car.freeze=false
+		return
+	if state not in ["race","menu"]: return
+	if state=="race": elapsed+=delta
+	effect_clock+=delta
+	for car in cars:
+		if car.index==0 and state=="race" and not demo_auto: controls.read(car,camera)
+		else:
+			car.bot_drive(); _bot_combat(car)
+		if car.finish_time>=0: car.throttle=0; car.brake=0.5; car.firing=false
+		car.tick(delta)
+		if car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
+		if car.firing and state=="race": _shoot(car)
+		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car)
+		if car.laps>=laps and car.finish_time<0 and state=="race":
+			car.finish_time=elapsed
+			if car.index==0:
+				state="results"; get_tree().paused=true; hud.menu("results"); hud.portrait.set_mood("victory"); _save_best()
+	for pickup in pickups:
+		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
+		pickup.node.rotation.y+=delta
+		if pickup.cooldown>0: continue
+		for car in cars:
+			if car.position.distance_to(pickup.node.position)<2:
+				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20)
+				else: car.ammo=mini(36,car.ammo+12)
+				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
+				if car.index==0: sound.pickup.play()
+				break
+	if effect_clock>0.09: effect_clock=0
+
+func _bot_combat(car: Node3D) -> void:
+	var nearest: Node3D=null; var distance = 25.0
+	for other in cars:
+		if other==car: continue
+		var diff: Vector3=other.position-car.position; diff.y=0
+		var d = diff.length()
+		if d<6 and diff.dot(car.last_forward)>1:
+			car.desired=(car.desired+Vector3(-diff.z,0,diff.x).normalized()*0.55).normalized()
+		if d<distance: nearest=other; distance=d
+	if nearest!=null:
+		var target: Vector3=nearest.position-car.position; target.y=0
+		car.aim=car.aim.lerp(target.normalized(),0.055).normalized()
+		car.firing=car.index%4!=0 and car.aim.dot(target.normalized())>0.97
+		if car.health<65: car.activate_shield()
+
+func _shoot(car: Node3D) -> void:
+	if car.fire_cooldown>0 or car.ammo<=0 or car.disabled_time>0: return
+	car.fire_cooldown=0.28 if car.index==0 else 0.55; car.ammo-=1
+	var from: Vector3=car.position+Vector3.UP*0.2+car.aim*0.9
+	var to: Vector3=from+car.aim*34
+	var query = PhysicsRayQueryParameters3D.create(from,to,3,[car.get_rid()])
+	var hit = get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		to=hit.position
+		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
+			hit.collider.take_damage(9,car.aim*75)
+			if hit.collider.index==0: hud.portrait.set_mood("hurt")
+		effects.burst(to,Color("ffbb51"))
+	effects.beam(from,to)
+	if car.index==0: sound.shot.play()
+
+func _process(delta: float) -> void:
+	if cars.is_empty(): return
+	_camera(delta)
+	sound.engine(cars[0].linear_velocity.length(),state=="race")
+	if state=="race" and cars[0].boosting: hud.portrait.set_mood("excited")
+	capture_time+=delta
+	if state=="race": performance_frames.append(delta)
+	if not capture_path.is_empty() and capture_time>10 and not screenshot_done:
+		screenshot_done=true
+		await RenderingServer.frame_post_draw
+		var error = get_viewport().get_texture().get_image().save_png(capture_path)
+		print("CAPTURE ",error," ",capture_path)
+		print("METRICS ",JSON.stringify({"frames":performance_frames.size(),"cars":cars.size(),"fps":Engine.get_frames_per_second(),"renderer":RenderingServer.get_current_rendering_method(),"scale":get_viewport().scaling_3d_scale,"player_position":str(cars[0].position),"passed":cars[0].passed}))
+		get_tree().quit()
+
+func _camera(delta: float, snap: bool = false) -> void:
+	var target: Vector3=cars[0].position
+	var lookahead: Vector3=cars[0].linear_velocity.limit_length(12)*0.20
+	lookahead.y=0; target+=lookahead
+	var desired_pos = target+Vector3(0,29,23)
+	camera.position=desired_pos if snap else camera.position.lerp(desired_pos,1-exp(-delta*5))
+	camera.rotation_degrees=Vector3(-51.6,0,0)
+
+func standings() -> Array:
+	var result = cars.duplicate()
+	result.sort_custom(func(a,b):
+		if a.finish_time>=0 and b.finish_time>=0: return a.finish_time<b.finish_time
+		if a.finish_time>=0: return true
+		if b.finish_time>=0: return false
+		return a.passed>b.passed)
+	return result
+
+func _save_best() -> void:
+	# Local first-stage result only. Never grants a full-cup prize or global rank.
+	var file = ConfigFile.new(); file.load("user://valley.cfg")
+	var previous = float(file.get_value("records","best_seconds",INF))
+	if elapsed<previous: file.set_value("records","best_seconds",elapsed)
+	file.set_value("records","completed_runs",int(file.get_value("records","completed_runs",0))+1)
+	if file.save("user://valley.cfg.pending")==OK:
+		DirAccess.rename_absolute("user://valley.cfg.pending","user://valley.cfg")

@@ -1,0 +1,39 @@
+[
+  {
+    "pack": "cars",
+    "creator": "Kenney",
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/car-kit",
+    "archive_sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4",
+    "models": [
+      "hatchback-sports",
+      "suv",
+      "sedan-sports",
+      "race",
+      "wheel-racing"
+    ]
+  },
+  {
+    "pack": "nature",
+    "creator": "Kenney",
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
+    "archive_sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+    "models": [
+      "tree_pineRoundA",
+      "tree_pineRoundB",
+      "tree_pineTallA",
+      "tree_pineSmallA",
+      "rock_largeA",
+      "rock_largeC",
+      "stone_largeA",
+      "plant_bushDetailed",
+      "plant_bushSmall",
+      "grass_large",
+      "flower_yellowA",
+      "flower_purpleA",
+      "fence_simple",
+      "bridge_wood"
+    ]
+  }
+]

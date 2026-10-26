@@ -1,17 +1,47 @@
 # Micro Rally
 
-Single-screen top-down racing.
+Отдельная боевая гонка TrainerOS на Godot для портативок.
 
-Part of the [Competitive Mini-Games](../) collection for TrainerOS.
+[Принятый дизайн](docs/idea.md), [визуальный ориентир](docs/visual-reference.png).
 
-## Concept
+## Текущее состояние
 
-Short races on fully visible courses, with collisions and quick rematches. Could become a distinct mode inside Mini Racing instead of a separate release; undecided.
+Первый участок «Грязевая долина»: физические машины с подвеской, заносами,
+ускорением, стрельбой, щитом и восстановлением; игрок и до 15 ботов.
+Четыре круга, меню, пауза, результат, реванш и локальное лучшее время.
+Это прототип первого этапа, а не готовый кубок или сетевой релиз.
 
-## Shared integration
+Левый стик задаёт направление, правый — независимый прицел; триггеры —
+газ/тормоз, бамперы — огонь/ускорение, нижняя кнопка — ручник, левая — щит,
+Start — пауза. Клавиатура: WASD, стрелки вверх/вниз, мышь, Shift, Space, E,
+R для возврата. После паузы требуется отпустить управление.
 
-This game will follow the [common approach](../docs/shared-approach.md) planned for the collection. It is intended to have its own Fluxer-connected community, auto-filled lobby information where possible, and relevant multiplayer/social information inside the game, with a shared path toward rankings and tournaments.
+Аватар подключается через существующий SDK в круге снизу; одежда принадлежит
+TrainerOS. При недоступном SDK показывается временный нейтральный портрет.
+Выражения лица требуют соответствующих действий модели SDK и ещё не приняты.
 
-**Status:** Initial idea only. Specific mechanics and technology will be discussed later.
+## Графика и происхождение
 
-See [idea notes](docs/idea.md).
+Kenney Car Kit / Nature Kit, CC0: лицензии в `assets`, источники и хеши архивов
+в `assets/provenance.json`. Материалы меняются в сцене. Шейдеры meadow/surface
+и модуль аватара переиспользованы из Pocket Golf (срез `771100b`), сохранены
+GPL-3.0-or-later и сторонние лицензии. Звуки синтезируются кодом.
+
+26 октября смягчены свет и тени, убраны чрезмерно тёмная зелень и рыжая дорога.
+Кадр Vulkan Mobile на ПК подтверждает рендер, но не производительность
+портативок или соответствие эталону.
+
+## Сборка и проверки
+
+`tools/server_build.py --output <папка> --tests --export` использует существующий
+серверный Godot 4.7.2 и контейнер CI, сохраняет снимок исходников, логи и манифест.
+Экспорт: Windows x86_64, Linux ARM64, Linux x86_64.
+
+`drive_test.gd` проверяет движение 16 машин, прогресс, восстановление и лимит
+эффектов. `journey_test.gd` проверяет синтетический ввод, паузу, стрельбу по
+коллизиям, щит, финиш и реванш. Это не физический контроллер или интернет-матч.
+
+Следующие этапы: довести первый участок/ботов, время загрузки и проверить обе
+портативки; подключить сетевой SDK и лобби на 16 игроков; реализовать кубок,
+награды и оставшиеся трассы; подготовить подписанный пакет Crates.
+Сейчас игра не опубликована и на портативки не установлена.
