@@ -24,7 +24,7 @@ func brake_distance(car: Node3D, grip: float) -> float:
 func run() -> void:
 	root.size=Vector2i(1280,720)
 	var c = Conditions.new(); var original = c.descriptor()
-	for bad in [{},{"version":2,"time":"day","weather":"rain","seed":1},{"version":1,"time":"night","weather":"rain","seed":1},{"version":1,"time":"day","weather":"rain","seed":-1},{"version":1,"time":"day","weather":"rain","seed":NAN}]:
+	for bad in [{},{"version":99,"time":"day","weather":"rain","seed":1},{"version":1,"time":"night","weather":"rain","seed":1},{"version":1,"time":"day","weather":"rain","seed":-1},{"version":1,"time":"day","weather":"rain","seed":NAN}]:
 		check(not c.configure(bad) and c.descriptor()==original,"Invalid contract cannot partly change conditions")
 	check(c.configure(JSON.parse_string(JSON.stringify(original))),"Conditions round-trip through JSON transport")
 	var route = preload("res://scripts/track.gd").new()
@@ -42,7 +42,7 @@ func run() -> void:
 	var keys = {}
 	for time in Conditions.TIMES:
 		for weather in Conditions.WEATHERS:
-			var descriptor = {"version":1,"time":time,"weather":weather,"seed":1234}
+			var descriptor = {"version":Conditions.VERSION,"time":time,"weather":weather,"seed":1234}
 			check(game.set_conditions(descriptor),"Menu accepts valid stage conditions")
 			keys[game.conditions.record_key()]=true
 			check(game.weather.rain.visible==(weather=="rain"),"Rain appears only in rain preset")
@@ -50,7 +50,7 @@ func run() -> void:
 			game.set_conditions(descriptor)
 			check(transforms==game.weather.rain.multimesh.buffer,"Stage seed repeats bounded rain layout")
 			for car in game.cars: check(is_equal_approx(car.surface_grip,game.conditions.grip()),"All cars share weather grip")
-	check(keys.size()==6,"Records separate all six stage condition combinations")
+	check(keys.size()==12,"Records separate all twelve stage condition combinations")
 	game.hud.menu("conditions"); await process_frame; await process_frame
 	check(game.hud.panel.position.y+game.hud.panel.size.y<=720,"Conditions menu fits handheld layout")
 	game.hud.buttons[1].grab_focus()

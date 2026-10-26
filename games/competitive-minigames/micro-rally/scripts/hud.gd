@@ -49,7 +49,7 @@ func menu(mode: String) -> void:
 		button(list,"В гонку",game.start_race)
 		button(list,"Машина: "+game.car_title(),game.cycle_car)
 		button(list,"Соперники: "+str(game.bot_count),game.cycle_bots)
-		button(list,game.conditions.title(),func(): menu("conditions"))
+		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
 		button(list,"Управление",func(): menu("controls"))
 		button(list,"Выйти",game.quit_game)
 	elif mode=="conditions":
@@ -57,7 +57,8 @@ func menu(mode: String) -> void:
 		list.add_child(label("Грязевая долина",22))
 		button(list,"Время: "+game.conditions.time_title(),game.cycle_time)
 		button(list,"Погода: "+game.conditions.weather_title(),game.cycle_weather)
-		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nУсловия одинаковы для всех\nи сохраняются на весь заезд.\nРекорды разделены по условиям.",18,Color("bed0c6")))
+		button(list,game.conditions.scenario_title(),game.cycle_scenario)
+		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nОбщий сценарий для всех.\nПауза останавливает погоду.\nРекорды разделены по условиям.",18,Color("bed0c6")))
 		button(list,"Назад",func(): menu("main"))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
@@ -103,7 +104,7 @@ func _draw() -> void:
 	var seconds = int(game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
 	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps],Vector2(238,53),24)
-	write(game.conditions.title(),Vector2(240,79),17,Color("d1dfd4"))
+	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
 	var center = Vector2(size.x*0.5,size.y-72)
 	draw_circle(center,55,INK)

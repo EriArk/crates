@@ -32,6 +32,7 @@ var capture_path = ""
 var capture_time = 0.0
 var screenshot_done = false
 var performance_frames: Array[float] = []
+var current_wetness = 0.0
 
 func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
@@ -42,6 +43,7 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--time="): selected_conditions.time=arg.trim_prefix("--time=")
 		elif arg.begins_with("--weather="): selected_conditions.weather=arg.trim_prefix("--weather=")
+		elif arg=="--nightfall": selected_conditions.timeline=[{"at":120.0,"time":"sunset","weather":"overcast"},{"at":300.0,"time":"night","weather":"rain"}]
 	if not conditions.configure(selected_conditions): push_warning("Invalid stage conditions: using clear daytime")
 	weather=Weather.new(); add_child(weather); weather.apply(conditions)
 	track=Track.new(); add_child(track); track.build()
@@ -70,19 +72,29 @@ func _resolution() -> void:
 
 func set_conditions(data: Dictionary) -> bool:
 	if state!="menu" or not conditions.configure(data): return false
-	weather.apply(conditions); track.set_wetness(conditions.wetness())
-	for car in cars: car.surface_grip=conditions.grip()
+	weather.apply(conditions); _update_conditions(0)
 	return true
+
+func _update_conditions(seconds: float) -> void:
+	current_wetness=conditions.wetness(seconds)
+	track.set_wetness(current_wetness); weather.set_sample(conditions.sample(seconds))
+	for car in cars: car.surface_grip=1.0-current_wetness*0.2
 
 func cycle_time() -> void:
 	var data = conditions.descriptor()
 	data.time=Conditions.TIMES[(Conditions.TIMES.find(data.time)+1)%Conditions.TIMES.size()]
+	if data.timeline.size()==2 and data.timeline[-1].time=="night" and data.timeline[-1].weather=="rain":
+		data.timeline[0].time="night" if data.time=="night" else "sunset"
+	elif data.timeline.size()==1 and data.timeline[0].weather=="clear": data.timeline[0].time=data.time
 	if set_conditions(data): hud.menu("conditions")
 
 func cycle_weather() -> void:
 	var data = conditions.descriptor()
 	data.weather=Conditions.WEATHERS[(Conditions.WEATHERS.find(data.weather)+1)%Conditions.WEATHERS.size()]
 	if set_conditions(data): hud.menu("conditions")
+
+func cycle_scenario() -> void:
+	if set_conditions(conditions.next_scenario()): hud.menu("conditions")
 
 func _spawn_cars() -> void:
 	for car in cars: remove_child(car); car.queue_free()
@@ -112,6 +124,7 @@ func start_race() -> void:
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
+	weather.apply(conditions); _update_conditions(0)
 
 func car_title() -> String: return ["Swift","Comet","Trail"][selected_car]
 func cycle_car() -> void: selected_car=(selected_car+1)%3; _spawn_cars(); hud.menu("main")
@@ -119,7 +132,8 @@ func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spa
 func quit_game() -> void: get_tree().paused=false; get_tree().quit()
 
 func return_menu() -> void:
-	get_tree().paused=false; state="menu"; _spawn_cars(); hud.menu("main")
+	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); hud.menu("main")
+	weather.apply(conditions); _update_conditions(0)
 
 func resume_race() -> void:
 	get_tree().paused=false; state="race"; hud.panel.hide(); controls.neutral_required=true
@@ -163,6 +177,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if state not in ["race","menu"]: return
 	if state=="race": elapsed+=delta
+	_update_conditions(elapsed if state=="race" else 0.0)
 	effect_clock+=delta
 	for car in cars:
 		if car.index==0 and state=="race" and not demo_auto: controls.read(car,camera)
@@ -172,7 +187,7 @@ func _physics_process(delta: float) -> void:
 		car.tick(delta)
 		if car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
 		if car.firing and state=="race": _shoot(car)
-		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car,conditions.wetness())
+		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(cars[0].position)<45: effects.dust(car,current_wetness)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed
 			if car.index==0:
@@ -225,6 +240,7 @@ func _process(delta: float) -> void:
 	if cars.is_empty(): return
 	_camera(delta)
 	weather.update(delta,cars[0].position,state in ["menu","race","countdown"])
+	weather.update_headlights(cars,delta)
 	sound.engine(cars[0].linear_velocity.length(),state=="race")
 	if state=="race" and cars[0].boosting: hud.portrait.set_mood("excited")
 	capture_time+=delta
@@ -258,7 +274,7 @@ func _save_best() -> void:
 	# Local first-stage result only. Never grants a full-cup prize or global rank.
 	var file = ConfigFile.new(); file.load("user://valley.cfg")
 	var section = "records/"+conditions.record_key()
-	var legacy = float(file.get_value("records","best_seconds",INF)) if conditions.time_of_day=="day" and conditions.weather=="clear" else INF
+	var legacy = float(file.get_value("records","best_seconds",INF)) if conditions.time_of_day=="day" and conditions.weather=="clear" and conditions.timeline.is_empty() else INF
 	var previous = float(file.get_value(section,"best_seconds",legacy))
 	if elapsed<previous: file.set_value(section,"best_seconds",elapsed)
 	file.set_value(section,"completed_runs",int(file.get_value(section,"completed_runs",0))+1)
