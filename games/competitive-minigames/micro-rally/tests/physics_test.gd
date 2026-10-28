@@ -102,6 +102,7 @@ func run() -> void:
 	check(game.effects.loose_wheels.size()==count,"Repeated state does not spawn duplicate wheels")
 	car.throttle=0.6; var before=car.position
 	await step_frames(100)
+	print("LIMP distance=",car.position.distance_to(before)," contacts=",car.physics.contacts," rpm=",car.transmission.rpm)
 	check(car.physics.contacts<=3 and car.position.distance_to(before)>2,"Three-wheel car loses support and can limp onward")
 	check(game.effects.loose_wheels.all(func(w): return w.node.collision_layer==0 and w.node.collision_mask==1),"Loose wheels are bounded world-only cosmetics")
 	car.damage_wheel(1,100)

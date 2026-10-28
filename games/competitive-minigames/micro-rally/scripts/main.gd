@@ -303,7 +303,6 @@ func _physics_process(delta: float) -> void:
 		car.tick(delta)
 		if car.overturned_time>2.0 or car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
 		if car.firing and state=="race": _shoot(car)
-		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(player().position)<45: effects.dust(car,current_wetness)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed; controls.neutral(car); car.freeze=true; car.collision_layer=0; car.collision_mask=1
 			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
@@ -315,7 +314,7 @@ func _physics_process(delta: float) -> void:
 	if state=="race":
 		if cars.all(func(c): return c.finish_time>=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
 			finish_race(); return
-		if player().finish_time>=0: hud.message="Финиш! Соперникам осталось %d с" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
+		if player().finish_time>=0: hud.message="Finished! Other drivers have %d s left" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
 	for pickup in pickups:
 		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
 		pickup.node.rotation.y+=delta

@@ -18,7 +18,7 @@ func run() -> void:
 	var easy=Settings.preset(0); var hard=Settings.preset(2)
 	check(store.set_bot_settings("quick",easy) and store.set_bot_settings("cup",hard),"Independent presets persist")
 	var custom=hard.duplicate(true); custom.style="tactical"; custom.pace=1
-	check(Settings.title(custom)=="Своя настройка" and Settings.key(custom)!=Settings.key(hard),"Custom settings have distinct identity")
+	check(Settings.title(custom)=="Custom" and Settings.key(custom)!=Settings.key(hard),"Custom settings have distinct identity")
 	for bad in [{}, {"version":99}, {"pace":NAN}]: check(not store.set_bot_settings("quick",bad),"Malformed bot settings rejected")
 	var invalid=hard.duplicate(); invalid.accuracy=INF; check(not Settings.valid(invalid),"Nonfinite difficulty rejected")
 	invalid=hard.duplicate(); invalid.pace=0.5; check(not Settings.valid(invalid),"Fractional difficulty rejected")
@@ -43,7 +43,7 @@ func run() -> void:
 	game.hud.back(); check(game.hud.menu_mode=="quick","Back returns to original setup screen")
 	store.set_bot_settings("quick",custom); game.start_race()
 	check(game.cars.size()==8 and game.cars.all(func(c): return c.bot.settings==custom),"Quick settings reach every actual driver")
-	check(game.cars[1].driver_title().begins_with("Тактик"),"Selected character changes driver identity")
+	check(game.cars[1].driver_title().begins_with("Tactician"),"Selected character changes driver identity")
 	game.hud.BotMenu.change(game.hud,"preset"); check(store.bot_settings("quick")==custom,"No in-race edit through menu handler")
 	game.elapsed=90; game._save_best(); var custom_key=game.record_section()
 	game.return_menu(); store.set_bot_settings("quick",easy); game.start_race(); game.elapsed=100; game._save_best()

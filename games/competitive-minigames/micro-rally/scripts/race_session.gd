@@ -46,7 +46,7 @@ func _session(is_host: bool) -> void:
 	game.player_index=members.find(bridge.session.self)
 	for member in bridge.channels: seen[member]=Time.get_ticks_msec()
 	round_id=0; phase="waiting"; game.state="network_wait"; game.hud.panel.hide()
-	game.hud.message="Собираем стартовую решётку…"; deadline=Time.get_ticks_msec()+15000
+	game.hud.message="Preparing the starting grid…"; deadline=Time.get_ticks_msec()+15000
 	if host:
 		bot_settings=game.cup.store.bot_settings("quick"); _prepare()
 
@@ -54,14 +54,14 @@ func _prepare() -> void:
 	round_id+=1; ready_members=[bridge.session.self]; votes.clear(); voted=false
 	phase="preparing"; deadline=Time.get_ticks_msec()+15000
 	game.bot_count=15; starting=true; game.start_race(); starting=false
-	game.state="network_wait"; game.hud.message="Ожидаем готовности участников…"
-	if not bridge.send({"type":"prepare","round":round_id,"track":Wire.TRACK,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Не удалось подготовить заезд.")
+	game.state="network_wait"; game.hud.message="Waiting for everyone to get ready…"
+	if not bridge.send({"type":"prepare","round":round_id,"track":Wire.TRACK,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
 
 func _begin() -> void:
 	phase="playing"; game.state="countdown"; game.countdown=3; game.hud.message=""
 	sequence=0; last_snapshot=-1; clock=0; inputs.clear(); input_sequences.clear(); targets.clear()
 	for member in seen: seen[member]=Time.get_ticks_msec()
-	if host and not bridge.send({"type":"begin","round":round_id}): abort("Не удалось начать заезд.")
+	if host and not bridge.send({"type":"begin","round":round_id}): abort("Could not start the race.")
 
 func _receive(member: String, data: Dictionary) -> void:
 	if not online or not bridge.channels.has(member): return
@@ -70,19 +70,19 @@ func _receive(member: String, data: Dictionary) -> void:
 	if data.get("namespace")=="traineros.avatar.v1": return
 	if kind=="prepare" and not host and member==bridge.session.hostMember:
 		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track")!=Wire.TRACK or data.get("laps")!=4 or not data.get("conditions") is Dictionary:
-			abort("Несовместимые условия заезда."); return
+			abort("Incompatible race conditions."); return
 		var conditions = game.Conditions.new()
-		if not conditions.configure(data.conditions): abort("Неверные условия заезда."); return
+		if not conditions.configure(data.conditions): abort("Invalid race conditions."); return
 		var incoming_bots=data.get("bots",game.BotSettings.preset())
-		if not game.BotSettings.valid(incoming_bots): abort("Неверные настройки соперников."); return
+		if not game.BotSettings.valid(incoming_bots): abort("Invalid opponent settings."); return
 		bot_settings=game.BotSettings.normalized(incoming_bots)
 		round_id+=1; game.conditions=conditions; game.bot_count=15; starting=true; game.start_race(); starting=false
 		for car in game.cars: car.replica=true; car.freeze=true; car.collision_layer=0; car.collision_mask=0
 		game.state="network_wait"; phase="preparing"; voted=false; overlay=false; deadline=Time.get_ticks_msec()+15000
-		if not bridge.send({"type":"ready","round":round_id}): abort("Не удалось подтвердить готовность.")
+		if not bridge.send({"type":"ready","round":round_id}): abort("Could not confirm readiness.")
 		return
 	if Wire.integer(data.get("round"),0,round_id-1): return # In-flight old inputs cannot enter a rematch.
-	if data.get("round")!=round_id: abort("Устаревшее сообщение заезда."); return
+	if data.get("round")!=round_id: abort("Outdated race message."); return
 	if kind=="ready" and host and phase=="preparing" and not ready_members.has(member):
 		ready_members.append(member)
 		if ready_members.size()==members.size(): _begin()
@@ -90,14 +90,14 @@ func _receive(member: String, data: Dictionary) -> void:
 	if kind=="begin" and not host and phase=="preparing": _begin(); return
 	if kind=="input" and host and phase in ["playing","results"]:
 		if not Wire.integer(data.get("seq"),0,2147483647) or data.seq<=input_sequences.get(member,-1) or not Wire.valid_input(data.get("values")):
-			abort("Неверная команда управления."); return
+			abort("Invalid control command."); return
 		input_sequences[member]=data.seq
 		if phase=="playing": inputs[member]={"values":data.values,"at":Time.get_ticks_msec()}
 		return
 	if kind=="recover" and host and phase=="playing": game._recover(game.cars[members.find(member)]); return
 	if kind=="state" and not host and phase in ["playing","results"]:
 		if not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
-			abort("Не удалось синхронизировать заезд."); return
+			abort("Could not sync the race."); return
 		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
 		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
 		for i in game.pickups.size():
@@ -112,10 +112,10 @@ func _receive(member: String, data: Dictionary) -> void:
 		elif phase!="results": game.state=data.phase
 		return
 	if kind=="vote" and host and phase in ["playing","results"]:
-		if game.state!="results" or votes.has(member): abort("Неверный запрос реванша."); return
+		if game.state!="results" or votes.has(member): abort("Invalid rematch request."); return
 		votes.append(member); _rematch_if_ready(); return
 	if kind=="ping": return
-	abort("Неизвестное сообщение заезда.")
+	abort("Unknown race message.")
 
 func apply_remote(car: Node3D) -> void:
 	var member: String=members[car.index]; var command: Dictionary=inputs.get(member,{})
@@ -132,12 +132,7 @@ func tick_client(delta: float) -> void:
 		else: game.controls.neutral(game.player())
 	if game.state=="race":
 		game.elapsed+=delta; game._update_conditions(game.elapsed)
-		game.effect_clock+=delta
-		if game.effect_clock>0.09:
-			for car in game.cars:
-				if car.finish_time<0 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(game.player().position)<45: game.effects.dust(car,game.current_wetness)
-			game.effect_clock=0
-		if game.player().finish_time>=0: game.hud.message="Финиш! Ожидаем остальных участников…"
+		if game.player().finish_time>=0: game.hud.message="Finished! Waiting for the other drivers…"
 	elif game.state=="countdown": game.countdown=maxf(0,game.countdown-delta)
 
 func apply_targets(delta: float, snap: bool = false) -> void:
@@ -160,7 +155,9 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		for n in 4:
 			var w: Dictionary=car.physics.wheels[n]
 			w.length=s[26+n]/1000.0; w.spin=wrapf(s[30+n]/1000.0+s[34+n]/100.0*age,-PI,PI); w.omega=s[34+n]/100.0
-			w.contact=(int(s[38])&(1<<n))!=0
+			w.contact=(int(s[38])&(1<<n))!=0; w.missing=(int(s[23])&(1<<n))!=0
+			w.long_slip=s[44+n*3]/100.0; w.slip=s[45+n*3]/100.0; w.surface=int(s[46+n*3])
+			w.slip_ratio=w.long_slip/maxf(2,absf(velocity.dot(-car.basis.z)))
 			w.normal=car.basis.y; w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
 		car.last_forward=-car.basis.z
 		car.checkpoint=posmod(int(s[13]),game.track.COUNT)
@@ -183,38 +180,38 @@ func _process(delta: float) -> void:
 	if not online: return
 	var now = Time.get_ticks_msec()
 	if phase in ["waiting","preparing"]:
-		if now>deadline: abort("Участник не успел подготовить трассу.")
+		if now>deadline: abort("A driver could not prepare the track in time.")
 		return
 	for member in seen:
-		if now-seen[member]>8000: abort("Связь с участником потеряна."); return
+		if now-seen[member]>8000: abort("Connection to a driver lost."); return
 	clock+=delta
 	if clock<(1.0/15.0 if host else 1.0/20.0): return
 	clock=0; sequence+=1
 	if host:
 		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
 		for member in bridge.channels:
-			if not bridge.send_latest(member,"state",packet): abort("Очередь синхронизации переполнена."); return
+			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
 		beams.clear()
 	else:
 		var packet = {"type":"input","round":round_id,"seq":sequence,"values":Wire.input(game.player())} if phase=="playing" else {"type":"ping","round":round_id}
-		if not bridge.send_latest(bridge.session.hostMember,"input",packet): abort("Не удалось передать управление.")
+		if not bridge.send_latest(bridge.session.hostMember,"input",packet): abort("Could not send controls.")
 
 func shot(car: Node3D, from: Vector3, to: Vector3) -> void:
 	if online and host and beams.size()<12: beams.append([car.index,roundi(from.x*100),roundi(from.y*100),roundi(from.z*100),roundi(to.x*100),roundi(to.y*100),roundi(to.z*100)])
 
 func rematch() -> void:
 	if not online or game.state!="results" or voted: return
-	voted=true; game.hud.message="Реванш: ожидаем остальных участников…"
+	voted=true; game.hud.message="Rematch: waiting for the other drivers…"
 	game.hud.menu("results")
 	if host: votes.append(bridge.session.self); _rematch_if_ready()
-	elif not bridge.send({"type":"vote","round":round_id}): abort("Не удалось запросить реванш.")
+	elif not bridge.send({"type":"vote","round":round_id}): abort("Could not request a rematch.")
 
 func _rematch_if_ready() -> void:
 	if votes.size()==members.size(): _prepare()
 
 func recover() -> void:
 	if host: game._recover(game.player())
-	elif not bridge.send({"type":"recover","round":round_id}): abort("Не удалось вернуть машину.")
+	elif not bridge.send({"type":"recover","round":round_id}): abort("Could not recover the car.")
 
 func leave() -> void:
 	online=false; phase="idle"; overlay=false; bridge.close_channel(); clear()
@@ -226,4 +223,4 @@ func abort(reason: String) -> void:
 	info=reason; leave(); game.network_ended(reason)
 
 func _closed() -> void:
-	if online: online=false; phase="idle"; overlay=false; clear(); game.network_ended("Заезд прерван. Вернитесь в лобби для нового старта.")
+	if online: online=false; phase="idle"; overlay=false; clear(); game.network_ended("Race interrupted. Return to the lobby to start again.")

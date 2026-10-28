@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const TRACK = preload("track_registry.gd").VALLEY
-const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,2000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]]
+const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,2000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]] + [[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4]]
 
 static func integer(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
@@ -41,6 +41,7 @@ static func car_state(car: Node3D) -> Array:
 		if car.physics.wheels[i].contact: contacts|=1<<i
 	result.append(contacts)
 	result.append_array([car.transmission.gear,roundi(car.transmission.rpm),roundi(car.transmission.shift_left*1000),1 if car.transmission.reverse else 0,1 if car.manual_gears else 0])
+	for w in car.physics.wheels: result.append_array([roundi(w.long_slip*100),roundi(w.slip*100),w.surface])
 	return result
 
 static func valid_snapshot(data: Dictionary, pickup_count: int) -> bool:

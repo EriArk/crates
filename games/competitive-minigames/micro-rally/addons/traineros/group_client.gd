@@ -23,7 +23,7 @@ func _retire_records() -> void:
 	while ignored.size()>64: ignored.pop_front()
 
 func _init() -> void:
-	app_id="art.abysstail.micro-rally"; activity_title="Micro Rally"; game_protocol="micro-rally.4"
+	app_id="art.abysstail.micro-rally"; activity_title="Micro Rally"; game_protocol="micro-rally.5"
 
 func send_latest(member: String, key: String, data: Dictionary) -> bool:
 	# Replace only unsent disposable state. Never replay old controls after congestion.
@@ -95,10 +95,10 @@ func _packet(value: Dictionary) -> void:
 	if event=="network.ready":
 		var s = value.get("session")
 		if not s is Dictionary or not registered or not channel.is_empty() or s.get("protocol")!=game_protocol or s.get("delivery")!="reliable-ordered" or not s.get("host") is bool:
-			fail("Несовместимая сетевая сессия."); return
+			fail("Incompatible network session."); return
 		var members = s.get("members"); var links = s.get("channels")
 		if not members is Array or members.size()<2 or members.size()>16 or not links is Array or s.get("maxBytes")!=16384 or s.get("window")!=64:
-			fail("Micro Rally поддерживает от 2 до 16 участников."); return
+			fail("Micro Rally supports 2 to 16 players."); return
 		var ids: Array = []; var previous := 0
 		for member in members:
 			if not member is Dictionary or not member.get("id") is String or member.id.is_empty() or ids.has(member.id) or member.get("connected")!=true or not _seat(member.get("seat"),previous):
@@ -138,16 +138,16 @@ func _packet(value: Dictionary) -> void:
 	if value.has("error"):
 		if pending.get(value.get("id"),{}).get("method")=="activity.register" and value.error.get("code")=="invalid_activity":
 			pending.erase(value.id); connected.emit()
-			status.emit("Для сетевой игры установите пакет Micro Rally через Crates."); return
+			status.emit("Install Micro Rally through Crates to play online."); return
 		push_warning("Rally SDK request "+str(pending.get(value.get("id"),{}).get("method"))+": "+str(value.error.get("code","unknown")))
 	if pending.get(value.get("id"),{}).get("method")=="hello" and not value.has("error"):
 		var context=value.get("result",{}).get("context",{})
 		if context is Dictionary and context.get("profile") is String: profile_available.emit(context.profile)
 		if value.get("result",{}).get("capabilities",{}).get("network.group")!=1:
 			var result = value.get("result",{})
-			if result.get("protocol")!=1 or not result.get("capabilities") is Dictionary: fail("Несовместимый TrainerOS."); return
+			if result.get("protocol")!=1 or not result.get("capabilities") is Dictionary: fail("Incompatible TrainerOS version."); return
 			pending.erase(value.id); capabilities=result.capabilities.duplicate(true); connected.emit()
-			status.emit("Обновите TrainerOS для сетевой гонки. Одиночная игра доступна."); return
+			status.emit("Update TrainerOS to race online. Solo play is available."); return
 	super._packet(value)
 
 func _seat(value, previous: int) -> bool:

@@ -95,68 +95,68 @@ func menu(mode: String) -> void:
 	if mode in ["main","cups","modes","settings","audio","confirm","lobby"]:
 		FrontMenu.build(self,list,mode)
 	elif mode=="credits":
-		list.add_child(label("АВТОРЫ И ДАННЫЕ",28,GOLD))
-		list.add_child(label("Micro Rally · TrainerOS\nКод: GPL-3.0-or-later\nМодели: Kenney (CC0)\nШрифт: Roboto Condensed · SIL OFL 1.1\n\nNordschleife:\n© OpenStreetMap contributors · ODbL\nopenstreetmap.org/copyright\n\nВысоты: Terrain Tiles (Mapzen)\nCopernicus EU-DEM / USGS SRTM\nregistry.opendata.aws/terrain-tiles\n\nГеоданные и лицензии входят в пакет.\nИгровая адаптация, без связи с владельцем трассы.",16))
-		button(list,"Назад",func(): menu("settings"))
+		list.add_child(label("CREDITS AND DATA",28,GOLD))
+		list.add_child(label("Micro Rally · TrainerOS\nCode: GPL-3.0-or-later\nModels: Kenney (CC0)\nFont: Roboto Condensed · SIL OFL 1.1\n\nNordschleife:\n© OpenStreetMap contributors · ODbL\nopenstreetmap.org/copyright\n\nElevation: Terrain Tiles (Mapzen)\nCopernicus EU-DEM / USGS SRTM\nregistry.opendata.aws/terrain-tiles\n\nGeodata and licenses are included.\nGame adaptation, not affiliated with the circuit owner.",16))
+		button(list,"Back",func(): menu("settings"))
 	elif mode in ["cup","cup_replace","standings","garage"]:
 		CupMenu.build(self,list,mode)
 	elif mode=="bots":
 		BotMenu.build(self,list)
 	elif mode=="quick":
-		list.add_child(label("ГОНКИ",36,GOLD))
+		list.add_child(label("RACING",36,GOLD))
 		list.add_child(label(game.track_title(),22))
-		list.add_child(label(("1 полный круг · 20+ мин" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 круга")+" · до 16 машин",18,Color("bed0c6")))
-		button(list,"В гонку",game.start_race)
-		button(list,"Сменить трассу",game.cycle_track)
-		button(list,"Машина: "+game.car_title(),game.cycle_car)
-		button(list,"Боты: %d · %s" % [game.bot_count,game.BotSettings.title(game.cup.store.bot_settings("quick"))],func(): BotMenu.open(self,"quick"))
+		list.add_child(label(("1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
+		button(list,"Race",game.start_race)
+		button(list,"Change track",game.cycle_track)
+		button(list,"Car: "+game.car_title(),game.cycle_car)
+		button(list,"Bots: %d · %s" % [game.bot_count,game.BotSettings.title(game.cup.store.bot_settings("quick"))],func(): BotMenu.open(self,"quick"))
 		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
-		button(list,"Управление",func(): menu("controls"))
-		button(list,"Назад",func(): menu("modes"))
+		button(list,"Controls",func(): menu("controls"))
+		button(list,"Back",func(): menu("modes"))
 	elif mode=="conditions":
-		list.add_child(label("УСЛОВИЯ ЗАЕЗДА",28,GOLD))
+		list.add_child(label("RACE CONDITIONS",28,GOLD))
 		list.add_child(label(game.track_title(),22))
-		button(list,"Время: "+game.conditions.time_title(),game.cycle_time)
-		button(list,"Погода: "+game.conditions.weather_title(),game.cycle_weather)
+		button(list,"Time: "+game.conditions.time_title(),game.cycle_time)
+		button(list,"Weather: "+game.conditions.weather_title(),game.cycle_weather)
 		button(list,game.conditions.scenario_title(),game.cycle_scenario)
-		list.add_child(label("Дождь: меньше сцепления,\nдлиннее тормозной путь.\n\nОбщий сценарий для всех.\nПауза останавливает погоду.\nРекорды разделены по условиям.",18,Color("bed0c6")))
-		button(list,"Назад",func(): menu("quick"))
+		list.add_child(label("Rain reduces grip\nand increases braking distance.\n\nConditions are shared by all drivers.\nPause also pauses the weather.\nRecords are separated by conditions.",18,Color("bed0c6")))
+		button(list,"Back",func(): menu("quick"))
 	elif mode=="controls":
-		list.add_child(label("УПРАВЛЕНИЕ",36,GOLD))
-		BotMenu.option(self,list,"Коробка: "+("ручная" if game.cup.store.manual_gears() else "автомат"),func(_step): toggle_gearbox())
-		BotMenu.option(self,list,"Вибрация: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
-		button(list,"Схема управления",func(): menu("bindings"))
-		list.add_child(label("Руль: влево / вправо относительно машины.\nПрицел управляется независимо правым стиком.\n\nРучная коробка — пять передач.\nВерхняя кнопка повышает, правая понижает.",22,Color("bed0c6")))
+		list.add_child(label("CONTROLS",36,GOLD))
+		BotMenu.option(self,list,"Transmission: "+("manual" if game.cup.store.manual_gears() else "automatic"),func(_step): toggle_gearbox())
+		BotMenu.option(self,list,"Vibration: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
+		button(list,"Button layout",func(): menu("bindings"))
+		list.add_child(label("Steer left / right relative to your car.\nAim independently with the right stick.\n\nManual transmission has five gears.\nTop face button shifts up; right shifts down.",22,Color("bed0c6")))
 		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
-		button(list,"Назад",back)
+		button(list,"Back",back)
 	elif mode=="bindings":
-		list.add_child(label("СХЕМА УПРАВЛЕНИЯ",36,GOLD))
+		list.add_child(label("BUTTON LAYOUT",36,GOLD))
 		var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",32); list.add_child(columns)
-		columns.add_child(label("КОНТРОЛЛЕР\n\nЛевый стик — руль\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит\nВерхняя / правая — передачи",20))
-		columns.add_child(label("КЛАВИАТУРА\n\nA / D или ← / → — руль\nW / S или ↑ / ↓ — газ / тормоз\nМышь — прицел и огонь\nShift — ускорение\nSpace — ручник\nE — щит\nR — вернуть машину\nC / Z — передачи\nEscape — пауза",20,Color("bed0c6")))
-		button(list,"Назад",func(): menu("controls"))
+		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift",20))
+		columns.add_child(label("KEYBOARD\n\nA / D or ← / → — steer\nW / S or ↑ / ↓ — accelerate / brake\nMouse — aim and fire\nShift — boost\nSpace — handbrake\nE — shield\nR — recover car\nC / Z — shift gears\nEscape — pause",20,Color("bed0c6")))
+		button(list,"Back",func(): menu("controls"))
 	elif mode=="pause":
-		list.add_child(label("ПАУЗА",34,GOLD))
-		button(list,"Продолжить",game.resume_race)
-		button(list,"Настройки",func(): menu("settings"))
-		button(list,"Вернуть машину на трассу",func(): game.recover_player(); game.resume_race())
-		button(list,"Начать заново",func(): confirm("НАЧАТЬ ЗАНОВО?","Текущий заезд начнётся с начала.\nРезультаты пройденных этапов сохранятся.","Перезапустить",game.start_race))
-		button(list,"Покинуть заезд",func(): confirm("ПОКИНУТЬ ЗАЕЗД?","Этот этап придётся начать заново.\nРезультаты пройденных этапов сохранятся." if game.cup.running else "Результат незавершённого заезда не сохранится.","Покинуть",game.cup.leave_stage if game.cup.running else game.return_menu))
+		list.add_child(label("PAUSED",34,GOLD))
+		button(list,"Resume",game.resume_race)
+		button(list,"Settings",func(): menu("settings"))
+		button(list,"Recover car to track",func(): game.recover_player(); game.resume_race())
+		button(list,"Restart",func(): confirm("RESTART RACE?","This race will restart from the beginning.\nCompleted stage results will be kept.","Restart",game.start_race))
+		button(list,"Leave race",func(): confirm("LEAVE RACE?","You will need to restart this stage.\nCompleted stage results will be kept." if game.cup.running else "This unfinished race result will not be saved.","Leave",game.cup.leave_stage if game.cup.running else game.return_menu))
 	elif mode=="net_pause":
-		list.add_child(label("СЕТЕВОЙ ЗАЕЗД",30,GOLD))
-		list.add_child(label("Гонка продолжается.\nВаша машина отпустила газ.",19))
-		button(list,"Продолжить",game.resume_race)
-		button(list,"Настройки",func(): menu("settings"))
-		button(list,"Вернуть машину",func(): game.recover_player(); game.resume_race())
-		button(list,"Покинуть заезд",func(): confirm("ПОКИНУТЬ ЗАЕЗД?","Вы выйдете из текущего сетевого заезда.","Покинуть",game.return_menu))
+		list.add_child(label("ONLINE RACE",30,GOLD))
+		list.add_child(label("The race is still running.\nYour car has released the throttle.",19))
+		button(list,"Resume",game.resume_race)
+		button(list,"Settings",func(): menu("settings"))
+		button(list,"Recover car",func(): game.recover_player(); game.resume_race())
+		button(list,"Leave race",func(): confirm("LEAVE RACE?","You will leave the current online race.","Leave",game.return_menu))
 	elif mode=="disconnected":
-		list.add_child(label("ЗАЕЗД ПРЕРВАН",28,GOLD))
+		list.add_child(label("RACE INTERRUPTED",28,GOLD))
 		var reason = label(message,19); reason.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; reason.custom_minimum_size.x=330; list.add_child(reason)
-		if game.net.bridge.registered: button(list,"Вернуться в лобби",func(): game.net.bridge.open_lobby())
-		else: button(list,"Вернуться в TrainerOS",game.quit_game)
-		button(list,"Одиночная игра",func(): menu("main"))
+		if game.net.bridge.registered: button(list,"Return to lobby",func(): game.net.bridge.open_lobby())
+		else: button(list,"Return to TrainerOS",game.quit_game)
+		button(list,"Solo play",func(): menu("main"))
 	elif mode=="results":
-		list.add_child(label("ФИНИШ!",38,GOLD))
+		list.add_child(label("FINISH!",38,GOLD))
 		list.add_child(label(game.track_title()+" · "+game.BotSettings.title(game.race_bots),24))
 		var rank = game.standings()
 		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
@@ -164,19 +164,19 @@ func menu(mode: String) -> void:
 		for i in rank.size():
 			var car: Node3D=rank[i]
 			var column = left if i<8 else right
-			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f с" % car.finish_time if car.finish_time>=0 else "не финишировал"),19,GOLD if car.local_player else PAPER))
+			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f s" % car.finish_time if car.finish_time>=0 else "DNF"),19,GOLD if car.local_player else PAPER))
 		if game.cup.running:
 			if not game.cup.pending_result.is_empty():
 				list.add_child(label(game.cup.store.notice,18,GOLD))
-				button(list,"Повторить сохранение",game.cup.retry_save)
+				button(list,"Retry save",game.cup.retry_save)
 			else:
-				list.add_child(label("Очки этапа сохранены в общем зачёте.",18,GOLD))
-				button(list,"К этапам и зачёту",game.cup.leave_stage)
+				list.add_child(label("Stage points saved to the standings.",18,GOLD))
+				button(list,"Stages and standings",game.cup.leave_stage)
 		else:
-			list.add_child(label("Отдельный заезд · без очков и наград кубка",16,Color("bed0c6")))
-			if game.net.online and game.net.voted: list.add_child(label("Реванш: ожидаем остальных участников…",19,GOLD))
-			else: button(list,"Реванш",game.start_race)
-			button(list,"К кубкам",game.return_menu)
+			list.add_child(label("Single race · no cup points or rewards",16,Color("bed0c6")))
+			if game.net.online and game.net.voted: list.add_child(label("Rematch: waiting for the other drivers…",19,GOLD))
+			else: button(list,"Rematch",game.start_race)
+			button(list,"Back to cups",game.return_menu)
 	# Native controls share a deterministic vertical focus chain, including sliders.
 	var enabled=focus_controls.filter(func(c): return not (c is BaseButton and c.disabled))
 	for i in enabled.size():
@@ -193,7 +193,7 @@ func back() -> void:
 	if menu_mode=="bots": menu(bots_parent); return
 	if menu_mode=="audio": menu(audio_parent); return
 	if menu_mode=="controls": menu(controls_parent); return
-	if menu_mode=="main": confirm("ВЫЙТИ ИЗ ИГРЫ?","Пройденные этапы и гараж сохранены.","Выйти",game.quit_game); return
+	if menu_mode=="main": confirm("QUIT GAME?","Completed stages and your garage are saved.","Quit",game.quit_game); return
 	menu({"conditions":"quick","quick":"modes","standings":"cup","cup_replace":"cup","cup":"cups","credits":"settings","bindings":"controls"}.get(menu_mode,"main"))
 
 func select_cup(id: String) -> void:
@@ -214,7 +214,7 @@ func execute_confirm() -> void:
 
 func cycle_haptics(step: int = 1) -> void:
 	var value=posmod(game.cup.store.haptics_level()+step,game.haptics.LEVELS.size())
-	gearbox_notice="" if game.cup.store.set_haptics_level(value) else "Не удалось сохранить настройку."
+	gearbox_notice="" if game.cup.store.set_haptics_level(value) else "Could not save this setting."
 	game.haptics.stop(); menu("controls")
 
 func toggle_gearbox() -> void:
@@ -222,13 +222,13 @@ func toggle_gearbox() -> void:
 	if game.cup.store.set_manual_gears(enabled):
 		game.player().manual_gears=enabled; game.player().transmission.pending=0
 		game.controls.neutral_required=true; gearbox_notice=""
-	else: gearbox_notice="Не удалось сохранить настройку."
+	else: gearbox_notice="Could not save this setting."
 	menu("controls")
 
 func cycle_audio(kind: String) -> void:
 	var current=game.sound.music_volume if kind=="music" else game.sound.effects_volume
 	var value=fmod(roundf(current*4)+1,5)/4
-	audio_notice="" if game.sound.set_volume(kind,value) else "Не удалось сохранить настройки."
+	audio_notice="" if game.sound.set_volume(kind,value) else "Could not save settings."
 	menu("audio")
 
 func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) -> void:
@@ -267,7 +267,7 @@ func _draw() -> void:
 	var seconds = int(game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
 	var section: String=game.track.section_name(car.checkpoint)
-	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f км" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
+	write("LAP %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f km" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
 	if not section.is_empty(): write(section,Vector2(240,106),20,GOLD)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
@@ -284,12 +284,12 @@ func _draw() -> void:
 	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
-	write("ПЕРЕГРЕВ" if car.overheated else "ПУЛЕМЁТ",weapon+Vector2(14,26),17,heat_color)
+	write("OVERHEATED" if car.overheated else "MACHINE GUN",weapon+Vector2(14,26),17,heat_color)
 	write("∞",weapon+Vector2(142,28),26,PAPER)
 	draw_style_box(_plate(),Rect2(weapon+Vector2(14,38),Vector2(153,13)))
 	draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
 	if car.weapon_heat>0: draw_line(weapon+Vector2(15,44),weapon+Vector2(15+151*car.weapon_heat/100,44),heat_color,9,true)
-	write("ЩИТ: "+("ГОТОВ" if car.shield_item else "—"),weapon+Vector2(14,76),15,Color("7edbff"))
+	write("SHIELD: "+("READY" if car.shield_item else "—"),weapon+Vector2(14,76),15,Color("7edbff"))
 	if game.state in ["race","countdown"]:
 		var target: Vector3=car.position+car.aim*8+Vector3.UP*0.4
 		if not game.camera.is_position_behind(target):
@@ -299,10 +299,10 @@ func _draw() -> void:
 	if game.state=="countdown":
 		var text = str(maxi(1,ceili(game.countdown)))
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
-	if car.disabled_time>0: write("ВОССТАНОВЛЕНИЕ",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
-	elif car.missing_wheels!=0: write("КОЛЕСО ПОТЕРЯНО",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
+	if car.disabled_time>0: write("RECOVERING",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
+	elif car.missing_wheels!=0: write("WHEEL LOST",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
 	if not message.is_empty(): write(message,Vector2(240,106 if section.is_empty() else 132),18,GOLD)
-	if game.show_metrics: write("%.0f FPS · %d машин" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
+	if game.show_metrics: write("%.0f FPS · %d cars" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
 
 func _menu_backdrop() -> void:
 	var modal=menu_mode in ["confirm","cup_replace"]
@@ -316,22 +316,22 @@ func _menu_backdrop() -> void:
 			var p=Vector2(fmod(i*173.0,size.x),14+fmod(i*7.0,18))
 			draw_line(p,p+Vector2(12+i%17,-2),Color(0.88,0.85,0.73,0.08),1)
 		draw_colored_polygon(PackedVector2Array([Vector2(20,48),Vector2(28,48),Vector2(23,114),Vector2(15,114)]),GOLD)
-	var hints="↑ ↓ — выбор    Enter — подтвердить    Esc — назад"
+	var hints="↑ ↓ — select    Enter — confirm    Esc — back"
 	var pads=Input.get_connected_joypads()
 	if not pads.is_empty():
 		var pad_name=Input.get_joy_name(pads[0]).to_lower()
-		var accept="Нижняя кнопка"; var cancel="Правая кнопка"
+		var accept="Bottom face button"; var cancel="Right face button"
 		if "xbox" in pad_name or "xinput" in pad_name: accept="A"; cancel="B"
 		elif "playstation" in pad_name or "dual" in pad_name or "ps4" in pad_name or "ps5" in pad_name: accept="×"; cancel="○"
 		elif "nintendo" in pad_name or "switch" in pad_name: accept="B"; cancel="A"
-		hints="Стик / крестовина — выбор    %s — подтвердить    %s — назад" % [accept,cancel]
+		hints="Stick / D-pad — select    %s — confirm    %s — back" % [accept,cancel]
 	write(hints,Vector2(52,size.y-26),18,Color("e1e5d6"))
 
 func _speedometer(car: Node3D) -> void:
 	var at=Vector2(158,size.y-117)
 	draw_style_box(_plate(),Rect2(at,Vector2(204,94)))
 	write("%03d" % roundi(displayed_speed),at+Vector2(12,57),48)
-	write("км/ч",at+Vector2(16,79),16,Color("bed0c6"))
+	write("km/h",at+Vector2(16,79),16,Color("bed0c6"))
 	var hot=car.transmission.rpm>=car.transmission.SHIFT_RPM
 	var tint=GOLD if hot else Color("58d7ec")
 	write(car.transmission.gear_label(),at+Vector2(150,55),40,tint)

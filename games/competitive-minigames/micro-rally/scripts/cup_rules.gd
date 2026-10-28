@@ -2,16 +2,16 @@
 extends RefCounted
 const ID = "forest-challenge"
 const VERSION = 1
-const TITLE = "Лесной вызов"
+const TITLE = "Woodland Challenge"
 const POINTS = [25,20,16,13,11,10,9,8,7,6,5,4,3,2,1,0]
 const CARS = ["swift","comet","trail","vortex"]
 const MODELS = ["hatchback-sports","sedan-sports","suv","race"]
 const TITLES = ["Swift","Comet","Trail","Vortex"]
 const STAGES = [
-	{"id":"valley","title":"Грязевая долина","track":preload("race_wire.gd").TRACK,"laps":5,"target":"4–6 мин","weight":2,"time":"day","weather":"clear","available":true},
-	{"id":"quarry","title":"Карьер","track":"quarry.1","laps":6,"target":"6–8 мин","weight":2,"time":"sunset","weather":"clear","available":true},
-	{"id":"pass","title":"Лесной перевал","track":"forest-pass.1","laps":5,"target":"8–10 мин","weight":2,"time":"dawn","weather":"rain","available":true},
-	{"id":"boss","title":"Nordschleife · босс","track":"nordschleife.1","laps":1,"target":"20+ мин","weight":3,"time":"day","weather":"overcast","available":true}
+	{"id":"valley","title":"Dirty Valley","track":preload("race_wire.gd").TRACK,"laps":5,"target":"4–6 min","weight":2,"time":"day","weather":"clear","available":true},
+	{"id":"quarry","title":"Quarry","track":"quarry.1","laps":6,"target":"6–8 min","weight":2,"time":"sunset","weather":"clear","available":true},
+	{"id":"pass","title":"Forest Pass","track":"forest-pass.1","laps":5,"target":"8–10 min","weight":2,"time":"dawn","weather":"rain","available":true},
+	{"id":"boss","title":"Nordschleife · boss","track":"nordschleife.1","laps":1,"target":"20+ min","weight":3,"time":"day","weather":"overcast","available":true}
 ]
 static func whole(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
@@ -70,4 +70,4 @@ static func won(results: Array, slot: int = 0) -> bool:
 		if row.slot==slot: return row.place==1 and row.points2>0
 	return false
 static func points(value: int) -> String:
-	return str(value/2)+(",5" if value%2 else "")
+	return str(value/2)+(".5" if value%2 else "")

@@ -52,14 +52,14 @@ func record_key() -> String:
 	var key = ("valley.v1/" if legacy else "valley.v2/")+time_of_day+"/"+weather
 	if not timeline.is_empty(): key+="/flow-"+JSON.stringify(timeline).sha256_text().substr(0,16)
 	return key
-func time_title() -> String: return {"day":"День","sunset":"Закат","night":"Ночь","dawn":"Рассвет"}[time_of_day]
-func weather_title() -> String: return {"clear":"Ясно","overcast":"Облачно","rain":"Дождь"}[weather]
+func time_title() -> String: return {"day":"Day","sunset":"Sunset","night":"Night","dawn":"Dawn"}[time_of_day]
+func weather_title() -> String: return {"clear":"Clear","overcast":"Overcast","rain":"Rain"}[weather]
 func title() -> String: return time_title()+" · "+weather_title()
 
 func scenario_title() -> String:
-	if timeline.is_empty(): return "Без изменений"
-	if timeline[-1].time=="night" and timeline[-1].weather=="rain": return "К ночи и дождю"
-	return "Прояснение" if timeline.size()==1 and timeline[0].weather=="clear" else "По сценарию"
+	if timeline.is_empty(): return "Unchanged"
+	if timeline[-1].time=="night" and timeline[-1].weather=="rain": return "Nightfall and rain"
+	return "Clearing up" if timeline.size()==1 and timeline[0].weather=="clear" else "Scripted"
 
 func next_scenario() -> Dictionary:
 	var data = descriptor()
@@ -73,5 +73,5 @@ func next_scenario() -> Dictionary:
 func live_title(seconds: float) -> String:
 	var s = sample(seconds)
 	var current: Dictionary=s.to if s.blend>=0.5 else s.from
-	var text = {"day":"День","sunset":"Закат","night":"Ночь","dawn":"Рассвет"}[current.time]+" · "+{"clear":"Ясно","overcast":"Облачно","rain":"Дождь"}[current.weather]
+	var text = {"day":"Day","sunset":"Sunset","night":"Night","dawn":"Dawn"}[current.time]+" · "+{"clear":"Clear","overcast":"Overcast","rain":"Rain"}[current.weather]
 	return text+(" ↗" if s.from.time!=s.to.time or s.from.weather!=s.to.weather else "")

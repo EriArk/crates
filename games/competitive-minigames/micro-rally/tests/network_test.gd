@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.4","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.5","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -52,12 +52,17 @@ func run() -> void:
 	check(Wire.valid_snapshot(snapshot,game.pickups.size()),"Bounded full state validates")
 	game.net._receive("p0",snapshot)
 	check(game.elapsed==5 and game.state=="race","Client accepts host time and phase")
+	snapshot.cars[15][44]=-250; snapshot.cars[15][45]=320; snapshot.cars[15][46]=4
 	snapshot.cars[15][39]=4; snapshot.cars[15][40]=5760; snapshot.cars[15][41]=80; snapshot.cars[15][42]=0
 	snapshot.cars[15][13]=350; snapshot.cars[15][12]=8|32; snapshot.cars[15][11]=91
 	game.net.apply_targets(1.0,true)
 	check(game.player().checkpoint==30 and game.player().ghost_time>0,"Replica restores lap checkpoint and recovery visuals")
 	check(game.player().weapon_heat==91 and game.player().overheated,"Replica restores host heat and overheat lock")
+	check(game.player().physics.wheels[0].long_slip== -2.5 and game.player().physics.wheels[0].slip==3.2 and game.player().physics.wheels[0].surface==4,"Replica restores signed slip and material without local tire simulation")
 	check(game.player().transmission.gear==4 and game.player().transmission.rpm==5760 and game.player().transmission.shift_left==0.08,"Replica instruments use authoritative gear, rpm and shift")
+	for field in [44,45,46]:
+		var invalid_tire=snapshot.duplicate(true); invalid_tire.cars[15][field]=6001
+		check(not Wire.valid_snapshot(invalid_tire,game.pickups.size()),"Reject out-of-range tire telemetry atomically")
 	var invalid_gear=snapshot.duplicate(true); invalid_gear.cars[15][39]=6
 	check(not Wire.valid_snapshot(invalid_gear,game.pickups.size()),"Invalid gear rejected")
 	invalid_gear=snapshot.duplicate(true); invalid_gear.cars[15][40]=8001
@@ -79,6 +84,7 @@ func run() -> void:
 	check(not Wire.valid_snapshot(invalid_rotation,game.pickups.size()),"Non-unit orientation is rejected")
 	var invalid_contact=snapshot.duplicate(true); invalid_contact.cars[15][38]=15
 	check(not Wire.valid_snapshot(invalid_contact,game.pickups.size()),"Missing wheel cannot claim ground contact")
+	print("SNAPSHOT bytes=",JSON.stringify(snapshot).to_utf8_buffer().size())
 	check(JSON.stringify(snapshot).to_utf8_buffer().size()<16384,"Full 16-car 3D state fits SDK packet budget")
 	game.weather.update_headlights(game.cars,1.0,15)
 	check(game.weather.light_cars[0]==game.player(),"Headlight budget follows local seat fifteen")

@@ -116,3 +116,5 @@ func _conveyor(pos: Vector3, heading: float) -> void:
 	for x in [-1.3,1.3]:
 		var rail=Art.box(root,Vector3(0.16,0.5,16),Vector3(x,4.35,0),Color("b39962")); rail.rotation.x=-0.12
 	# Equipment stays off the racing line, but its frame blocks cars and gunfire.
+
+func road_surface(_point: Vector3, _at: int) -> int: return Tires.Kind.GRAVEL

@@ -35,7 +35,6 @@ func update(game: Node, delta: float) -> void:
 			game.effects.ring(car.position,Color("b3f4ff"))
 		if trail and car.finish_time<0 and car.disabled_time<=0 and car.ghost_time<=0:
 			if car.boosting and car.boost>0 and (car.throttle>0 or car.replica): game.effects.exhaust(car)
-			if car.grounded and absf(car.linear_velocity.dot(car.transform.basis.x))>2.8:
-				game.effects.skid(car,game.track)
-			else: game.effects.end_skid(car)
+			game.effects.skid(car,game.track)
+			game.effects.dust(car,game.current_wetness)
 		elif trail: game.effects.end_skid(car)

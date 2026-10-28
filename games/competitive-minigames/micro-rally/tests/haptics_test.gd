@@ -38,6 +38,11 @@ func run() -> void:
 	car.shield=80; h.update(game,0.04); check(h.events.shield==1,"Shield hit has separate feedback")
 	car.reset_serial+=1; h.update(game,0.04)
 	check(h.output==Vector2.ZERO and h.pulses.is_empty(),"Recovery cancels effects and seeds fresh telemetry")
+	for w in car.physics.wheels: w.contact=true; w.long_slip=8; w.slip=0
+	h.update(game,0.04); check(h.output.x>0,"Stationary wheelspin drives local motors")
+	for w in car.physics.wheels: w.contact=false
+	h.update(game,0.04); check(h.output==Vector2.ZERO,"Unsupported spinning wheels do not cause tire vibration")
+	for w in car.physics.wheels: w.contact=true
 	car.linear_velocity=Vector3(5,0,-10); car.boosting=true; car.throttle=1
 	h.update(game,0.04); check(h.output.x>0 and h.output.y>0,"Drift and boost make a bounded continuous layer")
 	game.net.overlay=true; h.update(game,0.02)

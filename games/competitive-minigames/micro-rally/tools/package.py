@@ -33,11 +33,11 @@ for suffix,arch,machine in [('arm64','aarch64',183),('x86_64','x86_64',62)]:
  if binary[:6]!=b'\x7fELF\x02\x01' or int.from_bytes(binary[18:20],'little')!=machine:p.error('Wrong architecture')
  files={'bin/micro-rally':(ROOT/'launch.sh').read_bytes(),'libexec/micro-rally':binary,**common}
  name=f'micro-rally-{version}-{arch}.tar.gz'; target=a.output/name; archive(target,files); archives.append(target)
- record=dict(id='micro-rally',title='Micro Rally (альфа)',kind='game',version=version,architecture=arch,
+ record=dict(id='micro-rally',title='Micro Rally (alpha)',kind='game',version=version,architecture=arch,
   entry='bin/micro-rally',icon='icon.svg',license='GPL-3.0-or-later',repository='https://github.com/EriArk/crates.git',revision=a.revision,
   size=target.stat().st_size,unpackedSize=sum(map(len,files.values()))+1048576,sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
   channel='Experimental',compatibility='untested',compatibilityNote='Alpha: handheld controls, audio and sustained performance await player feedback.',
-  notes='Independent suspension and tire contact, jumps/rollovers, detachable wheel, conventional left/right steering. Unlimited heat-limited base gun. Network protocol 3 requires matching updates. Quarry is the second solo cup stage and a separate race; two later stages remain locked. Three AI difficulty presets plus custom pace, reaction, combat, aim and personality; cup settings persist across stages. Network races remain in Valley. Flip2 uses OpenGL.',
+  notes='Independent suspension and tire contact, jumps/rollovers, detachable wheel, conventional left/right steering. Unlimited heat-limited base gun. Network protocol 5 requires matching updates. Four solo cup stages include the full Nordschleife final. English menus, HUD and messages; five tire surfaces with wet grip and slip-driven feedback. Three AI difficulty presets plus custom pace, reaction, combat, aim and personality; cup settings persist across stages. Network races remain in Valley. Flip2 uses OpenGL.',
   url=f'https://github.com/EriArk/crates/releases/download/micro-rally-v{version}/{name}')
  (a.output/f'micro-rally-{arch}-record.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 source=a.output/f'micro-rally-{version}-source.tar.gz'

@@ -1,0 +1,26 @@
+{
+  "translated_unique_strings": 249,
+  "checked_quoted_literals": 2318,
+  "cyrillic_or_replacement_glyphs": 0,
+  "physics_snapshot": "c5e558beed0c59db",
+  "english_snapshot": "e45698c052bb9dd1",
+  "runtime_files_changed_only_in_string_literals_and_line_endings": [
+    "addons/traineros/group_client.gd",
+    "scripts/bot_driver.gd",
+    "scripts/bot_menu.gd",
+    "scripts/bot_settings.gd",
+    "scripts/car.gd",
+    "scripts/career_store.gd",
+    "scripts/cup_flow.gd",
+    "scripts/cup_menu.gd",
+    "scripts/cup_rules.gd",
+    "scripts/event_catalog.gd",
+    "scripts/front_menu.gd",
+    "scripts/haptics.gd",
+    "scripts/hud.gd",
+    "scripts/main.gd",
+    "scripts/race_session.gd",
+    "scripts/stage_conditions.gd",
+    "scripts/track_registry.gd"
+  ]
+}

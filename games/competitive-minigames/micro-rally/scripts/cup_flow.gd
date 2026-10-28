@@ -30,7 +30,7 @@ func _profile(id: String) -> void:
 func _revoked() -> void:
 	if profile_key=="standalone": return
 	running=false; pending_result.clear(); store.writable=false; game.haptics.stop()
-	store.notice="Профиль изменился. Перезапустите игру из TrainerOS."
+	store.notice="Your profile changed. Restart the game from TrainerOS."
 	if not game.net.online: game.return_menu()
 func begin_new() -> void:
 	store.begin(); game.hud.menu("cup")
@@ -67,10 +67,10 @@ func next_paint() -> void:
 	store.select_paint((Store.PAINTS.find(store.data.paint)+1)%store.paint_count()); game.hud.menu("garage")
 func status() -> String:
 	if not store.notice.is_empty(): return store.notice
-	if store.data.active.is_empty(): return "16 участников · состав сохраняется между этапами"
+	if store.data.active.is_empty(): return "16 drivers · same roster throughout the cup"
 	var count=store.data.active.results.size()
-	if count==4: return "Победа в кубке!" if Rules.won(store.data.active.results) else "Кубок завершён"
-	if not Rules.STAGES[count].available: return "Зачёт сохранён. Следующая трасса готовится."
-	return "Этап %d / 4 · можно продолжить после выхода" % (count+1)
+	if count==4: return "Cup victory!" if Rules.won(store.data.active.results) else "Cup complete"
+	if not Rules.STAGES[count].available: return "Standings saved. The next track is coming soon."
+	return "Stage %d / 4 · resume after leaving the game" % (count+1)
 func driver_title(slot: int) -> String:
-	return "Вы" if slot==0 else game.Car.BotDriver.STYLES[game.BotSettings.style_index(store.active_bots(),slot)]+" "+str(slot)
+	return "You" if slot==0 else game.Car.BotDriver.STYLES[game.BotSettings.style_index(store.active_bots(),slot)]+" "+str(slot)

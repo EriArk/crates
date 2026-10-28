@@ -35,18 +35,18 @@ static func change(hud, field: String, direction: int = 1) -> void:
 	hud.menu("bots")
 static func build(hud, list: VBoxContainer) -> void:
 	var settings=value(hud); var readonly=locked(hud) or not hud.game.cup.store.writable
-	list.add_child(hud.label("СОПЕРНИКИ",30,hud.GOLD))
-	list.add_child(hud.label("Весь кубок · 15 соперников" if hud.bots_parent!="quick" else "Отдельные трассы · боты в сети у ведущего",18))
+	list.add_child(hud.label("OPPONENTS",30,hud.GOLD))
+	list.add_child(hud.label("Whole cup · 15 opponents" if hud.bots_parent!="quick" else "Single events · host's bots online",18))
 	if readonly:
-		list.add_child(hud.label("Сложность: "+Settings.title(settings),22,hud.GOLD))
+		list.add_child(hud.label("Difficulty: "+Settings.title(settings),22,hud.GOLD))
 		for field in Settings.AXES: list.add_child(hud.label(Settings.LABELS[field]+": "+Settings.VALUES[field][int(settings[field])],22))
 		list.add_child(hud.label(Settings.STYLE_TITLES[Settings.STYLES.find(settings.style)],22))
-		list.add_child(hud.label("Настройки закреплены на весь кубок.\nИзменить их можно при создании нового." if locked(hud) else hud.game.cup.store.notice,18))
+		list.add_child(hud.label("Settings are locked for the whole cup.\nStart a new cup to change them." if locked(hud) else hud.game.cup.store.notice,18))
 	else:
-		option(hud,list,"Сложность: "+Settings.title(settings),func(step): change(hud,"preset",step))
-		if hud.bots_parent=="quick": option(hud,list,"Количество в соло: "+str(hud.game.bot_count),func(step): change(hud,"count",step))
+		option(hud,list,"Difficulty: "+Settings.title(settings),func(step): change(hud,"preset",step))
+		if hud.bots_parent=="quick": option(hud,list,"Solo opponents: "+str(hud.game.bot_count),func(step): change(hud,"count",step))
 		for field in Settings.AXES: option(hud,list,Settings.LABELS[field]+": "+Settings.VALUES[field][int(settings[field])],func(step): change(hud,field,step))
-		option(hud,list,"Характер: "+Settings.STYLE_TITLES[Settings.STYLES.find(settings.style)],func(step): change(hud,"style",step))
-		list.add_child(hud.label("← / → или нажатие · изменения сохраняются",17))
+		option(hud,list,"Driving style: "+Settings.STYLE_TITLES[Settings.STYLES.find(settings.style)],func(step): change(hud,"style",step))
+		list.add_child(hud.label("← / → or press · changes saved automatically",17))
 	if not hud.bot_notice.is_empty(): list.add_child(hud.label(hud.bot_notice,17,hud.GOLD))
-	hud.button(list,"Назад",func(): hud.menu(hud.bots_parent))
+	hud.button(list,"Back",func(): hud.menu(hud.bots_parent))

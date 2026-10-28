@@ -141,3 +141,5 @@ func _grass() -> void:
 			var pose: Transform3D=cells[key][i]; pose.origin-=origin; multi.set_instance_transform(i,pose)
 		node.position=origin; node.multimesh=multi; node.material_override=mat; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		node.visibility_range_end=65; node.visibility_range_end_margin=10; add_child(node)
+
+func road_surface(_point: Vector3, _at: int) -> int: return Tires.Kind.GRAVEL

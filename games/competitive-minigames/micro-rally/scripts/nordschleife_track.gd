@@ -223,3 +223,12 @@ func _scenery_tile(key: Vector2i) -> Node3D:
 		for i in poses.size(): var pose: Transform3D=poses[i]; pose.origin-=origin; multi.set_instance_transform(i,pose)
 		node.position=origin; node.multimesh=multi; node.material_override=meadow_material(true); node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=90; root.add_child(node)
 	return root
+
+func road_surface(point: Vector3, at: int) -> int:
+	# Same bank spans and inside 66% of the ribbon as nord_road.gdshader.
+	var side=Vector3(-tangents[at].z,0,tangents[at].x)
+	var u=0.5+(point-points[at]).dot(side)/WIDTH
+	var distance=float(at)/COUNT*20832
+	for span in data.banks:
+		if distance>span[0]+10 and distance<span[1]-10 and u<0.66: return Tires.Kind.CONCRETE
+	return Tires.Kind.ASPHALT

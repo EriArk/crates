@@ -35,9 +35,9 @@ func change(direction: int, speed: float) -> bool:
 func step(dt: float, speed: float, wheel_speed: float, throttle: float, brake: float, grounded: bool, manual: bool) -> void:
 	shift_left=maxf(0,shift_left-dt); cooldown=maxf(0,cooldown-dt)
 	# Same brake-to-reverse convenience in both modes, without an unsafe forward/reverse shift at speed.
-	if not reverse and speed<0.4 and throttle<0.05 and brake>0.05:
+	if grounded and not reverse and speed<0.4 and throttle<0.05 and brake>0.05:
 		reverse=true; gear=1; shift_left=0; pending=0
-	elif reverse and speed> -0.4 and (throttle>0.05 or brake<0.05):
+	elif grounded and reverse and speed> -0.4 and (throttle>0.05 or brake<0.05):
 		reverse=false; gear=1; shift_left=0; pending=0
 	if pending!=0:
 		if manual: change(pending,speed)

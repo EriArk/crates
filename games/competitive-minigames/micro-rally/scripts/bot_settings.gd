@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const AXES = ["pace","reaction","aggression","accuracy"]
-const LABELS = {"pace":"Темп", "reaction":"Реакция", "aggression":"Стрельба", "accuracy":"Точность"}
-const VALUES = {"pace":["Спокойный","Обычный","Быстрый"], "reaction":["Неспешная","Обычная","Быстрая"],
-	"aggression":["Редкая","Обычная","Напористая"], "accuracy":["Низкая","Обычная","Высокая"]}
-const PRESETS = ["Лёгкая","Обычная","Сложная"]
+const LABELS = {"pace":"Pace", "reaction":"Reaction", "aggression":"Aggression", "accuracy":"Accuracy"}
+const VALUES = {"pace":["Relaxed","Normal","Fast"], "reaction":["Slow","Normal","Fast"],
+	"aggression":["Low","Normal","High"], "accuracy":["Low","Normal","High"]}
+const PRESETS = ["Easy","Normal","Hard"]
 const STYLES = ["mixed","racer","assault","tactical","daredevil"]
-const STYLE_TITLES = ["Разные характеры","Рейсеры","Штурмовики","Тактики","Смельчаки"]
+const STYLE_TITLES = ["Mixed styles","Racers","Bruisers","Tacticians","Daredevils"]
 static func preset(level: int = 1) -> Dictionary:
 	return {"version":1,"pace":level,"reaction":level,"aggression":level,"accuracy":level,"style":"mixed"}
 static func valid(value) -> bool:
@@ -23,7 +23,7 @@ static func level(value: Dictionary) -> int:
 		if key(value)==key(preset(i)): return i
 	return -1
 static func title(value: Dictionary) -> String:
-	var i=level(value); return PRESETS[i] if i>=0 else "Своя настройка"
+	var i=level(value); return PRESETS[i] if i>=0 else "Custom"
 static func key(value: Dictionary) -> String:
 	return "bots.v1/%d%d%d%d/%s" % [value.pace,value.reaction,value.aggression,value.accuracy,value.style]
 static func style_index(value: Dictionary, slot: int) -> int:

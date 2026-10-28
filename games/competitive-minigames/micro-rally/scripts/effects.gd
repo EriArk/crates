@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+const Tires = preload("tire_surface.gd")
 const Art = preload("art.gd")
 const LIMIT = 220
 const MARK_LIMIT = 96
@@ -10,6 +11,8 @@ var marks: Array = []
 var skid_history: Dictionary = {}
 var mark_mesh: PlaneMesh
 var ring_mesh: TorusMesh
+var tire_smoke: StandardMaterial3D
+var spray_material: StandardMaterial3D
 var smoke_material: StandardMaterial3D
 var dust_clock = 0.0
 var sphere: SphereMesh
@@ -24,6 +27,10 @@ func _ready() -> void:
 	dust_material=StandardMaterial3D.new(); dust_material.albedo_texture=texture; dust_material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA; dust_material.billboard_mode=BaseMaterial3D.BILLBOARD_ENABLED
 	dust_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED; dust_material.no_depth_test=false
 	smoke_material=dust_material.duplicate(); smoke_material.albedo_color=Color(0.25,0.25,0.25,0.9)
+	tire_smoke=dust_material.duplicate(); tire_smoke.albedo_texture=texture.duplicate()
+	var grey=Gradient.new(); grey.colors=PackedColorArray([Color(0.72,0.74,0.76,0.25),Color(0.72,0.74,0.76,0)])
+	tire_smoke.albedo_texture.gradient=grey
+	spray_material=tire_smoke.duplicate(); spray_material.albedo_color=Color(0.7,0.83,0.9,0.65)
 	mark_mesh=PlaneMesh.new(); mark_mesh.size=Vector2.ONE
 	ring_mesh=TorusMesh.new(); ring_mesh.inner_radius=0.92; ring_mesh.outer_radius=1.04; ring_mesh.rings=20; ring_mesh.ring_segments=6
 
@@ -63,18 +70,18 @@ func skid(car: Node3D, _track: Node3D) -> void:
 	var id=car.get_instance_id()
 	var old: Array=skid_history.get(id,[])
 	var contacts: Array=[]
-	for wheel in 2:
+	for wheel in 4:
 		var w: Dictionary=car.physics.wheels[wheel]
-		if w.missing or not w.contact: contacts.append(null); continue
+		if Tires.intensity(w)<0.08: contacts.append(null); continue
 		var hit={"normal":w.normal}
 		var point: Vector3=w.point+w.normal*0.018
 		contacts.append(point)
-		if old.size()!=2 or old[wheel]==null: continue
+		if old.size()!=4 or old[wheel]==null: continue
 		var segment: Vector3=point-old[wheel]
 		# Join wheel contacts along the skid, not isolated bars along the car body.
 		if segment.length()<0.05 or segment.length()>3: continue
 		if marks.size()>=MARK_LIMIT: marks.pop_front().node.queue_free()
-		var node=MeshInstance3D.new(); node.mesh=mark_mesh; node.material_override=Art.material(Color("634c33"))
+		var node=MeshInstance3D.new(); node.mesh=mark_mesh; node.material_override=Art.material(Tires.MARKS[w.surface])
 		add_child(node); node.position=point.lerp(old[wheel],0.5)
 		var z: Vector3=segment.slide(hit.normal).normalized()
 		node.basis=Basis(hit.normal.cross(z).normalized(),hit.normal,z)
@@ -87,19 +94,26 @@ func end_skid(car: Node3D) -> void:
 	skid_history.erase(car.get_instance_id())
 
 func dust(car: Node3D, wetness: float = 0.0) -> void:
-	if particles.size()>=LIMIT: return
-	var contact: Dictionary={}
-	for w in car.physics.wheels:
-		if w.contact and not w.missing: contact=w; break
-	if contact.is_empty(): return
-	var node = MeshInstance3D.new(); node.mesh=dust_quad
-	node.material_override=dust_material
-	if wetness>0.5:
-		node.mesh=sphere; node.material_override=Art.material(Color("64533e"))
-	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(node); node.position=contact.point+contact.normal*0.08
-	var life = 0.24 if wetness>0.5 else 0.65
-	particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1)),"grow":wetness<0.5})
+	# At most two emissions per car per trail tick, sharing the global VFX budget.
+	var emitted=0
+	for contact in car.physics.wheels:
+		if particles.size()>=LIMIT or emitted>=2: return
+		if not contact.contact or contact.missing: continue
+		var slip=Tires.intensity(contact)
+		var loose: bool=contact.surface>=Tires.Kind.GRAVEL
+		var rolling: bool=car.linear_velocity.length()>3
+		if not (slip>0.08 or (rolling and (loose or wetness>0.15))): continue
+		var node=MeshInstance3D.new(); node.mesh=dust_quad
+		node.material_override=dust_material if loose else tire_smoke
+		var splat: bool=loose and wetness>0.5
+		if splat: node.mesh=sphere; node.material_override=Art.material(Tires.MARKS[contact.surface])
+		elif not loose and wetness>0.15: node.material_override=spray_material
+		node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(node); node.position=contact.point+contact.normal*0.08
+		var life=0.24 if splat else 0.65
+		var kick= -car.basis.z*clampf(contact.long_slip*0.12,-2,2)
+		particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1))-kick,"grow":not splat,"fade":not splat})
+		emitted+=1
 
 func beam(from: Vector3, to: Vector3, color: Color = Color("ffd07a")) -> void:
 	flash(from,color,1.8)

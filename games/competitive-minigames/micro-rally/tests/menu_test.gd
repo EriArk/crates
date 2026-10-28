@@ -27,7 +27,7 @@ func run() -> void:
 	press("ui_accept"); await process_frame
 	check(hud.menu_mode=="cup","Default catalogue focus opens selected cup, not filter")
 	press("ui_cancel"); await process_frame
-	check(hud.menu_mode=="cups" and root.gui_get_focus_owner().text.begins_with("ЛЕСНОЙ"),"Back restores cup-card focus")
+	check(hud.menu_mode=="cups" and root.gui_get_focus_owner().text.begins_with("WOODLAND"),"Back restores cup-card focus")
 	check(Catalog.MODES.size()==3 and Catalog.MODES.map(func(m): return m.id)==["race","arena","royale"],"Only the three accepted modes exist")
 	var fixtures: Array=[]
 	for i in 13: fixtures.append({"id":str(i),"category":"race" if i<10 else "mixed"})
@@ -35,7 +35,7 @@ func run() -> void:
 	check(not Catalog.can_start("unknown"),"Unknown cup cannot launch first cup by accident")
 	var catalogue: Array=[]
 	for i in 13:
-		var entry=Catalog.CUPS[0].duplicate(true); entry.id="preview-"+str(i); entry.title="Тестовый кубок "+str(i); catalogue.append(entry)
+		var entry=Catalog.CUPS[0].duplicate(true); entry.id="preview-"+str(i); entry.title="Test cup "+str(i); catalogue.append(entry)
 	hud.cup_entries=catalogue; hud.menu("cups"); await process_frame; await process_frame; fit(hud,"13-cup catalogue first page")
 	hud.buttons[-2].pressed.emit(); await process_frame; await process_frame
 	check(hud.cup_page==1,"Next page browses additional cup descriptors")
@@ -69,12 +69,12 @@ func run() -> void:
 	check(hud.buttons.size()==6,"Empty category exposes filters and Back, no fake start")
 	hud.cup_filter=0
 	hud.menu("main"); hud.buttons[-1].grab_focus()
-	hud.confirm("ПРОВЕРКА","Действие требует подтверждения.","Подтвердить",func(): confirmed+=1)
+	hud.confirm("CONFIRM","Please confirm this action.","Confirm",func(): confirmed+=1)
 	await process_frame; fit(hud,"confirmation")
 	check(hud.buttons[0].has_focus(),"Confirmation always defaults to Cancel")
 	press("ui_accept"); await process_frame
 	check(confirmed==0 and hud.menu_mode=="main" and hud.buttons[-1].has_focus(),"Accepting Cancel preserves state and restores trigger focus")
-	hud.confirm("ПРОВЕРКА","Подтверждение.","Подтвердить",func(): confirmed+=1)
+	hud.confirm("CONFIRM","Confirm this action.","Confirm",func(): confirmed+=1)
 	hud.buttons[-1].pressed.emit(); check(confirmed==1,"Deliberate confirmation executes once")
 	hud.execute_confirm(); check(confirmed==1,"Repeated confirmation cannot execute twice")
 	game.start_race(); game.state="pause"; paused=true; hud.menu("pause")
@@ -91,7 +91,7 @@ func run() -> void:
 	game.net.bridge.registered=true; game.net.bridge.active=true; game.net.bridge.outgoing.clear(); game.net.bridge.pending.clear()
 	hud.menu("main")
 	for button in hud.buttons:
-		if button.text=="ЛОББИ": button.pressed.emit(); break
+		if button.text=="LOBBY": button.pressed.emit(); break
 	var wire=game.net.bridge.outgoing.get_string_from_utf8()
 	check(wire.contains('"method":"activity.open"') and not game.net.online,"Lobby action uses existing SDK activity route")
 	game.net.bridge.active=false; game.net.bridge.registered=false; game.net.bridge.outgoing.clear(); game.net.bridge.pending.clear()

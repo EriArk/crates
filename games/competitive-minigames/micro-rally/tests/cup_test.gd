@@ -12,7 +12,7 @@ func result(winner: int = 0) -> Array:
 func _initialize() -> void:
 	var a=result(); a[15].ms=-1
 	var table=Rules.table([a,a,a,a])
-	check(table[0].points2==225 and Rules.points(225)=="112,5","Final awards exactly 1.5x without floating drift")
+	check(table[0].points2==225 and Rules.points(225)=="112.5","Final awards exactly 1.5x without floating drift")
 	check(table[15].points2==0,"DNF earns no points")
 	var tied=result(); tied[1].ms=tied[0].ms
 	check(Rules.table([tied])[0].place==Rules.table([tied])[1].place,"Equal finish times share points and place")

@@ -9,13 +9,13 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-TESTS=['menu_test.gd','nord_test.gd','nord_race_test.gd','haptics_test.gd','pass_test.gd','pass_race_test.gd','transmission_test.gd','driver_feedback_test.gd','difficulty_race_test.gd','difficulty_test.gd','difficulty_behavior_test.gd','scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
+TESTS=['tire_test.gd','menu_test.gd','nord_test.gd','nord_race_test.gd','haptics_test.gd','pass_test.gd','pass_race_test.gd','transmission_test.gd','driver_feedback_test.gd','difficulty_race_test.gd','difficulty_test.gd','difficulty_behavior_test.gd','scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
 parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 files = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in sorted(ROOT.rglob('*'))
-         if p.is_file() and not any(x in p.relative_to(ROOT).parts for x in ('.godot','__pycache__','evidence'))
+         if p.is_file() and not any(x in p.relative_to(ROOT).parts for x in ('.godot','__pycache__','evidence','build','dist'))
          and p.suffix != '.png'}  # PNG assets are added explicitly below.
 for p in (ROOT/'assets').rglob('*.png'): files[p.relative_to(ROOT).as_posix()] = p.read_bytes()
 digest = {name: hashlib.sha256(data).hexdigest() for name,data in files.items()}

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node
-# One local engine, three movement layers, two music decks and a bounded SFX pool.
+const Tires = preload("tire_surface.gd")
+# One local engine, bounded tire/boost layers, two music decks and a bounded SFX pool.
 const VOICES = 12
 const FILES = {"impact0":"impact0", "impact1":"impact1", "wreck":"wreck", "shield":"shield", "win":"win", "finish":"finish", "dnf":"dnf", "final_lap":"final_lap"}
 var streams: Dictionary = {}
@@ -9,6 +10,7 @@ var decks: Array[AudioStreamPlayer] = []
 var deck_gain = [0.0,0.0]
 var motor = AudioStreamPlayer.new()
 var tyres = AudioStreamPlayer.new()
+var squeal = AudioStreamPlayer.new()
 var turbo = AudioStreamPlayer.new()
 var cue = AudioStreamPlayer.new()
 var music_volume = 0.5
@@ -44,11 +46,12 @@ func _ready() -> void:
 		deck.stream.loop=true; deck.volume_db=-80; decks.append(deck)
 	for i in VOICES:
 		var voice=AudioStreamPlayer.new(); add_child(voice); voice.bus=mix_bus; voices.append(voice)
-	for layer in [motor,tyres,turbo,cue]: add_child(layer); layer.bus=mix_bus; layer.volume_db=-80
+	for layer in [motor,tyres,squeal,turbo,cue]: add_child(layer); layer.bus=mix_bus; layer.volume_db=-80
 	motor.stream=_tone(1.0,60,true,0.13)
 	tyres.stream=_tone(1.0,95,true,0.98)
+	squeal.stream=_tone(1.0,610,true,0.38)
 	turbo.stream=_tone(1.0,180,true,0.7)
-	for layer in [motor,tyres,turbo]: layer.play(); layer.stream_paused=true
+	for layer in [motor,tyres,squeal,turbo]: layer.play(); layer.stream_paused=true
 
 func _exit_tree() -> void:
 	for player in get_children():
@@ -133,10 +136,21 @@ func update(game: Node, delta: float) -> void:
 	motor.stream_paused=not moving
 	motor.pitch_scale=lerpf(motor.pitch_scale,0.68+car.transmission.rpm/car.transmission.REDLINE*1.28,1-exp(-delta*9))
 	motor.volume_db=-24+linear_to_db(maxf(0.00001,effects_volume))+(3 if absf(car.throttle)>0.1 else 0)
-	var slip=absf(car.linear_velocity.dot(car.transform.basis.x))
-	tyres.stream_paused=not moving or not car.grounded or speed<2
-	tyres.pitch_scale=0.8+minf(speed,30)*0.02
-	tyres.volume_db=-26+linear_to_db(maxf(0.00001,effects_volume*clampf((speed+slip*4)/35,0,1)))-game.current_wetness*3
+	var tire=Tires.feedback(car)
+	var hard=0.0; var contacts=0
+	for w in car.physics.wheels:
+		if not w.contact or w.missing: continue
+		contacts+=1
+		if w.surface<Tires.Kind.GRAVEL: hard+=1.0
+	hard=hard/contacts if contacts>0 else 0.0
+	var rough=maxf(tire.y*0.65,tire.x*(1-hard))
+	rough=maxf(rough,hard*game.current_wetness*clampf(speed/30,0,0.5))
+	tyres.stream_paused=not moving or not car.grounded or rough<0.015
+	tyres.pitch_scale=0.75+tire.x*0.65+tire.y*0.15
+	tyres.volume_db=-23+linear_to_db(maxf(0.00001,effects_volume*rough))-game.current_wetness*3
+	squeal.stream_paused=not moving or not car.grounded or tire.x*hard<0.015
+	squeal.pitch_scale=0.85+tire.x*0.35
+	squeal.volume_db=-28+linear_to_db(maxf(0.00001,effects_volume*tire.x*hard))
 	turbo.stream_paused=not moving or not car.boosting or car.boost<=0 or car.throttle<=0
 	turbo.pitch_scale=1+speed*0.012; turbo.volume_db=-23+linear_to_db(maxf(0.00001,effects_volume))
 	cue.volume_db=-10+linear_to_db(maxf(0.00001,effects_volume))

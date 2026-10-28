@@ -28,25 +28,25 @@ func load_profile(owner: String, directory: String = "user://career") -> void:
 		if file==null or file.get_length()>262144: damaged=true; continue
 		var envelope=decode(file.get_as_text())
 		if envelope is Dictionary and envelope.get("schema")!=1:
-			writable=false; notice="Сохранение создано другой версией игры."; return
+			writable=false; notice="This save was created by another game version."; return
 		if not envelope is Dictionary or not Rules.whole(envelope.get("generation"),1,2147483647) or not envelope.get("payload") is String:
 			damaged=true; continue
 		if envelope.get("sha256")!=envelope.payload.sha256_text(): damaged=true; continue
 		var candidate=decode(envelope.payload)
 		if candidate is Dictionary and candidate.get("active") is Dictionary and not candidate.active.is_empty() and candidate.active.get("version")!=Rules.VERSION:
-			writable=false; notice="Кубок создан другой версией игры. Сохранение не изменено."; return
+			writable=false; notice="This cup was created by another game version. Your save is unchanged."; return
 		if candidate is Dictionary:
 			var descriptors: Array=[]
 			if candidate.get("bot_preferences") is Dictionary: descriptors.append_array(candidate.bot_preferences.values())
 			if candidate.get("active") is Dictionary and candidate.active.get("bots") is Dictionary: descriptors.append(candidate.active.bots)
 			for descriptor in descriptors:
 				if descriptor is Dictionary and descriptor.has("version") and descriptor.version!=1:
-					writable=false; notice="Настройки ботов созданы другой версией игры."; return
+					writable=false; notice="These bot settings were created by another game version."; return
 		if not valid(candidate): damaged=true; continue
 		if envelope.generation>generation: data=candidate; generation=int(envelope.generation)
 	if exists and generation==0:
-		writable=false; notice="Сохранение повреждено. Исходные файлы сохранены."; return
-	if damaged: notice="Прогресс восстановлен из резервной записи."
+		writable=false; notice="The save is damaged. The original files have been preserved."; return
+	if damaged: notice="Progress restored from a backup."
 static func valid(value) -> bool:
 	if not value is Dictionary or value.get("selected") not in Rules.CARS or value.get("paint") not in PAINTS or not Rules.whole(value.get("wins"),0,1000000): return false
 	if value.selected=="vortex" and value.wins<1: return false
@@ -72,14 +72,14 @@ func commit(next: Dictionary) -> bool:
 	if not writable or not valid(next) or base_path.is_empty(): return false
 	var path=base_path+"."+str((generation+1)%2)+".json"
 	if fault=="write" or DirAccess.make_dir_recursive_absolute(base_path.get_base_dir())!=OK:
-		notice="Не удалось сохранить прогресс. Повторите попытку."; return false
+		notice="Could not save progress. Please try again."; return false
 	var payload=JSON.stringify(next)
 	var file=FileAccess.open(path+".pending",FileAccess.WRITE)
-	if file==null: notice="Нет доступа к сохранению. Повторите попытку."; return false
+	if file==null: notice="Cannot access the save. Please try again."; return false
 	file.store_string(JSON.stringify({"schema":1,"generation":generation+1,"payload":payload,"sha256":payload.sha256_text()})); file.flush()
 	var error=file.get_error(); file.close()
 	if error!=OK or fault=="rename" or DirAccess.rename_absolute(path+".pending",path)!=OK:
-		notice="Не удалось завершить сохранение. Повторите попытку."; return false
+		notice="Could not complete the save. Please try again."; return false
 	data=next.duplicate(true); generation+=1; notice=""; return true
 func begin() -> bool:
 	var next=data.duplicate(true); var roster: Array=[data.selected]

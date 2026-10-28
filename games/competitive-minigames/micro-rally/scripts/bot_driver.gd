@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 # Bot decisions produce the same inputs as a person. No transform/speed injection.
+const Tires = preload("tire_surface.gd")
 const Settings = preload("bot_settings.gd")
 var settings = Settings.preset()
 var combat_time = 0.0
-const STYLES = ["Рейсер","Штурмовик","Тактик","Смельчак"]
+const STYLES = ["Racer","Bruiser","Tactician","Daredevil"]
 var lane = 0.0
 var decision_clock = 0.0
 var reversing = 0.0
@@ -69,7 +70,8 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 		var next: int=(at+n)%track.COUNT
 		var distance: float=maxf(2,track.points[at].distance_to(track.points[next]))
 		bend=maxf(bend,absf(track.tangents[at].signed_angle_to(track.tangents[next],Vector3.UP))/distance)
-	target_speed=clampf(sqrt((9.0+[0.0,0.3,-0.8,1.2][style])*car.surface_grip/maxf(bend,0.015)),8,19)
+	var grip=Tires.profile(track.tire_surface_at(target),Tires.wetness(car.surface_grip)).x/1.12
+	target_speed=clampf(sqrt((9.0+[0.0,0.3,-0.8,1.2][style])*grip/maxf(bend,0.015)),8,19)
 	if angle>0.6: target_speed=minf(target_speed,10.0)
 	if angle>1.1: target_speed=6.0
 	if car.offroad: target_speed=minf(target_speed,9.0)
@@ -87,7 +89,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 			blocked=true; target_speed=minf(target_speed,maxf(4,other.linear_velocity.length()-1))
 	car.throttle=clampf((target_speed-speed)*0.5,0,1)
 	car.brake=clampf((speed-target_speed)*0.3,0,0.9)
-	car.handbrake=style==3 and angle>0.8 and speed>10 and car.surface_grip>0.9
+	car.handbrake=style==3 and angle>0.8 and speed>10 and grip>0.9
 	car.boosting=not blocked and bend<[0.015,0.025,0.03][int(settings.pace)] and angle<0.15 and speed>9 and car.boost>[60,35,25][int(settings.pace)] and style!=2
 	car.firing=false
 	if reversing<=0 and car.grounded and car.stuck_time>1.1: reversing=0.7

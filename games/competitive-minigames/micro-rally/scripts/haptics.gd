@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node
+const Tires = preload("tire_surface.gd")
 # One bounded mix for the local driver's pad. All writes expire even if a frame stalls.
 const LEVELS = [0.0,0.3,0.65,1.0]
-const TITLES = ["выкл.","слабая","обычная","сильная"]
+const TITLES = ["off","low","normal","high"]
 const PULSES = {
 	"impact":Vector3(0.32,0.85,0.22), "landing":Vector3(0.22,0.62,0.18),
 	"shot":Vector3(0.26,0.08,0.065), "shift":Vector3(0.12,0.20,0.07),
@@ -66,8 +67,9 @@ func update(game: Node, delta: float) -> void:
 	previous=now
 	var strength=Vector2.ZERO
 	if car.grounded and car.disabled_time<=0:
-		var drift=clampf((absf(car.linear_velocity.dot(car.basis.x))-2.8)/5.0,0,1)
-		strength=Vector2(0.11,0.045)*drift
+		var tire=Tires.feedback(car)
+		var drift=tire.x
+		strength=Vector2(0.11,0.045)*drift+Vector2(0.015,0.025)*tire.y
 		if car.boosting and car.boost>0 and (car.throttle>0 or car.replica): strength=strength.max(Vector2(0.08,0.14))
 	for kind in pulses.keys():
 		var effect: Dictionary=pulses[kind]

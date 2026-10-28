@@ -22,13 +22,22 @@ func run() -> void:
 	game.state="race"; audio.update(game,0.1); audio.update(game,0.1)
 	check(audio.events.get("go",0)==1,"GO plays once")
 	car.linear_velocity=Vector3(12,0,0); car.throttle=1; car.grounded=true; car.boosting=true; car.boost=80
+	for w in car.physics.wheels: w.contact=true; w.slip=4
 	audio.update(game,0.2)
 	check(not audio.motor.stream_paused and not audio.tyres.stream_paused and not audio.turbo.stream_paused,"Movement drives engine, gravel and boost layers")
+	car.linear_velocity=Vector3.ZERO
+	for w in car.physics.wheels: w.surface=0; w.slip=0; w.long_slip=8
+	audio.update(game,0.1)
+	check(not audio.squeal.stream_paused and audio.tyres.stream_paused,"Stationary asphalt burnout has rubber squeal without gravel")
+	for w in car.physics.wheels: w.surface=3
+	audio.update(game,0.1)
+	check(audio.squeal.stream_paused and not audio.tyres.stream_paused,"Stationary dirt wheelspin uses loose-surface sound")
+	car.linear_velocity=Vector3(12,0,0)
 	car.transmission.rpm=7000; audio.update(game,0.5); var high_pitch=audio.motor.pitch_scale
 	car.transmission.rpm=3500; audio.update(game,0.5)
 	check(audio.motor.pitch_scale<high_pitch-0.4,"Upshift rpm drop lowers engine pitch at unchanged road speed")
 	game.state="pause"; audio.update(game,0.2)
-	check(audio.motor.stream_paused and audio.tyres.stream_paused and audio.turbo.stream_paused,"Offline pause silences movement")
+	check(audio.motor.stream_paused and audio.tyres.stream_paused and audio.squeal.stream_paused and audio.turbo.stream_paused,"Offline pause silences movement")
 	game.state="race"; game.net.overlay=true; audio.update(game,0.2)
 	check(not audio.motor.stream_paused and audio.events.go==1,"Online menu keeps the moving world audible without replaying GO")
 	game.net.overlay=false
@@ -74,7 +83,7 @@ func run() -> void:
 		car.position+=game.track.tangents[80]*0.08
 		# Presentation consumes wheel contacts now; supply a moving authoritative contact fixture.
 		for w in car.physics.wheels:
-			w.contact=true; w.missing=false; w.normal=Vector3.UP
+			w.contact=true; w.missing=false; w.normal=Vector3.UP; w.slip=4
 			w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
 		game.effects.skid(car,game.track)
 	check(game.effects.marks.size()==game.effects.MARK_LIMIT,"Ground contact marks are bounded")

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
 const Art = preload("art.gd")
+const Tires = preload("tire_surface.gd")
 const WIDTH = 12.0
 var COUNT = 320
 var points = PackedVector3Array()
@@ -300,12 +301,12 @@ func _grass() -> void:
 		node.visibility_range_end=65; node.visibility_range_end_margin=10; add_child(node)
 
 
-func surface_at(point: Vector3) -> Vector3:
+func road_surface(_point: Vector3, _at: int) -> int: return Tires.Kind.MUD
+func tire_surface_at(point: Vector3) -> int:
 	var at=nearest(point)
-	var edge=road_distance(point,at)
-	# x: friction, y: lateral ratio, z: rolling resistance. Weather scales friction in the car.
-	if edge>WIDTH*0.5+1.0: return Vector3(0.72,0.92,1.15)
-	return Vector3(1.22,1.0,0.35)
+	return Tires.Kind.GRASS if road_distance(point,at)>WIDTH*0.5 else road_surface(point,at)
+func surface_at(point: Vector3) -> Vector3:
+	return Tires.profile(tire_surface_at(point))
 
 func road_pose(at: int, lane: float = 0.0, clearance: float = 0.85) -> Transform3D:
 	var tangent=tangents[posmod(at,COUNT)]
