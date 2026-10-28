@@ -34,6 +34,14 @@ func run() -> void:
 	await process_frame
 	check(game.hud.panel.size.y<=650,"Cup with continue, standings and new-run actions fits handheld canvas")
 	check(game.cup.store.data.wins==0,"Partial cup cannot grant prize")
+	var second: Array=[]
+	for i in 16: second.append({"slot":i,"ms":420000+i*1000,"progress":1920})
+	check(game.cup.store.finish(1,second),"Existing two-stage save can continue without a new cup")
+	game.cup.store.load_profile("journey",directory); game.cup.start_stage()
+	check(game.current_track==game.Tracks.PASS and game.laps==5 and game.cup.stage==2 and game.conditions.time_of_day=="dawn" and game.conditions.weather=="rain","Third stage enters mountain pass with cup conditions")
+	check(game.cup.store.data.active.id==id and game.cup.store.data.active.roster==roster and game.cup.store.data.active.results.size()==2,"Pass retains existing identity, roster and both results")
+	game.cup.leave_stage()
+
 	game.hud.menu("standings"); await process_frame
 	check(game.hud.panel.size.y<=650,"Sixteen-driver standings fits handheld canvas")
 	game.hud.back(); check(game.hud.menu_mode=="cup","Controller Back returns from table to cup")

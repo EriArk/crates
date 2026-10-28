@@ -56,6 +56,7 @@ static func valid(value) -> bool:
 		var prefs=value.bot_preferences
 		if not prefs is Dictionary or prefs.size()!=2 or not Bots.valid(prefs.get("quick")) or not Bots.valid(prefs.get("cup")): return false
 	if value.has("manual_gears") and not value.manual_gears is bool: return false
+	if value.has("haptics_level") and not Rules.whole(value.haptics_level,0,3): return false
 	var run=value.get("active")
 	if not run is Dictionary: return false
 	if run.is_empty(): return true
@@ -118,3 +119,8 @@ func set_bot_count(count: int) -> bool:
 func manual_gears() -> bool: return data.get("manual_gears",false)
 func set_manual_gears(enabled: bool) -> bool:
 	var next=data.duplicate(true); next.manual_gears=enabled; return commit(next)
+
+func haptics_level() -> int: return int(data.get("haptics_level",2))
+func set_haptics_level(level: int) -> bool:
+	if level<0 or level>3: return false
+	var next=data.duplicate(true); next.haptics_level=level; return commit(next)

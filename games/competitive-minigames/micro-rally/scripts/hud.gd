@@ -114,6 +114,7 @@ func menu(mode: String) -> void:
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
 		button(list,"Коробка: "+("ручная" if game.cup.store.manual_gears() else "автомат"),toggle_gearbox)
+		button(list,"Вибрация: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
 		list.add_child(label("Левый стик — руль влево / вправо\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
 		list.add_child(label("A / D или ← / → — руль\nW / S или ↑ / ↓ — газ / тормоз\nМышь — огонь, Shift — boost\nSpace — ручник, E — щит, R — возврат\nПередачи: верхняя / правая кнопка, C / Z",16,Color("bed0c6")))
 		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
@@ -168,6 +169,11 @@ func back() -> void:
 	if menu_mode=="bots": menu(bots_parent); return
 	if menu_mode=="audio": menu(audio_parent); return
 	menu(controls_parent if menu_mode=="controls" else {"conditions":"quick","standings":"cup","cup_replace":"cup"}.get(menu_mode,"main"))
+
+func cycle_haptics() -> void:
+	var value=(game.cup.store.haptics_level()+1)%game.haptics.LEVELS.size()
+	gearbox_notice="" if game.cup.store.set_haptics_level(value) else "Не удалось сохранить настройку."
+	game.haptics.stop(); menu("controls")
 
 func toggle_gearbox() -> void:
 	var enabled=not game.cup.store.manual_gears()

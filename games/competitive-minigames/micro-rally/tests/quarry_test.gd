@@ -32,12 +32,15 @@ func run() -> void:
 					worst_height=absf(hit.position.y-p.y); worst={"index":i,"lane":lane,"point":str(point),"hit":str(hit.position),"nearest":track.nearest(point),"analytic":track.ground_height(point.x,point.z,track.nearest(point),true)}
 	check(high-low>8 and max_grade<0.55,"Terraced route has meaningful climb and driveable grades")
 	check(hits==track.COUNT*3 and worst_height<1.5,"Road and banked shoulders have continuous support around entire lap")
+	var projection=preload("road_surface_check.gd").inspect(track)
+	check(projection.interior_error<0.001 and projection.coverage_error<0.001,"Whole road triangles follow terrain without holes, overlaps or lifted interiors")
+	print("ROAD PROJECTION ",JSON.stringify(projection))
 	var visual_error=0.0
 	var mesh: ArrayMesh=track.get_node("RoadSurface").mesh
 	for vertex in mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
 		var query=PhysicsRayQueryParameters3D.create(vertex+Vector3.UP*2,vertex-Vector3.UP*2,1)
 		var hit=track.get_world_3d().direct_space_state.intersect_ray(query)
-		if hit.is_empty(): failures+=1
+		if hit.is_empty(): failures+=1; print("MISSING ROAD SUPPORT ",vertex)
 		else: visual_error=maxf(visual_error,absf(vertex.y-hit.position.y-0.035))
 	check(visual_error<0.025,"Visible banked road vertices follow the actual terrain collision")
 	for point in [Vector3(-130,40,54),Vector3(130,40,0),Vector3(0,40,-130),Vector3(0,40,130)]:

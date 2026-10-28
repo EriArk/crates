@@ -44,7 +44,8 @@ func _build_terrain() -> void:
 	_static_surface(faces,"quarry_backdrop")
 
 func _bridge_segment(_i: int) -> bool: return false
-func road_divisions() -> int: return 6
+func road_follows_terrain() -> bool: return true
+func road_divisions() -> int: return 1
 func road_vertex(point: Vector3) -> Vector3:
 	point.y=surface_height(point.x,point.z)+0.035; return point
 func _build_stream() -> void: pass

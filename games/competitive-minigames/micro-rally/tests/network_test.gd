@@ -20,8 +20,8 @@ func admitted(client, self_id: String, count: int) -> void:
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
-	game.cycle_track()
-	check(game.current_track==game.Tracks.QUARRY,"Solo selection can start on Quarry before a lobby invitation")
+	game.cycle_track(); game.cycle_track()
+	check(game.current_track==game.Tracks.PASS,"Solo selection can start on Pass before a lobby invitation")
 	game.cup.store.set_bot_settings("quick",game.BotSettings.preset(2))
 	admitted(bridge,"p0",16)
 	check(game.net.online and game.state=="network_wait" and game.player_index==0,"Sixteen admitted players wait for common start")

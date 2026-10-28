@@ -101,9 +101,11 @@ func build() -> void:
 		var side = Vector3(-tangents[i].z,0,tangents[i].x)
 		pickup_spots.append(points[i]+side*3.6+Vector3.UP*0.8)
 
+func terrain_cells() -> int: return 108
+
 func _build_terrain() -> void:
 	var surface = SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	const N = 108; const STEP = 2.0
+	var N = terrain_cells(); const STEP = 2.0
 	var vertices = PackedVector3Array()
 	var collision_vertices = PackedVector3Array()
 	var faces = PackedVector3Array()
@@ -140,6 +142,7 @@ func _quad(faces: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vec
 func _bridge_segment(i: int) -> bool:
 	return absf(points[posmod(i,COUNT)].lerp(points[posmod(i+1,COUNT)],0.5).x+30)<=9.0
 
+func road_follows_terrain() -> bool: return false
 func road_divisions() -> int: return 1
 func road_vertex(point: Vector3) -> Vector3: return point
 
@@ -157,7 +160,10 @@ func _build_road() -> void:
 			var bl=road_vertex(b+side_b*(u*2-1)); var br=road_vertex(b+side_b*(v*2-1))
 			var vertices = [al,bl,ar,ar,bl,br]
 			var uvs = [Vector2(u,distance),Vector2(u,next),Vector2(v,distance),Vector2(v,distance),Vector2(u,next),Vector2(v,next)]
-			for n in 6: surface.set_uv(uvs[n]); surface.add_vertex(vertices[n])
+			if road_follows_terrain():
+				for offset in [0,3]: preload("road_projection.gd").append(self,surface,vertices.slice(offset,offset+3),uvs.slice(offset,offset+3))
+			else:
+				for n in 6: surface.set_uv(uvs[n]); surface.add_vertex(vertices[n])
 		distance=next
 	surface.generate_normals(); surface.index()
 	var node = MeshInstance3D.new(); node.mesh=surface.commit()
@@ -258,10 +264,11 @@ func meadow_material(grass: bool) -> ShaderMaterial:
 	return mat
 
 func surface_height(x: float, z: float) -> float:
-	var gx = clampf((x+108)/2,0,107.999); var gz = clampf((z+108)/2,0,107.999)
+	var n=terrain_cells(); var stride=n+1
+	var gx = clampf((x+n)/2,0,n-0.001); var gz = clampf((z+n)/2,0,n-0.001)
 	var ix = int(gx); var iz = int(gz); var dx = gx-ix; var dz = gz-iz
-	var a = terrain_vertices[iz*109+ix].y; var b = terrain_vertices[iz*109+ix+1].y
-	var c = terrain_vertices[(iz+1)*109+ix].y; var d = terrain_vertices[(iz+1)*109+ix+1].y
+	var a = terrain_vertices[iz*stride+ix].y; var b = terrain_vertices[iz*stride+ix+1].y
+	var c = terrain_vertices[(iz+1)*stride+ix].y; var d = terrain_vertices[(iz+1)*stride+ix+1].y
 	return a+(b-a)*dx+(c-a)*dz if dx+dz<=1 else d+(c-d)*(1-dx)+(b-d)*(1-dz)
 
 func _grass() -> void:

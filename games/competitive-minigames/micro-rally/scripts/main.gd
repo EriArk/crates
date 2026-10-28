@@ -29,6 +29,7 @@ var tilt_shift: ShaderMaterial
 var hud: Control
 var sound: Node
 var controls = Controls.new()
+var haptics = preload("haptics.gd").new()
 var pickups: Array = []
 var state = "menu"
 var elapsed = 0.0
@@ -54,6 +55,7 @@ func _ready() -> void:
 	Engine.max_fps=60
 	net.game=self; add_child(net)
 	cup.game=self; add_child(cup)
+	add_child(haptics)
 	bot_count=cup.store.quick_bot_count()
 	get_viewport().size_changed.connect(_resolution)
 	_resolution()
@@ -86,6 +88,13 @@ func _ready() -> void:
 		elif arg=="--tilt-off": tilt_shift.set_shader_parameter("strength",0.0)
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
 	if demo_auto: start_race()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--capture-at=") and not capture_path.is_empty():
+			var at=posmod(int(arg.trim_prefix("--capture-at=")),track.COUNT)
+			state="race"; set_physics_process(false)
+			for car in cars:
+				car.freeze=true; car.transform=track.road_pose(posmod(at-car.index*2,track.COUNT),(car.index%3-1)*2.5)
+				car.reset_pending=false; car.ghost_time=0; car.immune=0; car.aim=-car.basis.z
 	_camera(1,true)
 	if "--physics-benchmark" in OS.get_cmdline_user_args():
 		net.platform_enabled=false
@@ -182,7 +191,7 @@ func start_race() -> void:
 	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
-	sound.reset_round(); feedback.reset(); effects.clear(); hud.portrait.reset_race()
+	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
@@ -192,7 +201,7 @@ func cycle_car() -> void:
 	var available=cup.Rules.CARS.filter(cup.store.owned)
 	cup.store.select_car(available[(available.find(cup.store.data.selected)+1)%available.size()]); _spawn_cars(); hud.menu("quick")
 func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("quick")
-func quit_game() -> void: get_tree().paused=false; get_tree().quit()
+func quit_game() -> void: haptics.stop(); get_tree().paused=false; get_tree().quit()
 
 func return_menu() -> void:
 	if not cup.pending_result.is_empty(): hud.menu("results"); return
@@ -201,7 +210,7 @@ func return_menu() -> void:
 	player_index=0
 	load_track(quick_track)
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
-	sound.reset_round(); feedback.reset(); effects.clear(); hud.portrait.reset_race()
+	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	weather.apply(conditions); _update_conditions(0)
 
 func resume_race() -> void:
@@ -349,7 +358,7 @@ func _process(delta: float) -> void:
 	_camera(delta)
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)
-	sound.update(self,delta); feedback.update(self,delta)
+	sound.update(self,delta); feedback.update(self,delta); haptics.update(self,delta)
 	capture_time+=delta
 	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)
 	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>10) and not screenshot_done:

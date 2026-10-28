@@ -22,14 +22,14 @@ func _profile(id: String) -> void:
 	var next="profile:"+id if not id.is_empty() else "standalone"
 	if next==profile_key: return
 	var was_cup=running
-	running=false; pending_result.clear(); profile_key=next; store.load_profile(profile_key)
+	running=false; pending_result.clear(); profile_key=next; store.load_profile(profile_key); game.haptics.stop()
 	if not game.cars.is_empty(): game.player().manual_gears=store.manual_gears(); game.player().transmission.pending=0
 	if was_cup and not game.net.online: game.return_menu()
 	if game.state=="menu":
 		game.bot_count=store.quick_bot_count(); game._spawn_cars(); game.hud.menu("main")
 func _revoked() -> void:
 	if profile_key=="standalone": return
-	running=false; pending_result.clear(); store.writable=false
+	running=false; pending_result.clear(); store.writable=false; game.haptics.stop()
 	store.notice="Профиль изменился. Перезапустите игру из TrainerOS."
 	if not game.net.online: game.return_menu()
 func begin_new() -> void:

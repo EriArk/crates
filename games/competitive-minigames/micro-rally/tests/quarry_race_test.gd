@@ -24,7 +24,7 @@ func run() -> void:
 	report.cars=game.cars.map(func(c): return {"slot":c.index,"finish":c.finish_time,"progress":c.passed,"recoveries":c.recovery_count})
 	game.cup.leave_stage(); game.cup.store.load_profile("race",directory)
 	ok=ok and game.cup.store.data.active.id==id and game.cup.store.data.active.roster==roster and game.cup.store.data.active.results.size()==2
-	game.cup.start_stage(); ok=ok and game.state=="menu" and not game.cup.running
-	report.pass=ok; report.next_stage_locked=not game.cup.running
+	game.cup.start_stage(); ok=ok and game.state=="countdown" and game.cup.running and game.current_track==game.Tracks.PASS
+	report.pass=ok; report.next_stage_available=game.cup.running
 	print("QUARRY RACE ",JSON.stringify(report))
 	await preload("audio_drain.gd").dispose(game,self); quit(0 if ok else 1)
