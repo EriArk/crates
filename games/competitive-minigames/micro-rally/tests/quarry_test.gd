@@ -47,7 +47,7 @@ func run() -> void:
 	game.elapsed=17; game._save_best()
 	var retained=ConfigFile.new(); retained.load("user://valley.cfg")
 	var quarry_record=ConfigFile.new(); quarry_record.load("user://quarry.1.cfg")
-	check(retained.get_value("records","best_seconds")==42.0 and quarry_record.get_value("records/"+game.conditions.record_key(),"best_seconds")==17,"Quarry quick result cannot overwrite Valley records")
+	check(retained.get_value("records","best_seconds")==42.0 and quarry_record.get_value(game.record_section(),"best_seconds")==17,"Quarry quick result cannot overwrite Valley records")
 	check(not game.load_track("unknown") and game.track==track,"Unknown stage cannot silently fall back or destroy current world")
 	game.return_menu(); game.quick_track=game.Tracks.VALLEY; game.start_race(); await physics_frame
 	check(game.track.points==valley_points and get_nodes_in_group("driving_surface").size()==1,"Return to Valley restores original route without duplicate collision")

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
+const Bots = preload("bot_settings.gd")
 const Rules = preload("cup_rules.gd")
 const PAINTS = ["standard","gold","forest","violet"]
 const COLORS = [Color("ff8a28"),Color("e8bd45"),Color("45a478"),Color("aa79dd")]
@@ -34,6 +35,13 @@ func load_profile(owner: String, directory: String = "user://career") -> void:
 		var candidate=decode(envelope.payload)
 		if candidate is Dictionary and candidate.get("active") is Dictionary and not candidate.active.is_empty() and candidate.active.get("version")!=Rules.VERSION:
 			writable=false; notice="Кубок создан другой версией игры. Сохранение не изменено."; return
+		if candidate is Dictionary:
+			var descriptors: Array=[]
+			if candidate.get("bot_preferences") is Dictionary: descriptors.append_array(candidate.bot_preferences.values())
+			if candidate.get("active") is Dictionary and candidate.active.get("bots") is Dictionary: descriptors.append(candidate.active.bots)
+			for descriptor in descriptors:
+				if descriptor is Dictionary and descriptor.has("version") and descriptor.version!=1:
+					writable=false; notice="Настройки ботов созданы другой версией игры."; return
 		if not valid(candidate): damaged=true; continue
 		if envelope.generation>generation: data=candidate; generation=int(envelope.generation)
 	if exists and generation==0:
@@ -43,11 +51,16 @@ static func valid(value) -> bool:
 	if not value is Dictionary or value.get("selected") not in Rules.CARS or value.get("paint") not in PAINTS or not Rules.whole(value.get("wins"),0,1000000): return false
 	if value.selected=="vortex" and value.wins<1: return false
 	if PAINTS.find(value.paint)>=mini(4,maxi(1,int(value.wins))): return false
+	if value.has("quick_bot_count") and not Rules.whole(value.quick_bot_count,0,15): return false
+	if value.has("bot_preferences"):
+		var prefs=value.bot_preferences
+		if not prefs is Dictionary or prefs.size()!=2 or not Bots.valid(prefs.get("quick")) or not Bots.valid(prefs.get("cup")): return false
 	var run=value.get("active")
 	if not run is Dictionary: return false
 	if run.is_empty(): return true
 	if run.get("cup")!=Rules.ID or run.get("version")!=Rules.VERSION or not run.get("id") is String or run.id.length()!=32: return false
 	if not run.get("roster") is Array or run.roster.size()!=16 or not run.get("results") is Array or run.results.size()>4 or not run.get("settled") is bool: return false
+	if run.has("bots") and not Bots.valid(run.bots): return false
 	for car in run.roster:
 		if car not in Rules.CARS: return false
 	for result in run.results:
@@ -69,7 +82,7 @@ func commit(next: Dictionary) -> bool:
 func begin() -> bool:
 	var next=data.duplicate(true); var roster: Array=[data.selected]
 	for i in range(1,16): roster.append(["swift","trail","comet","vortex"][i%4])
-	next.active={"id":Crypto.new().generate_random_bytes(16).hex_encode(),"cup":Rules.ID,"version":Rules.VERSION,"roster":roster,"results":[],"settled":false}
+	next.active={"id":Crypto.new().generate_random_bytes(16).hex_encode(),"cup":Rules.ID,"version":Rules.VERSION,"roster":roster,"bots":bot_settings("cup"),"results":[],"settled":false}
 	return commit(next)
 func finish(stage: int, rows: Array) -> bool:
 	if data.active.is_empty() or stage!=data.active.results.size() or stage>=Rules.STAGES.size() or not Rules.valid_result(rows): return false
@@ -85,3 +98,18 @@ func select_paint(index: int) -> bool:
 	if index<0 or index>=paint_count(): return false
 	var next=data.duplicate(true); next.paint=PAINTS[index]; return commit(next)
 func color() -> Color: return COLORS[PAINTS.find(data.paint)]
+
+# Missing settings in schema-1 saves mean the original, ordinary AI.
+func bot_settings(context: String) -> Dictionary:
+	return Bots.normalized(data.get("bot_preferences",{}).get(context,Bots.preset()))
+func active_bots() -> Dictionary: return Bots.normalized(data.active.get("bots",Bots.preset()))
+func set_bot_settings(context: String, settings: Dictionary) -> bool:
+	if context not in ["quick","cup"] or not Bots.valid(settings): return false
+	var next=data.duplicate(true)
+	if not next.has("bot_preferences"): next.bot_preferences={"quick":Bots.preset(),"cup":Bots.preset()}
+	next.bot_preferences[context]=settings.duplicate(true)
+	return commit(next)
+func quick_bot_count() -> int: return int(data.get("quick_bot_count",15))
+func set_bot_count(count: int) -> bool:
+	if count<0 or count>15: return false
+	var next=data.duplicate(true); next.quick_bot_count=count; return commit(next)

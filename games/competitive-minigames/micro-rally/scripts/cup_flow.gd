@@ -24,7 +24,8 @@ func _profile(id: String) -> void:
 	var was_cup=running
 	running=false; pending_result.clear(); profile_key=next; store.load_profile(profile_key)
 	if was_cup and not game.net.online: game.return_menu()
-	if game.state=="menu": game.hud.menu("main")
+	if game.state=="menu":
+		game.bot_count=store.quick_bot_count(); game._spawn_cars(); game.hud.menu("main")
 func _revoked() -> void:
 	if profile_key=="standalone": return
 	running=false; pending_result.clear(); store.writable=false
@@ -71,4 +72,4 @@ func status() -> String:
 	if not Rules.STAGES[count].available: return "Зачёт сохранён. Следующая трасса готовится."
 	return "Этап %d / 4 · можно продолжить после выхода" % (count+1)
 func driver_title(slot: int) -> String:
-	return "Вы" if slot==0 else game.Car.BotDriver.STYLES[slot%4]+" "+str(slot)
+	return "Вы" if slot==0 else game.Car.BotDriver.STYLES[game.BotSettings.style_index(store.active_bots(),slot)]+" "+str(slot)

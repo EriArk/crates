@@ -2,6 +2,10 @@
 extends Control
 const Portrait = preload("portrait.gd")
 const Car = preload("car.gd")
+const BotMenu = preload("bot_menu.gd")
+var bots_parent = "quick"
+var bot_notice = ""
+var bot_axis_direction = 0
 const CupMenu = preload("cup_menu.gd")
 var game: Node3D
 var portrait: TextureRect
@@ -28,6 +32,10 @@ func _ready() -> void:
 	panel.add_theme_stylebox_override("panel",style); add_child(panel)
 	menu("main")
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion and event.axis==JOY_AXIS_LEFT_X and absf(event.axis_value)<0.3:
+		bot_axis_direction=0
+
 func label(text: String, size_value: int, color: Color = PAPER) -> Label:
 	var l = Label.new(); l.text=text; l.add_theme_font_size_override("font_size",size_value); l.add_theme_color_override("font_color",color)
 	return l
@@ -48,9 +56,9 @@ func menu(mode: String) -> void:
 	menu_mode=mode
 	panel.visible=true; buttons.clear()
 	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
-	panel.custom_minimum_size=Vector2(760,490) if mode in ["results","standings"] else Vector2(640,490) if mode in ["cup","cup_replace","garage"] else Vector2(390,490)
+	panel.custom_minimum_size=Vector2(760,490) if mode in ["results","standings"] else Vector2(640,490) if mode in ["cup","cup_replace","garage","bots"] else Vector2(390,490)
 	panel.size=panel.custom_minimum_size
-	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
+	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",6 if mode in ["cup","bots"] else 8); panel.add_child(list)
 	if mode=="main":
 		list.add_child(label("MICRO RALLY (альфа)",28,GOLD))
 		list.add_child(label("КУБКИ · ГАРАЖ · СЕТЕВАЯ ИГРА",17))
@@ -63,6 +71,8 @@ func menu(mode: String) -> void:
 		button(list,"Выйти",game.quit_game)
 	elif mode in ["cup","cup_replace","standings","garage"]:
 		CupMenu.build(self,list,mode)
+	elif mode=="bots":
+		BotMenu.build(self,list)
 	elif mode=="quick":
 		list.add_child(label("ОТДЕЛЬНЫЙ ЗАЕЗД",28,GOLD))
 		list.add_child(label(game.track_title(),22))
@@ -70,7 +80,7 @@ func menu(mode: String) -> void:
 		button(list,"В гонку",game.start_race)
 		button(list,"Сменить трассу",game.cycle_track)
 		button(list,"Машина: "+game.car_title(),game.cycle_car)
-		button(list,"Соперники: "+str(game.bot_count),game.cycle_bots)
+		button(list,"Боты: %d · %s" % [game.bot_count,game.BotSettings.title(game.cup.store.bot_settings("quick"))],func(): BotMenu.open(self,"quick"))
 		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
 		button(list,"Управление",func(): menu("controls"))
 		button(list,"Назад",func(): menu("main"))
@@ -117,7 +127,7 @@ func menu(mode: String) -> void:
 		button(list,"Одиночная игра",func(): menu("main"))
 	elif mode=="results":
 		list.add_child(label("ФИНИШ!",38,GOLD))
-		list.add_child(label(game.track_title(),24))
+		list.add_child(label(game.track_title()+" · "+game.BotSettings.title(game.race_bots),24))
 		var rank = game.standings()
 		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
 		var left = VBoxContainer.new(); var right = VBoxContainer.new(); columns.add_child(left); columns.add_child(right)
@@ -140,6 +150,7 @@ func menu(mode: String) -> void:
 	if not buttons.is_empty(): buttons[clampi(previous_focus,0,buttons.size()-1)].grab_focus()
 
 func back() -> void:
+	if menu_mode=="bots": menu(bots_parent); return
 	if menu_mode=="audio": menu(audio_parent); return
 	menu(controls_parent if menu_mode=="controls" else {"conditions":"quick","standings":"cup","cup_replace":"cup"}.get(menu_mode,"main"))
 

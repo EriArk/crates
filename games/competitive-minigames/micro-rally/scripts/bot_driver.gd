@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 # Bot decisions produce the same inputs as a person. No transform/speed injection.
+const Settings = preload("bot_settings.gd")
+var settings = Settings.preset()
+var combat_time = 0.0
 const STYLES = ["Рейсер","Штурмовик","Тактик","Смельчак"]
 var lane = 0.0
 var decision_clock = 0.0
@@ -17,8 +20,12 @@ var shots = 0
 var pickups_collected = 0
 var cooling_weapon = false
 
+func configure(value: Dictionary) -> bool:
+	if not Settings.valid(value): return false
+	settings=Settings.normalized(value); return true
+func style_index(slot: int) -> int: return Settings.style_index(settings,slot)
 func drive(car: Node3D, others: Array, delta: float) -> void:
-	var track = car.track; var style: int=car.index%4
+	var track = car.track; var style: int=style_index(car.index)
 	var speed: float=car.linear_velocity.length()
 	decision_clock-=delta; lane_hold=maxf(0,lane_hold-delta)
 	var at: int=track.nearest(car.position,car.checkpoint)
@@ -28,7 +35,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	var tangent: Vector3=track.tangents[target_at]
 	var side = Vector3(-tangent.z,0,tangent.x)
 	if decision_clock<=0:
-		decision_clock=0.25; decision_count+=1
+		decision_clock=[0.5,0.25,0.14][int(settings.reaction)]; decision_count+=1
 		var best_score = INF; var selected = desired_lane
 		for candidate in [-2.8,0.0,2.8]:
 			var score: float=absf(candidate-desired_lane)*0.25+absf(candidate-(float(car.index%3)-1)*2.8)*0.08
@@ -69,6 +76,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	if car.missing_wheels!=0: target_speed=minf(target_speed,10.0)
 	var rise: float=track.points[target_at].y-track.points[at].y
 	if absf(rise)>1.0: target_speed=minf(target_speed,13.0)
+	target_speed*=[0.78,1.0,1.08][int(settings.pace)]
 	var blocked = false
 	for other in others:
 		if other==car or other.finish_time>=0 or other.ghost_time>0: continue
@@ -80,7 +88,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	car.throttle=clampf((target_speed-speed)*0.5,0,1)
 	car.brake=clampf((speed-target_speed)*0.3,0,0.9)
 	car.handbrake=style==3 and angle>0.8 and speed>10 and car.surface_grip>0.9
-	car.boosting=not blocked and bend<0.025 and angle<0.15 and speed>9 and car.boost>35 and style!=2
+	car.boosting=not blocked and bend<[0.015,0.025,0.03][int(settings.pace)] and angle<0.15 and speed>9 and car.boost>[60,35,25][int(settings.pace)] and style!=2
 	car.firing=false
 	if reversing<=0 and car.grounded and car.stuck_time>1.1: reversing=0.7
 	if reversing>0:
@@ -92,14 +100,14 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 
 func combat(car: Node3D, others: Array, delta: float) -> void:
 	car.firing=false
-	combat_clock-=delta
+	combat_time+=delta; combat_clock-=delta
 	if combat_clock<=0:
-		combat_clock=0.2; clear_shot=false
+		combat_clock=[0.45,0.2,0.12][int(settings.reaction)]; clear_shot=false
 		var selected: Node3D=null; var best_score = INF
 		for other in others:
 			if other==car or other.finish_time>=0 or other.ghost_time>0 or other.disabled_time>0: continue
 			var diff: Vector3=other.position-car.position; var distance = diff.length()
-			if distance>25 or absf(diff.y)>3: continue
+			if distance>[20,25,30][int(settings.aggression)] or absf(diff.y)>3: continue
 			var score: float=distance-(4.0 if other==opponent else 0.0)
 			if score<best_score: selected=other; best_score=score
 		opponent=selected
@@ -109,11 +117,14 @@ func combat(car: Node3D, others: Array, delta: float) -> void:
 			clear_shot=not hit.is_empty() and hit.collider==opponent
 			var to_us: Vector3=(car.position-opponent.position).normalized()
 			var threatened: bool=opponent.firing and opponent.aim.dot(to_us)>0.9
-			if threatened or (car.health<65 and best_score<12): car.activate_shield()
+			if threatened or (car.health<[40,65,75][int(settings.reaction)] and best_score<12): car.activate_shield()
 	if not is_instance_valid(opponent): return
 	var direction: Vector3=opponent.position-car.position; direction.y=0; direction=direction.normalized()
+	# Repeatable aim error, independent of frame rate and global RNG.
+	direction=direction.rotated(Vector3.UP,sin(combat_time*1.7+car.index*2.1)*[0.16,0.0,0.0][int(settings.accuracy)])
 	var turn: float=car.aim.signed_angle_to(direction,Vector3.UP)
-	car.aim=car.aim.rotated(Vector3.UP,clampf(turn,-2.4*delta,2.4*delta)).normalized()
-	if car.weapon_heat>=[65.0,90.0,55.0,100.0][car.index%4] or car.overheated: cooling_weapon=true
+	var aim_speed: float=[1.2,2.4,3.6][int(settings.accuracy)]
+	car.aim=car.aim.rotated(Vector3.UP,clampf(turn,-aim_speed*delta,aim_speed*delta)).normalized()
+	if car.weapon_heat>=[65.0,90.0,55.0,100.0][style_index(car.index)] or car.overheated: cooling_weapon=true
 	if car.weapon_heat<=25: cooling_weapon=false
-	car.firing=clear_shot and absf(turn)<0.12 and not cooling_weapon
+	car.firing=clear_shot and absf(turn)<0.12 and not cooling_weapon and (settings.aggression>0 or fmod(combat_time+car.index*0.37,3.0)<1.0)

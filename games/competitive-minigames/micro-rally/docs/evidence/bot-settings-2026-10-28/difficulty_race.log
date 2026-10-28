@@ -1,0 +1,3 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+DIFFICULTY RACES {"failures":0,"races":[{"elapsed":61.5499999999978,"falls":0,"finishers":16,"level":0,"pass":true,"player_finish":53.4333333333316,"recoveries":34,"track":"dirty-valley.4"},{"elapsed":48.6166666666652,"falls":0,"finishers":16,"level":2,"pass":true,"player_finish":42.8499999999989,"recoveries":37,"track":"dirty-valley.4"},{"elapsed":111.299999999995,"falls":0,"finishers":16,"level":0,"pass":true,"player_finish":99.7999999999956,"recoveries":55,"track":"quarry.1"},{"elapsed":87.2999999999963,"falls":0,"finishers":16,"level":2,"pass":true,"player_finish":73.1999999999971,"recoveries":71,"track":"quarry.1"}]}

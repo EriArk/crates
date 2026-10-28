@@ -7,6 +7,7 @@ p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
 p.add_argument('--track',choices=['dirty-valley.4','quarry.1'],default='quarry.1')
+p.add_argument('--screen',choices=['race','quick','bots','cup'],default='race')
 p.add_argument('--renderer',choices=['mobile','gl_compatibility'],default='mobile')
 a=p.parse_args()
 snapshot=json.loads(a.manifest.read_text())['source_snapshot']
@@ -14,14 +15,14 @@ if not re.fullmatch('[a-f0-9]{16}',snapshot): p.error('Invalid snapshot')
 a.output.mkdir(parents=True,exist_ok=True)
 remote='/home/abysscloud/traineros-micro-rally'
 name='rally-capture-'+uuid.uuid4().hex
-filename='capture-'+a.track+'-'+a.renderer+'.png'
+filename='capture-'+a.track+'-'+a.renderer+('-'+a.screen if a.screen!='race' else '')+'.png'
 target='/work/exports/'+snapshot+'/'+filename
 argv=['docker','run','--init','--rm','--name',name,'--network','none','--user','1000:1000',
       '-e','HOME=/tmp','-e','LIBGL_ALWAYS_SOFTWARE=1','-e','XDG_RUNTIME_DIR=/tmp',
       '-v',remote+':/work','traineros-rally-render-ci:20261028',
       'xvfb-run','-a','-s','-screen 0 1280x720x24',
       '/work/exports/'+snapshot+'/micro-rally.x86_64','--audio-driver','Dummy',
-      '--rendering-method',a.renderer,'--','--autodrive','--track='+a.track,
+      '--rendering-method',a.renderer,'--',('--autodrive' if a.screen=='race' else '--screen='+a.screen),'--track='+a.track,
       '--time=sunset','--capture='+target]
 try:
     result=subprocess.run(['ssh','books-server',shlex.join(argv)],capture_output=True,timeout=180)

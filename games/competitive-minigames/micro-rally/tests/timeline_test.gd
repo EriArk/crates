@@ -55,6 +55,6 @@ func run() -> void:
 	var legacy = ConfigFile.new(); legacy.set_value("records","best_seconds",1.0); legacy.save("user://valley.cfg")
 	game.set_conditions(saved); game.elapsed=88; game._save_best()
 	var record = ConfigFile.new(); record.load("user://valley.cfg")
-	check(record.get_value("records/"+game.conditions.record_key(),"best_seconds",0)==88.0,"Legacy dry best cannot become a dynamic-scenario best")
+	check(record.get_value(game.record_section(),"best_seconds",0)==88.0,"Legacy dry best cannot become a dynamic-scenario best")
 	await preload("audio_drain.gd").dispose(game,self)
 	print("TIMELINE TEST failures=",failures); quit(1 if failures else 0)

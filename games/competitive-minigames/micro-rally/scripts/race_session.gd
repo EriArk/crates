@@ -4,6 +4,7 @@ const Client = preload("res://addons/traineros/group_client.gd")
 const Wire = preload("race_wire.gd")
 var bridge = Client.new()
 var game: Node3D
+var bot_settings = preload("bot_settings.gd").preset()
 var online = false
 var host = false
 var starting = false
@@ -46,14 +47,15 @@ func _session(is_host: bool) -> void:
 	for member in bridge.channels: seen[member]=Time.get_ticks_msec()
 	round_id=0; phase="waiting"; game.state="network_wait"; game.hud.panel.hide()
 	game.hud.message="Собираем стартовую решётку…"; deadline=Time.get_ticks_msec()+15000
-	if host: _prepare()
+	if host:
+		bot_settings=game.cup.store.bot_settings("quick"); _prepare()
 
 func _prepare() -> void:
 	round_id+=1; ready_members=[bridge.session.self]; votes.clear(); voted=false
 	phase="preparing"; deadline=Time.get_ticks_msec()+15000
 	game.bot_count=15; starting=true; game.start_race(); starting=false
 	game.state="network_wait"; game.hud.message="Ожидаем готовности участников…"
-	if not bridge.send({"type":"prepare","round":round_id,"track":Wire.TRACK,"conditions":game.conditions.descriptor(),"laps":4}): abort("Не удалось подготовить заезд.")
+	if not bridge.send({"type":"prepare","round":round_id,"track":Wire.TRACK,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Не удалось подготовить заезд.")
 
 func _begin() -> void:
 	phase="playing"; game.state="countdown"; game.countdown=3; game.hud.message=""
@@ -71,6 +73,9 @@ func _receive(member: String, data: Dictionary) -> void:
 			abort("Несовместимые условия заезда."); return
 		var conditions = game.Conditions.new()
 		if not conditions.configure(data.conditions): abort("Неверные условия заезда."); return
+		var incoming_bots=data.get("bots",game.BotSettings.preset())
+		if not game.BotSettings.valid(incoming_bots): abort("Неверные настройки соперников."); return
+		bot_settings=game.BotSettings.normalized(incoming_bots)
 		round_id+=1; game.conditions=conditions; game.bot_count=15; starting=true; game.start_race(); starting=false
 		for car in game.cars: car.replica=true; car.freeze=true; car.collision_layer=0; car.collision_mask=0
 		game.state="network_wait"; phase="preparing"; voted=false; overlay=false; deadline=Time.get_ticks_msec()+15000

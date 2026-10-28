@@ -221,7 +221,7 @@ func bot_drive(others: Array = [], delta: float = 1.0/60.0) -> void:
 	bot.drive(self,others,delta)
 
 func driver_title() -> String:
-	return "Вы" if local_player else "Игрок "+str(index+1) if human else BotDriver.STYLES[index%4]+" "+str(index)
+	return "Вы" if local_player else "Игрок "+str(index+1) if human else BotDriver.STYLES[bot.style_index(index)]+" "+str(index)
 
 func tick_weapon(delta: float) -> void:
 	if replica: return # Heat and lockout are authoritative host state.

@@ -14,6 +14,7 @@ static func build(hud, list: VBoxContainer, mode: String) -> void:
 		var status=hud.label(flow.status(),18,hud.GOLD); status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; status.custom_minimum_size.x=550; list.add_child(status)
 		list.add_child(hud.label("Финал: очки ×1,5 · Приз: Vortex, затем окраски",17))
 		if completed<4 and Rules.STAGES[completed].available and store.writable: hud.button(list,"Начать кубок" if active.is_empty() else "Продолжить этап",flow.start_stage)
+		hud.button(list,"Боты: "+store.Bots.title(store.active_bots() if not active.is_empty() else store.bot_settings("cup")),func(): hud.BotMenu.open(hud,"cup"))
 		if completed>0: hud.button(list,"Общий зачёт",func(): hud.menu("standings"))
 		if not active.is_empty() and store.writable: hud.button(list,"Новый кубок",func(): hud.menu("cup_replace"))
 		hud.button(list,"Назад",func(): hud.menu("main"))
@@ -21,11 +22,12 @@ static func build(hud, list: VBoxContainer, mode: String) -> void:
 		list.add_child(hud.label("НОВЫЙ КУБОК?",30,hud.GOLD))
 		list.add_child(hud.label("Текущий зачёт будет заменён.\nОткрытые машины и окраски сохранятся.",20))
 		hud.button(list,"Сохранить текущий кубок",func(): hud.menu("cup"))
+		hud.button(list,"Боты нового кубка: "+store.Bots.title(store.bot_settings("cup")),func(): hud.BotMenu.open(hud,"cup_replace"))
 		hud.button(list,"Начать новый",flow.begin_new)
 	elif mode=="standings":
 		list.add_child(hud.label("ОБЩИЙ ЗАЧЁТ",32,hud.GOLD))
 		if not active.is_empty():
-			list.add_child(hud.label("Этапов завершено: %d / 4" % active.results.size(),20))
+			list.add_child(hud.label("Этапов: %d / 4 · %s" % [active.results.size(),store.Bots.title(store.active_bots())],20))
 			var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",32); list.add_child(columns)
 			var left=VBoxContainer.new(); var right=VBoxContainer.new(); columns.add_child(left); columns.add_child(right)
 			var table=Rules.table(active.results)

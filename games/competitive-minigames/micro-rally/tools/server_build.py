@@ -9,7 +9,7 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-TESTS=['scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
+TESTS=['difficulty_race_test.gd','difficulty_test.gd','difficulty_behavior_test.gd','scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
 parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()

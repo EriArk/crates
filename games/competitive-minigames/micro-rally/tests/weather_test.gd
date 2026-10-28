@@ -79,6 +79,6 @@ func run() -> void:
 	game.elapsed=31.0; game._save_best()
 	game.return_menu(); game.set_conditions(original); game.elapsed=25.0; game._save_best()
 	var save = ConfigFile.new(); save.load("user://valley.cfg")
-	check(save.get_value("records/valley.v1/sunset/rain","best_seconds",0)>0 and save.get_value("records/valley.v1/day/clear","best_seconds",0)>0,"Saving a dry run preserves wet record")
+	check(save.get_value("records/valley.v1/sunset/rain/"+game.BotSettings.key(game.race_bots)+"/count/"+str(game.bot_count),"best_seconds",0)>0 and save.get_value("records/valley.v1/day/clear/"+game.BotSettings.key(game.race_bots)+"/count/"+str(game.bot_count),"best_seconds",0)>0,"Saving a dry run preserves wet record")
 	floor_body.queue_free(); await preload("audio_drain.gd").dispose(game,self)
 	print("WEATHER TEST failures=",failures); quit(1 if failures else 0)

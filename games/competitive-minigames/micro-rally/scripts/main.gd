@@ -34,6 +34,8 @@ var state = "menu"
 var elapsed = 0.0
 var countdown = 3.0
 var laps = 4
+const BotSettings = preload("bot_settings.gd")
+var race_bots = BotSettings.preset()
 var bot_count = 15
 var effect_clock = 0.0
 var show_metrics = false
@@ -52,6 +54,7 @@ func _ready() -> void:
 	Engine.max_fps=60
 	net.game=self; add_child(net)
 	cup.game=self; add_child(cup)
+	bot_count=cup.store.quick_bot_count()
 	get_viewport().size_changed.connect(_resolution)
 	_resolution()
 	var selected_conditions = conditions.descriptor()
@@ -89,7 +92,7 @@ func _ready() -> void:
 		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -133,6 +136,7 @@ func _spawn_cars() -> void:
 		if not net.online:
 			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
 			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
+		car.bot.configure(race_bots)
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
 		if car.local_player and not net.online:
 			for paint in car.paint_materials: paint.set_shader_parameter("paint",cup.store.color())
@@ -174,6 +178,7 @@ func start_race() -> void:
 	if net.online: cup.running=false
 	if not cup.running:
 		laps=4; load_track(net.Wire.TRACK if net.online else quick_track)
+	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
 	sound.reset_round(); feedback.reset(); effects.clear()
@@ -191,7 +196,7 @@ func quit_game() -> void: get_tree().paused=false; get_tree().quit()
 func return_menu() -> void:
 	if not cup.pending_result.is_empty(): hud.menu("results"); return
 	if net.online: net.leave()
-	cup.running=false; laps=4
+	cup.running=false; laps=4; bot_count=cup.store.quick_bot_count()
 	player_index=0
 	load_track(quick_track)
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
@@ -373,15 +378,19 @@ func standings() -> Array:
 		return a.passed>b.passed)
 	return result
 
+func record_section() -> String:
+	return "records/"+conditions.record_key()+"/"+BotSettings.key(race_bots)+"/count/"+str(bot_count)
+
 func _save_best() -> void:
 	# Separate track records; preserve the original Valley file and legacy result.
 	var path="user://valley.cfg" if current_track==Tracks.VALLEY else "user://"+current_track+".cfg"
 	var file = ConfigFile.new(); file.load(path)
-	var section = "records/"+conditions.record_key()
-	var legacy = float(file.get_value("records","best_seconds",INF)) if conditions.time_of_day=="day" and conditions.weather=="clear" and conditions.timeline.is_empty() else INF
-	var previous = float(file.get_value(section,"best_seconds",legacy))
+	var section = record_section()
+	var previous = float(file.get_value(section,"best_seconds",INF))
 	if elapsed<previous: file.set_value(section,"best_seconds",elapsed)
 	file.set_value(section,"completed_runs",int(file.get_value(section,"completed_runs",0))+1)
 	file.set_value(section,"conditions",conditions.descriptor())
+	file.set_value(section,"bots",race_bots)
+	file.set_value(section,"bot_count",bot_count)
 	if file.save(path+".pending")==OK:
 		DirAccess.rename_absolute(path+".pending",path)
