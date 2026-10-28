@@ -141,7 +141,7 @@ func _spawn_pickups() -> void:
 		var node = MeshInstance3D.new(); var mesh = BoxMesh.new(); mesh.size=Vector3(0.85,0.85,0.85); node.mesh=mesh
 		node.material_override=Art.material(Color("50c9ff") if i%2 else Color("ffc44b"),0.6)
 		node.position=track.pickup_spots[i]; add_child(node)
-		var icon = Label3D.new(); icon.text="+" if i%2 else "III"; icon.font_size=65; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+		var icon = Label3D.new(); icon.text="+" if i%2 else "COOL"; icon.font_size=48; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
 		icon.position.y=0.75; node.add_child(icon)
 		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1})
 
@@ -207,7 +207,7 @@ func _recover(car: Node3D) -> bool:
 			if car.position.y< -5: car.fall_count+=1
 			car.checkpoint=at; car.passed-=back; car.laps=car.passed/track.COUNT
 			car.reset_at(Transform3D(basis,pos))
-			if car.health<=0: car.health=100; car.ammo=maxi(car.ammo,6)
+			if car.health<=0: car.health=100
 			return true
 	car.recovery_lock=0.25
 	return false
@@ -280,7 +280,7 @@ func _physics_process(delta: float) -> void:
 			if car.position.distance_to(pickup.node.position)<2:
 				car.bot.pickups_collected+=1
 				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20)
-				else: car.ammo=mini(36,car.ammo+12)
+				else: car.cool_weapon()
 				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
 				if car.local_player: sound.play_event("pickup")
 				break
@@ -295,8 +295,7 @@ func finish_race() -> void:
 	hud.menu("results")
 
 func _shoot(car: Node3D) -> void:
-	if car.fire_cooldown>0 or car.ammo<=0 or car.disabled_time>0 or car.finish_time>=0 or car.ghost_time>0: return
-	car.fire_cooldown=0.28 if car.local_player or car.human else 0.55; car.ammo-=1
+	if not car.begin_shot(): return
 	car.bot.shots+=1
 	var from: Vector3=car.position+Vector3.UP*0.2+car.aim*0.9
 	var to: Vector3=from+car.aim*34

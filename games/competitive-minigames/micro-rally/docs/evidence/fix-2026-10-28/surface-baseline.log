@@ -1,0 +1,28 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SURFACE TEST failures=5 cases=24 worst_travel=0.83278506994247 engine=DEFAULT
+ERROR: Shoulder crossing at 75 side -1 speed 4 moved only 0.89 m
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/surface_test.gd:5)
+       [1] run (res://tests/surface_test.gd:29)
+ERROR: Shoulder crossing at 130 side -1 speed 4 moved only 0.86 m
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/surface_test.gd:5)
+       [1] run (res://tests/surface_test.gd:29)
+ERROR: Shoulder crossing at 185 side -1 speed 4 moved only 0.89 m
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/surface_test.gd:5)
+       [1] run (res://tests/surface_test.gd:29)
+ERROR: Shoulder crossing at 225 side -1 speed 4 moved only 0.83 m
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/surface_test.gd:5)
+       [1] run (res://tests/surface_test.gd:29)
+ERROR: Shoulder crossing at 275 side -1 speed 4 moved only 0.89 m
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/surface_test.gd:5)
+       [1] run (res://tests/surface_test.gd:29)

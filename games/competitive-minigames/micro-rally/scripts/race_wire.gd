@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
-const TRACK = "dirty-valley.2"
-const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,36],[0,31],[-320,1291],[-1,600100],[0,2000]]
+const TRACK = "dirty-valley.3"
+const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,2000]]
 
 static func integer(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
@@ -24,7 +24,7 @@ static func apply_input(car: Node3D, values: Array) -> void:
 	if (int(values[5])&8)!=0: car.activate_shield()
 
 static func car_state(car: Node3D) -> Array:
-	return [roundi(car.position.x*100),roundi(car.position.y*100),roundi(car.position.z*100),roundi(wrapf(car.rotation.y,-PI,PI)*1000),roundi(car.linear_velocity.x*100),roundi(car.linear_velocity.y*100),roundi(car.linear_velocity.z*100),roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.health),roundi(car.shield),roundi(car.boost),car.ammo,(1 if car.immune>0 else 0)|(2 if car.shield_item else 0)|(4 if car.boosting else 0)|(8 if car.ghost_time>0 else 0)|(16 if car.grounded else 0),car.passed,roundi(car.finish_time*1000) if car.finish_time>=0 else -1,roundi(car.disabled_time*1000)]
+	return [roundi(car.position.x*100),roundi(car.position.y*100),roundi(car.position.z*100),roundi(wrapf(car.rotation.y,-PI,PI)*1000),roundi(car.linear_velocity.x*100),roundi(car.linear_velocity.y*100),roundi(car.linear_velocity.z*100),roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.health),roundi(car.shield),roundi(car.boost),roundi(car.weapon_heat),(1 if car.immune>0 else 0)|(2 if car.shield_item else 0)|(4 if car.boosting else 0)|(8 if car.ghost_time>0 else 0)|(16 if car.grounded else 0)|(32 if car.overheated else 0),car.passed,roundi(car.finish_time*1000) if car.finish_time>=0 else -1,roundi(car.disabled_time*1000)]
 
 static func valid_snapshot(data: Dictionary, pickup_count: int) -> bool:
 	if not integer(data.get("seq"),0,2147483647) or not integer(data.get("ms"),0,600100) or not integer(data.get("countdown"),0,3000): return false

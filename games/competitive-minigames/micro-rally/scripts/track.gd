@@ -62,7 +62,7 @@ func road_distance(p: Vector3, index: int) -> float:
 	var side = Vector3(-tangents[index].z,0,tangents[index].x)
 	return absf((p-points[index]).dot(side))
 
-func ground_height(x: float, z: float, index: int) -> float:
+func ground_height(x: float, z: float, index: int, driving_surface: bool = false) -> float:
 	var d = Vector2(x-points[index].x,z-points[index].z).length()
 	var hill = smoothstep(7.5,19.0,d)*(1.8+sin(x*0.11)*cos(z*0.09)*2.2)
 	var stream = 1.0-smoothstep(3.0,7.0,absf(x+30.0))
@@ -73,7 +73,11 @@ func ground_height(x: float, z: float, index: int) -> float:
 		var t = clampf((Vector2(x,z)-av).dot(bv-av)/(bv-av).length_squared(),0,1)
 		var distance = Vector2(x,z).distance_squared_to(av.lerp(bv,t))
 		if distance<best_distance: best_distance=distance; road_y=lerpf(a.y,b.y,t)
-	return lerpf(road_y-0.28,base_height(x,z)+hill,smoothstep(6.0,12.0,sqrt(best_distance)))-stream*6.0
+	var distance = sqrt(best_distance)
+	# One continuous driving surface: no raised ribbon edge to catch the chassis.
+	# The visible creek remains below bridges; cars never drive under these spans.
+	if driving_surface: stream*=smoothstep(6.3,10.0,distance)
+	return lerpf(road_y-0.035,base_height(x,z)+hill,smoothstep(6.0,12.0,distance))-stream*6.0
 
 func build() -> void:
 	rng.seed=38021
@@ -86,21 +90,39 @@ func _build_terrain() -> void:
 	var surface = SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	const N = 108; const STEP = 2.0
 	var vertices = PackedVector3Array()
+	var collision_vertices = PackedVector3Array()
+	var faces = PackedVector3Array()
 	for z in N+1:
 		for x in N+1:
 			var px = (x-N/2)*STEP; var pz = (z-N/2)*STEP
 			var at = nearest(Vector3(px,0,pz))
 			vertices.append(Vector3(px,ground_height(px,pz,at),pz))
+			collision_vertices.append(Vector3(px,ground_height(px,pz,at,true),pz))
 	for z in N:
 		for x in N:
 			var a = z*(N+1)+x; var b = a+1; var c = a+N+1; var d = c+1
 			for i in [a,b,c,b,d,c]:
 				surface.set_color(Color(0.1,0.6,0.1)); surface.add_vertex(vertices[i])
+				faces.append(collision_vertices[i])
 	terrain_vertices=vertices
 	surface.index(); surface.generate_normals()
 	var mesh = surface.commit(); var node = MeshInstance3D.new(); node.mesh=mesh
 	var mat = meadow_material(false); node.material_override=mat
-	add_child(node); node.create_trimesh_collision()
+	add_child(node)
+	_static_surface(faces,"driving_surface")
+
+func _static_surface(faces: PackedVector3Array, group: String) -> StaticBody3D:
+	var body = StaticBody3D.new(); var collider = CollisionShape3D.new()
+	var shape = ConcavePolygonShape3D.new(); shape.set_faces(faces)
+	shape.backface_collision=true; collider.shape=shape
+	body.add_child(collider); add_child(body); body.add_to_group(group)
+	return body
+
+func _quad(faces: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+	faces.append_array(PackedVector3Array([a,b,c,a,c,d]))
+
+func _bridge_segment(i: int) -> bool:
+	return absf(points[posmod(i,COUNT)].lerp(points[posmod(i+1,COUNT)],0.5).x+30)<=9.0
 
 func _build_road() -> void:
 	var surface = SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -117,7 +139,8 @@ func _build_road() -> void:
 	surface.generate_normals(); surface.index()
 	var node = MeshInstance3D.new(); node.mesh=surface.commit()
 	road_material=ShaderMaterial.new(); road_material.shader=preload("res://shaders/road.gdshader"); node.material_override=road_material
-	add_child(node); node.create_trimesh_collision()
+	add_child(node) # Visible road only; ground and bridge decks share one collider.
+	var rail_faces = PackedVector3Array()
 	# Planked bridges wherever the authored route crosses the creek.
 	for i in COUNT:
 		var j = (i+1)%COUNT; var center = points[i].lerp(points[j],0.5)
@@ -134,9 +157,17 @@ func _build_road() -> void:
 			for height in [0.45,1.1]:
 				var rail = Art.box(self,Vector3(0.18,0.2,edge.length()+0.12),pos+Vector3.UP*height,Color("a27a50"))
 				rail.look_at(rail.position+edge,Vector3.UP)
-			var barrier = Art.collider(self,Vector3(0.36,1.5,edge.length()+0.18),pos+Vector3.UP*0.65)
-			barrier.look_at(barrier.position+edge,Vector3.UP)
-			barrier.add_to_group("bridge_rail"); barrier.set_meta("route_index",i); barrier.set_meta("side",s)
+			# Joined wall strips have no overlapping box end-caps inside a bend.
+			var ai = a-side_a*0.18; var ao = a+side_a*0.18
+			var bi = b-side_b*0.18; var bo = b+side_b*0.18
+			var low = Vector3.DOWN*0.1; var high = Vector3.UP*1.4
+			_quad(rail_faces,ai+low,bi+low,bi+high,ai+high)
+			_quad(rail_faces,ao+low,ao+high,bo+high,bo+low)
+			_quad(rail_faces,ai+high,bi+high,bo+high,ao+high)
+			_quad(rail_faces,ai+low,ao+low,bo+low,bi+low)
+			if not _bridge_segment(i-1): _quad(rail_faces,ai+low,ai+high,ao+high,ao+low)
+			if not _bridge_segment(i+1): _quad(rail_faces,bi+low,bo+low,bo+high,bi+high)
+	_static_surface(rail_faces,"bridge_rail")
 
 func _build_stream() -> void:
 	var plane = PlaneMesh.new(); plane.size=Vector2(10,210); plane.subdivide_depth=30

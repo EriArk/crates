@@ -15,6 +15,7 @@ var clear_shot = false
 var lane_changes = 0
 var shots = 0
 var pickups_collected = 0
+var cooling_weapon = false
 
 func drive(car: Node3D, others: Array, delta: float) -> void:
 	var track = car.track; var style: int=car.index%4
@@ -46,7 +47,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 			if not hit.is_empty() and absf(hit.normal.y)<0.5: score+=12.0
 			for item in car.get_parent().pickups:
 				if item.cooldown>0: continue
-				var useful: bool=(item.shield and (not car.shield_item or car.health<80)) or (not item.shield and car.ammo<8)
+				var useful: bool=(item.shield and (not car.shield_item or car.health<80)) or (not item.shield and car.weapon_heat>50)
 				if useful and point.distance_to(item.node.position)<3.5: score-=1.2
 			if score<best_score: best_score=score; selected=candidate
 		if selected!=desired_lane: lane_changes+=1; lane_hold=0.75
@@ -107,4 +108,6 @@ func combat(car: Node3D, others: Array, delta: float) -> void:
 	var direction: Vector3=opponent.position-car.position; direction.y=0; direction=direction.normalized()
 	var turn: float=car.aim.signed_angle_to(direction,Vector3.UP)
 	car.aim=car.aim.rotated(Vector3.UP,clampf(turn,-2.4*delta,2.4*delta)).normalized()
-	car.firing=clear_shot and absf(turn)<0.12 and (car.index%4!=0 or car.ammo>6)
+	if car.weapon_heat>=[65.0,90.0,55.0,100.0][car.index%4] or car.overheated: cooling_weapon=true
+	if car.weapon_heat<=25: cooling_weapon=false
+	car.firing=clear_shot and absf(turn)<0.12 and not cooling_weapon

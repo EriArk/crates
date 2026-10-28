@@ -5,7 +5,7 @@ Run on a handheld with a selected Trainer; never replaces the shell or helpers.
 """
 from pathlib import Path
 import argparse,hashlib,json,os,socket,subprocess,sys,time
-p=argparse.ArgumentParser();p.add_argument('stage',type=Path);p.add_argument('--settle',type=int,default=18);p.add_argument('--skip-install',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('stage',type=Path);p.add_argument('--version',required=True);p.add_argument('--settle',type=int,default=18);p.add_argument('--skip-install',action='store_true');a=p.parse_args()
 assert 5<=a.settle<=55
 stage=a.stage.resolve();stage.mkdir(parents=True,exist_ok=True)
 sys.path.insert(0,'/var/opt/traineros/crates')
@@ -13,18 +13,18 @@ import catalogue
 root=Path.home()/'.local/share/TrainerOS/TrainerOS/crates'
 before={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'active').glob('*.json') if p.stem!='micro-rally'}
 old_objects={p.name for p in (root/'objects').iterdir()}
-old_data={str(p.relative_to(root/'data')) for p in (root/'data').rglob('*') if p.is_file()}
+old_data={str(p.relative_to(root/'data')):hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'data').rglob('*') if p.is_file()}
 envelope,kind=catalogue.sync(root/'catalogue')
-record=next(r for r in envelope['signed']['packages'] if r['id']=='micro-rally' and r['version']=='0.1.0' and r['architecture']=='aarch64')
+record=next(r for r in envelope['signed']['packages'] if r['id']=='micro-rally' and r['version']==a.version and r['architecture']=='aarch64')
 assert record['title']=='Micro Rally (альфа)'
 if not a.skip_install:
  with (stage/'install.log').open('wb') as log:
-  subprocess.run(['/usr/bin/python3','/var/opt/traineros/crates/installer.py',str(root/'catalogue/current.json'),str(root),'install','micro-rally','0.1.0'],stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+  subprocess.run(['/usr/bin/python3','/var/opt/traineros/crates/installer.py',str(root/'catalogue/current.json'),str(root),'install','micro-rally',a.version],stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
 receipt=json.loads((root/'active/micro-rally.json').read_text());assert receipt['sha256']==record['sha256']
 assert all((root/'active'/name).exists() and hashlib.sha256((root/'active'/name).read_bytes()).hexdigest()==digest for name,digest in before.items())
 assert old_objects<={p.name for p in (root/'objects').iterdir()}
-assert old_data<={str(p.relative_to(root/'data')) for p in (root/'data').rglob('*') if p.is_file()}
-report={'title':record['title'],'version':record['version'],'catalogue_revision':envelope['signed']['revision'],'download_url':record['url'],'sha256':record['sha256'],'installed':True,'other_receipts_unchanged':True,'old_objects_retained':True,'old_data_files_retained':True}
+assert all((root/'data'/name).is_file() and hashlib.sha256((root/'data'/name).read_bytes()).hexdigest()==digest for name,digest in old_data.items())
+report={'title':record['title'],'version':record['version'],'catalogue_revision':envelope['signed']['revision'],'download_url':record['url'],'sha256':record['sha256'],'installed':True,'other_receipts_unchanged':True,'old_objects_retained':True,'old_data_files_retained':True,'old_data_hashes_unchanged_after_install':True}
 (stage/'installation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print('PUBLIC DOWNLOAD AND INSTALL PASS',flush=True)
 pid=subprocess.check_output(['pgrep','-xo','traineros'],text=True).strip()

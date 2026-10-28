@@ -192,7 +192,12 @@ func _draw() -> void:
 	write("BOOST",boost_center+Vector2(-32,8),19); write(str(int(car.boost)),boost_center+Vector2(-20,31),21)
 	var weapon = Vector2(size.x-203,size.y-115)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
-	write("ПУЛЕМЁТ",weapon+Vector2(14,26),17); write("%02d" % car.ammo,weapon+Vector2(118,64),35,GOLD)
+	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
+	write("ПЕРЕГРЕВ" if car.overheated else "ПУЛЕМЁТ",weapon+Vector2(14,26),17,heat_color)
+	write("∞",weapon+Vector2(142,28),26,PAPER)
+	draw_style_box(_plate(),Rect2(weapon+Vector2(14,38),Vector2(153,13)))
+	draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
+	if car.weapon_heat>0: draw_line(weapon+Vector2(15,44),weapon+Vector2(15+151*car.weapon_heat/100,44),heat_color,9,true)
 	write("ЩИТ: "+("ГОТОВ" if car.shield_item else "—"),weapon+Vector2(14,76),15,Color("7edbff"))
 	if game.state in ["race","countdown"]:
 		var target: Vector3=car.position+car.aim*8+Vector3.UP*0.4

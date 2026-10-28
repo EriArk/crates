@@ -17,7 +17,12 @@ var finish_time = -1.0
 var health = 100.0
 var shield = 0.0
 var shield_item = true
-var ammo = 12
+const HEAT_PER_SHOT = 8.5
+const COOLING_PER_SECOND = 24.0
+const RESUME_HEAT = 30.0
+var weapon_heat = 0.0
+var overheated = false
+var cooling_delay = 0.0
 var boost = 100.0
 var immune = 2.0
 var disabled_time = 0.0
@@ -132,7 +137,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	else: state.angular_velocity.y=move_toward(state.angular_velocity.y,0,step*5)
 
 func tick(delta: float) -> void:
-	immune=maxf(0,immune-delta); disabled_time=maxf(0,disabled_time-delta); fire_cooldown=maxf(0,fire_cooldown-delta)
+	immune=maxf(0,immune-delta); disabled_time=maxf(0,disabled_time-delta)
+	tick_weapon(delta)
 	recovery_lock=maxf(0,recovery_lock-delta)
 	if ghost_time>0:
 		ghost_time=maxf(0,ghost_time-delta)
@@ -164,6 +170,24 @@ func bot_drive(others: Array = [], delta: float = 1.0/60.0) -> void:
 
 func driver_title() -> String:
 	return "Вы" if local_player else "Игрок "+str(index+1) if human else BotDriver.STYLES[index%4]+" "+str(index)
+
+func tick_weapon(delta: float) -> void:
+	if replica: return # Heat and lockout are authoritative host state.
+	fire_cooldown=maxf(0,fire_cooldown-delta)
+	var cooling_time = maxf(0,delta-cooling_delay)
+	cooling_delay=maxf(0,cooling_delay-delta)
+	weapon_heat=maxf(0,weapon_heat-COOLING_PER_SECOND*cooling_time)
+	if overheated and weapon_heat<=RESUME_HEAT: overheated=false
+
+func begin_shot() -> bool:
+	if replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
+	fire_cooldown=0.28; cooling_delay=0.45
+	weapon_heat=minf(100,weapon_heat+HEAT_PER_SHOT)
+	if weapon_heat>=100: overheated=true
+	return true
+
+func cool_weapon() -> void:
+	weapon_heat=0; overheated=false; cooling_delay=0
 
 func activate_shield() -> void:
 	if replica: return

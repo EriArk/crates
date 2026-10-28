@@ -42,8 +42,8 @@ func run() -> void:
 	var a=game.cars[0]; var b=game.cars[1]
 	a.position=Vector3(0,30,0); b.position=Vector3(0,30,-8); a.aim=Vector3.FORWARD; b.shield=0; b.health=100
 	await physics_frame; await physics_frame
-	a.fire_cooldown=0; a.ammo=3; game._shoot(a)
-	check(a.ammo==2 and b.health==91,"Actual physics ray hits car and consumes ammunition")
+	a.fire_cooldown=0; a.cool_weapon(); game._shoot(a)
+	check(a.weapon_heat==a.HEAT_PER_SHOT and b.health==91,"Actual physics ray hits car and heats the unlimited gun")
 	b.immune=0; b.shield=20; a.fire_cooldown=0; game._shoot(a)
 	check(b.health==91 and b.shield==11,"Shot first consumes active shield")
 	b.immune=0; b.shield=0; b.take_damage(200)

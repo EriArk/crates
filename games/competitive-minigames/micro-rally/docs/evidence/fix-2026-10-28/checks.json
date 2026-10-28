@@ -1,0 +1,93 @@
+{
+  "audio_feedback_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "AUDIO FEEDBACK TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "bot_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "BOT TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "drive_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "DRIVE TEST failures=0 progressed=16"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "journey_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "JOURNEY TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "network_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "NETWORK TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "race_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "RACE TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "recovery_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "RECOVERY TEST failures=0 rails=1"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "surface_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "SURFACE TEST failures=0 cases=24 rail_runs=4 worst_travel=20.3521919250488 engine=Jolt Physics"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "weather_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "WEATHER TEST failures=0"
+    ],
+    "source_snapshot": "c4029044c0676bbd"
+  },
+  "cup_journey_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "CUP JOURNEY TEST failures=0"
+    ],
+    "source_snapshot": "b0fbadbe60592e88"
+  },
+  "cup_race_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "CUP RACE {\"elapsed\":210.250000000059,\"finishers\":16,\"laps\":5,\"pass\":true,\"player_finish\":190.750000000044,\"saved_stages\":1,\"wins\":0}"
+    ],
+    "source_snapshot": "b0fbadbe60592e88"
+  },
+  "cup_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "CUP TEST failures=0"
+    ],
+    "source_snapshot": "b0fbadbe60592e88"
+  },
+  "weapon_test.gd.log": {
+    "passed": true,
+    "summary": [
+      "WEAPON TEST failures=0 shots=195 locks=21 first_burst=12 cooling_frames=201"
+    ],
+    "source_snapshot": "b0fbadbe60592e88"
+  }
+}

@@ -11,12 +11,16 @@ func run() -> void:
 	for car in game.cars: car.freeze=true
 	await physics_frame; await physics_frame
 	var rails = get_nodes_in_group("bridge_rail")
-	check(rails.size()>10,"Continuous bridge rails exist")
-	for rail in rails:
-		var from: Vector3=rail.position-rail.basis.x*1.5
-		var to: Vector3=rail.position+rail.basis.x*1.5
-		var hit: Dictionary=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,to,1))
-		check(not hit.is_empty() and hit.collider.is_in_group("bridge_rail"),"Mid-span bridge collision has no gap")
+	check(rails.size()==1,"Continuous bridge rails share one body for internal-edge removal")
+	for at in game.track.COUNT:
+		if not game.track._bridge_segment(at): continue
+		for fraction in [0.02,0.5,0.98]:
+			var tangent: Vector3=game.track.tangents[at].lerp(game.track.tangents[(at+1)%game.track.COUNT],fraction).normalized()
+			var side=Vector3(-tangent.z,0,tangent.x)
+			for sign_value in [-1,1]:
+				var center: Vector3=game.track.points[at].lerp(game.track.points[(at+1)%game.track.COUNT],fraction)+Vector3.UP*0.65
+				var hit: Dictionary=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(center+side*4*sign_value,center+side*8*sign_value,1))
+				check(not hit.is_empty() and hit.collider.is_in_group("bridge_rail"),"Bridge rail %d fraction %.2f side %d has no gap" % [at,fraction,sign_value])
 	var a=game.cars[0]; var b=game.cars[1]; var at=60
 	a.checkpoint=at; a.passed=at; a.position=Vector3(0,-10,0)
 	b.position=game.track.points[at]+Vector3.UP*0.85

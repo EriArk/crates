@@ -151,8 +151,8 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		if car.local_player:
 			if s[8]<car.health: game.hud.portrait.set_mood("hurt")
 			elif s[14]>=0 and car.finish_time<0: game.hud.portrait.set_mood("victory")
-			if s[11]>car.ammo or ((int(s[12])&2)!=0 and not car.shield_item): game.sound.play_event("pickup")
-		car.health=s[8]; car.shield=s[9]; car.boost=s[10]; car.ammo=s[11]
+			if car.weapon_heat-s[11]>35 or ((int(s[12])&2)!=0 and not car.shield_item): game.sound.play_event("pickup")
+		car.health=s[8]; car.shield=s[9]; car.boost=s[10]; car.weapon_heat=s[11]; car.overheated=(int(s[12])&32)!=0
 		car.immune=1 if (int(s[12])&1)!=0 else 0; car.shield_item=(int(s[12])&2)!=0
 		car.ghost_time=1 if (int(s[12])&8)!=0 else 0
 		car.boosting=(int(s[12])&4)!=0; car.grounded=(int(s[12])&16)!=0

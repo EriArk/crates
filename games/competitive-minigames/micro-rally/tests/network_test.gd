@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.1","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.2","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -42,9 +42,12 @@ func run() -> void:
 	check(Wire.valid_snapshot(snapshot,game.pickups.size()),"Bounded full state validates")
 	game.net._receive("p0",snapshot)
 	check(game.elapsed==5 and game.state=="race","Client accepts host time and phase")
-	snapshot.cars[15][13]=350; snapshot.cars[15][12]=8
+	snapshot.cars[15][13]=350; snapshot.cars[15][12]=8|32; snapshot.cars[15][11]=91
 	game.net.apply_targets(1.0,true)
 	check(game.player().checkpoint==30 and game.player().ghost_time>0,"Replica restores lap checkpoint and recovery visuals")
+	check(game.player().weapon_heat==91 and game.player().overheated,"Replica restores host heat and overheat lock")
+	var invalid_heat=snapshot.duplicate(true); invalid_heat.cars[15][11]=101
+	check(not Wire.valid_snapshot(invalid_heat,game.pickups.size()),"Out-of-range heat is rejected")
 	game.weather.update_headlights(game.cars,1.0,15)
 	check(game.weather.light_cars[0]==game.player(),"Headlight budget follows local seat fifteen")
 	game.net._receive("p0",{"type":"input","round":0,"values":[]})
