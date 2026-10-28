@@ -1,0 +1,271 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) 
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1281
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1281
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=rematch round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK TrainerOS disconnected. Local play is available.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1281
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1281
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=revoked round=2 progress=1280
+
+QINFO  : HostIntegration::groupRace(16) RALLY SDK/TLS PASS players= 16 same result, rematch, profile revocation, retained lobby; terminal fixture= true
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16)
+PASS   : HostIntegration::groupRace(16)
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 77850ms
+********* Finished testing of HostIntegration *********

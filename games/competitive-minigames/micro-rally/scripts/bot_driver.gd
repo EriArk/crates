@@ -65,6 +65,9 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	if angle>0.6: target_speed=minf(target_speed,10.0)
 	if angle>1.1: target_speed=6.0
 	if car.offroad: target_speed=minf(target_speed,9.0)
+	if car.missing_wheels!=0: target_speed=minf(target_speed,10.0)
+	var rise: float=track.points[target_at].y-track.points[at].y
+	if absf(rise)>1.0: target_speed=minf(target_speed,13.0)
 	var blocked = false
 	for other in others:
 		if other==car or other.finish_time>=0 or other.ghost_time>0: continue
@@ -78,11 +81,13 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	car.handbrake=style==3 and angle>0.8 and speed>10 and car.surface_grip>0.9
 	car.boosting=not blocked and bend<0.025 and angle<0.15 and speed>9 and car.boost>35 and style!=2
 	car.firing=false
-	if reversing<=0 and car.stuck_time>1.1: reversing=0.7
+	if reversing<=0 and car.grounded and car.stuck_time>1.1: reversing=0.7
 	if reversing>0:
 		reversing-=delta; car.throttle=0; car.brake=1; car.boosting=false; car.handbrake=false
 		# Yaw follows actual reverse motion through the ordinary steering model.
 		car.desired=-car.desired
+
+	car.steer_towards(car.desired)
 
 func combat(car: Node3D, others: Array, delta: float) -> void:
 	car.firing=false

@@ -4,6 +4,8 @@ const Art = preload("art.gd")
 const LIMIT = 220
 const MARK_LIMIT = 96
 var particles: Array = []
+var loose_wheels: Array = []
+const WHEEL_LIMIT = 16
 var marks: Array = []
 var skid_history: Dictionary = {}
 var mark_mesh: PlaneMesh
@@ -26,6 +28,8 @@ func _ready() -> void:
 	ring_mesh=TorusMesh.new(); ring_mesh.inner_radius=0.92; ring_mesh.outer_radius=1.04; ring_mesh.rings=20; ring_mesh.ring_segments=6
 
 func clear() -> void:
+	for wheel in loose_wheels: wheel.node.queue_free()
+	loose_wheels.clear()
 	for p in particles: p.node.queue_free()
 	for mark in marks: mark.node.queue_free()
 	particles.clear(); marks.clear(); skid_history.clear()
@@ -60,12 +64,10 @@ func skid(car: Node3D, _track: Node3D) -> void:
 	var old: Array=skid_history.get(id,[])
 	var contacts: Array=[]
 	for wheel in 2:
-		var side=-0.72 if wheel==0 else 0.72
-		var origin=car.position+car.basis.x*side+car.basis.z*0.65
-		var query=PhysicsRayQueryParameters3D.create(origin+Vector3.UP*0.3,origin-Vector3.UP*1.3,1)
-		var hit=get_world_3d().direct_space_state.intersect_ray(query)
-		if hit.is_empty(): contacts.append(null); continue
-		var point: Vector3=hit.position+hit.normal*0.018
+		var w: Dictionary=car.physics.wheels[wheel]
+		if w.missing or not w.contact: contacts.append(null); continue
+		var hit={"normal":w.normal}
+		var point: Vector3=w.point+w.normal*0.018
 		contacts.append(point)
 		if old.size()!=2 or old[wheel]==null: continue
 		var segment: Vector3=point-old[wheel]
@@ -86,12 +88,16 @@ func end_skid(car: Node3D) -> void:
 
 func dust(car: Node3D, wetness: float = 0.0) -> void:
 	if particles.size()>=LIMIT: return
+	var contact: Dictionary={}
+	for w in car.physics.wheels:
+		if w.contact and not w.missing: contact=w; break
+	if contact.is_empty(): return
 	var node = MeshInstance3D.new(); node.mesh=dust_quad
 	node.material_override=dust_material
 	if wetness>0.5:
 		node.mesh=sphere; node.material_override=Art.material(Color("64533e"))
 	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(node); node.position=car.position+car.transform.basis.z*1.1-Vector3.UP*0.4
+	add_child(node); node.position=contact.point+contact.normal*0.08
 	var life = 0.24 if wetness>0.5 else 0.65
 	particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1)),"grow":wetness<0.5})
 
@@ -112,7 +118,24 @@ func burst(pos: Vector3, color: Color) -> void:
 		add_child(node); node.position=pos; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		particles.append({"node":node,"life":0.45,"total":0.45,"velocity":Vector3(randf_range(-4,4),randf_range(1,4),randf_range(-4,4)),"grow":false})
 
+func detach_wheel(car: Node3D, index: int) -> void:
+	if loose_wheels.size()>=WHEEL_LIMIT: loose_wheels.pop_front().node.queue_free()
+	var wheel: Dictionary=car.physics.wheels[index]
+	var body=RigidBody3D.new(); body.mass=3; body.collision_layer=0; body.collision_mask=1
+	body.continuous_cd=true; body.linear_damp=0.1; body.angular_damp=0.2
+	var collision=CollisionShape3D.new(); var shape=CylinderShape3D.new()
+	shape.radius=wheel.radius; shape.height=0.35; collision.shape=shape; collision.rotation.z=PI/2; body.add_child(collision)
+	var mesh=car.wheel_pivots[index].get_child(0).duplicate(); body.add_child(mesh)
+	add_child(body); body.global_transform=car.wheel_pivots[index].global_transform
+	body.linear_velocity=car.linear_velocity+car.angular_velocity.cross(body.position-car.position)+Vector3.UP*1.5
+	body.angular_velocity=car.angular_velocity-car.wheel_pivots[index].global_basis.x*wheel.omega
+	loose_wheels.append({"node":body,"life":5.0})
+	burst(body.position,Color("d6b88c"))
+
 func _process(delta: float) -> void:
+	for i in range(loose_wheels.size()-1,-1,-1):
+		loose_wheels[i].life-=delta
+		if loose_wheels[i].life<=0: loose_wheels[i].node.queue_free(); loose_wheels.remove_at(i)
 	for i in range(marks.size()-1,-1,-1):
 		marks[i].life-=delta
 		if marks[i].life<=0: marks[i].node.queue_free(); marks.remove_at(i)

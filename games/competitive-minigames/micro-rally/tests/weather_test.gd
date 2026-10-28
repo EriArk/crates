@@ -7,7 +7,7 @@ func check(ok: bool, label: String) -> void:
 func _initialize() -> void: call_deferred("run")
 
 func brake_distance(car: Node3D, grip: float) -> float:
-	car.surface_grip=grip; car.freeze=false; car.throttle=0; car.boosting=false; car.brake=0; car.handbrake=false; car.desired=Vector3.ZERO
+	car.surface_grip=grip; car.freeze=false; car.throttle=0; car.boosting=false; car.brake=0; car.handbrake=false; car.desired=Vector3.ZERO; car.steer_input=0
 	car.reset_at(Transform3D(Basis.IDENTITY,Vector3(0,30.72,0)))
 	for i in 30: await physics_frame
 	car.linear_velocity=Vector3(0,0,-12); car.brake=1.0

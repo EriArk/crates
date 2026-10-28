@@ -25,7 +25,7 @@ func read(car: Node3D, camera: Camera3D) -> void:
 	var steer = Vector2.ZERO; var aiming = Vector2.ZERO
 	var shielding = false
 	if device>=0:
-		steer=Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
+		steer=Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),0)
 		aiming=Vector2(Input.get_joy_axis(device,JOY_AXIS_RIGHT_X),Input.get_joy_axis(device,JOY_AXIS_RIGHT_Y))
 		car.throttle=maxf(0,Input.get_joy_axis(device,JOY_AXIS_TRIGGER_RIGHT)); car.brake=maxf(0,Input.get_joy_axis(device,JOY_AXIS_TRIGGER_LEFT))
 		car.boosting=Input.is_joy_button_pressed(device,JOY_BUTTON_LEFT_SHOULDER)
@@ -33,9 +33,9 @@ func read(car: Node3D, camera: Camera3D) -> void:
 		car.handbrake=Input.is_joy_button_pressed(device,JOY_BUTTON_A)
 		shielding=Input.is_joy_button_pressed(device,JOY_BUTTON_X)
 	else:
-		steer=Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
-		car.throttle=1.0 if Input.is_physical_key_pressed(KEY_UP) else 0.0
-		car.brake=1.0 if Input.is_physical_key_pressed(KEY_DOWN) else 0.0
+		steer=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),0)
+		car.throttle=1.0 if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W) else 0.0
+		car.brake=1.0 if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S) else 0.0
 		car.boosting=Input.is_physical_key_pressed(KEY_SHIFT); car.handbrake=Input.is_physical_key_pressed(KEY_SPACE)
 		car.firing=Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 		shielding=Input.is_physical_key_pressed(KEY_E)
@@ -46,8 +46,8 @@ func read(car: Node3D, camera: Camera3D) -> void:
 		return
 	if shielding: car.activate_shield()
 	car.shield_pressed=shielding
-	if steer.length()>0.18: car.desired=Vector3(steer.x,0,steer.y).normalized()
-	else: car.desired=Vector3.ZERO
+	car.steer_input=steering_axis(steer.x)
+	car.desired=Vector3.ZERO
 	if aiming.length()>0.22: car.aim=Vector3(aiming.x,0,aiming.y).normalized()
 	elif device<0 and mouse_aim:
 		var pos = camera.get_viewport().get_mouse_position()
@@ -57,5 +57,9 @@ func read(car: Node3D, camera: Camera3D) -> void:
 			car.aim=(target-car.position).normalized()
 
 func neutral(car: Node3D) -> void:
-	car.shield_pressed=false
+	car.shield_pressed=false; car.steer_input=0
 	car.throttle=0; car.brake=0; car.boosting=false; car.firing=false; car.handbrake=false; car.desired=Vector3.ZERO
+
+
+static func steering_axis(value: float) -> float:
+	return signf(value)*clampf((absf(value)-0.18)/0.82,0,1)

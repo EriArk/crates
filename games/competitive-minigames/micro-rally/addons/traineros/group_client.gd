@@ -23,7 +23,7 @@ func _retire_records() -> void:
 	while ignored.size()>64: ignored.pop_front()
 
 func _init() -> void:
-	app_id="art.abysstail.micro-rally"; activity_title="Micro Rally"; game_protocol="micro-rally.2"
+	app_id="art.abysstail.micro-rally"; activity_title="Micro Rally"; game_protocol="micro-rally.3"
 
 func send_latest(member: String, key: String, data: Dictionary) -> bool:
 	# Replace only unsent disposable state. Never replay old controls after congestion.

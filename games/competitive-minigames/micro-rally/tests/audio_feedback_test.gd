@@ -69,6 +69,10 @@ func run() -> void:
 	await physics_frame
 	for i in 80:
 		car.position+=game.track.tangents[80]*0.08
+		# Presentation consumes wheel contacts now; supply a moving authoritative contact fixture.
+		for w in car.physics.wheels:
+			w.contact=true; w.missing=false; w.normal=Vector3.UP
+			w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
 		game.effects.skid(car,game.track)
 	check(game.effects.marks.size()==game.effects.MARK_LIMIT,"Ground contact marks are bounded")
 	var marks=game.effects.marks.size(); car.grounded=false; game.effects.skid(car,game.track)

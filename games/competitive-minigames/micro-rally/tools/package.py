@@ -37,7 +37,7 @@ for suffix,arch,machine in [('arm64','aarch64',183),('x86_64','x86_64',62)]:
   entry='bin/micro-rally',icon='icon.svg',license='GPL-3.0-or-later',repository='https://github.com/EriArk/crates.git',revision=a.revision,
   size=target.stat().st_size,unpackedSize=sum(map(len,files.values()))+1048576,sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
   channel='Experimental',compatibility='untested',compatibilityNote='Alpha: handheld controls, audio and sustained performance await player feedback.',
-  notes='Continuous road/shoulder collisions; unlimited base gun with heat and coolant pickups. Network protocol 2 requires matching updates. Three later cup tracks remain locked. Flip2 uses OpenGL.',
+  notes='Independent suspension and tire contact, jumps/rollovers, detachable wheel, conventional left/right steering. Unlimited heat-limited base gun. Network protocol 3 requires matching updates. Three later cup tracks remain locked. Flip2 uses OpenGL.',
   url=f'https://github.com/EriArk/crates/releases/download/micro-rally-v{version}/{name}')
  (a.output/f'micro-rally-{arch}-record.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 source=a.output/f'micro-rally-{version}-source.tar.gz'

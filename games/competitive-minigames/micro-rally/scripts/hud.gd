@@ -209,6 +209,7 @@ func _draw() -> void:
 		var text = str(maxi(1,ceili(game.countdown)))
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
 	if car.disabled_time>0: write("ВОССТАНОВЛЕНИЕ",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
+	elif car.missing_wheels!=0: write("КОЛЕСО ПОТЕРЯНО",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
 	if not message.is_empty(): write(message,Vector2(240,106),18,GOLD)
 	if game.show_metrics: write("%.0f FPS · %d машин" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
 

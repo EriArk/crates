@@ -23,8 +23,14 @@ func run() -> void:
 	game.controls.neutral_required=false
 	key(KEY_W,true); key(KEY_UP,true)
 	for i in 100: await physics_frame
-	check(game.cars[0].desired.z< -0.9 and game.cars[0].linear_velocity.length()>2,"Real key events steer and accelerate physical vehicle")
+	check(game.cars[0].throttle>0.9 and game.cars[0].linear_velocity.length()>2,"Real key events accelerate physical vehicle")
 	key(KEY_W,false); key(KEY_UP,false)
+	key(KEY_A,true); game.controls.read(game.cars[0],game.camera)
+	check(game.cars[0].steer_input== -1,"A maps to left wheel steering")
+	key(KEY_A,false); key(KEY_D,true); game.controls.read(game.cars[0],game.camera)
+	check(game.cars[0].steer_input==1,"D maps to right wheel steering")
+	key(KEY_D,false); game.controls.read(game.cars[0],game.camera)
+	check(game.cars[0].steer_input==0,"Released stick/key centers steering")
 	pad(JOY_BUTTON_START,true); await process_frame; pad(JOY_BUTTON_START,false)
 	check(game.state=="pause" and paused,"Start pauses solo race")
 	var elapsed=game.elapsed; var position=game.cars[0].position

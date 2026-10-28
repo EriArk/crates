@@ -54,7 +54,7 @@ func nearest(p: Vector3, hint: int = -1) -> int:
 	var end = COUNT if hint<0 else hint+23
 	for n in range(start,end):
 		var i = posmod(n,COUNT)
-		var d = Vector2(p.x-points[i].x,p.z-points[i].z).length_squared()
+		var d = p.distance_squared_to(points[i])
 		if d<distance: distance=d; best=i
 	return best
 
@@ -261,3 +261,23 @@ func _grass() -> void:
 			var pose: Transform3D=cells[key][i]; pose.origin-=origin; multi.set_instance_transform(i,pose)
 		node.multimesh=multi; node.material_override=mat; node.position=origin; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		node.visibility_range_end=65; node.visibility_range_end_margin=10; add_child(node)
+
+
+func surface_at(point: Vector3) -> Vector3:
+	var at=nearest(point)
+	var edge=road_distance(point,at)
+	# x: friction, y: lateral ratio, z: rolling resistance. Weather scales friction in the car.
+	if edge>WIDTH*0.5+1.0: return Vector3(0.72,0.92,1.15)
+	return Vector3(1.22,1.0,0.35)
+
+func road_pose(at: int, lane: float = 0.0, clearance: float = 0.85) -> Transform3D:
+	var tangent=tangents[posmod(at,COUNT)]
+	var side=Vector3(-tangent.z,0,tangent.x)
+	var point=points[posmod(at,COUNT)]+side*lane
+	var eps=0.5
+	var dx=ground_height(point.x+eps,point.z,nearest(point+Vector3.RIGHT*eps),true)-ground_height(point.x-eps,point.z,nearest(point-Vector3.RIGHT*eps),true)
+	var dz=ground_height(point.x,point.z+eps,nearest(point+Vector3.BACK*eps),true)-ground_height(point.x,point.z-eps,nearest(point-Vector3.BACK*eps),true)
+	var normal=Vector3(-dx/(2*eps),1,-dz/(2*eps)).normalized()
+	var forward=tangent.slide(normal).normalized()
+	point.y=ground_height(point.x,point.z,at,true)
+	return Transform3D(Basis(forward.cross(normal).normalized(),normal,-forward),point+normal*clearance)

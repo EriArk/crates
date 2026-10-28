@@ -25,6 +25,7 @@ var beams: Array = []
 var info = ""
 var overlay = false
 var voted = false
+var platform_enabled = true # Disabled only by the isolated rendered soak harness.
 
 func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS; add_child(bridge)
@@ -33,6 +34,7 @@ func _ready() -> void:
 	bridge.status.connect(func(text): info=text)
 
 func connect_platform() -> void:
+	if not platform_enabled: return
 	if DisplayServer.get_name()!="headless": await RenderingServer.frame_post_draw
 	bridge.connect_host()
 
@@ -140,8 +142,19 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		var s: Array=targets[i]; var car: Node3D=game.cars[i]
 		var position = Vector3(s[0],s[1],s[2])/100.0; var velocity = Vector3(s[4],s[5],s[6])/100.0
 		var target = position+velocity*age if s[14]<0 else position
-		car.position=target if snap or car.position.distance_to(target)>6 else car.position.lerp(target,1-exp(-delta*24))
-		car.rotation.y=lerp_angle(car.rotation.y,s[3]/1000.0,1.0 if snap else 1-exp(-delta*24))
+		var reset_changed: bool=car.reset_serial!=int(s[24])
+		var immediate: bool=snap or reset_changed or car.position.distance_to(target)>6
+		car.position=target if immediate else car.position.lerp(target,1-exp(-delta*24))
+		var q=Quaternion(s[16]/10000.0,s[17]/10000.0,s[18]/10000.0,s[19]/10000.0).normalized()
+		car.basis=Basis(q if immediate else car.basis.get_rotation_quaternion().slerp(q,1-exp(-delta*24)))
+		car.angular_velocity=Vector3(s[20],s[21],s[22])/100.0
+		car.reset_serial=int(s[24]); car.missing_wheels=int(s[23]); car.physics.steer=s[25]/1000.0
+		if immediate: car.reset_physics_interpolation()
+		for n in 4:
+			var w: Dictionary=car.physics.wheels[n]
+			w.length=s[26+n]/1000.0; w.spin=wrapf(s[30+n]/1000.0+s[34+n]/100.0*age,-PI,PI); w.omega=s[34+n]/100.0
+			w.contact=(int(s[38])&(1<<n))!=0
+			w.normal=car.basis.y; w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
 		car.last_forward=-car.basis.z
 		car.checkpoint=posmod(int(s[13]),game.track.COUNT)
 		car.offroad=game.track.road_distance(car.position,game.track.nearest(car.position,car.checkpoint))>game.track.WIDTH*0.5+0.5

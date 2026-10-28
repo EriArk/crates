@@ -21,7 +21,7 @@ func run() -> void:
 				check(not hit.is_empty(),"Shoulder has physical ground")
 				start.y=hit.position.y+0.72
 				var pose=Transform3D(Basis(Vector3.UP,atan2(lateral.x,lateral.z)),start)
-				car.reset_at(pose); car.throttle=1; car.desired=-lateral; car.immune=100; car.disabled_time=0; car.handbrake=false; car.brake=0
+				car.reset_at(pose); car.steer_input=0; car.throttle=1; car.desired=-lateral; car.immune=100; car.disabled_time=0; car.handbrake=false; car.brake=0
 				await physics_frame; await physics_frame
 				car.linear_velocity=-lateral*speed
 				for frame in 100: await physics_frame
@@ -37,13 +37,13 @@ func run() -> void:
 			var lateral=Vector3(-tangent.z,0,tangent.x)*side
 			var start: Vector3=game.track.points[start_at]+lateral*5.05+Vector3.UP*0.72
 			car.reset_at(Transform3D(Basis(Vector3.UP,atan2(-tangent.x,-tangent.z)),start))
-			car.throttle=1; car.desired=tangent; car.immune=100; car.disabled_time=0
+			car.steer_input=0; car.throttle=1; car.desired=tangent; car.immune=100; car.disabled_time=0
 			await physics_frame; await physics_frame
 			car.linear_velocity=tangent*12+lateral*2
 			for frame in 100:
 				var index: int=game.track.nearest(car.position)
 				# Push gently into the curved wall throughout the run, forcing seam contacts.
-				car.desired=(game.track.tangents[index]+lateral*0.06).normalized()
+				car.steer_towards((game.track.tangents[index]+lateral*0.06).normalized())
 				await physics_frame
 			var travel: float=(car.position-start).dot(tangent); rail_runs+=1
 			check(travel>9,"Glancing along bridge %d side %d moved %.2f m" % [at,side,travel])

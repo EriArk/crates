@@ -79,7 +79,10 @@ func _ready() -> void:
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
 	if demo_auto: start_race()
 	_camera(1,true)
-	net.call_deferred("connect_platform")
+	if "--physics-benchmark" in OS.get_cmdline_user_args():
+		net.platform_enabled=false
+		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
+	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio"]: hud.menu(arg.trim_prefix("--screen="))
 
@@ -130,8 +133,7 @@ func _spawn_cars() -> void:
 			for paint in car.paint_materials: paint.set_shader_parameter("paint",cup.store.color())
 		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
 		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
-		car.position=track.points[at]+side*(float(i%3)-1)*2.8+Vector3.UP*0.72
-		car.rotation.y=atan2(-track.tangents[at].x,-track.tangents[at].z); car.aim=track.tangents[at]
+		car.transform=track.road_pose(at,(float(i%3)-1)*2.8); car.aim=track.tangents[at]
 		car.freeze=state!="menu"
 
 func _spawn_pickups() -> void:
@@ -195,14 +197,15 @@ func _recover(car: Node3D) -> bool:
 		var at: int=posmod(car.checkpoint-back,track.COUNT)
 		var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
 		for lane in [0.0,-3.1,3.1]:
-			var pos: Vector3=track.points[at]+side*lane+Vector3.UP*0.85
+			var recovery_pose: Transform3D=track.road_pose(at,lane)
+			var pos: Vector3=recovery_pose.origin
 			var occupied = false
 			for other in cars:
 				if other==car or other.finish_time>=0: continue
 				var other_pos: Vector3=other.reset_pose.origin if other.reset_pending else other.position
 				if other_pos.distance_to(pos)<4.2: occupied=true; break
 			if occupied: continue
-			var basis = Basis(Vector3.UP,atan2(-track.tangents[at].x,-track.tangents[at].z))
+			var basis = recovery_pose.basis
 			car.recovery_count+=1
 			if car.position.y< -5: car.fall_count+=1
 			car.checkpoint=at; car.passed-=back; car.laps=car.passed/track.COUNT
@@ -256,7 +259,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			car.bot_drive(cars,delta); car.bot.combat(car,cars,delta)
 		car.tick(delta)
-		if car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
+		if car.overturned_time>2.0 or car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
 		if car.firing and state=="race": _shoot(car)
 		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(player().position)<45: effects.dust(car,current_wetness)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
@@ -279,7 +282,7 @@ func _physics_process(delta: float) -> void:
 			if car.finish_time>=0: continue
 			if car.position.distance_to(pickup.node.position)<2:
 				car.bot.pickups_collected+=1
-				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20)
+				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20); car.repair_wheels()
 				else: car.cool_weapon()
 				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
 				if car.local_player: sound.play_event("pickup")
@@ -304,7 +307,7 @@ func _shoot(car: Node3D) -> void:
 	if not hit.is_empty():
 		to=hit.position
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
-			hit.collider.take_damage(9,car.aim*75)
+			hit.collider.take_damage(9,car.aim*75,hit.position)
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")
 		effects.burst(to,Color("ffbb51"))
 	effects.beam(from,to); net.shot(car,from,to)

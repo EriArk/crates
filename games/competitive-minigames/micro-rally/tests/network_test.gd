@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.2","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.3","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -28,7 +28,7 @@ func run() -> void:
 	check(game.state=="countdown" and game.net.phase=="playing","All ready starts shared countdown")
 	game.net._receive("p15",{"type":"input","round":1,"seq":0,"values":[1000,0,0,750,0,0]})
 	game.net.apply_remote(game.cars[15]); game.net.apply_remote(game.cars[14])
-	check(game.cars[15].throttle==0.75 and game.cars[14].throttle==0,"Sender controls only its admitted seat")
+	check(game.cars[15].steer_input==1 and game.cars[15].throttle==0.75 and game.cars[14].throttle==0,"Sender controls only its admitted seat")
 	game.net.inputs.p15.at=Time.get_ticks_msec()-1000; game.net.apply_remote(game.cars[15])
 	check(game.cars[15].throttle==0,"Expired input releases throttle")
 	game.net._receive("p15",{"type":"state","round":1,"seq":1})
@@ -48,6 +48,22 @@ func run() -> void:
 	check(game.player().weapon_heat==91 and game.player().overheated,"Replica restores host heat and overheat lock")
 	var invalid_heat=snapshot.duplicate(true); invalid_heat.cars[15][11]=101
 	check(not Wire.valid_snapshot(invalid_heat,game.pickups.size()),"Out-of-range heat is rejected")
+	var rotated=Quaternion(Vector3.FORWARD,1.9)
+	snapshot.cars[15][16]=roundi(rotated.x*10000); snapshot.cars[15][17]=roundi(rotated.y*10000)
+	snapshot.cars[15][18]=roundi(rotated.z*10000); snapshot.cars[15][19]=roundi(rotated.w*10000)
+	snapshot.cars[15][23]=1; snapshot.cars[15][38]=14; snapshot.cars[15][24]=9
+	snapshot.cars[15][26]=400; snapshot.cars[15][25]=-320
+	game.net.apply_targets(1.0,true)
+	check(game.player().basis.y.y<0 and game.player().missing_wheels==1 and game.player().reset_serial==9,"Replica restores roll, missing wheel and recovery generation")
+	check(is_equal_approx(game.player().physics.wheels[0].length,0.4),"Replica restores suspension travel")
+	var wheel_count=game.effects.loose_wheels.size()
+	game.net.apply_targets(1.0,true)
+	check(game.effects.loose_wheels.size()==wheel_count,"Repeated snapshot does not replay wheel separation")
+	var invalid_rotation=snapshot.duplicate(true); invalid_rotation.cars[15][19]=10000
+	check(not Wire.valid_snapshot(invalid_rotation,game.pickups.size()),"Non-unit orientation is rejected")
+	var invalid_contact=snapshot.duplicate(true); invalid_contact.cars[15][38]=15
+	check(not Wire.valid_snapshot(invalid_contact,game.pickups.size()),"Missing wheel cannot claim ground contact")
+	check(JSON.stringify(snapshot).to_utf8_buffer().size()<16384,"Full 16-car 3D state fits SDK packet budget")
 	game.weather.update_headlights(game.cars,1.0,15)
 	check(game.weather.light_cars[0]==game.player(),"Headlight budget follows local seat fifteen")
 	game.net._receive("p0",{"type":"input","round":0,"values":[]})

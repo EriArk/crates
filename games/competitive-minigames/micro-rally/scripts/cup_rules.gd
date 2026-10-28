@@ -8,7 +8,7 @@ const CARS = ["swift","comet","trail","vortex"]
 const MODELS = ["hatchback-sports","sedan-sports","suv","race"]
 const TITLES = ["Swift","Comet","Trail","Vortex"]
 const STAGES = [
-	{"id":"valley","title":"Грязевая долина","track":"dirty-valley.3","laps":5,"target":"4–6 мин","weight":2,"time":"day","weather":"clear","available":true},
+	{"id":"valley","title":"Грязевая долина","track":preload("race_wire.gd").TRACK,"laps":5,"target":"4–6 мин","weight":2,"time":"day","weather":"clear","available":true},
 	{"id":"quarry","title":"Карьер","track":"quarry.1","laps":0,"target":"6–8 мин","weight":2,"time":"sunset","weather":"clear","available":false},
 	{"id":"pass","title":"Лесной перевал","track":"forest-pass.1","laps":0,"target":"8–10 мин","weight":2,"time":"dawn","weather":"rain","available":false},
 	{"id":"boss","title":"Nordschleife · босс","track":"nordschleife.1","laps":0,"target":"20+ мин","weight":3,"time":"day","weather":"overcast","available":false}

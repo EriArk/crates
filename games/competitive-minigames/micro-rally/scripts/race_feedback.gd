@@ -14,11 +14,14 @@ func update(game: Node, delta: float) -> void:
 	if trail: clock=0
 	for car in game.cars:
 		var id=car.get_instance_id()
-		var now={"health":car.health,"shield":car.shield,"ghost":car.ghost_time}
+		var now={"health":car.health,"shield":car.shield,"ghost":car.ghost_time,"grounded":car.grounded,"vertical":car.linear_velocity.y}
 		var before: Dictionary=previous.get(id,now)
 		previous[id]=now
 		var distance=car.position.distance_to(game.player().position)
 		if distance>=45: continue
+		if now.grounded and not before.grounded and before.vertical< -3:
+			game.sound.play_event("impact0",distance)
+			game.effects.dust(car,game.current_wetness)
 		if now.health<before.health:
 			if now.health<=0:
 				game.effects.wreck(car.position); game.sound.play_event("wreck",distance)

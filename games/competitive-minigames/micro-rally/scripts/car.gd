@@ -2,6 +2,7 @@
 extends RigidBody3D
 const Art = preload("art.gd")
 const BotDriver = preload("bot_driver.gd")
+const VehiclePhysics = preload("vehicle_physics.gd")
 const COLORS = [Color("ff8a28"),Color("27bec0"),Color("db4472"),Color("ad75ed"),Color("8dc84e"),Color("e7c13e"),Color("4c89d9"),Color("eeeece")]
 var index = 0
 var local_player = false
@@ -27,7 +28,8 @@ var boost = 100.0
 var immune = 2.0
 var disabled_time = 0.0
 var fire_cooldown = 0.0
-var desired = Vector3.ZERO
+var desired = Vector3.ZERO # Route target for bots only.
+var steer_input = 0.0 # -1 left, +1 right; independent of camera/world heading.
 var aim = Vector3.FORWARD
 var throttle = 0.0
 var brake = 0.0
@@ -49,20 +51,36 @@ var paint_materials: Array[ShaderMaterial] = []
 var last_forward = Vector3.FORWARD
 var surface_grip = 1.0
 var lamp_material: StandardMaterial3D
-var body_shape: BoxShape3D
+var body_shape: Shape3D
 var bot = BotDriver.new()
 var ghost_time = 0.0
 var recovery_lock = 0.0
 var recovery_count = 0
 var fall_count = 0
 var did_not_finish = false
+var physics = VehiclePhysics.new()
+var wheel_pivots: Array[Node3D] = []
+var wheel_colliders: Array[CollisionShape3D] = []
+var missing_wheels = 0
+var displayed_missing = 0
+var reset_serial = 0
+var overturned_time = 0.0
+var impact_cooldown = 0.0
+var impact_speed = 0.0
 
 func _ready() -> void:
-	mass=65; linear_damp=0.14; angular_damp=4.0; can_sleep=false
-	axis_lock_angular_x=true; axis_lock_angular_z=true; continuous_cd=true
-	contact_monitor=true; max_contacts_reported=4
+	mass=65; linear_damp=0.10; angular_damp=0.45; can_sleep=false
+	center_of_mass_mode=RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM; center_of_mass=Vector3(0,-0.23,0)
+	inertia=Vector3(72,88,28)
+	continuous_cd=true
+	contact_monitor=true; max_contacts_reported=8
 	collision_layer=2; collision_mask=3
-	var collider = CollisionShape3D.new(); var shape = BoxShape3D.new(); shape.size=Vector3(1.75,0.9,3.25)
+	var collider = CollisionShape3D.new(); var shape = ConvexPolygonShape3D.new()
+	var corners=PackedVector3Array()
+	for y in [-0.28,0.48]:
+		for xz in [Vector2(-0.68,-1.8),Vector2(0.68,-1.8),Vector2(0.86,-1.55),Vector2(0.86,1.55),Vector2(0.68,1.8),Vector2(-0.68,1.8),Vector2(-0.86,1.55),Vector2(-0.86,-1.55)]:
+			corners.append(Vector3(xz.x,y,xz.y))
+	shape.points=corners; shape.margin=0.06
 	body_shape=shape
 	collider.shape=shape; add_child(collider)
 	physics_material_override=PhysicsMaterial.new(); physics_material_override.friction=0.15; physics_material_override.bounce=0.08
@@ -83,7 +101,7 @@ func _ready() -> void:
 	shield_mesh=MeshInstance3D.new(); var sphere = SphereMesh.new(); sphere.radius=2.0; sphere.height=3.0
 	shield_mesh.mesh=sphere; shield_mesh.material_override=Art.material(Color(0.1,0.58,1.0,0.16),0.7)
 	shield_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; add_child(shield_mesh)
-	body_entered.connect(_collision)
+	_setup_wheels(model)
 	lamp_material=Art.material(Color("e2dec6")).duplicate(); lamp_material.emission_enabled=true
 	lamp_material.emission=Color("ffe4b6"); lamp_material.emission_energy_multiplier=0
 	for side in [-1,1]:
@@ -91,50 +109,64 @@ func _ready() -> void:
 		lamp.material_override=lamp_material; lamp.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func reset_at(pose: Transform3D) -> void:
-	reset_pose=pose; reset_pending=true; immune=2.0
+	reset_pose=pose; reset_pending=true; immune=2.0; reset_serial+=1
+	repair_wheels(); overturned_time=0
 	ghost_time=2.0; collision_layer=4; collision_mask=1
 	bot.reversing=0; stuck_time=0; recovery_lock=2.0
 
+func _setup_wheels(model: Node3D) -> void:
+	for wheel_name in ["wheel-back-left","wheel-back-right","wheel-front-left","wheel-front-right"]:
+		var part: MeshInstance3D=model.find_child(wheel_name,true,false)
+		assert(part!=null,"Car asset must contain four named wheels")
+		var bounds=part.get_aabb()
+		var center=to_local(part.to_global(bounds.get_center()))
+		var radius=bounds.size.y*1.4*0.5
+		var width=bounds.size.x*1.4
+		var anchor=center+Vector3.UP*(VehiclePhysics.REST-0.07)
+		physics.add_wheel(anchor,radius,width,wheel_name.contains("front"))
+		var pivot=Node3D.new(); add_child(pivot); pivot.position=center
+		part.reparent(pivot,true); wheel_pivots.append(pivot)
+		# Small inner collision volume catches lateral impacts/bottoming. The outer tire
+		# footprint belongs to suspension queries, so it does not double support the car.
+		var collider=CollisionShape3D.new(); var shape=SphereShape3D.new(); shape.radius=radius*0.55
+		collider.shape=shape; collider.position=center; add_child(collider); wheel_colliders.append(collider)
+
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	if replica: return
 	if reset_pending:
 		state.transform=reset_pose; state.linear_velocity=Vector3.ZERO; state.angular_velocity=Vector3.ZERO; reset_pending=false
+		physics.reset(); reset_physics_interpolation()
 		return
-	var step = state.step
-	var forward = -state.transform.basis.z; forward.y=0; forward=forward.normalized(); last_forward=forward
-	var right = state.transform.basis.x; right.y=0; right=right.normalized()
-	var speed = state.linear_velocity.dot(forward)
-	var side_speed = state.linear_velocity.dot(right); slip=absf(side_speed)
-	grounded=false
-	for wheel in [Vector3(-0.51,0,0.83),Vector3(0.51,0,0.83),Vector3(-0.51,0,-0.83),Vector3(0.51,0,-0.83)]:
-		var origin = state.transform*wheel
-		var query = PhysicsRayQueryParameters3D.create(origin+Vector3.UP*0.25,origin-Vector3.UP*1.0,1)
-		var hit = state.get_space_state().intersect_ray(query)
-		if hit.is_empty(): continue
-		var height: float=origin.y-hit.position.y
-		if height>0.85: continue
-		grounded=true
-		var force = clampf((0.72-height)*1600.0-state.linear_velocity.y*130.0,0,2200)
-		state.apply_central_force(Vector3.UP*force)
-	if not grounded: return
-	var grip = (2.8 if offroad else 5.6)*(0.25 if handbrake else 1.0)*surface_grip
-	state.apply_central_force(-right*side_speed*mass*grip)
-	var engine = throttle*mass*13.0
-	if disabled_time>0: engine=0
-	if boosting and boost>0 and throttle>0 and disabled_time<=0:
-		engine*=1.7; boost=maxf(0,boost-step*23)
-	else: boost=minf(100,boost+step*10)
-	var top_speed = (12.0 if offroad else 19.0)+(8.0 if boosting and boost>0 else 0.0)
-	if speed<top_speed: state.apply_central_force(forward*engine)
-	if brake>0:
-		if speed>0.6: state.apply_central_force(-forward*brake*mass*22*surface_grip)
-		elif speed>-5: state.apply_central_force(-forward*brake*mass*7)
-	if throttle<0.05 and brake<0.05: state.apply_central_force(-forward*speed*mass*0.6)
-	if handbrake: state.apply_central_force(-forward*speed*mass*0.9)
-	if desired.length_squared()>0.1 and disabled_time<=0:
-		var error = forward.signed_angle_to(desired,Vector3.UP)
-		var rate = clampf(absf(speed)*0.26,0.0,2.5)*(1.45 if handbrake else 1.0)
-		state.angular_velocity.y=move_toward(state.angular_velocity.y,clampf(error*4.0,-rate,rate),step*9)
-	else: state.angular_velocity.y=move_toward(state.angular_velocity.y,0,step*5)
+	impact_cooldown=maxf(0,impact_cooldown-state.step)
+	impact_speed=0
+	var strongest_contact=-1
+	for c in state.get_contact_count():
+		var impulse=state.get_contact_impulse(c).length()
+		if impulse/mass>impact_speed:
+			impact_speed=impulse/mass; strongest_contact=c
+	if impact_speed>5.5 and impact_cooldown<=0:
+		impact_cooldown=0.35
+		# Select the strongest contact before applying the shared cooldown. A small
+		# first contact must not mask the main impact in the same solver step.
+		# Despite "local" in its name, Godot returns this point in world coordinates.
+		take_damage(minf(24,(impact_speed-5.5)*2.0),Vector3.ZERO,state.get_contact_local_position(strongest_contact))
+	physics.solve(self,state)
+
+func repair_wheels() -> void:
+	missing_wheels=0
+	for w in physics.wheels: w.missing=false; w.health=100.0
+
+func damage_wheel(index_value: int, amount: float) -> void:
+	if replica or index_value<0 or index_value>=4: return
+	var wheel: Dictionary=physics.wheels[index_value]
+	if wheel.missing: return
+	wheel.health=maxf(0,wheel.health-amount)
+	if wheel.health>0: return
+	if missing_wheels!=0:
+		health=0; disabled_time=1.6; throttle=0; boosting=false
+		return
+	wheel.missing=true; wheel.contact=false; wheel.load=0
+	missing_wheels|=1<<index_value
 
 func tick(delta: float) -> void:
 	immune=maxf(0,immune-delta); disabled_time=maxf(0,disabled_time-delta)
@@ -155,15 +187,35 @@ func tick(delta: float) -> void:
 	if advance<12 and on_course and not reset_pending:
 		passed+=advance; checkpoint=nearest_index; laps=passed/track.COUNT
 	offroad=track.road_distance(position,nearest_index)>track.WIDTH*0.5+0.5
-	if linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
+	if grounded and linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
 	else: stuck_time=0
+	if basis.y.dot(Vector3.UP)<0.2 and linear_velocity.length()<3: overturned_time+=delta
+	else: overturned_time=0
 
 func update_visuals() -> void:
+	for i in physics.wheels.size():
+		var w: Dictionary=physics.wheels[i]
+		var lost=(missing_wheels&(1<<i))!=0
+		if lost and (displayed_missing&(1<<i))==0 and get_parent().get("effects")!=null:
+			get_parent().effects.detach_wheel(self,i)
+		w.missing=lost
+		wheel_pivots[i].visible=not lost
+		wheel_pivots[i].position=w.anchor-Vector3.UP*w.length
+		wheel_pivots[i].basis=Basis(Vector3.UP,physics.steer if w.front else 0.0)*Basis(Vector3.RIGHT,-w.spin)
+		wheel_colliders[i].position=wheel_pivots[i].position
+		if wheel_colliders[i].disabled!=lost: wheel_colliders[i].set_deferred("disabled",lost)
+	displayed_missing=missing_wheels
 	shield_mesh.visible=shield>0 or immune>0
 	if aim.length_squared()>0.1: turret.global_rotation.y=atan2(-aim.x,-aim.z)
 	damage_material.albedo_color.a=clampf((100-health)*0.006+0.12,0.12,0.7)
 	dirt_mesh.visible=false
 	for paint in paint_materials: paint.set_shader_parameter("damage",clampf((100-health)*0.008+0.12,0.12,0.9))
+
+func steer_towards(direction: Vector3) -> void:
+	# Navigation helper shared by AI/test drivers; human input bypasses heading conversion.
+	var forward=-basis.z; var up=basis.y
+	var target=direction.slide(up).normalized()
+	steer_input=clampf(-forward.signed_angle_to(target,up)*1.05/0.62,-1,1)
 
 func bot_drive(others: Array = [], delta: float = 1.0/60.0) -> void:
 	bot.drive(self,others,delta)
@@ -185,7 +237,6 @@ func begin_shot() -> bool:
 	weapon_heat=minf(100,weapon_heat+HEAT_PER_SHOT)
 	if weapon_heat>=100: overheated=true
 	return true
-
 func cool_weapon() -> void:
 	weapon_heat=0; overheated=false; cooling_delay=0
 
@@ -193,16 +244,16 @@ func activate_shield() -> void:
 	if replica: return
 	if shield_item and disabled_time<=0: shield=100; shield_item=false
 
-func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO) -> bool:
-	if immune>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
+func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF) -> bool:
+	if replica or immune>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
 	var absorbed = minf(shield,amount); shield-=absorbed; amount-=absorbed
 	health=maxf(0,health-amount)
+	if amount>0 and health<=35 and hit_point.is_finite():
+		var nearest_wheel=-1; var distance=1.15
+		for i in physics.wheels.size():
+			var d=wheel_pivots[i].global_position.distance_to(hit_point)
+			if d<distance: nearest_wheel=i; distance=d
+		if nearest_wheel>=0: damage_wheel(nearest_wheel,amount*8)
 	apply_central_impulse(impulse.limit_length(150))
 	if health<=0: disabled_time=1.6; throttle=0; boosting=false
 	return true
-
-func _collision(body: Node) -> void:
-	if not body is PhysicsBody3D: return
-	var relative = linear_velocity
-	if body is RigidBody3D: relative-=body.linear_velocity
-	if relative.length()>7: take_damage(minf(14,(relative.length()-7)*1.0))
