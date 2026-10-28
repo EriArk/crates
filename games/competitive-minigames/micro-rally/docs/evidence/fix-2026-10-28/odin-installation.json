@@ -1,0 +1,12 @@
+{
+  "title": "Micro Rally (альфа)",
+  "version": "0.1.1",
+  "catalogue_revision": 38,
+  "download_url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.1/micro-rally-0.1.1-aarch64.tar.gz",
+  "sha256": "95825ebb26edd53c8600282152d34d3c091882041883ec2710ac57ac3f8bbf7a",
+  "installed": true,
+  "other_receipts_unchanged": true,
+  "old_objects_retained": true,
+  "old_data_files_retained": true,
+  "old_data_hashes_unchanged_after_install": true
+}
