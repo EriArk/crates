@@ -1,0 +1,20 @@
+{
+  "id": "micro-rally",
+  "title": "Micro Rally (альфа)",
+  "kind": "game",
+  "version": "0.1.2",
+  "architecture": "x86_64",
+  "entry": "bin/micro-rally",
+  "icon": "icon.svg",
+  "license": "GPL-3.0-or-later",
+  "repository": "https://github.com/EriArk/crates.git",
+  "revision": "2b7f101c53c80caab062a42cc77970caa398f20e",
+  "size": 33657487,
+  "unpackedSize": 81117832,
+  "sha256": "dbec5dc1d2080ef7286e932cef51fc4e8924d68bc93f89edc4ec32477b43af73",
+  "channel": "Experimental",
+  "compatibility": "untested",
+  "compatibilityNote": "Alpha: handheld controls, audio and sustained performance await player feedback.",
+  "notes": "Four-stage solo Woodland Challenge with the full Nordschleife final; Rust Pit arena and 900x700 m Deadwater Battle Royale. Up to 16 cars, adjustable bots, independent suspension, five tire surfaces, heat-limited unlimited base gun, manual gears and haptics. Five camera views including windshield; shared SDK profile driver with updated outfits and expressions. English interface. Multiplayer uses TrainerOS Lobby; protocol micro-rally.8 requires matching updates. Network racing remains in Valley; network cup is not included. Handheld performance and full gameplay acceptance remain pending. Flip2 uses OpenGL.",
+  "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.2/micro-rally-0.1.2-x86_64.tar.gz"
+}

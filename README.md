@@ -6,9 +6,10 @@ concepts; implementation and verification are recorded per project.
 **Implemented projects:**
 
 - [Micro Rally (альфа)](games/competitive-minigames/micro-rally/) — physical combat
-  racing with up to 16 cars, drifting, weapons and shields. Version 0.1.0 is available
-  in Crates and installed on Odin/Flip; only the first cup stage is currently open.
-  [Delivery and remaining acceptance](games/competitive-minigames/micro-rally/docs/evidence/alpha-2026-10-27/README.md).
+  racing with up to 16 cars, drifting, weapons and shields. Version 0.1.2 is available
+  in Crates: four solo cup stages, arena battles and Deadwater Battle Royale.
+  Installation and gameplay acceptance of this version on handhelds remain pending.
+  [Publication and remaining acceptance](games/competitive-minigames/micro-rally/docs/evidence/release-0.1.2-2026-10-29/README.md).
 
 - [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
   Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.
