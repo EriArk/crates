@@ -1,0 +1,59 @@
+{
+  "status": "design graph only; no driving, collisions or storm clipping simulated",
+  "area_m2": 630000,
+  "area_ratio_to_current": 4.861,
+  "nodes": 33,
+  "edges": 50,
+  "connected": true,
+  "connected_after_removing_each_bridge": {
+    "A-S1": true,
+    "B-S2": true,
+    "D-S3": true,
+    "F-S5": true
+  },
+  "max_endpoint_grade_percent": 11.43,
+  "minimum_spawn_separation_m": 90.0,
+  "longest_shortest_route_m": 1203.9,
+  "longest_route_endpoints": [
+    "Q4",
+    "N0"
+  ],
+  "route_estimates": [
+    {
+      "from": "W",
+      "to": "F",
+      "metres": 817.4,
+      "seconds_at_10_to_18_mps": [
+        45,
+        82
+      ]
+    },
+    {
+      "from": "N0",
+      "to": "Q4",
+      "metres": 1203.9,
+      "seconds_at_10_to_18_mps": [
+        67,
+        120
+      ]
+    },
+    {
+      "from": "N7",
+      "to": "Q0",
+      "metres": 1124.6,
+      "seconds_at_10_to_18_mps": [
+        62,
+        112
+      ]
+    },
+    {
+      "from": "B",
+      "to": "S3",
+      "metres": 362.5,
+      "seconds_at_10_to_18_mps": [
+        20,
+        36
+      ]
+    }
+  ]
+}
