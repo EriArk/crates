@@ -11,7 +11,7 @@ const STAGES = [
 	{"id":"valley","title":"Грязевая долина","track":preload("race_wire.gd").TRACK,"laps":5,"target":"4–6 мин","weight":2,"time":"day","weather":"clear","available":true},
 	{"id":"quarry","title":"Карьер","track":"quarry.1","laps":6,"target":"6–8 мин","weight":2,"time":"sunset","weather":"clear","available":true},
 	{"id":"pass","title":"Лесной перевал","track":"forest-pass.1","laps":5,"target":"8–10 мин","weight":2,"time":"dawn","weather":"rain","available":true},
-	{"id":"boss","title":"Nordschleife · босс","track":"nordschleife.1","laps":0,"target":"20+ мин","weight":3,"time":"day","weather":"overcast","available":false}
+	{"id":"boss","title":"Nordschleife · босс","track":"nordschleife.1","laps":1,"target":"20+ мин","weight":3,"time":"day","weather":"overcast","available":true}
 ]
 static func whole(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high

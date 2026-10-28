@@ -93,15 +93,17 @@ func _ready() -> void:
 			var at=posmod(int(arg.trim_prefix("--capture-at=")),track.COUNT)
 			state="race"; set_physics_process(false)
 			for car in cars:
-				car.freeze=true; car.transform=track.road_pose(posmod(at-car.index*2,track.COUNT),(car.index%3-1)*2.5)
+				car.checkpoint=posmod(at-car.index*2,track.COUNT); car.passed=car.checkpoint; car.laps=0
+				car.freeze=true; car.transform=track.road_pose(car.checkpoint,(car.index%3-1)*2.5)
 				car.reset_pending=false; car.ghost_time=0; car.immune=0; car.aim=-car.basis.z
+				car.update_visuals()
 	_camera(1,true)
 	if "--physics-benchmark" in OS.get_cmdline_user_args():
 		net.platform_enabled=false
 		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots","controls"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots","controls","credits"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -187,7 +189,7 @@ func start_race() -> void:
 	if net.online and not net.starting: net.rematch(); return
 	if net.online: cup.running=false
 	if not cup.running:
-		laps=4; load_track(net.Wire.TRACK if net.online else quick_track)
+		load_track(net.Wire.TRACK if net.online else quick_track); laps=int(Tracks.TRACKS[current_track].get("quick_laps",4))
 	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
@@ -355,6 +357,7 @@ func _shoot(car: Node3D) -> void:
 
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
+	track.update_view(player().position)
 	_camera(delta)
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)

@@ -1,0 +1,4 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ROAD PROJECTION {"coverage_error":0.0000000127462952842529,"interior_error":0.00000655077397823667,"triangles":29453}
+PASS GEOMETRY {"elevation":32.8187718391418,"failures":0,"length":1468.19279360771,"max_crossfall_height":0.498119354248047,"max_grade":0.301338859863323,"road_collision_error":0.0000535583496093783,"support_hits":960,"worst":{"analytic":28.2406009758775,"hit":"(-47.49474, 28.20282, -41.75964)","index":60,"lane":-5.5,"nearest":59,"point":"(-47.49474, 28.70094, -41.75964)"}}

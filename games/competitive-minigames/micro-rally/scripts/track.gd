@@ -2,7 +2,7 @@
 extends Node3D
 const Art = preload("art.gd")
 const WIDTH = 12.0
-const COUNT = 320
+var COUNT = 320
 var points = PackedVector3Array()
 var tangents = PackedVector3Array()
 var length = 0.0
@@ -17,8 +17,14 @@ const SEARCH_CELL = 8.0
 func set_wetness(value: float) -> void:
 	if road_material!=null: road_material.set_shader_parameter("wetness",clampf(value,0,1))
 
-func _init() -> void:
-	_sample_route(_anchors())
+func update_view(_position: Vector3) -> void: pass
+func section_name(_index: int) -> String: return ""
+func grid_step() -> float: return 2.0
+func grid_origin() -> Vector2: return Vector2(-terrain_cells(),-terrain_cells())
+func grid_bounded() -> bool: return true
+
+func _init(authored: bool = true) -> void:
+	if authored: _sample_route(_anchors())
 
 func _anchors() -> Array:
 	# Closed authored valley route: broad sweep, bridge, climb, hairpin, return.

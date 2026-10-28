@@ -79,7 +79,12 @@ func menu(mode: String) -> void:
 		if game.net.bridge.registered: button(list,"Играть с друзьями",game.net.bridge.open_lobby)
 		button(list,"Управление",func(): menu("controls"))
 		button(list,"Звук и музыка",func(): menu("audio"))
+		button(list,"Авторы и данные",func(): menu("credits"))
 		button(list,"Выйти",game.quit_game)
+	elif mode=="credits":
+		list.add_child(label("АВТОРЫ И ДАННЫЕ",28,GOLD))
+		list.add_child(label("Micro Rally · TrainerOS\nКод: GPL-3.0-or-later\nМодели: Kenney (CC0)\n\nNordschleife:\n© OpenStreetMap contributors · ODbL\nopenstreetmap.org/copyright\n\nВысоты: Terrain Tiles (Mapzen)\nCopernicus EU-DEM / USGS SRTM\nregistry.opendata.aws/terrain-tiles\n\nГеоданные и лицензии входят в пакет.\nИгровая адаптация, без связи с владельцем трассы.",16))
+		button(list,"Назад",func(): menu("main"))
 	elif mode in ["cup","cup_replace","standings","garage"]:
 		CupMenu.build(self,list,mode)
 	elif mode=="bots":
@@ -87,7 +92,7 @@ func menu(mode: String) -> void:
 	elif mode=="quick":
 		list.add_child(label("ОТДЕЛЬНЫЙ ЗАЕЗД",28,GOLD))
 		list.add_child(label(game.track_title(),22))
-		list.add_child(label("4 круга · до 16 машин",18,Color("bed0c6")))
+		list.add_child(label(("1 полный круг · 20+ мин" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 круга")+" · до 16 машин",18,Color("bed0c6")))
 		button(list,"В гонку",game.start_race)
 		button(list,"Сменить трассу",game.cycle_track)
 		button(list,"Машина: "+game.car_title(),game.cycle_car)
@@ -221,7 +226,9 @@ func _draw() -> void:
 	write(str(rank.find(car)+1),Vector2(38,77),58,GOLD); write("/"+str(game.cars.size()),Vector2(110,76),31)
 	var seconds = int(game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
-	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps],Vector2(238,53),24)
+	var section: String=game.track.section_name(car.checkpoint)
+	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f км" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
+	if not section.is_empty(): write(section,Vector2(240,106),20,GOLD)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
 	# Compact status bars sit below the chair; gameplay has no bottom panel.
@@ -254,7 +261,7 @@ func _draw() -> void:
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
 	if car.disabled_time>0: write("ВОССТАНОВЛЕНИЕ",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
 	elif car.missing_wheels!=0: write("КОЛЕСО ПОТЕРЯНО",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
-	if not message.is_empty(): write(message,Vector2(240,106),18,GOLD)
+	if not message.is_empty(): write(message,Vector2(240,106 if section.is_empty() else 132),18,GOLD)
 	if game.show_metrics: write("%.0f FPS · %d машин" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
 
 func _speedometer(car: Node3D) -> void:
@@ -282,7 +289,9 @@ func _map() -> void:
 	var scale_value=minf(150.0/maxf(1,bounds.size.x),148.0/maxf(1,bounds.size.y))
 	var center=bounds.get_center()
 	var path = PackedVector2Array()
-	for p in game.track.points: path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
+	# A 150-pixel map needs at most 512 segments, independent of physics samples.
+	for i in range(0,game.track.COUNT,maxi(1,ceili(game.track.COUNT/512.0))):
+		var p: Vector3=game.track.points[i]; path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
 	path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
 	for c in game.cars:
 		var p: Vector2=origin+(Vector2(c.position.x,c.position.z)-center)*scale_value
