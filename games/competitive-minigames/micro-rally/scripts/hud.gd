@@ -102,12 +102,18 @@ func menu(mode: String) -> void:
 		CupMenu.build(self,list,mode)
 	elif mode=="bots":
 		BotMenu.build(self,list)
+	elif mode=="network_setup":
+		list.add_child(label("LOBBY EVENT",36,GOLD))
+		list.add_child(label("Choose the event for everyone.\nUp to 16 cars · empty seats use bots",20))
+		button(list,"Racing · Dirty Valley",func(): game.net.select_event("race"))
+		button(list,"Arena battle · Rust Pit",func(): game.net.select_event("arena"))
+		button(list,"Leave",game.return_menu)
 	elif mode=="quick":
-		list.add_child(label("RACING",36,GOLD))
+		list.add_child(label("ARENA BATTLE" if game.is_arena() else "RACING",36,GOLD))
 		list.add_child(label(game.track_title(),22))
-		list.add_child(label(("1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
-		button(list,"Race",game.start_race)
-		button(list,"Change track",game.cycle_track)
+		list.add_child(label(("8 minutes · respawns" if game.is_arena() else "1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
+		button(list,"Battle" if game.is_arena() else "Race",game.start_race)
+		if not game.is_arena(): button(list,"Change track",game.cycle_track)
 		button(list,"Car: "+game.car_title(),game.cycle_car)
 		button(list,"Bots: %d · %s" % [game.bot_count,game.BotSettings.title(game.cup.store.bot_settings("quick"))],func(): BotMenu.open(self,"quick"))
 		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
@@ -125,6 +131,7 @@ func menu(mode: String) -> void:
 		list.add_child(label("CONTROLS",36,GOLD))
 		BotMenu.option(self,list,"Transmission: "+("manual" if game.cup.store.manual_gears() else "automatic"),func(_step): toggle_gearbox())
 		BotMenu.option(self,list,"Vibration: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
+		BotMenu.option(self,list,"Aim assist: "+game.arena.Aim.TITLES[game.arena.assist_level]+" · arena",game.arena.change_assist)
 		button(list,"Button layout",func(): menu("bindings"))
 		list.add_child(label("Steer left / right relative to your car.\nAim independently with the right stick.\n\nManual transmission has five gears.\nTop face button shifts up; right shifts down.",22,Color("bed0c6")))
 		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
@@ -132,31 +139,31 @@ func menu(mode: String) -> void:
 	elif mode=="bindings":
 		list.add_child(label("BUTTON LAYOUT",36,GOLD))
 		var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",32); list.add_child(columns)
-		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift",20))
-		columns.add_child(label("KEYBOARD\n\nA / D or ← / → — steer\nW / S or ↑ / ↓ — accelerate / brake\nMouse — aim and fire\nShift — boost\nSpace — handbrake\nE — shield\nR — recover car\nC / Z — shift gears\nEscape — pause",20,Color("bed0c6")))
+		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift\nD-pad left / right — weapon",18))
+		columns.add_child(label("KEYBOARD\n\nA / D or ← / → — steer\nW / S or ↑ / ↓ — accelerate / brake\nMouse — aim and fire\nShift — boost\nSpace — handbrake\nE — shield\nR — recover car\nC / Z — shift gears\nEscape — pause\nQ — weapon",18,Color("bed0c6")))
 		button(list,"Back",func(): menu("controls"))
 	elif mode=="pause":
 		list.add_child(label("PAUSED",34,GOLD))
 		button(list,"Resume",game.resume_race)
 		button(list,"Settings",func(): menu("settings"))
-		button(list,"Recover car to track",func(): game.recover_player(); game.resume_race())
-		button(list,"Restart",func(): confirm("RESTART RACE?","This race will restart from the beginning.\nCompleted stage results will be kept.","Restart",game.start_race))
-		button(list,"Leave race",func(): confirm("LEAVE RACE?","You will need to restart this stage.\nCompleted stage results will be kept." if game.cup.running else "This unfinished race result will not be saved.","Leave",game.cup.leave_stage if game.cup.running else game.return_menu))
+		button(list,"Recover car",func(): game.recover_player(); game.resume_race())
+		button(list,"Restart",func(): confirm("RESTART EVENT?","This event will restart from the beginning.\nCompleted stage results will be kept.","Restart",game.start_race))
+		button(list,"Leave event",func(): confirm("LEAVE EVENT?","You will need to restart this stage.\nCompleted stage results will be kept." if game.cup.running else "This unfinished event result will not be saved.","Leave",game.cup.leave_stage if game.cup.running else game.return_menu))
 	elif mode=="net_pause":
-		list.add_child(label("ONLINE RACE",30,GOLD))
-		list.add_child(label("The race is still running.\nYour car has released the throttle.",19))
+		list.add_child(label("ONLINE EVENT",30,GOLD))
+		list.add_child(label("The event is still running.\nYour car has released the throttle.",19))
 		button(list,"Resume",game.resume_race)
 		button(list,"Settings",func(): menu("settings"))
 		button(list,"Recover car",func(): game.recover_player(); game.resume_race())
-		button(list,"Leave race",func(): confirm("LEAVE RACE?","You will leave the current online race.","Leave",game.return_menu))
+		button(list,"Leave event",func(): confirm("LEAVE EVENT?","You will leave the current online event.","Leave",game.return_menu))
 	elif mode=="disconnected":
-		list.add_child(label("RACE INTERRUPTED",28,GOLD))
+		list.add_child(label("EVENT INTERRUPTED",28,GOLD))
 		var reason = label(message,19); reason.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; reason.custom_minimum_size.x=330; list.add_child(reason)
 		if game.net.bridge.registered: button(list,"Return to lobby",func(): game.net.bridge.open_lobby())
 		else: button(list,"Return to TrainerOS",game.quit_game)
 		button(list,"Solo play",func(): menu("main"))
 	elif mode=="results":
-		list.add_child(label("FINISH!",38,GOLD))
+		list.add_child(label("BATTLE OVER" if game.is_arena() else "FINISH!",38,GOLD))
 		list.add_child(label(game.track_title()+" · "+game.BotSettings.title(game.race_bots),24))
 		var rank = game.standings()
 		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
@@ -164,7 +171,11 @@ func menu(mode: String) -> void:
 		for i in rank.size():
 			var car: Node3D=rank[i]
 			var column = left if i<8 else right
-			column.add_child(label(str(i+1)+"  "+car.driver_title()+"   "+("%.1f s" % car.finish_time if car.finish_time>=0 else "DNF"),19,GOLD if car.local_player else PAPER))
+			var text=str(i+1)+"  "+car.driver_title()+"   "+("%.1f s" % car.finish_time if car.finish_time>=0 else "DNF")
+			if game.is_arena():
+				var row=game.arena.rules.ranked()[i]
+				text="%d  %s   %d pts · %d K / %d D" % [row.place,car.driver_title(),row.score,row.kills,row.deaths]
+			column.add_child(label(text,17 if game.is_arena() else 19,GOLD if car.local_player else PAPER))
 		if game.cup.running:
 			if not game.cup.pending_result.is_empty():
 				list.add_child(label(game.cup.store.notice,18,GOLD))
@@ -173,7 +184,7 @@ func menu(mode: String) -> void:
 				list.add_child(label("Stage points saved to the standings.",18,GOLD))
 				button(list,"Stages and standings",game.cup.leave_stage)
 		else:
-			list.add_child(label("Single race · no cup points or rewards",16,Color("bed0c6")))
+			list.add_child(label("Single event · no cup points or rewards",16,Color("bed0c6")))
 			if game.net.online and game.net.voted: list.add_child(label("Rematch: waiting for the other drivers…",19,GOLD))
 			else: button(list,"Rematch",game.start_race)
 			button(list,"Back to cups",game.return_menu)
@@ -263,11 +274,12 @@ func _draw() -> void:
 		return
 	var rank: Array=game.standings()
 	draw_style_box(_plate(),Rect2(22,20,194,108))
-	write(str(rank.find(car)+1),Vector2(38,77),58,GOLD); write("/"+str(game.cars.size()),Vector2(110,76),31)
-	var seconds = int(game.elapsed)
+	write(str(game.arena.rules.place(car.index) if game.is_arena() else rank.find(car)+1),Vector2(38,77),58,GOLD); write("/"+str(game.cars.size()),Vector2(110,76),31)
+	var seconds = int(maxf(0,game.arena.Rules.DURATION-game.elapsed) if game.is_arena() else game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
 	var section: String=game.track.section_name(car.checkpoint)
-	write("LAP %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f km" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
+	if game.is_arena(): write("%d PTS · %d KOs" % [game.arena.rules.rows[car.index].score,game.arena.rules.rows[car.index].kills],Vector2(238,53),24,GOLD)
+	else: write("LAP %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f km" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
 	if not section.is_empty(): write(section,Vector2(240,106),20,GOLD)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
@@ -284,7 +296,7 @@ func _draw() -> void:
 	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
-	write("OVERHEATED" if car.overheated else "MACHINE GUN",weapon+Vector2(14,26),17,heat_color)
+	write("OVERHEATED" if car.overheated else (car.weapon.to_upper()+" · "+str(car.ammo) if game.is_arena() and car.weapon_selected and car.ammo>0 else "MACHINE GUN"),weapon+Vector2(14,26),17,heat_color)
 	write("∞",weapon+Vector2(142,28),26,PAPER)
 	draw_style_box(_plate(),Rect2(weapon+Vector2(14,38),Vector2(153,13)))
 	draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
@@ -351,11 +363,15 @@ func _map() -> void:
 	var bounds: Rect2=game.track.map_bounds
 	var scale_value=minf(150.0/maxf(1,bounds.size.x),148.0/maxf(1,bounds.size.y))
 	var center=bounds.get_center()
-	var path = PackedVector2Array()
-	# A 150-pixel map needs at most 512 segments, independent of physics samples.
-	for i in range(0,game.track.COUNT,maxi(1,ceili(game.track.COUNT/512.0))):
-		var p: Vector3=game.track.points[i]; path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
-	path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
+	if game.is_arena():
+		draw_rect(Rect2(origin-bounds.size*scale_value/2,bounds.size*scale_value),Color(0.06,0.08,0.07,0.7))
+		for cover in game.track.covers: draw_rect(Rect2(origin+(cover.position-center)*scale_value,cover.size*scale_value),Color("9e9d87"))
+	else:
+		var path = PackedVector2Array()
+		# A 150-pixel map needs at most 512 segments, independent of physics samples.
+		for i in range(0,game.track.COUNT,maxi(1,ceili(game.track.COUNT/512.0))):
+			var p: Vector3=game.track.points[i]; path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
+		path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
 	for c in game.cars:
 		var p: Vector2=origin+(Vector2(c.position.x,c.position.z)-center)*scale_value
 		draw_circle(p,5 if c.local_player else 3.5,Car.COLORS[c.index%8])

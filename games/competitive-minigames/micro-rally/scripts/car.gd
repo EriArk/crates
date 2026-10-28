@@ -4,6 +4,12 @@ const Art = preload("art.gd")
 const BotDriver = preload("bot_driver.gd")
 const VehiclePhysics = preload("vehicle_physics.gd")
 const COLORS = [Color("ff8a28"),Color("27bec0"),Color("db4472"),Color("ad75ed"),Color("8dc84e"),Color("e7c13e"),Color("4c89d9"),Color("eeeece")]
+signal damaged(car: Node3D, attacker: int, amount: float)
+var arena_mode=false
+var assist_level=1
+var weapon="rocket"
+var ammo=0
+var weapon_selected=false
 var index = 0
 var local_player = false
 var human = false
@@ -119,9 +125,10 @@ func _ready() -> void:
 		var lamp = Art.box(self,Vector3(0.18,0.14,0.08),Vector3(side*0.55,0.0,-1.58),Color("e2dec6"))
 		lamp.material_override=lamp_material; lamp.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
-func reset_at(pose: Transform3D) -> void:
+func reset_at(pose: Transform3D, restore_wheels: bool=true) -> void:
 	reset_pose=pose; reset_pending=true; immune=2.0; reset_serial+=1
-	repair_wheels(); overturned_time=0
+	if restore_wheels: repair_wheels()
+	overturned_time=0
 	ghost_time=2.0; collision_layer=4; collision_mask=1
 	bot.reversing=0; stuck_time=0; recovery_lock=2.0
 
@@ -160,7 +167,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		# Select the strongest contact before applying the shared cooldown. A small
 		# first contact must not mask the main impact in the same solver step.
 		# Despite "local" in its name, Godot returns this point in world coordinates.
-		take_damage(minf(24,(impact_speed-5.5)*2.0),Vector3.ZERO,state.get_contact_local_position(strongest_contact))
+		var collider=state.get_contact_collider_object(strongest_contact)
+		var attacker=int(collider.index) if is_instance_valid(collider) and collider.get("index")!=null else -1
+		take_damage(minf(24,(impact_speed-5.5)*2.0),Vector3.ZERO,state.get_contact_local_position(strongest_contact),attacker)
 	physics.solve(self,state)
 
 func repair_wheels() -> void:
@@ -191,13 +200,14 @@ func tick(delta: float) -> void:
 			else: ghost_time=0.1; immune=maxf(immune,0.1)
 	shield=maxf(0,shield-delta*2.0)
 	update_visuals()
-	var nearest_index: int=track.nearest(position,checkpoint)
-	var advance = posmod(nearest_index-checkpoint,track.COUNT)
-	var road_delta: Vector3=position-track.points[nearest_index]
-	var on_course = Vector2(road_delta.x,road_delta.z).length()<track.WIDTH*0.5+1.5 and absf(road_delta.y)<2.5
-	if advance<12 and on_course and not reset_pending:
-		passed+=advance; checkpoint=nearest_index; laps=passed/track.COUNT
-	offroad=track.road_distance(position,nearest_index)>track.WIDTH*0.5+0.5
+	if not arena_mode:
+		var nearest_index: int=track.nearest(position,checkpoint)
+		var advance = posmod(nearest_index-checkpoint,track.COUNT)
+		var road_delta: Vector3=position-track.points[nearest_index]
+		var on_course = Vector2(road_delta.x,road_delta.z).length()<track.WIDTH*0.5+1.5 and absf(road_delta.y)<2.5
+		if advance<12 and on_course and not reset_pending:
+			passed+=advance; checkpoint=nearest_index; laps=passed/track.COUNT
+		offroad=track.road_distance(position,nearest_index)>track.WIDTH*0.5+0.5
 	if grounded and linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
 	else: stuck_time=0
 	if basis.y.dot(Vector3.UP)<0.2 and linear_velocity.length()<3: overturned_time+=delta
@@ -243,7 +253,7 @@ func tick_weapon(delta: float) -> void:
 	if overheated and weapon_heat<=RESUME_HEAT: overheated=false
 
 func begin_shot() -> bool:
-	if replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
+	if replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0 or (arena_mode and immune>0): return false
 	fire_cooldown=0.28; cooling_delay=0.45
 	weapon_heat=minf(100,weapon_heat+HEAT_PER_SHOT)
 	if weapon_heat>=100: overheated=true
@@ -255,8 +265,9 @@ func activate_shield() -> void:
 	if replica: return
 	if shield_item and disabled_time<=0: shield=100; shield_item=false
 
-func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF) -> bool:
+func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF, attacker: int=-1) -> bool:
 	if replica or immune>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
+	var before=health
 	var absorbed = minf(shield,amount); shield-=absorbed; amount-=absorbed
 	health=maxf(0,health-amount)
 	if amount>0 and health<=35 and hit_point.is_finite():
@@ -265,6 +276,7 @@ func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vect
 			var d=wheel_pivots[i].global_position.distance_to(hit_point)
 			if d<distance: nearest_wheel=i; distance=d
 		if nearest_wheel>=0: damage_wheel(nearest_wheel,amount*8)
+	if health<before: damaged.emit(self,attacker,before-health)
 	apply_central_impulse(impulse.limit_length(150))
 	if health<=0: disabled_time=1.6; throttle=0; boosting=false
 	return true

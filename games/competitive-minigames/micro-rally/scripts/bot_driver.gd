@@ -20,6 +20,7 @@ var lane_changes = 0
 var shots = 0
 var pickups_collected = 0
 var cooling_weapon = false
+var vertical_range = 3.0
 
 func configure(value: Dictionary) -> bool:
 	if not Settings.valid(value): return false
@@ -109,7 +110,7 @@ func combat(car: Node3D, others: Array, delta: float) -> void:
 		for other in others:
 			if other==car or other.finish_time>=0 or other.ghost_time>0 or other.disabled_time>0: continue
 			var diff: Vector3=other.position-car.position; var distance = diff.length()
-			if distance>[20,25,30][int(settings.aggression)] or absf(diff.y)>3: continue
+			if distance>[20,25,30][int(settings.aggression)] or absf(diff.y)>vertical_range: continue
 			var score: float=distance-(4.0 if other==opponent else 0.0)
 			if score<best_score: selected=other; best_score=score
 		opponent=selected

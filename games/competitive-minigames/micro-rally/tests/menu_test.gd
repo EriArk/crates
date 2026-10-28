@@ -44,9 +44,9 @@ func run() -> void:
 	check(hud.buttons.size()==9,"Last page contains one card, filters, paging and Back")
 	hud.cup_entries=Catalog.CUPS; hud.cup_page=0
 	hud.menu("modes"); await process_frame
-	check(hud.buttons[1].disabled and hud.buttons[2].disabled,"Unimplemented arena and royale cannot start racing")
+	check(not hud.buttons[1].disabled and hud.buttons[2].disabled,"Implemented arena is available while royale remains unavailable")
 	press("ui_down"); await process_frame
-	check(hud.buttons[-1].has_focus(),"Controller skips unavailable modes")
+	check(hud.buttons[1].has_focus(),"Controller reaches the playable arena mode")
 	hud.menu("main"); hud.menu("settings"); hud.menu("audio"); await process_frame
 	var slider=root.gui_get_focus_owner()
 	check(slider is HSlider,"Audio starts with a focused native slider")

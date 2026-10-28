@@ -115,11 +115,11 @@ func update(game: Node, delta: float) -> void:
 		var tick=maxi(1,ceili(game.countdown))
 		if tick!=countdown_tick: countdown_tick=tick; play_cue("tick")
 	if game.state=="race" and previous_state=="countdown": play_cue("go")
-	if game.state=="race" and car.laps>=game.laps-1 and not final_lap_played and car.finish_time<0:
+	if not game.is_arena() and game.state=="race" and car.laps>=game.laps-1 and not final_lap_played and car.finish_time<0:
 		final_lap_played=true; play_cue("final_lap")
 	if (car.finish_time>=0 or game.state=="results") and game.state in ["race","results"] and not finish_played:
 		finish_played=true
-		play_cue("dnf" if car.finish_time<0 else "win" if game.standings().find(car)==0 else "finish")
+		play_cue("dnf" if car.finish_time<0 and not game.is_arena() else "win" if game.standings().find(car)==0 else "finish")
 	previous_state=game.state
 	duck=maxf(0,duck-delta)
 	var racing=game.state in ["countdown","race","pause"] and not finish_played

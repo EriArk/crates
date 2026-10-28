@@ -5,6 +5,7 @@ import argparse,json,pathlib,shlex,subprocess
 p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
+p.add_argument('--mode',choices=['race','arena'],default='race')
 p.add_argument('--case',choices=['2','16'],required=True)
 a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 identity=json.loads(a.manifest.read_text())['source_snapshot']
@@ -21,4 +22,4 @@ def run(argv,name,timeout=120):
 build='/rally/network-build/'+identity
 run(base+['cmake','-S','/rally/snapshots/'+identity+'/tests','-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release','-DTRAINEROS_SOURCE=/work/source','-DTRAINEROS_CORE=/work/build-trixie/libtrainer_core.a'],'configure.log')
 run(base+['cmake','--build',build,'-j','2'],'build.log')
-run(base+['env','TRAINEROS_TEST_RECORD_PYTHON=/usr/bin/python3','RALLY_TEST_GODOT=/rally/engine/godot','RALLY_TEST_PROJECT=/rally/snapshots/'+identity,build+'/rally-host-tests','groupRace:'+a.case], 'sdk-'+a.case+'.log',700)
+run(base+['env','QTEST_FUNCTION_TIMEOUT=720000','TRAINEROS_TEST_RECORD_PYTHON=/usr/bin/python3','RALLY_TEST_MODE='+a.mode,'RALLY_TEST_GODOT=/rally/engine/godot','RALLY_TEST_PROJECT=/rally/snapshots/'+identity,build+'/rally-host-tests','groupRace:'+a.case], 'sdk-'+a.mode+'-'+a.case+'.log',780)

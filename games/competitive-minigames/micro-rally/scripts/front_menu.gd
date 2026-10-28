@@ -58,7 +58,7 @@ static func build(hud, list: VBoxContainer, mode: String) -> void:
 		list.add_child(hud.label("QUICK PLAY",40))
 		subtitle(hud,list,"CHOOSE A MODE")
 		for entry in Catalog.MODES:
-			var b=hud.button(list,entry.title.to_upper()+"\n"+entry.description+("" if entry.available else "  ·  coming soon"),func(): hud.menu("quick"))
+			var b=hud.button(list,entry.title.to_upper()+"\n"+entry.description+("" if entry.available else "  ·  coming soon"),func(): game.select_mode(entry.id))
 			b.custom_minimum_size.y=86; b.disabled=not entry.available
 		hud.button(list,"Back",func(): hud.menu("main"))
 	elif mode=="settings":

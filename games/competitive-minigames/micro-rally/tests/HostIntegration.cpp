@@ -26,7 +26,7 @@ private slots:
         for(int i=0;i<count;++i){
             ids<<QString::number(100+i);auto n=std::make_unique<Node>();n->lobby.configure(ids[i],"P"+QString::number(i),true);n->runtime.configure(ids[i],true);
             n->network=std::make_unique<SdkNetwork>(n->lobby,n->runtime,python,QString::fromUtf8(SDK_SOURCE)+"/packaging/emulators/melonds/secure-channel.py","127.0.0.1");
-            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.micro-rally"},{"title","Micro Rally"},{"protocol","micro-rally.5"},{"seats",16},{"local","crates:micro-rally"}}});
+            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.micro-rally"},{"title","Micro Rally"},{"protocol","micro-rally.6"},{"seats",16},{"local","crates:micro-rally"}}});
             n->controls.setOwner(ids[i]);n->host.setContext({{"profile",ids[i]}});n->host.setNetwork(n->network.get());
             n->endpoint=dir.filePath(ids[i]+"/endpoint.json");n->report=dir.filePath(ids[i]+".json");QString error;QVERIFY2(n->host.start(n->endpoint,&error),qPrintable(error));
             n->process.setProcessChannelMode(QProcess::MergedChannels);
@@ -46,7 +46,8 @@ private slots:
         QVERIFY(nodes[0]->lobby.selectGame({a["id"].toString(),a["title"].toString(),"Apps","sdk.records.v1",16,QJsonObject::fromVariantMap(a["runtime"].toMap())}));
         for(auto& n:nodes)QVERIFY(n->runtime.prepare());for(auto& n:nodes)QVERIFY(n->lobby.ready(true));QVERIFY(nodes[0]->lobby.start());
         auto report=[](const QString& path){QFile f(path);if(!f.open(QIODevice::ReadOnly))return QJsonObject{};return QJsonDocument::fromJson(f.readAll()).object();};
-        QTRY_VERIFY_WITH_TIMEOUT(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="rematch";}),480000);
+        QTRY_VERIFY_WITH_TIMEOUT(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="rematch";}) || std::any_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="failed";}),600000);
+        QVERIFY(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="rematch";}));
         QSet<int> seats;for(auto& n:nodes){const auto r=report(n->report);QCOMPARE(r["result"],report(nodes[0]->report)["result"]);QVERIFY(r["progress"].toInt()>15);seats.insert(r["local"].toInt());QVERIFY(!n->output.contains("SCRIPT ERROR:"));}QCOMPARE(seats.size(),count);
         nodes[count-1]->host.setContext({{"profile","other"}});
         QTRY_VERIFY_WITH_TIMEOUT(std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="revoked";}),20000);

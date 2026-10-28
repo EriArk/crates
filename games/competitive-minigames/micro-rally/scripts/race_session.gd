@@ -5,6 +5,7 @@ const Wire = preload("race_wire.gd")
 var bridge = Client.new()
 var game: Node3D
 var bot_settings = preload("bot_settings.gd").preset()
+var event_track=Wire.TRACK
 var online = false
 var host = false
 var starting = false
@@ -46,16 +47,21 @@ func _session(is_host: bool) -> void:
 	game.player_index=members.find(bridge.session.self)
 	for member in bridge.channels: seen[member]=Time.get_ticks_msec()
 	round_id=0; phase="waiting"; game.state="network_wait"; game.hud.panel.hide()
-	game.hud.message="Preparing the starting grid…"; deadline=Time.get_ticks_msec()+15000
+	game.hud.message="Waiting for the host to choose an event…"; deadline=Time.get_ticks_msec()+120000
 	if host:
-		bot_settings=game.cup.store.bot_settings("quick"); _prepare()
+		bot_settings=game.cup.store.bot_settings("quick"); game.hud.menu("network_setup")
+
+func select_event(mode: String) -> void:
+	if not online or not host or phase!="waiting" or mode not in ["race","arena"]: return
+	event_track=game.Tracks.ARENA if mode=="arena" else Wire.TRACK
+	_prepare()
 
 func _prepare() -> void:
 	round_id+=1; ready_members=[bridge.session.self]; votes.clear(); voted=false
 	phase="preparing"; deadline=Time.get_ticks_msec()+15000
 	game.bot_count=15; starting=true; game.start_race(); starting=false
 	game.state="network_wait"; game.hud.message="Waiting for everyone to get ready…"
-	if not bridge.send({"type":"prepare","round":round_id,"track":Wire.TRACK,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
+	if not bridge.send({"type":"prepare","round":round_id,"track":event_track,"mode":"arena" if game.is_arena() else "race","rules":1,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
 
 func _begin() -> void:
 	phase="playing"; game.state="countdown"; game.countdown=3; game.hud.message=""
@@ -69,13 +75,13 @@ func _receive(member: String, data: Dictionary) -> void:
 	var kind = data.get("type")
 	if data.get("namespace")=="traineros.avatar.v1": return
 	if kind=="prepare" and not host and member==bridge.session.hostMember:
-		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track")!=Wire.TRACK or data.get("laps")!=4 or not data.get("conditions") is Dictionary:
+		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track") not in [Wire.TRACK,game.Tracks.ARENA] or data.get("laps")!=4 or data.get("rules",1)!=1 or data.get("mode","race")!=("arena" if data.get("track")==game.Tracks.ARENA else "race") or not data.get("conditions") is Dictionary:
 			abort("Incompatible race conditions."); return
 		var conditions = game.Conditions.new()
 		if not conditions.configure(data.conditions): abort("Invalid race conditions."); return
 		var incoming_bots=data.get("bots",game.BotSettings.preset())
 		if not game.BotSettings.valid(incoming_bots): abort("Invalid opponent settings."); return
-		bot_settings=game.BotSettings.normalized(incoming_bots)
+		bot_settings=game.BotSettings.normalized(incoming_bots); event_track=data.track
 		round_id+=1; game.conditions=conditions; game.bot_count=15; starting=true; game.start_race(); starting=false
 		for car in game.cars: car.replica=true; car.freeze=true; car.collision_layer=0; car.collision_mask=0
 		game.state="network_wait"; phase="preparing"; voted=false; overlay=false; deadline=Time.get_ticks_msec()+15000
@@ -96,8 +102,9 @@ func _receive(member: String, data: Dictionary) -> void:
 		return
 	if kind=="recover" and host and phase=="playing": game._recover(game.cars[members.find(member)]); return
 	if kind=="state" and not host and phase in ["playing","results"]:
-		if not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
+		if (game.is_arena() and not game.arena.valid_state(data.get("arena"))) or not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
 			abort("Could not sync the race."); return
+		if game.is_arena(): game.arena.apply_snapshot(data.arena)
 		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
 		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
 		for i in game.pickups.size():
@@ -124,6 +131,7 @@ func apply_remote(car: Node3D) -> void:
 
 func tick_client(delta: float) -> void:
 	apply_targets(delta)
+	if game.is_arena(): game.arena.display_client(delta)
 	if phase=="playing":
 		if game.state=="race" and not overlay:
 			if game.demo_auto:
@@ -160,8 +168,9 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 			w.slip_ratio=w.long_slip/maxf(2,absf(velocity.dot(-car.basis.z)))
 			w.normal=car.basis.y; w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
 		car.last_forward=-car.basis.z
-		car.checkpoint=posmod(int(s[13]),game.track.COUNT)
-		car.offroad=game.track.road_distance(car.position,game.track.nearest(car.position,car.checkpoint))>game.track.WIDTH*0.5+0.5
+		if not game.is_arena():
+			car.checkpoint=posmod(int(s[13]),game.track.COUNT)
+			car.offroad=game.track.road_distance(car.position,game.track.nearest(car.position,car.checkpoint))>game.track.WIDTH*0.5+0.5
 		car.linear_velocity=velocity
 		# Local aim reacts immediately; everyone else displays the authoritative turret.
 		if i!=game.player_index: car.aim=Vector3(sin(s[7]/1000.0),0,cos(s[7]/1000.0))
@@ -173,7 +182,7 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		car.immune=1 if (int(s[12])&1)!=0 else 0; car.shield_item=(int(s[12])&2)!=0
 		car.ghost_time=1 if (int(s[12])&8)!=0 else 0
 		car.boosting=(int(s[12])&4)!=0; car.grounded=(int(s[12])&16)!=0
-		car.passed=s[13]; car.laps=int(s[13])/game.track.COUNT; car.finish_time=s[14]/1000.0 if s[14]>=0 else -1
+		car.passed=s[13]; car.laps=0 if game.is_arena() else int(s[13])/game.track.COUNT; car.finish_time=s[14]/1000.0 if s[14]>=0 else -1
 		car.disabled_time=s[15]/1000.0; car.update_visuals()
 
 func _process(delta: float) -> void:
@@ -189,6 +198,7 @@ func _process(delta: float) -> void:
 	clock=0; sequence+=1
 	if host:
 		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
+		if game.is_arena(): packet.arena=game.arena.snapshot()
 		for member in bridge.channels:
 			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
 		beams.clear()

@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.5","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.6","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -25,7 +25,7 @@ func run() -> void:
 	game.cycle_track()
 	check(game.current_track==game.Tracks.NORD and game.track.COUNT==4096,"Long solo circuit can be selected before admission")
 	game.cup.store.set_bot_settings("quick",game.BotSettings.preset(2))
-	admitted(bridge,"p0",16)
+	admitted(bridge,"p0",16); game.net.select_event("race")
 	check(game.net.online and game.state=="network_wait" and game.player_index==0,"Sixteen admitted players wait for common start")
 	check(game.current_track==Wire.TRACK and game.track.COUNT==320 and game.laps==4 and game.race_limit_seconds==600,"Network prepare loads its agreed Valley, not the previous long solo track")
 	check(game.net.bot_settings==game.BotSettings.preset(2) and game.race_bots==game.net.bot_settings,"Host admits selected difficulty into shared round")

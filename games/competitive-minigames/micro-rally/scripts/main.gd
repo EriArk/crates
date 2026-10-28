@@ -2,8 +2,11 @@
 extends Node3D
 const Track = preload("track.gd")
 const Tracks = preload("track_registry.gd")
+const Arena=preload("arena.gd")
+var arena=Arena.new()
 var current_track = Tracks.VALLEY
 var quick_track = Tracks.VALLEY
+var quick_race_track = Tracks.VALLEY
 const Car = preload("car.gd")
 const Effects = preload("effects.gd")
 const Controls = preload("controls.gd")
@@ -43,6 +46,8 @@ var show_metrics = false
 var demo_auto = false
 var capture_path = ""
 var capture_time = 0.0
+var capture_after = 10.0
+var arena_overview = false
 var screenshot_done = false
 var capture_results = false
 var performance_frames: Array[float] = []
@@ -53,6 +58,7 @@ var race_limit_seconds = 600.0 # Dirty Valley only; future cup stages own their 
 func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps=60
+	arena.game=self; arena.load_settings()
 	net.game=self; add_child(net)
 	cup.game=self; add_child(cup)
 	add_child(haptics)
@@ -80,10 +86,12 @@ func _ready() -> void:
 	var layer = CanvasLayer.new(); add_child(layer); hud=Hud.new(); hud.game=self; layer.add_child(hud)
 	for arg in OS.get_cmdline_user_args():
 		if arg=="--autodrive": demo_auto=true
+		elif arg=="--arena-overview": arena_overview=true
 		elif arg.begins_with("--track=") and Tracks.has_track(arg.trim_prefix("--track=")):
 			quick_track=arg.trim_prefix("--track="); load_track(quick_track); _spawn_cars(); _spawn_pickups()
 		elif arg=="--metrics": show_metrics=true
 		elif arg.begins_with("--capture="): capture_path=arg.trim_prefix("--capture=")
+		elif arg.begins_with("--capture-after="): capture_after=clampf(float(arg.trim_prefix("--capture-after=")),1,600)
 		elif arg=="--capture-results": capture_results=true
 		elif arg=="--tilt-off": tilt_shift.set_shader_parameter("strength",0.0)
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
@@ -104,6 +112,14 @@ func _ready() -> void:
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
+
+func is_arena() -> bool: return current_track==Tracks.ARENA
+
+func select_mode(mode: String) -> void:
+	cup.running=false
+	if quick_track!=Tracks.ARENA: quick_race_track=quick_track
+	quick_track=Tracks.ARENA if mode=="arena" else quick_race_track
+	load_track(quick_track); _spawn_cars(); _spawn_pickups(); arena.reset(); _camera(1,true); hud.menu("quick")
 
 func player() -> Node3D: return cars[player_index]
 
@@ -148,14 +164,21 @@ func _spawn_cars() -> void:
 			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
 			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
 		car.manual_gears=car.local_player and not demo_auto and cup.store.manual_gears()
+		if is_arena():
+			car.bot=preload("arena_bot.gd").new(); car.arena_mode=true; car.damaged.connect(arena.damaged)
 		car.bot.configure(race_bots)
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
 		if car.local_player and not net.online:
 			for paint in car.paint_materials: paint.set_shader_parameter("paint",cup.store.color())
+		if is_arena():
+			car.transform=track.spawn_pose(i); car.aim=-car.basis.z; car.freeze=state!="menu"
+			continue
 		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
 		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
 		car.transform=track.road_pose(at,(float(i%3)-1)*2.8); car.aim=track.tangents[at]
 		car.freeze=state!="menu"
+
+	arena.reset()
 
 func _spawn_pickups() -> void:
 	for item in pickups: item.node.queue_free()
@@ -165,8 +188,9 @@ func _spawn_pickups() -> void:
 		node.material_override=Art.material(Color("50c9ff") if i%2 else Color("ffc44b"),0.6)
 		node.position=track.pickup_spots[i]; add_child(node)
 		var icon = Label3D.new(); icon.text="+" if i%2 else "COOL"; icon.font_size=48; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+		if is_arena(): icon.text=track.PICKUP_TYPES[i].to_upper()
 		icon.position.y=0.75; node.add_child(icon)
-		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1})
+		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1,"kind":track.PICKUP_TYPES[i] if is_arena() else "shield" if i%2 else "cool"})
 
 func load_track(id: String) -> bool:
 	if not Tracks.has_track(id): return false
@@ -182,20 +206,20 @@ func load_track(id: String) -> bool:
 
 func track_title() -> String: return Tracks.TRACKS[current_track].title
 func cycle_track() -> void:
-	var ids=Tracks.TRACKS.keys(); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
+	var ids=Tracks.TRACKS.keys().filter(func(id): return id!=Tracks.ARENA); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
 	load_track(quick_track); effects.clear(); feedback.reset(); _spawn_cars(); _spawn_pickups(); _camera(1,true); hud.menu("quick")
 
 func start_race() -> void:
 	if net.online and not net.starting: net.rematch(); return
 	if net.online: cup.running=false
 	if not cup.running:
-		load_track(net.Wire.TRACK if net.online else quick_track); laps=int(Tracks.TRACKS[current_track].get("quick_laps",4))
+		load_track(net.event_track if net.online else quick_track); laps=int(Tracks.TRACKS[current_track].get("quick_laps",4))
 	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
 	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	controls.neutral_required=true
-	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
+	_spawn_cars(); _spawn_pickups(); arena.reset(); hud.panel.hide(); hud.message=""; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
 
 func car_title() -> String: return cup.Rules.title(cup.store.data.selected)
@@ -211,6 +235,7 @@ func return_menu() -> void:
 	cup.running=false; laps=4; bot_count=cup.store.quick_bot_count()
 	player_index=0
 	load_track(quick_track)
+	arena.reset()
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
 	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	weather.apply(conditions); _update_conditions(0)
@@ -233,6 +258,7 @@ func network_pause() -> void:
 	else: hud.panel.hide()
 
 func _recover(car: Node3D) -> bool:
+	if is_arena(): return arena.recover(car)
 	if car.finish_time>=0 or car.reset_pending or car.recovery_lock>0: return false
 	for back in [0,2,4,6]:
 		var at: int=posmod(car.checkpoint-back,track.COUNT)
@@ -290,6 +316,7 @@ func _physics_process(delta: float) -> void:
 			for car in cars: car.freeze=false
 		return
 	if state not in ["race","menu"]: return
+	if is_arena(): arena.tick(delta); return
 	if state=="race": elapsed+=delta
 	_update_conditions(elapsed if state=="race" else 0.0)
 	effect_clock+=delta
@@ -334,21 +361,22 @@ func finish_race() -> void:
 	state="results"; get_tree().paused=not net.online; hud.message=""
 	if net.online: net.phase="results"; net.overlay=false
 	for car in cars:
-		car.did_not_finish=car.finish_time<0; controls.neutral(car); car.freeze=true
+		car.did_not_finish=not is_arena() and car.finish_time<0; controls.neutral(car); car.freeze=true
 	if cup.running: cup.finish()
 	hud.menu("results")
 
 func _shoot(car: Node3D) -> void:
 	if not car.begin_shot(): return
 	car.bot.shots+=1
-	var from: Vector3=car.position+Vector3.UP*0.2+car.aim*0.9
-	var to: Vector3=from+car.aim*34
+	var direction=arena.Aim.resolve(car,cars,car.assist_level if car.human or car.local_player and not demo_auto else 0) if is_arena() else car.aim
+	var from: Vector3=car.position+Vector3.UP*0.6 if is_arena() else car.position+Vector3.UP*0.2+direction*0.9
+	var to: Vector3=from+direction*34
 	var query = PhysicsRayQueryParameters3D.create(from,to,3,[car.get_rid()])
 	var hit = get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		to=hit.position
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
-			hit.collider.take_damage(9,car.aim*75,hit.position)
+			hit.collider.take_damage(9,direction*75,hit.position,car.index)
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")
 		effects.burst(to,Color("ffbb51"))
 	effects.beam(from,to); net.shot(car,from,to)
@@ -363,7 +391,7 @@ func _process(delta: float) -> void:
 	sound.update(self,delta); feedback.update(self,delta); haptics.update(self,delta)
 	capture_time+=delta
 	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)
-	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>10) and not screenshot_done:
+	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>capture_after) and not screenshot_done:
 		screenshot_done=true
 		await RenderingServer.frame_post_draw
 		var error = get_viewport().get_texture().get_image().save_png(capture_path)
@@ -372,6 +400,10 @@ func _process(delta: float) -> void:
 		get_tree().quit()
 
 func _camera(delta: float, snap: bool = false) -> void:
+	if arena_overview and is_arena():
+		camera.position=Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=400
+		tilt_shift.set_shader_parameter("strength",0.0)
+		return
 	var target: Vector3=player().position
 	var lookahead: Vector3=player().linear_velocity.limit_length(12)*0.20
 	lookahead.y=0; target+=lookahead
@@ -382,6 +414,7 @@ func _camera(delta: float, snap: bool = false) -> void:
 	tilt_shift.set_shader_parameter("focus_y",clampf(focus.y/get_viewport().get_visible_rect().size.y,0.4,0.65))
 
 func standings() -> Array:
+	if is_arena(): return arena.rules.ranked().map(func(row): return cars[int(row.slot)])
 	var result = cars.duplicate()
 	result.sort_custom(func(a,b):
 		if a.finish_time>=0 and b.finish_time>=0: return a.finish_time<b.finish_time
