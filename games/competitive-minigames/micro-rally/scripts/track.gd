@@ -11,14 +11,20 @@ var pickup_spots: Array[Vector3] = []
 var terrain_vertices = PackedVector3Array()
 var road_material: ShaderMaterial
 var spatial_candidates: Dictionary = {}
+var map_bounds = Rect2()
 const SEARCH_CELL = 8.0
 
 func set_wetness(value: float) -> void:
 	if road_material!=null: road_material.set_shader_parameter("wetness",clampf(value,0,1))
 
 func _init() -> void:
+	_sample_route(_anchors())
+
+func _anchors() -> Array:
 	# Closed authored valley route: broad sweep, bridge, climb, hairpin, return.
-	var anchors = [Vector3(0,0,32),Vector3(-32,0,35),Vector3(-65,0,12),Vector3(-72,0,-24),Vector3(-45,0,-55),Vector3(-8,0,-48),Vector3(12,0,-72),Vector3(47,0,-70),Vector3(68,0,-42),Vector3(44,0,-12),Vector3(65,0,18),Vector3(45,0,54),Vector3(15,0,60)]
+	return [Vector3(0,0,32),Vector3(-32,0,35),Vector3(-65,0,12),Vector3(-72,0,-24),Vector3(-45,0,-55),Vector3(-8,0,-48),Vector3(12,0,-72),Vector3(47,0,-70),Vector3(68,0,-42),Vector3(44,0,-12),Vector3(65,0,18),Vector3(45,0,54),Vector3(15,0,60)]
+
+func _sample_route(anchors: Array) -> void:
 	for i in COUNT:
 		var t = float(i)/COUNT*anchors.size(); var k = int(t); var f = t-k
 		var a: Vector3=anchors[posmod(k-1,anchors.size())]; var b: Vector3=anchors[k]
@@ -27,6 +33,8 @@ func _init() -> void:
 		p.y=base_height(p.x,p.z)+0.07; points.append(p)
 	for i in COUNT:
 		var v = points[(i+1)%COUNT]-points[i]; length+=v.length(); v.y=0; tangents.append(v.normalized())
+	map_bounds=Rect2(Vector2(points[0].x,points[0].z),Vector2.ZERO)
+	for point in points: map_bounds=map_bounds.expand(Vector2(point.x,point.z))
 
 func base_height(x: float, z: float) -> float:
 	return 2.8+sin(x*0.032)*1.7+cos(z*0.035)*2.0+sin((x+z)*0.055)*0.55
@@ -61,6 +69,13 @@ func nearest(p: Vector3, hint: int = -1) -> int:
 func road_distance(p: Vector3, index: int) -> float:
 	var side = Vector3(-tangents[index].z,0,tangents[index].x)
 	return absf((p-points[index]).dot(side))
+
+func steps_ahead(index: int, meters: float) -> int:
+	var distance=0.0
+	for step in range(1,COUNT):
+		distance+=points[posmod(index+step-1,COUNT)].distance_to(points[posmod(index+step,COUNT)])
+		if distance>=meters: return step
+	return COUNT-1
 
 func ground_height(x: float, z: float, index: int, driving_surface: bool = false) -> float:
 	var d = Vector2(x-points[index].x,z-points[index].z).length()
@@ -112,6 +127,7 @@ func _build_terrain() -> void:
 	_static_surface(faces,"driving_surface")
 
 func _static_surface(faces: PackedVector3Array, group: String) -> StaticBody3D:
+	if faces.is_empty(): return null
 	var body = StaticBody3D.new(); var collider = CollisionShape3D.new()
 	var shape = ConcavePolygonShape3D.new(); shape.set_faces(faces)
 	shape.backface_collision=true; collider.shape=shape
@@ -124,6 +140,9 @@ func _quad(faces: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vec
 func _bridge_segment(i: int) -> bool:
 	return absf(points[posmod(i,COUNT)].lerp(points[posmod(i+1,COUNT)],0.5).x+30)<=9.0
 
+func road_divisions() -> int: return 1
+func road_vertex(point: Vector3) -> Vector3: return point
+
 func _build_road() -> void:
 	var surface = SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var distance = 0.0
@@ -132,19 +151,24 @@ func _build_road() -> void:
 		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)*WIDTH*0.5
 		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)*WIDTH*0.5
 		var next = distance+a.distance_to(b)
-		var vertices = [a-side_a,b-side_b,a+side_a,a+side_a,b-side_b,b+side_b]
-		var uvs = [Vector2(0,distance),Vector2(0,next),Vector2(1,distance),Vector2(1,distance),Vector2(0,next),Vector2(1,next)]
-		for n in 6: surface.set_uv(uvs[n]); surface.add_vertex(vertices[n])
+		for cross_section in road_divisions():
+			var u=float(cross_section)/road_divisions(); var v=float(cross_section+1)/road_divisions()
+			var al=road_vertex(a+side_a*(u*2-1)); var ar=road_vertex(a+side_a*(v*2-1))
+			var bl=road_vertex(b+side_b*(u*2-1)); var br=road_vertex(b+side_b*(v*2-1))
+			var vertices = [al,bl,ar,ar,bl,br]
+			var uvs = [Vector2(u,distance),Vector2(u,next),Vector2(v,distance),Vector2(v,distance),Vector2(u,next),Vector2(v,next)]
+			for n in 6: surface.set_uv(uvs[n]); surface.add_vertex(vertices[n])
 		distance=next
 	surface.generate_normals(); surface.index()
 	var node = MeshInstance3D.new(); node.mesh=surface.commit()
+	node.name="RoadSurface"
 	road_material=ShaderMaterial.new(); road_material.shader=preload("res://shaders/road.gdshader"); node.material_override=road_material
 	add_child(node) # Visible road only; ground and bridge decks share one collider.
 	var rail_faces = PackedVector3Array()
 	# Planked bridges wherever the authored route crosses the creek.
 	for i in COUNT:
 		var j = (i+1)%COUNT; var center = points[i].lerp(points[j],0.5)
-		if absf(center.x+30)>9.0: continue
+		if not _bridge_segment(i): continue
 		var span = points[j]-points[i]
 		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)
 		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)

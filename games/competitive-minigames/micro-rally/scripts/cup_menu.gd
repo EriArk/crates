@@ -9,11 +9,10 @@ static func build(hud, list: VBoxContainer, mode: String) -> void:
 		var completed: int=0 if active.is_empty() else active.results.size()
 		for i in Rules.STAGES.size():
 			var stage: Dictionary=Rules.STAGES[i]
-			var suffix="✓" if i<completed else "ГОТОВИТСЯ" if not stage.available else "СТАРТ"
-			list.add_child(hud.label("%02d   %s   %s" % [i+1,stage.title,suffix],22,hud.PAPER if i==completed else Color("b0bfb7")))
-			list.add_child(hud.label("        "+stage.target+(" · очки ×1,5" if stage.weight==3 else ""),16))
+			var suffix="✓" if i<completed else "ГОТОВИТСЯ" if not stage.available else "СТАРТ" if i==completed else "ДАЛЕЕ"
+			list.add_child(hud.label("%02d  %s · %s  %s" % [i+1,stage.title,stage.target,suffix],20,hud.PAPER if i==completed else Color("b0bfb7")))
 		var status=hud.label(flow.status(),18,hud.GOLD); status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; status.custom_minimum_size.x=550; list.add_child(status)
-		list.add_child(hud.label("Приз за победу: Vortex · повторные победы: окраски",17))
+		list.add_child(hud.label("Финал: очки ×1,5 · Приз: Vortex, затем окраски",17))
 		if completed<4 and Rules.STAGES[completed].available and store.writable: hud.button(list,"Начать кубок" if active.is_empty() else "Продолжить этап",flow.start_stage)
 		if completed>0: hud.button(list,"Общий зачёт",func(): hud.menu("standings"))
 		if not active.is_empty() and store.writable: hud.button(list,"Новый кубок",func(): hud.menu("cup_replace"))

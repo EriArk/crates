@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
 const Track = preload("track.gd")
+const Tracks = preload("track_registry.gd")
+var current_track = Tracks.VALLEY
+var quick_track = Tracks.VALLEY
 const Car = preload("car.gd")
 const Effects = preload("effects.gd")
 const Controls = preload("controls.gd")
@@ -58,7 +61,7 @@ func _ready() -> void:
 		elif arg=="--nightfall": selected_conditions.timeline=[{"at":120.0,"time":"sunset","weather":"overcast"},{"at":300.0,"time":"night","weather":"rain"}]
 	if not conditions.configure(selected_conditions): push_warning("Invalid stage conditions: using clear daytime")
 	weather=Weather.new(); add_child(weather); weather.apply(conditions)
-	track=Track.new(); add_child(track); track.build()
+	track=Tracks.create(current_track); add_child(track); track.build()
 	track.set_wetness(conditions.wetness())
 	effects=Effects.new(); effects.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(effects)
 	sound=Audio.new(); add_child(sound)
@@ -72,6 +75,8 @@ func _ready() -> void:
 	var layer = CanvasLayer.new(); add_child(layer); hud=Hud.new(); hud.game=self; layer.add_child(hud)
 	for arg in OS.get_cmdline_user_args():
 		if arg=="--autodrive": demo_auto=true
+		elif arg.begins_with("--track=") and Tracks.has_track(arg.trim_prefix("--track=")):
+			quick_track=arg.trim_prefix("--track="); load_track(quick_track); _spawn_cars(); _spawn_pickups()
 		elif arg=="--metrics": show_metrics=true
 		elif arg.begins_with("--capture="): capture_path=arg.trim_prefix("--capture=")
 		elif arg=="--capture-results": capture_results=true
@@ -147,10 +152,28 @@ func _spawn_pickups() -> void:
 		icon.position.y=0.75; node.add_child(icon)
 		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1})
 
+func load_track(id: String) -> bool:
+	if not Tracks.has_track(id): return false
+	race_limit_seconds=Tracks.TRACKS[id].limit
+	if current_track==id: return true
+	# Stage changes are synchronous between races. Detach old physics immediately;
+	# start_race replaces cars/pickups before the next simulation step.
+	var previous=track
+	track=Tracks.create(id); add_child(track); track.build(); current_track=id
+	remove_child(previous); previous.queue_free()
+	track.set_wetness(conditions.wetness())
+	return true
+
+func track_title() -> String: return Tracks.TRACKS[current_track].title
+func cycle_track() -> void:
+	var ids=Tracks.TRACKS.keys(); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
+	load_track(quick_track); effects.clear(); feedback.reset(); _spawn_cars(); _spawn_pickups(); _camera(1,true); hud.menu("quick")
+
 func start_race() -> void:
 	if net.online and not net.starting: net.rematch(); return
 	if net.online: cup.running=false
-	if not cup.running: laps=4
+	if not cup.running:
+		laps=4; load_track(net.Wire.TRACK if net.online else quick_track)
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
 	sound.reset_round(); feedback.reset(); effects.clear()
@@ -170,7 +193,8 @@ func return_menu() -> void:
 	if net.online: net.leave()
 	cup.running=false; laps=4
 	player_index=0
-	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); hud.menu("main")
+	load_track(quick_track)
+	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
 	sound.reset_round(); feedback.reset(); effects.clear()
 	weather.apply(conditions); _update_conditions(0)
 
@@ -264,11 +288,11 @@ func _physics_process(delta: float) -> void:
 		if effect_clock>0.09 and car.grounded and car.linear_velocity.length()>3 and car.position.distance_to(player().position)<45: effects.dust(car,current_wetness)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed; controls.neutral(car); car.freeze=true; car.collision_layer=0; car.collision_mask=1
-			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+45
+			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
 			if car.local_player:
 				hud.portrait.set_mood("victory")
 				if not net.online:
-					finish_deadline=elapsed+45
+					finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
 					if not cup.running: _save_best()
 	if state=="race":
 		if cars.all(func(c): return c.finish_time>=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
@@ -350,13 +374,14 @@ func standings() -> Array:
 	return result
 
 func _save_best() -> void:
-	# Local first-stage result only. Never grants a full-cup prize or global rank.
-	var file = ConfigFile.new(); file.load("user://valley.cfg")
+	# Separate track records; preserve the original Valley file and legacy result.
+	var path="user://valley.cfg" if current_track==Tracks.VALLEY else "user://"+current_track+".cfg"
+	var file = ConfigFile.new(); file.load(path)
 	var section = "records/"+conditions.record_key()
 	var legacy = float(file.get_value("records","best_seconds",INF)) if conditions.time_of_day=="day" and conditions.weather=="clear" and conditions.timeline.is_empty() else INF
 	var previous = float(file.get_value(section,"best_seconds",legacy))
 	if elapsed<previous: file.set_value(section,"best_seconds",elapsed)
 	file.set_value(section,"completed_runs",int(file.get_value(section,"completed_runs",0))+1)
 	file.set_value(section,"conditions",conditions.descriptor())
-	if file.save("user://valley.cfg.pending")==OK:
-		DirAccess.rename_absolute("user://valley.cfg.pending","user://valley.cfg")
+	if file.save(path+".pending")==OK:
+		DirAccess.rename_absolute(path+".pending",path)

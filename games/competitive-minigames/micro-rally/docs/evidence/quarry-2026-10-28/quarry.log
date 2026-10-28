@@ -1,0 +1,3 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QUARRY GEOMETRY {"elevation":14.1172499656677,"failures":0,"length":944.649275183678,"max_crossfall_height":0.981101036071777,"max_grade":0.416727123150816,"road_collision_error":0.0000301265716552701,"support_hits":960,"worst":{"analytic":6.8536032873853,"hit":"(29.66034, 7.075171, -41.93564)","index":169,"lane":-5.5,"nearest":166,"point":"(29.66034, 8.056272, -41.93564)"}}

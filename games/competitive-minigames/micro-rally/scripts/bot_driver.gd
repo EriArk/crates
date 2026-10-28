@@ -22,7 +22,8 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	var speed: float=car.linear_velocity.length()
 	decision_clock-=delta; lane_hold=maxf(0,lane_hold-delta)
 	var at: int=track.nearest(car.position,car.checkpoint)
-	var ahead: int=clampi(4+int(speed*0.25),4,9)
+	# Look ahead in metres: longer tracks must not make the same sample count cut corners.
+	var ahead: int=track.steps_ahead(at,clampf(7.0+speed*0.55,7,17))
 	var target_at: int=(at+ahead)%track.COUNT
 	var tangent: Vector3=track.tangents[target_at]
 	var side = Vector3(-tangent.z,0,tangent.x)
@@ -57,7 +58,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	car.desired=target-car.position; car.desired.y=0; car.desired=car.desired.normalized()
 	var angle: float=absf(car.last_forward.signed_angle_to(car.desired,Vector3.UP))
 	var bend = 0.0
-	for n in [ahead,12,18]:
+	for n in [ahead,track.steps_ahead(at,20),track.steps_ahead(at,30)]:
 		var next: int=(at+n)%track.COUNT
 		var distance: float=maxf(2,track.points[at].distance_to(track.points[next]))
 		bend=maxf(bend,absf(track.tangents[at].signed_angle_to(track.tangents[next],Vector3.UP))/distance)

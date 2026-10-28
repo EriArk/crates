@@ -35,12 +35,18 @@ static func mesh_parts(node: Node3D, transform: Transform3D = Transform3D.IDENTI
 		if child is Node3D: parts.append_array(mesh_parts(child,combined))
 	return parts
 
+# Visibility distance is measured from a GeometryInstance origin, not each instance.
+# Keep batches local so a long track never culls all scenery from the map centre.
+const BATCH_SIZE = 24.0
 static func instances(parent: Node3D, kind: String, id: String, transforms: Array) -> void:
 	if transforms.is_empty(): return
+	var cells: Dictionary = {}
+	for transform in transforms:
+		var cell=Vector2i(floori(transform.origin.x/BATCH_SIZE),floori(transform.origin.z/BATCH_SIZE))
+		if not cells.has(cell): cells[cell]=[]
+		cells[cell].append(transform)
 	var source = model(kind,id)
 	for part in mesh_parts(source):
-		var node = MultiMeshInstance3D.new()
-		var multi = MultiMesh.new()
 		var mesh = part[0].duplicate()
 		for i in mesh.get_surface_count():
 			var original = mesh.surface_get_material(i)
@@ -56,13 +62,18 @@ static func instances(parent: Node3D, kind: String, id: String, transforms: Arra
 				mat.set_shader_parameter("tint",tint); mat.set_shader_parameter("kind",surface_kind)
 				mat.set_shader_parameter("grain_axis",Vector3.UP); materials[key]=mat
 			mesh.surface_set_material(i,materials[key])
-		multi.transform_format=MultiMesh.TRANSFORM_3D; multi.mesh=mesh
-		multi.instance_count=transforms.size()
-		for i in transforms.size(): multi.set_instance_transform(i,transforms[i]*part[1])
-		node.multimesh=multi; node.visibility_range_end=100
-		node.visibility_range_end_margin=12
-		if id.contains("grass") or id.contains("flower"): node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=52
-		parent.add_child(node)
+		for cell in cells:
+			var node=MultiMeshInstance3D.new(); var multi=MultiMesh.new()
+			node.position=Vector3((cell.x+0.5)*BATCH_SIZE,0,(cell.y+0.5)*BATCH_SIZE)
+			multi.transform_format=MultiMesh.TRANSFORM_3D; multi.mesh=mesh
+			multi.instance_count=cells[cell].size()
+			for i in cells[cell].size():
+				var local: Transform3D=cells[cell][i]*part[1]
+				local.origin-=node.position; multi.set_instance_transform(i,local)
+			node.multimesh=multi; node.visibility_range_end=100
+			node.visibility_range_end_margin=12
+			if id.contains("grass") or id.contains("flower"): node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=52
+			parent.add_child(node)
 	source.free()
 
 static func collider(parent: Node3D, size: Vector3, pos: Vector3) -> StaticBody3D:

@@ -9,7 +9,7 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-TESTS=['physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
+TESTS=['scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
 parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()
@@ -46,7 +46,15 @@ if args.tests or args.test:
     for test in (TESTS if args.tests else args.test):
         if (ROOT/'tests'/test).exists():
             extra=['--','--mix-output=/work/exports/'+identity+'/audio-preview.wav'] if test=='audio_mix_test.gd' else []
-            print(remote(base+['--fixed-fps','60','--script','res://tests/'+test]+extra,test+'.log')[-1000:],flush=True)
+            test_base=base
+            if test=='scenery_test.gd':
+                # Dummy headless rendering does not retain MultiMesh transforms.
+                test_base=['docker','run','--init','--rm','--network','none','--user','1000:1000',
+                    '-e','HOME=/tmp','-e','LIBGL_ALWAYS_SOFTWARE=1','-e','XDG_RUNTIME_DIR=/tmp',
+                    '-v',REMOTE+':/work','traineros-rally-render-ci:20261028','xvfb-run','-a',
+                    '/work/engine/godot','--path','/work/snapshots/'+identity,'--audio-driver','Dummy',
+                    '--rendering-method','gl_compatibility']
+            print(remote(test_base+['--fixed-fps','60','--script','res://tests/'+test]+extra,test+'.log')[-1000:],flush=True)
 if args.export:
     for preset,name in [('Windows','micro-rally.exe'),('Linux ARM64','micro-rally.arm64'),('Linux x86_64','micro-rally.x86_64')]:
         remote(base+['--export-release',preset,'/work/exports/'+identity+'/'+name],'export-'+name+'.log')

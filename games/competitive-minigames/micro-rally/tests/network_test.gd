@@ -20,8 +20,11 @@ func admitted(client, self_id: String, count: int) -> void:
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
+	game.cycle_track()
+	check(game.current_track==game.Tracks.QUARRY,"Solo selection can start on Quarry before a lobby invitation")
 	admitted(bridge,"p0",16)
 	check(game.net.online and game.state=="network_wait" and game.player_index==0,"Sixteen admitted players wait for common start")
+	check(game.current_track==Wire.TRACK and game.laps==4 and game.race_limit_seconds==600,"Network prepare loads its agreed Valley, not the previous solo track")
 	for i in range(1,15): game.net._receive("p"+str(i),{"type":"ready","round":1})
 	check(game.state=="network_wait","One missing ready prevents early start")
 	game.net._receive("p15",{"type":"ready","round":1})

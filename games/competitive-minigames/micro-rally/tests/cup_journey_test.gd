@@ -9,7 +9,8 @@ func press() -> void:
 	event=event.duplicate(); event.pressed=false; root.push_input(event)
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
-	game.cup.store.load_profile("journey","user://cup-journey/"+str(Time.get_ticks_usec()))
+	var directory="user://cup-journey/"+str(Time.get_ticks_usec())
+	game.cup.store.load_profile("journey",directory)
 	press(); await process_frame
 	check(game.hud.menu_mode=="cup","Primary controller action opens cup route")
 	press(); await process_frame
@@ -24,7 +25,14 @@ func run() -> void:
 	check(game.cup.pending_result.is_empty() and game.cup.store.data.active.results.size()==1,"Retry commits exactly one result")
 	game.finish_race(); check(game.cup.store.data.active.results.size()==1 and game.cup.pending_result.is_empty(),"Repeated finish callback is harmless")
 	game.cup.leave_stage(); game.cup.start_stage()
-	check(game.state=="menu" and not game.cup.running and game.hud.menu_mode=="cup","Unbuilt Quarry cannot silently reuse Valley or award cup")
+	check(game.state=="countdown" and game.cup.running and game.current_track==game.Tracks.QUARRY and game.laps==6,"Saved Valley result opens the actual Quarry with six laps")
+	check(game.cup.store.data.active.id==id and game.cup.store.data.active.roster==roster,"Track transition retains cup identity and roster")
+	game.cup.leave_stage()
+	game.cup.store.load_profile("journey",directory); game.cup.start_stage()
+	check(game.current_track==game.Tracks.QUARRY and game.cup.stage==1 and game.cup.store.data.active.id==id and game.cup.store.data.active.roster==roster,"Interrupted Quarry resumes from persisted Valley score and exact roster")
+	game.cup.leave_stage()
+	await process_frame
+	check(game.hud.panel.size.y<=650,"Cup with continue, standings and new-run actions fits handheld canvas")
 	check(game.cup.store.data.wins==0,"Partial cup cannot grant prize")
 	game.hud.menu("standings"); await process_frame
 	check(game.hud.panel.size.y<=650,"Sixteen-driver standings fits handheld canvas")

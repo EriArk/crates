@@ -47,9 +47,9 @@ func menu(mode: String) -> void:
 	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
 	menu_mode=mode
 	panel.visible=true; buttons.clear()
+	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
 	panel.custom_minimum_size=Vector2(760,490) if mode in ["results","standings"] else Vector2(640,490) if mode in ["cup","cup_replace","garage"] else Vector2(390,490)
 	panel.size=panel.custom_minimum_size
-	for child in panel.get_children(): panel.remove_child(child); child.queue_free()
 	var list = VBoxContainer.new(); list.add_theme_constant_override("separation",8); panel.add_child(list)
 	if mode=="main":
 		list.add_child(label("MICRO RALLY (альфа)",28,GOLD))
@@ -65,9 +65,10 @@ func menu(mode: String) -> void:
 		CupMenu.build(self,list,mode)
 	elif mode=="quick":
 		list.add_child(label("ОТДЕЛЬНЫЙ ЗАЕЗД",28,GOLD))
-		list.add_child(label("01  Грязевая долина",22))
+		list.add_child(label(game.track_title(),22))
 		list.add_child(label("4 круга · до 16 машин",18,Color("bed0c6")))
 		button(list,"В гонку",game.start_race)
+		button(list,"Сменить трассу",game.cycle_track)
 		button(list,"Машина: "+game.car_title(),game.cycle_car)
 		button(list,"Соперники: "+str(game.bot_count),game.cycle_bots)
 		button(list,game.conditions.title()+(" ↗" if not game.conditions.timeline.is_empty() else ""),func(): menu("conditions"))
@@ -75,7 +76,7 @@ func menu(mode: String) -> void:
 		button(list,"Назад",func(): menu("main"))
 	elif mode=="conditions":
 		list.add_child(label("УСЛОВИЯ ЗАЕЗДА",28,GOLD))
-		list.add_child(label("Грязевая долина",22))
+		list.add_child(label(game.track_title(),22))
 		button(list,"Время: "+game.conditions.time_title(),game.cycle_time)
 		button(list,"Погода: "+game.conditions.weather_title(),game.cycle_weather)
 		button(list,game.conditions.scenario_title(),game.cycle_scenario)
@@ -91,8 +92,8 @@ func menu(mode: String) -> void:
 		button(list,"Назад",func(): menu(audio_parent))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
-		list.add_child(label("Левый стик — направление\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
-		list.add_child(label("Клавиатура: WASD — направление\n↑ / ↓ — газ / тормоз, мышь — огонь\nShift — boost, Space — ручник\nE — щит, R — вернуть машину",16,Color("bed0c6")))
+		list.add_child(label("Левый стик — руль влево / вправо\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
+		list.add_child(label("A / D или ← / → — руль\nW / S или ↑ / ↓ — газ / тормоз\nМышь — огонь, Shift — boost\nSpace — ручник, E — щит, R — возврат",16,Color("bed0c6")))
 		button(list,"Назад",back)
 	elif mode=="pause":
 		list.add_child(label("ПАУЗА",34,GOLD))
@@ -116,7 +117,7 @@ func menu(mode: String) -> void:
 		button(list,"Одиночная игра",func(): menu("main"))
 	elif mode=="results":
 		list.add_child(label("ФИНИШ!",38,GOLD))
-		list.add_child(label("Грязевая долина",24))
+		list.add_child(label(game.track_title(),24))
 		var rank = game.standings()
 		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
 		var left = VBoxContainer.new(); var right = VBoxContainer.new(); columns.add_child(left); columns.add_child(right)
@@ -161,7 +162,7 @@ func _draw() -> void:
 	if game==null or game.cars.is_empty(): return
 	var car: Node3D=game.player()
 	if game.state=="menu":
-		write("DIRTY VALLEY",Vector2(size.x-340,size.y-65),28,GOLD)
+		write(game.Tracks.TRACKS[game.current_track].sign,Vector2(size.x-380,size.y-65),28,GOLD)
 		write("MICRO RALLY / FIRST DRIVE",Vector2(size.x-340,size.y-35),16)
 		return
 	if game.state=="network_wait":
@@ -217,10 +218,13 @@ func _plate() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new(); style.bg_color=INK; style.set_corner_radius_all(16); return style
 
 func _map() -> void:
-	var origin = Vector2(size.x-180,34); var scale_value = 0.75
+	var origin=Vector2(size.x-104,110)
+	var bounds: Rect2=game.track.map_bounds
+	var scale_value=minf(150.0/maxf(1,bounds.size.x),148.0/maxf(1,bounds.size.y))
+	var center=bounds.get_center()
 	var path = PackedVector2Array()
-	for p in game.track.points: path.append(origin+Vector2(p.x+78,p.z+80)*scale_value)
+	for p in game.track.points: path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
 	path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
 	for c in game.cars:
-		var p: Vector2=origin+Vector2(c.position.x+78,c.position.z+80)*scale_value
+		var p: Vector2=origin+(Vector2(c.position.x,c.position.z)-center)*scale_value
 		draw_circle(p,5 if c.local_player else 3.5,Car.COLORS[c.index%8])

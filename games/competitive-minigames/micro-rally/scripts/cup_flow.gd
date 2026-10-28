@@ -38,8 +38,7 @@ func start_stage() -> void:
 	if store.data.active.is_empty() and not store.begin(): game.hud.menu("cup"); return
 	stage=store.data.active.results.size()
 	if stage>=Rules.STAGES.size() or not Rules.STAGES[stage].available: game.hud.menu("cup"); return
-	# A new stage must supply its actual track loader before becoming playable.
-	if Rules.STAGES[stage].track!=game.net.Wire.TRACK: game.hud.menu("cup"); return
+	if not game.load_track(Rules.STAGES[stage].track): game.hud.menu("cup"); return
 	running=true; recorded=false; game.bot_count=15; game.laps=Rules.STAGES[stage].laps
 	game.conditions.configure(Rules.conditions(stage)); game.start_race()
 func finish() -> void:
