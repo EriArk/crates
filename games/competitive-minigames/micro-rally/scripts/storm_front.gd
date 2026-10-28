@@ -48,7 +48,7 @@ func update(_delta: float) -> void:
 	var density=smoothstep(-10,12,game.royale.outside(followed.position))
 	haze.set_shader_parameter("density",density); haze.set_shader_parameter("clock",clock)
 	var viewport_size=game.get_viewport().get_visible_rect().size
-	haze.set_shader_parameter("focus",game.camera.unproject_position(followed.position)/viewport_size); haze.set_shader_parameter("aspect",viewport_size.x/viewport_size.y)
+	haze.set_shader_parameter("focus",Vector2(0.5,0.66) if game.race_camera.mode==game.race_camera.Mode.HOOD else game.camera.unproject_position(followed.position)/viewport_size); haze.set_shader_parameter("aspect",viewport_size.x/viewport_size.y)
 	wind.volume_db=linear_to_db(maxf(0.0001,game.sound.effects_volume*(0.02+density*0.18)))
 	filter.cutoff_hz=lerpf(18000,3800,density)
 	debris.visible=density>0.05

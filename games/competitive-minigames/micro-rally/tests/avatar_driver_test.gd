@@ -13,6 +13,7 @@ class Bridge extends Node:
 var failures=0
 var output=""
 var descriptor: Dictionary
+var replacement_path=""
 func check(value: bool,label: String) -> void:
 	if not value: failures+=1; push_error(label)
 func _initialize() -> void: call_deferred("run")
@@ -26,6 +27,7 @@ func run() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--descriptor="): path=arg.trim_prefix("--descriptor=")
 		if arg.begins_with("--output="): output=arg.trim_prefix("--output=")
+		if arg.begins_with("--replacement-descriptor="): replacement_path=arg.trim_prefix("--replacement-descriptor=")
 	descriptor=JSON.parse_string(FileAccess.get_file_as_string(path))
 	var backdrop=ColorRect.new(); backdrop.color=Color("344752"); backdrop.size=Vector2(1280,720); root.add_child(backdrop)
 	var bridge=Bridge.new(); root.add_child(bridge)
@@ -57,6 +59,32 @@ func run() -> void:
 	check(p.rig.bone_position("foot.L").z>p.rig.bone_position("shin.L").z,"Racing legs extend forward instead of hanging down")
 	check(p.rig.bone_position("head").z<p.rig.bone_position("pelvis").z-0.06,"Racing torso reclines")
 	p.set_process(false); p.rig.pose(0)
+	# Revision 9's extra eye/mouth geometry and CPU garment correctives must coexist
+	# with the held Sit pose and game IK, including a live wardrobe notification.
+	for expression in ["neutral","happy","sad","angry","surprised","smug","worried","tired","laughing","cat_smug","content","squeezed","love","shocked"]:
+		check(p.model.set_expression(expression,1,0),"Pack expression accepted: "+expression)
+		p.rig.pose(0.7,1,0.4)
+		p.view.render_target_update_mode=SubViewport.UPDATE_ALWAYS
+		await process_frame; await RenderingServer.frame_post_draw
+		if expression in ["cat_smug","love","shocked"]: await capture(expression)
+	for mouth in ["rest","flat","smile","frown","smirk","open","laugh","tense","cat_smile"]:
+		check(p.model.set_mouth(mouth,1,0),"Pack mouth accepted: "+mouth)
+	p.model.reset_face(0)
+	if not replacement_path.is_empty():
+		var replacement=JSON.parse_string(FileAccess.get_file_as_string(replacement_path))
+		var old_model=p.model
+		p.set_mood("happy",true); bridge.avatar_changed.emit(replacement)
+		check(p.model!=null and p.model!=old_model,"Wardrobe push replaces the resolved costume")
+		check(old_model.profile_id.is_empty(),"Old costume identity is cleared before deferred free")
+		check(p.mood=="neutral" and p.model.profile_id==descriptor.get("profile",""),"Costume switch retains identity and clears transient face")
+		p.set_process(false); p.rig.pose(-1,0,1); p.set_mood("sad",true)
+		p.view.render_target_update_mode=SubViewport.UPDATE_ALWAYS
+		for i in 20: p.model._process(1.0/60)
+		await capture("wardrobe-switch")
+		for error in p.rig.hand_errors: check(error<0.012,"Changed costume keeps wheel grip")
+		for error in p.rig.foot_errors: check(error<0.012,"Changed costume keeps pedal contact")
+		bridge.avatar_changed.emit(descriptor); p.set_process(false)
+	p.rig.pose(0)
 	for expression in ["neutral","happy","sad"]:
 		p.set_mood(expression,true)
 		for i in 20: p.model._process(1.0/60)

@@ -59,13 +59,20 @@ func read(car: Node3D, camera: Camera3D) -> void:
 	car.shield_pressed=shielding
 	car.steer_input=steering_axis(steer.x)
 	car.desired=Vector3.ZERO
-	if aiming.length()>0.22: car.aim=Vector3(aiming.x,0,aiming.y).normalized()
+	if aiming.length()>0.22: car.aim=aim_direction(aiming,camera.global_basis)
 	elif device<0 and mouse_aim:
 		var pos = camera.get_viewport().get_mouse_position()
 		var origin = camera.project_ray_origin(pos); var direction = camera.project_ray_normal(pos)
-		if absf(direction.y)>0.01:
-			var target = origin+direction*((car.position.y-origin.y)/direction.y)
-			car.aim=(target-car.position).normalized()
+		var distance=(car.position.y-origin.y)/direction.y if absf(direction.y)>0.01 else -1.0
+		# Low cameras can point above the horizon; never aim at an intersection behind
+		# the player. Use the ray ahead and keep the existing horizontal gun contract.
+		var target=origin+direction*(distance if distance>0 and distance<80 else 40.0)
+		var flat=Vector3(target.x-car.position.x,0,target.z-car.position.z)
+		if flat.length_squared()>0.01: car.aim=flat.normalized()
+	elif device>=0 and camera.fov>50:
+		# Releasing the aim stick returns the low driving views' weapon to the nose.
+		var nose=-car.global_basis.z; nose.y=0
+		if nose.length_squared()>0.01: car.aim=nose.normalized()
 
 func neutral(car: Node3D) -> void:
 	car.shield_pressed=false; car.steer_input=0; car.shift_direction=0; car.transmission.pending=0
@@ -79,3 +86,8 @@ func shift_buttons(car: Node3D, up: bool, down: bool) -> void:
 
 static func steering_axis(value: float) -> float:
 	return signf(value)*clampf((absf(value)-0.18)/0.82,0,1)
+
+static func aim_direction(stick: Vector2,view_basis: Basis) -> Vector3:
+	var right=Vector3(view_basis.x.x,0,view_basis.x.z).normalized()
+	var back=Vector3(view_basis.z.x,0,view_basis.z.z).normalized()
+	return (right*stick.x+back*stick.y).normalized()

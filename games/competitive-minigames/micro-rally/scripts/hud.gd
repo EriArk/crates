@@ -34,6 +34,7 @@ var controls_parent = "main"
 var audio_parent = "main"
 var audio_notice = ""
 var gearbox_notice = ""
+var camera_notice = ""
 var displayed_speed = 0.0
 var speed_reset = -1
 var shift_touch: Array[Button] = []
@@ -77,7 +78,7 @@ func menu(mode: String) -> void:
 		if focused>=0: focus_memory[menu_mode]=focused
 	if mode=="settings" and menu_mode not in ["settings","controls","audio","credits"]: settings_parent=menu_mode
 	if mode=="audio" and menu_mode!="audio": audio_parent=menu_mode; audio_notice=""
-	if mode=="controls" and menu_mode not in ["controls","bindings"]: controls_parent=menu_mode; gearbox_notice=""
+	if mode=="controls" and menu_mode not in ["controls","bindings","camera"]: controls_parent=menu_mode; gearbox_notice=""
 	if mode=="cup_replace": focus_memory[mode]=0
 	menu_mode=mode
 	panel.visible=true; buttons.clear(); focus_controls.clear()
@@ -133,15 +134,27 @@ func menu(mode: String) -> void:
 		BotMenu.option(self,list,"Transmission: "+("manual" if game.cup.store.manual_gears() else "automatic"),func(_step): toggle_gearbox())
 		BotMenu.option(self,list,"Vibration: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
 		BotMenu.option(self,list,"Aim assist: "+game.arena.Aim.TITLES[game.arena.assist_level]+" · combat",game.arena.change_assist)
+		button(list,"Camera",func(): menu("camera"))
 		button(list,"Button layout",func(): menu("bindings"))
-		list.add_child(label("Steer left / right relative to your car.\nAim independently with the right stick.\n\nManual transmission has five gears.\nTop face button shifts up; right shifts down.",22,Color("bed0c6")))
+		list.add_child(label("Steer relative to your car; right stick aims.\nManual: top / right face buttons shift gears.",20,Color("bed0c6")))
 		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
 		button(list,"Back",back)
+	elif mode=="camera":
+		list.add_child(label("CAMERA",36,GOLD))
+		BotMenu.option(self,list,"View: "+game.race_camera.TITLES[game.race_camera.mode],func(step): game.cycle_camera(step); menu("camera"))
+		BotMenu.option(self,list,"Button: "+game.race_camera.BUTTON_TITLES[game.cup.store.camera_button()],func(step):
+			var next=posmod(game.cup.store.camera_button()+step,game.race_camera.BUTTONS.size())
+			camera_notice="" if game.cup.store.set_camera_option("camera_button",next) else "Could not save this setting."
+			menu("camera"))
+		list.add_child(label("Press V or the selected controller button\nto cycle all five views during an event.\n\nThree overhead distances and chase.\nWindshield view with the bonnet visible.\nAim stays relative to the screen.\nEach profile remembers its own view.",20,Color("bed0c6")))
+		if not camera_notice.is_empty(): list.add_child(label(camera_notice,16,GOLD))
+		button(list,"Back",func(): menu("controls"))
 	elif mode=="bindings":
 		list.add_child(label("BUTTON LAYOUT",36,GOLD))
 		var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",32); list.add_child(columns)
 		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift\nD-pad left / right — weapon",18))
 		columns.add_child(label("KEYBOARD\n\nA / D or ← / → — steer\nW / S or ↑ / ↓ — accelerate / brake\nMouse — aim and fire\nShift — boost\nSpace — handbrake\nE — shield\nR — recover car\nC / Z — shift gears\nEscape — pause\nQ — weapon",18,Color("bed0c6")))
+		list.add_child(label("Camera: V / "+game.race_camera.BUTTON_TITLES[game.cup.store.camera_button()],18,GOLD))
 		button(list,"Back",func(): menu("controls"))
 	elif mode=="pause":
 		list.add_child(label("PAUSED",34,GOLD))
@@ -208,7 +221,7 @@ func back() -> void:
 	if menu_mode=="audio": menu(audio_parent); return
 	if menu_mode=="controls": menu(controls_parent); return
 	if menu_mode=="main": confirm("QUIT GAME?","Completed stages and your garage are saved.","Quit",game.quit_game); return
-	menu({"conditions":"quick","quick":"modes","standings":"cup","cup_replace":"cup","cup":"cups","credits":"settings","bindings":"controls"}.get(menu_mode,"main"))
+	menu({"conditions":"quick","quick":"modes","standings":"cup","cup_replace":"cup","cup":"cups","credits":"settings","bindings":"controls","camera":"controls"}.get(menu_mode,"main"))
 
 func select_cup(id: String) -> void:
 	if not FrontMenu.Catalog.can_start(id): return
@@ -287,6 +300,8 @@ func _draw() -> void:
 	if not section.is_empty(): write(section,Vector2(240,106),20,GOLD)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
+	if game.race_camera.notice_time>0:
+		write(game.race_camera.TITLES[game.race_camera.mode] if camera_notice.is_empty() else camera_notice,Vector2(size.x*0.5-150,160),20,GOLD)
 	# Compact status bars sit below the chair; gameplay has no bottom panel.
 	var status_origin=Vector2(size.x-240,size.y-24)
 	draw_line(status_origin,status_origin+Vector2(182,0),INK,10,true)
@@ -323,6 +338,10 @@ func _draw() -> void:
 		if car.health>0 and game.royale.outside(car.position)>-20:
 			var safe=game.royale.safe_goal(car,car.position+Vector3(1000,0,0))
 			var from=game.camera.unproject_position(car.position); var to=game.camera.unproject_position(safe); var direction=(to-from).normalized()
+			if game.race_camera.mode>=game.race_camera.Mode.CHASE:
+				from=Vector2(size.x*0.5,size.y*0.65)
+				var delta=Vector3(safe.x-car.position.x,0,safe.z-car.position.z).normalized()
+				direction=Vector2(delta.dot(game.camera.global_basis.x),delta.dot(Vector3(game.camera.global_basis.z.x,0,game.camera.global_basis.z.z).normalized())).normalized()
 			draw_line(from+direction*35,from+direction*75,Color("7de6ff"),4,true)
 			draw_circle(from+direction*75,5,Color("7de6ff"))
 	elif car.disabled_time>0: write("RECOVERING",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)

@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/EriArk/TrainerOS",
-  "revision": "36605919ddee4e5d43c608d059a3a6f18baf6d3a",
+  "revision": "1e33a5d16df393b6c21d1339b5350ed216c2e320",
   "license": "GPL-3.0-or-later",
   "normalization": "LF",
   "files": {
     "avatar_client.gd": "5dd50648c18d9ba5641dd3b322ac89f053c89475234581cc62846765826c05dc",
-    "avatar_presenter.gd": "e2be7ae5c30186a022516e6257ff3e81f33dbe3dcf0a0e90e0bb12668df4e80b",
+    "avatar_presenter.gd": "61cf372b2af9373eb3060d18b57cb08935f4cb2ed35612d54cb8fa35a5f1e777",
     "avatar_exchange.gd": "a69fcf73b5b7fe1fec26511b90d68b1a19c6c358bdf07d1f9425c7ac70405e02",
     "avatar_portrait.gd": "fa0df49b9462e0afeb088ea8ee85fd3ea7b7f6e696a234cd793f5b026609a7d1"
   }

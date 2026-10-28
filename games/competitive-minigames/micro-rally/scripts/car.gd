@@ -122,7 +122,10 @@ func _ready() -> void:
 	lamp_material=Art.material(Color("e2dec6")).duplicate(); lamp_material.emission_enabled=true
 	lamp_material.emission=Color("ffe4b6"); lamp_material.emission_energy_multiplier=0
 	for side in [-1,1]:
-		var lamp = Art.box(self,Vector3(0.18,0.14,0.08),Vector3(side*0.55,0.0,-1.58),Color("e2dec6"))
+		# The open racer carries auxiliary lamps on its front wing, below the
+		# closed cars' bumper height. A shared height left these floating in air.
+		var lamp_y=-0.27 if model_id=="race" else 0.0
+		var lamp = Art.box(self,Vector3(0.18,0.14,0.08),Vector3(side*0.55,lamp_y,-1.58),Color("e2dec6"))
 		lamp.material_override=lamp_material; lamp.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func reset_at(pose: Transform3D, restore_wheels: bool=true) -> void:

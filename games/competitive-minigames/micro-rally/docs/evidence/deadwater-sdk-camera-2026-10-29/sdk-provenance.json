@@ -1,0 +1,38 @@
+{
+  "sdk_commit": "1e33a5d16df393b6c21d1339b5350ed216c2e320",
+  "pack": "trainer-avatar-1",
+  "pack_revision": 9,
+  "manifest_sha256": "3e250ec77fa884820143e54c2eccca440d8f8e58a0423d04ca5d145f755af7d1",
+  "fixtures": [
+    {
+      "name": "sundress",
+      "sha256": "c64cf92c10451525761f140cf6b2f85a8f7e99aed865d7b22534f409ae7d253b",
+      "revision": "7e67bd66bc71cade707904085a2e1ab505e1d31f3fdb407c48b6bb990037b30e"
+    },
+    {
+      "name": "denim",
+      "sha256": "0275ed4872903ba9aa76c921d348bc132c056f71b25988acf6edd10337fec11e",
+      "revision": "56ec619916e0cca624f0a3a7df644850ab7ed98dd1abb7f1aca542f3d6011aea"
+    },
+    {
+      "name": "racing-classic",
+      "sha256": "9e5115fb9b78ec4249d4c23ab16dd11e42c21dbc514290861539a2635a106f99",
+      "revision": "20c2ebc2f192b50392154a868b92b224a76f206e2e8f2e5a37572e36e83c04ca"
+    },
+    {
+      "name": "racing-classic-without-helmet",
+      "sha256": "e6d9e9fb5f07ec28290e4ffaba856cb2e7426d25ce59770b23691709b5342e18",
+      "revision": "301f1ba9f17e5bc3c83689da51ee5429209182887f238b25021dc21c96ebd6e0"
+    },
+    {
+      "name": "racing-rose",
+      "sha256": "31795a4c934b8adb0bf66bee219abb2d8328e6cdefd7f99df6810431a711099d",
+      "revision": "685a4af56ef757f6f9e6336c8d7f6c5f88a1720f93bee01109eb7dd013387f67"
+    },
+    {
+      "name": "racing-rose-without-helmet",
+      "sha256": "a0673642aa264c6f2bc333c403ddb481dc6ec96c6830b34fd6fe5da67466ecbf",
+      "revision": "00b56024dd5bbba9f8cd8036a572da00de981315e179acbb34f2b60243c25e42"
+    }
+  ]
+}

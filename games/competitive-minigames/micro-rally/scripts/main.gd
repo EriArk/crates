@@ -29,6 +29,7 @@ var track: Node3D
 var cars: Array[Node3D] = []
 var effects: Node3D
 var camera: Camera3D
+var race_camera=preload("race_camera.gd").new()
 var tilt_shift: ShaderMaterial
 var hud: Control
 var sound: Node
@@ -46,6 +47,7 @@ var effect_clock = 0.0
 var show_metrics = false
 var demo_auto = false
 var capture_path = ""
+var capture_model_id = ""
 var capture_time = 0.0
 var capture_after = 10.0
 var arena_overview = false
@@ -64,6 +66,7 @@ func _ready() -> void:
 	cup.game=self; add_child(cup)
 	add_child(haptics)
 	bot_count=cup.store.quick_bot_count()
+	race_camera.mode=cup.store.camera_mode()
 	get_viewport().size_changed.connect(_resolution)
 	_resolution()
 	var selected_conditions = conditions.descriptor()
@@ -94,7 +97,9 @@ func _ready() -> void:
 		elif arg.begins_with("--capture="): capture_path=arg.trim_prefix("--capture=")
 		elif arg.begins_with("--capture-after="): capture_after=clampf(float(arg.trim_prefix("--capture-after=")),1,600)
 		elif arg=="--capture-results": capture_results=true
-		elif arg=="--tilt-off": tilt_shift.set_shader_parameter("strength",0.0)
+		elif arg=="--tilt-off": race_camera.tilt_disabled=true
+		elif arg.begins_with("--camera-mode="): race_camera.select(clampi(int(arg.trim_prefix("--camera-mode=")),0,4))
+		elif arg.begins_with("--capture-car=") and arg.trim_prefix("--capture-car=") in cup.Rules.MODELS: capture_model_id=arg.trim_prefix("--capture-car=")
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
 	if demo_auto: start_race()
 	for arg in OS.get_cmdline_user_args():
@@ -108,8 +113,10 @@ func _ready() -> void:
 				car.update_visuals()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--county-view=") and is_royale() and not capture_path.is_empty():
-			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-145,12,40)
-			if view=="bridge": pos=(track.bridges[1].a+track.bridges[1].b)/2
+			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-238,12,8)
+			if view=="ridge": pos=Vector3(-382,0,-133); pos.y=track.height_at(pos)
+			elif view=="workshops": pos=Vector3(217,0,140); pos.y=track.height_at(pos)
+			elif view=="bridge": pos=(track.bridges[1].a+track.bridges[1].b)/2
 			elif view=="underpass":
 				var lower=track.roads.filter(func(r):return r.kind=="lower")[0].points
 				for p in lower:
@@ -133,7 +140,7 @@ func _ready() -> void:
 		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","camera","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
 
 func is_arena() -> bool: return current_track in [Tracks.ARENA,Tracks.ROYALE]
 func is_royale() -> bool: return current_track==Tracks.ROYALE
@@ -188,6 +195,7 @@ func _spawn_cars() -> void:
 		if not net.online:
 			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
 			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
+		if i==player_index and not capture_path.is_empty() and not capture_model_id.is_empty(): car.model_id=capture_model_id
 		car.manual_gears=car.local_player and not demo_auto and cup.store.manual_gears()
 		if is_arena():
 			car.bot=preload("arena_bot.gd").new(); car.arena_mode=true; car.damaged.connect(arena.damaged)
@@ -308,6 +316,8 @@ func _recover(car: Node3D) -> bool:
 	return false
 
 func _input(event: InputEvent) -> void:
+	if state in ["race","countdown"] and not net.overlay and race_camera.pressed(event,cup.store.camera_button()):
+		cycle_camera(); get_viewport().set_input_as_handled(); return
 	if is_royale() and state=="race" and player().health<=0 and not net.overlay:
 		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			royale.cycle_spectator(-1 if event.is_action_pressed("ui_left") else 1); get_viewport().set_input_as_handled(); return
@@ -412,9 +422,10 @@ func _shoot(car: Node3D) -> void:
 
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
+	if is_royale(): track.roof_cutaway=race_camera.mode<=race_camera.Mode.WIDE
 	track.update_view(view_car().position)
-	if is_royale(): royale.visual_update(delta)
 	_camera(delta)
+	if is_royale(): royale.visual_update(delta)
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)
 	sound.update(self,delta); feedback.update(self,delta); haptics.update(self,delta)
@@ -433,14 +444,14 @@ func _camera(delta: float, snap: bool = false) -> void:
 		camera.position=Vector3(0,850,650) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=1800 if is_royale() else 700
 		tilt_shift.set_shader_parameter("strength",0.0)
 		return
-	var target: Vector3=view_car().position
-	var lookahead: Vector3=view_car().linear_velocity.limit_length(12)*0.20
-	lookahead.y=0; target+=lookahead
-	var desired_pos = target+Vector3(0,29,23)
-	camera.position=desired_pos if snap else camera.position.lerp(desired_pos,1-exp(-delta*5))
-	camera.rotation_degrees=Vector3(-51.6,0,0)
-	var focus: Vector2=camera.unproject_position(view_car().position)
-	tilt_shift.set_shader_parameter("focus_y",clampf(focus.y/get_viewport().get_visible_rect().size.y,0.4,0.65))
+	race_camera.update(camera,view_car(),tilt_shift,delta,snap)
+
+func cycle_camera(step: int=1) -> void:
+	race_camera.select(race_camera.mode+step)
+	if not cup.store.set_camera_option("camera_mode",race_camera.mode):
+		hud.camera_notice="View changed · could not save preference"
+	else: hud.camera_notice=""
+	_camera(0,true)
 
 func standings() -> Array:
 	if is_arena(): return arena.rules.ranked().map(func(row): return cars[int(row.slot)])

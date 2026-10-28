@@ -20,6 +20,30 @@ var _base_expression := "neutral"
 var _base_strength := 1.0
 var _mouth_override: Dictionary = {}
 var _cpu_faces: Dictionary = {}
+var _cpu_correctives: Dictionary = {}
+
+class CorrectiveWeights:
+	extends Node
+	var values := PackedFloat32Array()
+	var dirty := true
+	func _get_property_list() -> Array[Dictionary]:
+		var properties: Array[Dictionary] = []
+		for i in values.size():properties.append({"name":"morph_"+str(i),"type":TYPE_FLOAT,"usage":PROPERTY_USAGE_DEFAULT})
+		return properties
+	func _set(property: StringName, value: Variant) -> bool:
+		var text := str(property)
+		if not text.begins_with("morph_"):return false
+		var i := text.trim_prefix("morph_").to_int()
+		if i<0 or i>=values.size():return false
+		if values[i]!=float(value):values[i]=float(value);dirty=true
+		return true
+	func _get(property: StringName) -> Variant:
+		var text := str(property)
+		if text.begins_with("morph_"):
+			var i := text.trim_prefix("morph_").to_int()
+			if i>=0 and i<values.size():return values[i]
+		return null
+
 
 static func from_descriptor(descriptor: Dictionary) -> TrainerAvatarPresenter:
 	if descriptor.get("schema") != 1 or descriptor.get("rig") != "trainer-humanoid-54-v1": return null
@@ -49,14 +73,17 @@ static func from_descriptor(descriptor: Dictionary) -> TrainerAvatarPresenter:
 	presenter.actions = descriptor.get("actions", {})
 	presenter.add_child(scene)
 	presenter.animation_player = scene.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	presenter._bind_face(state.json.get("extras", {}).get("trainerFace", {}))
+	var metadata: Dictionary = state.json.get("extras", {}).get("trainerFace", {})
+	presenter._prepare_cpu_correctives(metadata.get("controls",[]))
+	presenter._bind_face(metadata)
 	return presenter
 
 func _prepare_cpu_faces(controls: Array) -> void:
 	if DisplayServer.get_name()=="headless" or RenderingServer.get_current_rendering_method()!="gl_compatibility": return
 	# Compatibility GPU morphs corrupt small negative facial deltas on the
 	# handheld renderer. Evaluate only these small face meshes on the CPU;
-	# ordinary skeleton skinning and the body's corrective tracks stay on GPU.
+	# Skeleton skinning stays on GPU; body/garment correctives have their own
+	# CPU evaluator below for the same Compatibility renderer failure class.
 	for node in find_children("*","MeshInstance3D",true,false):
 		var instance := node as MeshInstance3D
 		var source := instance.mesh as ArrayMesh
@@ -236,10 +263,94 @@ func clear_identity() -> void:
 	set_process(false)
 	facial_rig.clear(); _face_bindings.clear(); _face_values.clear()
 	_face_from.clear(); _face_to.clear(); _mouth_override.clear(); _reaction_remaining = 0
-	_cpu_faces.clear()
+	_cpu_faces.clear(); _cpu_correctives.clear()
+	if RenderingServer.frame_pre_draw.is_connected(_update_cpu_correctives):RenderingServer.frame_pre_draw.disconnect(_update_cpu_correctives)
 	_base_expression = "neutral"; _base_strength = 1.0
 	profile_id = ""
 	for node in get_children():
 		remove_child(node)
 		node.queue_free()
 	animation_player = null
+
+# Compatibility also corrupts zero-delta head vertices when body corrective
+# weights play. Preserve the imported clips and skin, but route their scalar
+# tracks to per-instance weights and update only dirty corrective surfaces.
+# The GLB and its authenticated hash stay unchanged; other renderers keep GPU morphs.
+func _prepare_cpu_correctives(controls: Array, force := false) -> void:
+	if not force and (DisplayServer.get_name()=="headless" or RenderingServer.get_current_rendering_method()!="gl_compatibility"):return
+	if animation_player==null:return
+	var animation_root := animation_player.get_node(animation_player.root_node)
+	var paths: Dictionary = {}
+	for node in find_children("*","MeshInstance3D",true,false):
+		var instance := node as MeshInstance3D
+		var source := instance.mesh as ArrayMesh
+		if source==null or source.get_blend_shape_count()==0 or str(source.get_blend_shape_name(0)) in controls:continue
+		var names: Array = []
+		for i in source.get_blend_shape_count():names.append(str(source.get_blend_shape_name(i)))
+		var proxy := CorrectiveWeights.new()
+		proxy.name="CpuCorrectiveWeights";proxy.values.resize(names.size());instance.add_child(proxy)
+		var surfaces: Array = []
+		for i in source.get_surface_count():
+			var arrays := source.surface_get_arrays(i)
+			var deltas: Array = []
+			for shape in source.surface_get_blend_shape_arrays(i):
+				var changes: Array = []
+				if source.blend_shape_mode==Mesh.BLEND_SHAPE_MODE_NORMALIZED and shape[Mesh.ARRAY_VERTEX]==arrays[Mesh.ARRAY_VERTEX] and shape[Mesh.ARRAY_NORMAL]==arrays[Mesh.ARRAY_NORMAL]:
+					deltas.append(changes);continue
+				for v in arrays[Mesh.ARRAY_VERTEX].size():
+					var position: Vector3 = shape[Mesh.ARRAY_VERTEX][v]
+					var normal: Vector3 = shape[Mesh.ARRAY_NORMAL][v]
+					if source.blend_shape_mode==Mesh.BLEND_SHAPE_MODE_NORMALIZED:
+						position-=arrays[Mesh.ARRAY_VERTEX][v];normal-=arrays[Mesh.ARRAY_NORMAL][v]
+					if position.length_squared()>0 or normal.length_squared()>0:changes.append([v,position,normal])
+				deltas.append(changes)
+			surfaces.append({"arrays":arrays,"deltas":deltas,"material":source.surface_get_material(i),"primitive":source.surface_get_primitive_type(i)})
+		var mesh := ArrayMesh.new()
+		_cpu_correctives[instance.get_instance_id()]={"instance":instance,"names":names,"surfaces":surfaces,"mesh":mesh,"proxy":proxy}
+		paths[str(animation_root.get_path_to(instance))]={"path":str(animation_root.get_path_to(proxy)),"names":names}
+		instance.mesh=mesh
+	for clip_name in animation_player.get_animation_list():
+		var clip := animation_player.get_animation(clip_name)
+		for i in clip.get_track_count():
+			if clip.track_get_type(i)!=Animation.TYPE_BLEND_SHAPE:continue
+			var path := clip.track_get_path(i)
+			var key := str(path.get_concatenated_names())
+			if not paths.has(key) or path.get_subname_count()!=1:continue
+			var index: int = paths[key].names.find(str(path.get_subname(0)))
+			if index<0:continue
+			var interpolation := clip.track_get_interpolation_type(i)
+			var loop_wrap := clip.track_get_interpolation_loop_wrap(i)
+			var enabled := clip.track_is_enabled(i)
+			var keys: Array = []
+			for k in clip.track_get_key_count(i):keys.append([clip.track_get_key_time(i,k),clip.track_get_key_value(i,k),clip.track_get_key_transition(i,k)])
+			clip.remove_track(i);clip.add_track(Animation.TYPE_VALUE,i)
+			clip.track_set_path(i,NodePath(paths[key].path+":morph_"+str(index)))
+			clip.track_set_interpolation_type(i,interpolation)
+			clip.track_set_interpolation_loop_wrap(i,loop_wrap)
+			clip.track_set_enabled(i,enabled)
+			clip.value_track_set_update_mode(i,Animation.UPDATE_CONTINUOUS)
+			for keyframe in keys:clip.track_insert_key(i,keyframe[0],keyframe[1],keyframe[2])
+	_update_cpu_correctives()
+	if not _cpu_correctives.is_empty():RenderingServer.frame_pre_draw.connect(_update_cpu_correctives)
+
+func _update_cpu_correctives() -> void:
+	for body in _cpu_correctives.values():
+		var proxy: CorrectiveWeights = body.proxy
+		if not proxy.dirty:continue
+		proxy.dirty=false
+		var mesh: ArrayMesh = body.mesh
+		mesh.clear_surfaces()
+		for surface in body.surfaces:
+			var arrays: Array = surface.arrays.duplicate()
+			var positions: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX].duplicate()
+			var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL].duplicate()
+			var touched: Dictionary = {}
+			for i in proxy.values.size():
+				var weight := proxy.values[i]
+				if weight==0:continue
+				for change in surface.deltas[i]:
+					positions[change[0]]+=change[1]*weight;normals[change[0]]+=change[2]*weight;touched[change[0]]=true
+			for i in touched:normals[i]=normals[i].normalized()
+			arrays[Mesh.ARRAY_VERTEX]=positions;arrays[Mesh.ARRAY_NORMAL]=normals
+			mesh.add_surface_from_arrays(surface.primitive,arrays,[],{},Mesh.ARRAY_FLAG_USE_DYNAMIC_UPDATE)
+			mesh.surface_set_material(mesh.get_surface_count()-1,surface.material)

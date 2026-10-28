@@ -6,6 +6,7 @@ var roads: Array=[]
 var bridges: Array=[]
 var river: Array[Vector2]=[]
 var roofs: Array=[]
+var roof_cutaway=true
 var bridge_nodes: Array[int]=[]
 var spawns: Array[Transform3D]=[]
 var pickup_types: Array=[]
@@ -135,20 +136,13 @@ func _buildings() -> void:
 		var pos=v3(entry.position); var size=v3(entry.size); var w=size.x; var h=size.y; var d=size.z; var yaw=float(entry.yaw)
 		var root=Node3D.new(); add_child(root); root.position=pos; root.rotation.y=yaw
 		var st=SurfaceTool.new(); st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var facade_yaw=preload("county_architecture.gd").street_front(self,entry)
+		preload("county_architecture.gd").apron(self,entry,material)
 		var colors=[Color("b66d43"),Color("c1ac7c"),Color("7e9792"),Color("a49b85")]; var color: Color=colors[int(entry.variant)]
 		_box(st,Vector3(w,h+4,d),Vector3(0,h/2-2,0),color)
 		_box(st,Vector3(w+1,0.2,d+1),Vector3(0,0,0),Color("92978b"))
-		for side in [-1,1]:
-			for x in [-w*0.28,w*0.28]:
-				_box(st,Vector3(w*0.22,2,0.12),Vector3(x,h*0.65,side*(d/2+0.08)),Color("426e7d"))
-			_box(st,Vector3(2,2.8,0.18),Vector3(0,1.4,side*(d/2+0.1)),Color("454b42"))
-		if entry.kind=="shop":
-			for x in [-w*0.3,w*0.3]: _box(st,Vector3(4,2.7,0.16),Vector3(x,1.8,d/2+0.1),Color("305e70"))
-			_box(st,Vector3(w+0.4,0.3,2.5),Vector3(0,3.4,d/2+0.8),Color("cda946"))
-			_box(st,Vector3(w,0.9,0.3),Vector3(0,h-0.7,d/2+0.15),Color("dfc49a"))
-		elif entry.kind=="warehouse":
-			for x in [-w*0.27,w*0.27]: _box(st,Vector3(6,4.5,0.18),Vector3(x,2.25,d/2+0.1),Color("566971"))
-		st.generate_normals(); var body=MeshInstance3D.new(); body.mesh=st.commit(); body.material_override=material; body.visibility_range_end=190; root.add_child(body)
+		preload("county_architecture.gd").facades(self,st,entry)
+		st.generate_normals(); var body=MeshInstance3D.new(); body.mesh=st.commit(); body.material_override=material; body.visibility_range_end=190; body.rotation.y=facade_yaw; root.add_child(body)
 		Art.collider(root,Vector3(w,h+4,d),Vector3(0,h/2-2,0))
 		var ext=Vector2(absf(cos(yaw))*w+absf(sin(yaw))*d,absf(sin(yaw))*w+absf(cos(yaw))*d)
 		covers.append(Rect2(flat(pos)-ext/2,ext))
@@ -158,7 +152,8 @@ func _buildings() -> void:
 			for tri in [[a,t,u],[a,u,f],[t,b,c],[t,c,u],[a,b,t],[f,u,c]]:
 				for p in tri: roof.set_color(Color("914d36")); roof.add_vertex(p)
 		else: _box(roof,Vector3(w+1,0.5,d+1),Vector3(0,h,0),Color("555f5b"))
-		roof.generate_normals(); var cap=MeshInstance3D.new(); cap.mesh=roof.commit(); cap.material_override=material; cap.visibility_range_end=190; root.add_child(cap); roofs.append([cap,pos])
+		preload("county_architecture.gd").roof_details(self,roof,entry)
+		roof.generate_normals(); var cap=MeshInstance3D.new(); cap.mesh=roof.commit(); cap.material_override=material; cap.visibility_range_end=190; cap.rotation.y=facade_yaw; root.add_child(cap); roofs.append([cap,pos])
 func _nav_add(p: Vector3) -> void:
 	if not safe_point(p,3): return
 	var cell=Vector2i(floori(p.x/16),floori(p.z/16))
@@ -225,15 +220,22 @@ func _navigation_items() -> void:
 			pickup_spots.append(p+Vector3.UP); pickup_types.append(["repair","rocket","shield","cool","pulse"][pickup_types.size()%5])
 func _scenery() -> void:
 	var rng=RandomNumberGenerator.new(); rng.seed=716042
-	var trees=[]; var grass=[]; var rocks=[]
-	for i in 5200:
+	var trees=[]; var round_trees=[]; var bushes=[]; var grass=[]; var rocks=[]
+	for i in 10500:
 		var p=Vector3(rng.randf_range(-475,475),0,rng.randf_range(-375,375)); p.y=height_at(p)
 		var road=road_near(p)
 		if not safe_point(p,5) or (not road.is_empty() and road[0]<7): continue
 		var tr=Transform3D(Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3.ONE*rng.randf_range(1.4,3.2)),p)
-		if p.z< -120 and i%3==0: trees.append(tr)
-		elif i%11==0: rocks.append(tr)
+		# Deterministic groves, with open street verges and sparse southern scrub.
+		var grove=sin(p.x*0.036)+cos(p.z*0.049)+sin((p.x+p.z)*0.021)
+		if p.z< -105 and grove> -0.35 and i%2==0:
+			tr.basis=tr.basis.scaled(Vector3.ONE*1.35)
+			if i%6==0: round_trees.append(tr)
+			else: trees.append(tr)
+		elif i%13==0: bushes.append(tr)
+		elif i%19==0: rocks.append(tr)
 		else: grass.append(tr)
+	Art.instances(self,"nature","tree_pineRoundA",round_trees); Art.instances(self,"nature","plant_bushDetailed",bushes)
 	Art.instances(self,"nature","tree_pineTallA",trees); Art.instances(self,"nature","rock_largeA",rocks); Art.instances(self,"nature","grass_large",grass)
 	for x in [-454,454]:
 		for z in range(-350,351,16): _block(Vector3(4,8,16),Vector3(x,height_at(Vector3(x,0,z))+2,z),Color("6d775b"))
@@ -244,4 +246,4 @@ func pickup_kind(i: int) -> String: return pickup_types[i]
 func build() -> void:
 	_land(); _roads(); _bridges(); _buildings(); _navigation(); _scenery()
 func update_view(pos: Vector3) -> void:
-	for item in roofs: item[0].visible=item[1].distance_to(pos)>19
+	for item in roofs: item[0].visible=not roof_cutaway or item[1].distance_to(pos)>19

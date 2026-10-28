@@ -1,0 +1,8 @@
+{
+  "snapshot": "b220ce6df3fa4b1b",
+  "sdk_fixture_sha256": "c64cf92c10451525761f140cf6b2f85a8f7e99aed865d7b22534f409ae7d253b",
+  "renderer": "gl_compatibility",
+  "software_render": true,
+  "test_profile": true,
+  "replacement_sha256": "31795a4c934b8adb0bf66bee219abb2d8328e6cdefd7f99df6810431a711099d"
+}

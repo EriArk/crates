@@ -63,7 +63,7 @@ func run() -> void:
 	hud.back(); check(hud.menu_mode=="main","Settings returns to its entry point")
 	hud.menu("cup_replace"); hud.buttons[-1].grab_focus(); hud.back(); hud.menu("cup_replace")
 	check(hud.buttons[0].has_focus(),"Reopening cup replacement always focuses preserving current progress")
-	for mode in ["main","cups","cup","modes","settings","audio","quick","conditions","controls","bindings","garage","bots","credits","standings","results"]:
+	for mode in ["main","cups","cup","modes","settings","audio","quick","conditions","controls","camera","bindings","garage","bots","credits","standings","results"]:
 		hud.menu(mode); await process_frame; await process_frame; fit(hud,mode)
 	hud.cup_filter=2; hud.menu("cups"); await process_frame; fit(hud,"empty catalogue")
 	check(hud.buttons.size()==6,"Empty category exposes filters and Back, no fake start")

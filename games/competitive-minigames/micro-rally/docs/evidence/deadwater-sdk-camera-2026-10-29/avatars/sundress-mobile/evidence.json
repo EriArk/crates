@@ -1,0 +1,8 @@
+{
+  "snapshot": "b220ce6df3fa4b1b",
+  "sdk_fixture_sha256": "c64cf92c10451525761f140cf6b2f85a8f7e99aed865d7b22534f409ae7d253b",
+  "renderer": "mobile",
+  "software_render": true,
+  "test_profile": true,
+  "replacement_sha256": "e6d9e9fb5f07ec28290e4ffaba856cb2e7426d25ce59770b23691709b5342e18"
+}

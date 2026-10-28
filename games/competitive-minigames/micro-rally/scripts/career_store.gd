@@ -57,6 +57,8 @@ static func valid(value) -> bool:
 		if not prefs is Dictionary or prefs.size()!=2 or not Bots.valid(prefs.get("quick")) or not Bots.valid(prefs.get("cup")): return false
 	if value.has("manual_gears") and not value.manual_gears is bool: return false
 	if value.has("haptics_level") and not Rules.whole(value.haptics_level,0,3): return false
+	if value.has("camera_mode") and not Rules.whole(value.camera_mode,0,4): return false
+	if value.has("camera_button") and not Rules.whole(value.camera_button,0,3): return false
 	var run=value.get("active")
 	if not run is Dictionary: return false
 	if run.is_empty(): return true
@@ -124,3 +126,9 @@ func haptics_level() -> int: return int(data.get("haptics_level",2))
 func set_haptics_level(level: int) -> bool:
 	if level<0 or level>3: return false
 	var next=data.duplicate(true); next.haptics_level=level; return commit(next)
+
+func camera_mode() -> int: return int(data.get("camera_mode",1))
+func camera_button() -> int: return int(data.get("camera_button",0))
+func set_camera_option(key: String,value: int) -> bool:
+	if key not in ["camera_mode","camera_button"] or value<0 or value>(4 if key=="camera_mode" else 3): return false
+	var next=data.duplicate(true); next[key]=value; return commit(next)
