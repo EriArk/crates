@@ -23,6 +23,7 @@ func _profile(id: String) -> void:
 	if next==profile_key: return
 	var was_cup=running
 	running=false; pending_result.clear(); profile_key=next; store.load_profile(profile_key)
+	if not game.cars.is_empty(): game.player().manual_gears=store.manual_gears(); game.player().transmission.pending=0
 	if was_cup and not game.net.online: game.return_menu()
 	if game.state=="menu":
 		game.bot_count=store.quick_bot_count(); game._spawn_cars(); game.hud.menu("main")

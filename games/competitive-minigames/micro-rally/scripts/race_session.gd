@@ -154,6 +154,8 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		car.basis=Basis(q if immediate else car.basis.get_rotation_quaternion().slerp(q,1-exp(-delta*24)))
 		car.angular_velocity=Vector3(s[20],s[21],s[22])/100.0
 		car.reset_serial=int(s[24]); car.missing_wheels=int(s[23]); car.physics.steer=s[25]/1000.0
+		car.transmission.gear=int(s[39]); car.transmission.rpm=float(s[40]); car.transmission.shift_left=s[41]/1000.0; car.transmission.reverse=s[42]==1
+		if not car.local_player: car.manual_gears=s[43]==1
 		if immediate: car.reset_physics_interpolation()
 		for n in 4:
 			var w: Dictionary=car.physics.wheels[n]

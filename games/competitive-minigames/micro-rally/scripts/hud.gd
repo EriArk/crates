@@ -18,6 +18,10 @@ var menu_mode = ""
 var controls_parent = "main"
 var audio_parent = "main"
 var audio_notice = ""
+var gearbox_notice = ""
+var displayed_speed = 0.0
+var speed_reset = -1
+var shift_touch: Array[Button] = []
 const INK = Color(0.025,0.045,0.045,0.86)
 const PAPER = Color("fff6d8")
 const GOLD = Color("ffcc42")
@@ -30,6 +34,13 @@ func _ready() -> void:
 	var style = StyleBoxFlat.new(); style.bg_color=Color(0.025,0.055,0.06,0.93); style.set_corner_radius_all(24)
 	style.content_margin_left=25; style.content_margin_right=25; style.content_margin_top=24; style.content_margin_bottom=24
 	panel.add_theme_stylebox_override("panel",style); add_child(panel)
+	for direction in [-1,1]:
+		var b=Button.new(); b.text="−" if direction<0 else "+"
+		b.add_theme_font_size_override("font_size",26); b.focus_mode=Control.FOCUS_NONE
+		b.add_theme_stylebox_override("normal",_plate()); b.size=Vector2(94,44)
+		b.pressed.connect(func():
+			if game.state=="race" and not game.net.overlay and not game.controls.neutral_required: game.player().request_shift(direction))
+		add_child(b); shift_touch.append(b)
 	menu("main")
 
 func _input(event: InputEvent) -> void:
@@ -51,7 +62,7 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 
 func menu(mode: String) -> void:
 	if mode=="audio" and menu_mode!="audio": audio_parent=menu_mode; audio_notice=""
-	if mode=="controls": controls_parent="quick" if menu_mode=="quick" else "main"
+	if mode=="controls" and menu_mode!="controls": controls_parent=menu_mode; gearbox_notice=""
 	var previous_focus = buttons.find(get_viewport().gui_get_focus_owner()) if mode==menu_mode else 0
 	menu_mode=mode
 	panel.visible=true; buttons.clear()
@@ -102,12 +113,15 @@ func menu(mode: String) -> void:
 		button(list,"Назад",func(): menu(audio_parent))
 	elif mode=="controls":
 		list.add_child(label("УПРАВЛЕНИЕ",28,GOLD))
+		button(list,"Коробка: "+("ручная" if game.cup.store.manual_gears() else "автомат"),toggle_gearbox)
 		list.add_child(label("Левый стик — руль влево / вправо\nПравый стик — прицел\nПравый триггер — газ\nЛевый триггер — тормоз\nПравый бампер — огонь\nЛевый бампер — ускорение\nНижняя кнопка — ручник\nЛевая кнопка — щит",19))
-		list.add_child(label("A / D или ← / → — руль\nW / S или ↑ / ↓ — газ / тормоз\nМышь — огонь, Shift — boost\nSpace — ручник, E — щит, R — возврат",16,Color("bed0c6")))
+		list.add_child(label("A / D или ← / → — руль\nW / S или ↑ / ↓ — газ / тормоз\nМышь — огонь, Shift — boost\nSpace — ручник, E — щит, R — возврат\nПередачи: верхняя / правая кнопка, C / Z",16,Color("bed0c6")))
+		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
 		button(list,"Назад",back)
 	elif mode=="pause":
 		list.add_child(label("ПАУЗА",34,GOLD))
 		button(list,"Продолжить",game.resume_race)
+		button(list,"Управление",func(): menu("controls"))
 		button(list,"Звук и музыка",func(): menu("audio"))
 		button(list,"Вернуть машину на трассу",func(): game.recover_player(); game.resume_race())
 		button(list,"Начать заново",game.start_race)
@@ -116,6 +130,7 @@ func menu(mode: String) -> void:
 		list.add_child(label("СЕТЕВОЙ ЗАЕЗД",30,GOLD))
 		list.add_child(label("Гонка продолжается.\nВаша машина отпустила газ.",19))
 		button(list,"Продолжить",game.resume_race)
+		button(list,"Управление",func(): menu("controls"))
 		button(list,"Звук и музыка",func(): menu("audio"))
 		button(list,"Вернуть машину",func(): game.recover_player(); game.resume_race())
 		button(list,"Покинуть заезд",game.return_menu)
@@ -154,6 +169,14 @@ func back() -> void:
 	if menu_mode=="audio": menu(audio_parent); return
 	menu(controls_parent if menu_mode=="controls" else {"conditions":"quick","standings":"cup","cup_replace":"cup"}.get(menu_mode,"main"))
 
+func toggle_gearbox() -> void:
+	var enabled=not game.cup.store.manual_gears()
+	if game.cup.store.set_manual_gears(enabled):
+		game.player().manual_gears=enabled; game.player().transmission.pending=0
+		game.controls.neutral_required=true; gearbox_notice=""
+	else: gearbox_notice="Не удалось сохранить настройку."
+	menu("controls")
+
 func cycle_audio(kind: String) -> void:
 	var current=game.sound.music_volume if kind=="music" else game.sound.effects_volume
 	var value=fmod(roundf(current*4)+1,5)/4
@@ -165,6 +188,14 @@ func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) ->
 	draw_string(font,pos,text,HORIZONTAL_ALIGNMENT_LEFT,-1,size_value,color)
 
 func _process(_delta: float) -> void:
+	if not game.cars.is_empty():
+		var car=game.player()
+		var value=car.transmission.speed_kmh(car.linear_velocity)
+		if speed_reset!=car.reset_serial or game.state in ["menu","countdown"]: displayed_speed=value; speed_reset=car.reset_serial
+		else: displayed_speed=lerpf(displayed_speed,value,1-exp(-_delta*12))
+	for i in shift_touch.size():
+		shift_touch[i].position=Vector2(158+i*110,size.y-169)
+		shift_touch[i].visible=game.state=="race" and not game.net.overlay and game.player().manual_gears and game.player().finish_time<0
 	portrait.position=Vector2(size.x-284,size.y-290); portrait.size=Vector2(270,270)
 	portrait.visible=game.state in ["race","countdown","pause","results"]
 	queue_redraw()
@@ -196,6 +227,7 @@ func _draw() -> void:
 	draw_circle(boost_center,52,INK); draw_arc(boost_center,43,-PI*0.88,PI*0.88,48,Color("224d5c"),9,true)
 	draw_arc(boost_center,43,-PI*0.88,-PI*0.88+PI*1.76*car.boost/100,48,Color("42cff6"),9,true)
 	write("BOOST",boost_center+Vector2(-32,8),19); write(str(int(car.boost)),boost_center+Vector2(-20,31),21)
+	_speedometer(car)
 	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
@@ -218,6 +250,22 @@ func _draw() -> void:
 	elif car.missing_wheels!=0: write("КОЛЕСО ПОТЕРЯНО",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
 	if not message.is_empty(): write(message,Vector2(240,106),18,GOLD)
 	if game.show_metrics: write("%.0f FPS · %d машин" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
+
+func _speedometer(car: Node3D) -> void:
+	var at=Vector2(158,size.y-117)
+	draw_style_box(_plate(),Rect2(at,Vector2(204,94)))
+	write("%03d" % roundi(displayed_speed),at+Vector2(12,57),48)
+	write("км/ч",at+Vector2(16,79),16,Color("bed0c6"))
+	var hot=car.transmission.rpm>=car.transmission.SHIFT_RPM
+	var tint=GOLD if hot else Color("58d7ec")
+	write(car.transmission.gear_label(),at+Vector2(150,55),40,tint)
+	write("MT" if car.manual_gears else "AT",at+Vector2(151,78),15)
+	for i in 10:
+		var lit=car.transmission.rpm/car.transmission.REDLINE>float(i)/10
+		var color=(Color("ff7052") if i>=8 else GOLD if i>=6 else Color("58d7ec")) if lit else Color("284647")
+		draw_line(at+Vector2(13+i*18,7),at+Vector2(26+i*18,7),color,5,true)
+	if car.manual_gears and hot and car.transmission.gear<5 and not car.transmission.reverse:
+		write("↑",at+Vector2(178,39),22,GOLD)
 
 func _plate() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new(); style.bg_color=INK; style.set_corner_radius_all(16); return style

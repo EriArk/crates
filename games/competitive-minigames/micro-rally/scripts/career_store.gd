@@ -55,6 +55,7 @@ static func valid(value) -> bool:
 	if value.has("bot_preferences"):
 		var prefs=value.bot_preferences
 		if not prefs is Dictionary or prefs.size()!=2 or not Bots.valid(prefs.get("quick")) or not Bots.valid(prefs.get("cup")): return false
+	if value.has("manual_gears") and not value.manual_gears is bool: return false
 	var run=value.get("active")
 	if not run is Dictionary: return false
 	if run.is_empty(): return true
@@ -113,3 +114,7 @@ func quick_bot_count() -> int: return int(data.get("quick_bot_count",15))
 func set_bot_count(count: int) -> bool:
 	if count<0 or count>15: return false
 	var next=data.duplicate(true); next.quick_bot_count=count; return commit(next)
+
+func manual_gears() -> bool: return data.get("manual_gears",false)
+func set_manual_gears(enabled: bool) -> bool:
+	var next=data.duplicate(true); next.manual_gears=enabled; return commit(next)

@@ -81,6 +81,11 @@ func solve(car: RigidBody3D, state: PhysicsDirectBodyState3D) -> void:
 	var active_boost=car.boosting and car.boost>0 and car.throttle>0 and car.disabled_time<=0 and contacts>0
 	car.boost=clampf(car.boost+dt*(-23.0 if active_boost else 10.0),0,100)
 	var max_speed=(12.0 if car.offroad else 19.0)+(8.0 if active_boost else 0.0)
+	var wheel_speed=0.0; var driven=0
+	for w in wheels:
+		if w.contact and not w.missing: wheel_speed+=w.omega*w.radius; driven+=1
+	wheel_speed=wheel_speed/driven if driven>0 else speed
+	car.transmission.step(dt,speed,wheel_speed,car.throttle if car.disabled_time<=0 else 0.0,car.brake,contacts>0,car.manual_gears)
 	for i in wheels.size():
 		var w: Dictionary=wheels[i]
 		if w.missing: continue
@@ -113,8 +118,8 @@ func solve(car: RigidBody3D, state: PhysicsDirectBodyState3D) -> void:
 		var mu=profile.x*grip_drop
 		var effective_load=minf(load,car.mass*14*0.6)
 		var budget=mu*effective_load
-		var drive=car.throttle*car.mass*(22.0 if active_boost else 13.0)/4.0
-		if car.disabled_time>0 or speed>max_speed: drive=0
+		var drive=car.throttle*car.mass*car.transmission.drive_acceleration(active_boost)/4.0
+		if car.disabled_time>0 or speed>max_speed or car.transmission.reverse: drive=0
 		var wheel_inertia: float=0.5*3.0*w.radius*w.radius
 		# Motor/brake torque first, then the contact impulse couples spin to the body.
 		var rolling=longitudinal*profile.z*car.mass/4.0
@@ -122,7 +127,8 @@ func solve(car: RigidBody3D, state: PhysicsDirectBodyState3D) -> void:
 		var brake_torque=0.0
 		if car.brake>0:
 			if longitudinal>0.4: brake_torque=car.brake*car.mass*22/4*w.radius
-			elif car.throttle<0.05 and speed> -5: torque-=car.brake*car.mass*7/4*w.radius
+			elif car.transmission.reverse and car.disabled_time<=0 and speed> -5: torque-=car.brake*car.mass*7/4*w.radius
+		if car.transmission.reverse and car.throttle>0.05: brake_torque+=car.throttle*car.mass*22/4*w.radius
 		if car.handbrake and not w.front: brake_torque+=car.mass*30/4*w.radius
 		if car.throttle<0.05 and car.brake<0.05: torque-=longitudinal*car.mass*0.8/4*w.radius
 		w.omega+=torque/wheel_inertia*dt

@@ -131,7 +131,7 @@ func update(game: Node, delta: float) -> void:
 	var moving=game.state=="race" and car.finish_time<0 and car.disabled_time<=0
 	var speed=car.linear_velocity.length()
 	motor.stream_paused=not moving
-	motor.pitch_scale=lerpf(motor.pitch_scale,0.72+speed*0.055+absf(car.throttle)*0.12,1-exp(-delta*9))
+	motor.pitch_scale=lerpf(motor.pitch_scale,0.68+car.transmission.rpm/car.transmission.REDLINE*1.28,1-exp(-delta*9))
 	motor.volume_db=-24+linear_to_db(maxf(0.00001,effects_volume))+(3 if absf(car.throttle)>0.1 else 0)
 	var slip=absf(car.linear_velocity.dot(car.transform.basis.x))
 	tyres.stream_paused=not moving or not car.grounded or speed<2

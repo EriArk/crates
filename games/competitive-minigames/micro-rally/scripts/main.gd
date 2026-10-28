@@ -92,7 +92,7 @@ func _ready() -> void:
 		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots","controls"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -136,6 +136,7 @@ func _spawn_cars() -> void:
 		if not net.online:
 			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
 			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
+		car.manual_gears=car.local_player and not demo_auto and cup.store.manual_gears()
 		car.bot.configure(race_bots)
 		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
 		if car.local_player and not net.online:
@@ -246,6 +247,7 @@ func _recover(car: Node3D) -> bool:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		if (state=="pause" or net.overlay) and hud.menu_mode in ["controls","audio"]: hud.back(); return
 		if net.online and net.overlay: resume_race(); return
 		if state=="menu":
 			hud.back(); return

@@ -7,7 +7,7 @@ p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
 p.add_argument('--track',choices=['dirty-valley.4','quarry.1'],default='quarry.1')
-p.add_argument('--screen',choices=['race','quick','bots','cup'],default='race')
+p.add_argument('--screen',choices=['race','quick','bots','cup','controls'],default='race')
 p.add_argument('--renderer',choices=['mobile','gl_compatibility'],default='mobile')
 a=p.parse_args()
 snapshot=json.loads(a.manifest.read_text())['source_snapshot']

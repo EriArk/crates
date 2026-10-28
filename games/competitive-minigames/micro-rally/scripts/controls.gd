@@ -3,6 +3,8 @@ extends RefCounted
 var device = -1
 var mouse_aim = false
 var neutral_required = true
+var shift_up_held = false
+var shift_down_held = false
 
 func _init() -> void:
 	# Do not depend on engine/editor defaults for controller menu navigation.
@@ -37,13 +39,17 @@ func read(car: Node3D, camera: Camera3D) -> void:
 		car.throttle=1.0 if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W) else 0.0
 		car.brake=1.0 if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S) else 0.0
 		car.boosting=Input.is_physical_key_pressed(KEY_SHIFT); car.handbrake=Input.is_physical_key_pressed(KEY_SPACE)
-		car.firing=Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		car.firing=Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and camera.get_viewport().gui_get_hovered_control()==null
 		shielding=Input.is_physical_key_pressed(KEY_E)
+	var shift_up=Input.is_joy_button_pressed(device,JOY_BUTTON_Y) if device>=0 else Input.is_physical_key_pressed(KEY_C)
+	var shift_down=Input.is_joy_button_pressed(device,JOY_BUTTON_B) if device>=0 else Input.is_physical_key_pressed(KEY_Z)
 	if neutral_required:
-		var released = steer.length()<0.18 and aiming.length()<0.22 and car.throttle<0.08 and car.brake<0.08 and not car.firing and not car.boosting and not car.handbrake and not shielding
+		var released = steer.length()<0.18 and aiming.length()<0.22 and car.throttle<0.08 and car.brake<0.08 and not car.firing and not car.boosting and not car.handbrake and not shielding and not shift_up and not shift_down
+		shift_up_held=shift_up; shift_down_held=shift_down
 		neutral(car)
 		if released: neutral_required=false
 		return
+	shift_buttons(car,shift_up,shift_down)
 	if shielding: car.activate_shield()
 	car.shield_pressed=shielding
 	car.steer_input=steering_axis(steer.x)
@@ -57,9 +63,14 @@ func read(car: Node3D, camera: Camera3D) -> void:
 			car.aim=(target-car.position).normalized()
 
 func neutral(car: Node3D) -> void:
-	car.shield_pressed=false; car.steer_input=0
+	car.shield_pressed=false; car.steer_input=0; car.shift_direction=0; car.transmission.pending=0
 	car.throttle=0; car.brake=0; car.boosting=false; car.firing=false; car.handbrake=false; car.desired=Vector3.ZERO
 
+
+func shift_buttons(car: Node3D, up: bool, down: bool) -> void:
+	if up and not shift_up_held and not down: car.request_shift(1)
+	elif down and not shift_down_held and not up: car.request_shift(-1)
+	shift_up_held=up; shift_down_held=down
 
 static func steering_axis(value: float) -> float:
 	return signf(value)*clampf((absf(value)-0.18)/0.82,0,1)

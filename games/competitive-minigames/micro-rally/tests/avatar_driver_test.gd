@@ -105,6 +105,9 @@ func run() -> void:
 	portrait.set_mood("happy")
 	for i in 20: portrait.model._process(1.0/60)
 	portrait.view.render_target_update_mode=SubViewport.UPDATE_ALWAYS
+	# Instrument fixture for layout only; real acceleration is covered by transmission_test.
+	game.player().manual_gears=true; game.player().transmission.gear=3; game.player().transmission.rpm=6500
+	game.player().linear_velocity=Vector3(0,0,-14); game.hud.displayed_speed=50.4
 	await capture("game-hud")
 	game.state="pause"; portrait._process(0.1)
 	check(portrait.view.process_mode==Node.PROCESS_MODE_DISABLED,"Pause stops face and pose processing")

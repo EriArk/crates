@@ -59,6 +59,17 @@ var recovery_count = 0
 var fall_count = 0
 var did_not_finish = false
 var physics = VehiclePhysics.new()
+var transmission = preload("transmission.gd").new()
+var manual_gears = false
+var shift_serial = 0
+var shift_direction = 0
+var received_shift = 0
+
+func request_shift(direction: int) -> void:
+	if not manual_gears or disabled_time>0 or finish_time>=0: return
+	shift_serial+=1; shift_direction=clampi(direction,-1,1)
+	if not replica: transmission.request(shift_direction)
+
 var wheel_pivots: Array[Node3D] = []
 var wheel_colliders: Array[CollisionShape3D] = []
 var missing_wheels = 0
@@ -135,7 +146,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if replica: return
 	if reset_pending:
 		state.transform=reset_pose; state.linear_velocity=Vector3.ZERO; state.angular_velocity=Vector3.ZERO; reset_pending=false
-		physics.reset(); reset_physics_interpolation()
+		physics.reset(); transmission.reset(); shift_direction=0; reset_physics_interpolation()
 		return
 	impact_cooldown=maxf(0,impact_cooldown-state.step)
 	impact_speed=0

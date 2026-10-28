@@ -24,6 +24,9 @@ func run() -> void:
 	car.linear_velocity=Vector3(12,0,0); car.throttle=1; car.grounded=true; car.boosting=true; car.boost=80
 	audio.update(game,0.2)
 	check(not audio.motor.stream_paused and not audio.tyres.stream_paused and not audio.turbo.stream_paused,"Movement drives engine, gravel and boost layers")
+	car.transmission.rpm=7000; audio.update(game,0.5); var high_pitch=audio.motor.pitch_scale
+	car.transmission.rpm=3500; audio.update(game,0.5)
+	check(audio.motor.pitch_scale<high_pitch-0.4,"Upshift rpm drop lowers engine pitch at unchanged road speed")
 	game.state="pause"; audio.update(game,0.2)
 	check(audio.motor.stream_paused and audio.tyres.stream_paused and audio.turbo.stream_paused,"Offline pause silences movement")
 	game.state="race"; game.net.overlay=true; audio.update(game,0.2)

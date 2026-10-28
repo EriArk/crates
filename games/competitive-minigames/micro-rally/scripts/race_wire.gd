@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const TRACK = preload("track_registry.gd").VALLEY
-const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,2000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]]
+const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,2000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]]
 
 static func integer(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
 
 static func valid_input(values) -> bool:
-	if not values is Array or values.size()!=6: return false
-	for i in 6:
-		var bounds = [[-1000,1000],[0,0],[-3142,3142],[0,1000],[0,1000],[0,15]][i]
+	if not values is Array or values.size()!=9: return false
+	for i in 9:
+		var bounds = [[-1000,1000],[0,0],[-3142,3142],[0,1000],[0,1000],[0,15],[0,1],[0,2147483647],[-1,1]][i]
 		if not integer(values[i],bounds[0],bounds[1]): return false
 	return Vector2(values[0],values[1]).length()<=1420
 
 static func input(car: Node3D) -> Array:
-	return [roundi(car.steer_input*1000),0,roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.throttle*1000),roundi(car.brake*1000),(1 if car.boosting else 0)|(2 if car.firing else 0)|(4 if car.handbrake else 0)|(8 if car.shield_pressed else 0)]
+	return [roundi(car.steer_input*1000),0,roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.throttle*1000),roundi(car.brake*1000),(1 if car.boosting else 0)|(2 if car.firing else 0)|(4 if car.handbrake else 0)|(8 if car.shield_pressed else 0),1 if car.manual_gears else 0,car.shift_serial,car.shift_direction]
 
 static func apply_input(car: Node3D, values: Array) -> void:
 	car.steer_input=values[0]/1000.0; car.desired=Vector3.ZERO
@@ -22,6 +22,10 @@ static func apply_input(car: Node3D, values: Array) -> void:
 	car.throttle=values[3]/1000.0; car.brake=values[4]/1000.0
 	car.boosting=(int(values[5])&1)!=0; car.firing=(int(values[5])&2)!=0; car.handbrake=(int(values[5])&4)!=0
 	if (int(values[5])&8)!=0: car.activate_shield()
+	car.manual_gears=values[6]==1
+	if values[7]>car.received_shift:
+		car.received_shift=int(values[7])
+		if car.manual_gears: car.transmission.request(int(values[8]))
 
 static func car_state(car: Node3D) -> Array:
 	var result = [roundi(car.position.x*100),roundi(car.position.y*100),roundi(car.position.z*100),roundi(wrapf(car.rotation.y,-PI,PI)*1000),roundi(car.linear_velocity.x*100),roundi(car.linear_velocity.y*100),roundi(car.linear_velocity.z*100),roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.health),roundi(car.shield),roundi(car.boost),roundi(car.weapon_heat),(1 if car.immune>0 else 0)|(2 if car.shield_item else 0)|(4 if car.boosting else 0)|(8 if car.ghost_time>0 else 0)|(16 if car.grounded else 0)|(32 if car.overheated else 0),car.passed,roundi(car.finish_time*1000) if car.finish_time>=0 else -1,roundi(car.disabled_time*1000)]
@@ -36,6 +40,7 @@ static func car_state(car: Node3D) -> Array:
 	for i in 4:
 		if car.physics.wheels[i].contact: contacts|=1<<i
 	result.append(contacts)
+	result.append_array([car.transmission.gear,roundi(car.transmission.rpm),roundi(car.transmission.shift_left*1000),1 if car.transmission.reverse else 0,1 if car.manual_gears else 0])
 	return result
 
 static func valid_snapshot(data: Dictionary, pickup_count: int) -> bool:
