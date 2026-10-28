@@ -1,0 +1,14 @@
+{
+  "version": "0.1.24",
+  "package_sha256": "5edae8fd1a982ab367b73c0c6fa1df5d96b9e716330d929b462ba247139f2d7e",
+  "source_revision": "47dcc38f867e0b0a7df820dd120e4c545cb8a8b5",
+  "sdk_revision": "f328d5a374193e78478805c28ed440832fbf4a36",
+  "data_preserved": true,
+  "history_preserved": true,
+  "history_tables": [
+    "play_sessions"
+  ],
+  "other_packages_unchanged": true,
+  "shell_unchanged": true,
+  "rollback_retained": true
+}
