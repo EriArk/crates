@@ -103,7 +103,7 @@ func _ready() -> void:
 		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
 	else: net.call_deferred("connect_platform")
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","garage","main","audio","quick","bots","controls","credits"]: hud.menu(arg.trim_prefix("--screen="))
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
 
 func player() -> Node3D: return cars[player_index]
 
@@ -258,10 +258,10 @@ func _recover(car: Node3D) -> bool:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		if (state=="pause" or net.overlay) and hud.menu_mode in ["controls","audio"]: hud.back(); return
+		if (state=="pause" or net.overlay) and hud.menu_mode not in ["pause","net_pause"]: hud.back(); get_viewport().set_input_as_handled(); return
 		if net.online and net.overlay: resume_race(); return
 		if state=="menu":
-			hud.back(); return
+			hud.back(); get_viewport().set_input_as_handled(); return
 		elif state=="pause": resume_race(); return
 	if event is InputEventMouseMotion: controls.mouse_aim=true
 	var pause_pressed = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode==KEY_ESCAPE) or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_START)

@@ -65,7 +65,7 @@ func run() -> void:
 	reopened.queue_free()
 	audio.set_volume("effects",0.75,false); audio.set_volume("music",0.5,false)
 	game.hud.menu("pause"); game.hud.menu("audio")
-	check(game.hud.audio_parent=="pause" and game.hud.buttons[0].has_focus(),"Sound controls retain controller focus and return to pause")
+	check(game.hud.audio_parent=="pause" and game.hud.focus_controls[0].has_focus(),"Sound controls retain controller focus and return to pause")
 	game.hud.buttons[-1].pressed.emit(); check(game.hud.menu_mode=="pause","Sound Back returns to originating menu")
 	game.effects.clear()
 	car.position=game.track.points[80]+Vector3.UP*0.72; car.grounded=true

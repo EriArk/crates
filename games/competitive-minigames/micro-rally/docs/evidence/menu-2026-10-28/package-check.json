@@ -1,0 +1,21 @@
+{
+  "snapshot": "8cd0e4f8ca8c18f9",
+  "runtime_snapshot": "ed37eeac1d738475",
+  "changed_files": [
+    "export_presets.cfg"
+  ],
+  "exported_notices": {
+    "micro-rally.exe": {
+      "res://assets/fonts/OFL.txt": true,
+      "res://assets/fonts/README.md": true
+    },
+    "micro-rally.arm64": {
+      "res://assets/fonts/OFL.txt": true,
+      "res://assets/fonts/README.md": true
+    },
+    "micro-rally.x86_64": {
+      "res://assets/fonts/OFL.txt": true,
+      "res://assets/fonts/README.md": true
+    }
+  }
+}

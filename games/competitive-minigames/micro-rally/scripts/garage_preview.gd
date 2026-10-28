@@ -4,10 +4,22 @@ const Art = preload("art.gd")
 var model_id = "race"
 var tint = Color("ff8a28")
 var model: Node3D
+var preview_size = Vector2(520,170)
 func _ready() -> void:
-	custom_minimum_size=Vector2(520,170); stretch=true; mouse_filter=Control.MOUSE_FILTER_IGNORE
-	var view=SubViewport.new(); view.size=Vector2i(520,170); view.own_world_3d=true; view.transparent_bg=true
+	custom_minimum_size=preview_size; stretch=true; mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var view=SubViewport.new(); view.size=Vector2i(preview_size); view.own_world_3d=true; view.transparent_bg=true
+	view.msaa_3d=Viewport.MSAA_2X
 	view.render_target_update_mode=SubViewport.UPDATE_ALWAYS; add_child(view)
+	var shadow=MeshInstance3D.new(); var disc=QuadMesh.new(); disc.size=Vector2(4,3)
+	shadow.mesh=disc; shadow.position.y=0.01; shadow.rotation.x=-PI/2
+	var shadow_image=Image.create(64,64,false,Image.FORMAT_RGBA8)
+	for y in 64:
+		for x in 64:
+			var radius=Vector2((x-31.5)/31.5,(y-31.5)/31.5).length()
+			shadow_image.set_pixel(x,y,Color(0,0,0,(1-smoothstep(0.15,1.0,radius))*0.4))
+	var shade=StandardMaterial3D.new(); shade.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
+	shade.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED; shade.albedo_texture=ImageTexture.create_from_image(shadow_image)
+	shadow.material_override=shade; view.add_child(shadow)
 	model=Art.model("cars",model_id); view.add_child(model)
 	for part in model.find_children("*","MeshInstance3D",true,false):
 		for surface in part.mesh.get_surface_count():

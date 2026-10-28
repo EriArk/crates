@@ -5,19 +5,25 @@ const Preview = preload("garage_preview.gd")
 static func build(hud, list: VBoxContainer, mode: String) -> void:
 	var flow=hud.game.cup; var store=flow.store; var active: Dictionary=store.data.active
 	if mode=="cup":
-		list.add_child(hud.label("ЛЕСНОЙ ВЫЗОВ",32,hud.GOLD))
+		list.add_child(hud.label(Rules.TITLE.to_upper(),40,hud.GOLD))
 		var completed: int=0 if active.is_empty() else active.results.size()
+		var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",26); list.add_child(columns)
+		var actions=VBoxContainer.new(); actions.add_theme_constant_override("separation",8); actions.custom_minimum_size.x=360; columns.add_child(actions)
+		var stages=VBoxContainer.new(); stages.add_theme_constant_override("separation",10); stages.size_flags_horizontal=Control.SIZE_EXPAND_FILL; columns.add_child(stages)
 		for i in Rules.STAGES.size():
 			var stage: Dictionary=Rules.STAGES[i]
-			var suffix="✓" if i<completed else "ГОТОВИТСЯ" if not stage.available else "СТАРТ" if i==completed else "ДАЛЕЕ"
-			list.add_child(hud.label("%02d  %s · %s  %s" % [i+1,stage.title,stage.target,suffix],20,hud.PAPER if i==completed else Color("b0bfb7")))
-		var status=hud.label(flow.status(),18,hud.GOLD); status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; status.custom_minimum_size.x=550; list.add_child(status)
-		list.add_child(hud.label("Финал: очки ×1,5 · Приз: Vortex, затем окраски",17))
-		if completed<4 and Rules.STAGES[completed].available and store.writable: hud.button(list,"Начать кубок" if active.is_empty() else "Продолжить этап",flow.start_stage)
-		hud.button(list,"Боты: "+store.Bots.title(store.active_bots() if not active.is_empty() else store.bot_settings("cup")),func(): hud.BotMenu.open(hud,"cup"))
-		if completed>0: hud.button(list,"Общий зачёт",func(): hud.menu("standings"))
-		if not active.is_empty() and store.writable: hud.button(list,"Новый кубок",func(): hud.menu("cup_replace"))
-		hud.button(list,"Назад",func(): hud.menu("main"))
+			var suffix="ПРОЙДЕН" if i<completed else "ГОТОВИТСЯ" if not stage.available else "СЛЕДУЮЩИЙ" if i==completed else "ДАЛЕЕ"
+			var tile=PanelContainer.new(); tile.add_theme_stylebox_override("panel",hud.MenuSkin.plate(Color("343b35") if i==completed else Color("182121"),16,i==completed)); stages.add_child(tile)
+			var lines=VBoxContainer.new(); tile.add_child(lines)
+			lines.add_child(hud.label("%02d  %s" % [i+1,stage.title],20,hud.GOLD if i==completed else hud.PAPER))
+			lines.add_child(hud.label("ГОНКИ / %s / %s" % [stage.target,suffix],15,Color("c3cabc")))
+		var status=hud.label(flow.status(),22,hud.GOLD); status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; status.custom_minimum_size.x=340; actions.add_child(status)
+		actions.add_child(hud.label("ПРИЗ: VORTEX\nЗатем — новые окраски\nФинал: очки ×1,5",20))
+		if completed<Rules.STAGES.size() and Rules.STAGES[completed].available and store.writable: hud.button(actions,"Начать кубок" if active.is_empty() else "Продолжить этап",flow.start_stage)
+		hud.button(actions,"Боты: "+store.Bots.title(store.active_bots() if not active.is_empty() else store.bot_settings("cup")),func(): hud.BotMenu.open(hud,"cup"))
+		if completed>0: hud.button(actions,"Общий зачёт",func(): hud.menu("standings"))
+		if not active.is_empty() and store.writable: hud.button(actions,"Новый кубок",func(): hud.menu("cup_replace"))
+		hud.button(actions,"Все кубки",func(): hud.menu("cups"))
 	elif mode=="cup_replace":
 		list.add_child(hud.label("НОВЫЙ КУБОК?",30,hud.GOLD))
 		list.add_child(hud.label("Текущий зачёт будет заменён.\nОткрытые машины и окраски сохранятся.",20))

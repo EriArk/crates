@@ -12,7 +12,9 @@ func run() -> void:
 	var directory="user://cup-journey/"+str(Time.get_ticks_usec())
 	game.cup.store.load_profile("journey",directory)
 	press(); await process_frame
-	check(game.hud.menu_mode=="cup","Primary controller action opens cup route")
+	check(game.hud.menu_mode=="cups","Primary controller action opens cup catalogue")
+	press(); await process_frame
+	check(game.hud.menu_mode=="cup","Selected cup opens its stages")
 	press(); await process_frame
 	check(game.state=="countdown" and game.laps==5 and game.cup.running,"Cup starts real five-lap stage with fixed rules")
 	var id=game.cup.store.data.active.id; var roster=game.cup.store.data.active.roster.duplicate()
