@@ -40,6 +40,7 @@ func _ready() -> void:
 	streams.tick=_tone(0.12,520,false,0.0)
 	streams.go=_tone(0.45,1040,false,0.0)
 	streams.ui=_tone(0.045,740,false,0.0)
+	streams.thunder=_tone(2.4,34,false,0.97)
 	for name in ["menu","race"]:
 		var deck=AudioStreamPlayer.new(); add_child(deck); deck.bus=mix_bus
 		deck.stream=load("res://assets/audio/"+name+".ogg").duplicate()
@@ -119,7 +120,8 @@ func update(game: Node, delta: float) -> void:
 		final_lap_played=true; play_cue("final_lap")
 	if (car.finish_time>=0 or game.state=="results") and game.state in ["race","results"] and not finish_played:
 		finish_played=true
-		play_cue("dnf" if car.finish_time<0 and not game.is_arena() else "win" if game.standings().find(car)==0 else "finish")
+		var winner=game.arena.rules.place(car.index)==1 if game.is_royale() else game.standings().find(car)==0
+		play_cue("dnf" if car.finish_time<0 and not game.is_arena() else "win" if winner else "finish")
 	previous_state=game.state
 	duck=maxf(0,duck-delta)
 	var racing=game.state in ["countdown","race","pause"] and not finish_played

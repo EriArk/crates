@@ -44,7 +44,7 @@ func run() -> void:
 	check(hud.buttons.size()==9,"Last page contains one card, filters, paging and Back")
 	hud.cup_entries=Catalog.CUPS; hud.cup_page=0
 	hud.menu("modes"); await process_frame
-	check(not hud.buttons[1].disabled and hud.buttons[2].disabled,"Implemented arena is available while royale remains unavailable")
+	check(not hud.buttons[1].disabled and not hud.buttons[2].disabled,"All three implemented modes are available")
 	press("ui_down"); await process_frame
 	check(hud.buttons[1].has_focus(),"Controller reaches the playable arena mode")
 	hud.menu("main"); hud.menu("settings"); hud.menu("audio"); await process_frame

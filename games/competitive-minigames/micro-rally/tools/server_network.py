@@ -5,7 +5,7 @@ import argparse,json,pathlib,shlex,subprocess
 p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
-p.add_argument('--mode',choices=['race','arena'],default='race')
+p.add_argument('--mode',choices=['race','arena','royale'],default='race')
 p.add_argument('--case',choices=['2','16'],required=True)
 a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 identity=json.loads(a.manifest.read_text())['source_snapshot']

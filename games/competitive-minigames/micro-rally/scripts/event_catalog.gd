@@ -5,7 +5,7 @@ const Rules = preload("cup_rules.gd")
 const MODES = [
 	{"id":"race","title":"Racing","description":"Circuit racing · weapons · boosts","available":true},
 	{"id":"arena","title":"Arena battle","description":"Rust Pit · weapons · respawns","available":true},
-	{"id":"royale","title":"Battle royale","description":"Last car standing","available":false}
+	{"id":"royale","title":"Battle royale","description":"Deadwater County · outrun the storm","available":true}
 ]
 const FILTERS = ["All","Racing","Arenas","Battle royale","Mixed"]
 const CUPS = [

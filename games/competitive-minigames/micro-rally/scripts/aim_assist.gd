@@ -7,6 +7,7 @@ static func resolve(car: Node3D, others: Array, level: int) -> Vector3:
 	var result=raw; var best=INF
 	for other in others:
 		if other==car or other.health<=0 or other.ghost_time>0: continue
+		if car.get_parent().has_method("is_royale") and car.get_parent().is_royale() and not car.get_parent().royale.can_see(car,other): continue
 		var diff: Vector3=other.position+Vector3.UP*0.3-origin
 		var distance=diff.length()
 		if distance<2 or distance>34: continue

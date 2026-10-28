@@ -23,7 +23,7 @@ func run() -> void:
 	while Time.get_ticks_msec()-test_started<600000:
 		await process_frame
 		if game.net.online:
-			if game.net.host and game.net.phase=="waiting": game.net.select_event("arena" if OS.get_environment("RALLY_TEST_MODE")=="arena" else "race")
+			if game.net.host and game.net.phase=="waiting": game.net.select_event(OS.get_environment("RALLY_TEST_MODE") if OS.get_environment("RALLY_TEST_MODE") in ["arena","royale"] else "race")
 			round_one=true
 			if game.is_arena():
 				var car=game.player()
@@ -32,15 +32,18 @@ func run() -> void:
 					if distance<4: driven_distance+=distance
 				last_position=car.position; last_reset=car.reset_serial
 			maximum_progress=maxi(maximum_progress,int(driven_distance) if game.is_arena() else game.player().passed)
-			if game.net.round_id==1 and game.net.members.size()==16 and game.net.host and game.elapsed>(60 if game.is_arena() else 15) and not forced_finish:
+			if game.net.round_id==1 and (game.net.members.size()==16 or game.is_royale()) and game.net.host and game.elapsed>(60 if game.is_arena() else 15) and not forced_finish:
 				# Only terminal presentation/rematch is accelerated in the 16-process case.
 				# Initial driving, admission and all inputs use the real game/SDK/physics.
 				forced_finish=true
-				if game.is_arena(): game.elapsed=game.arena.Rules.DURATION
+				if game.is_royale():
+					for car in game.cars:
+						if car.index!=game.player_index: car.health=0
+				elif game.is_arena(): game.elapsed=game.arena.Rules.DURATION
 				else:
 					for car in game.cars: car.passed=1280; car.laps=4
 			if game.state=="results" and game.net.round_id==1 and not game.net.voted:
-				result=game.arena.snapshot().scores if game.is_arena() else game.cars.map(func(c): return [c.passed,roundi(c.finish_time*1000),c.did_not_finish])
+				result=[game.arena.snapshot().scores,game.royale.snapshot()] if game.is_royale() else game.arena.snapshot().scores if game.is_arena() else game.cars.map(func(c): return [c.passed,roundi(c.finish_time*1000),c.did_not_finish])
 				print("RALLY movement slot=",game.player_index," distance=",maximum_progress," position=",game.player().position," health=",game.player().health)
 				if maximum_progress<15: printerr("FAIL no driven progress slot=",game.player_index); quit(2); return
 				game.net.rematch()

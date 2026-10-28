@@ -17,7 +17,9 @@ func change_assist(step: int) -> void:
 	game.hud.menu("controls")
 func reset() -> void:
 	for rocket in rockets: rocket.node.queue_free()
-	rockets.clear(); next_rocket=0; rules.reset(game.cars.size())
+	rockets.clear(); next_rocket=0
+	rules=game.royale.Rules.new() if game.is_royale() else Rules.new(); rules.reset(game.cars.size())
+	game.royale.reset()
 func hurt(car: Node3D, amount: float, impulse: Vector3, point: Vector3, attacker: int=-1) -> void:
 	car.take_damage(amount,impulse,point,attacker)
 func damaged(car: Node3D, attacker: int, amount: float) -> void:
@@ -31,6 +33,10 @@ func recovery_pose(car: Node3D, respawn: bool) -> Variant:
 		for id in game.track.graph.get_point_ids():
 			candidates.append(Transform3D(Basis(Vector3.UP,atan2(-car.last_forward.x,-car.last_forward.z)),game.track.graph.get_point_position(id)+Vector3.UP*0.9))
 	for pose in candidates:
+		if game.is_royale() and not respawn:
+			if pose.origin.distance_to(car.position)>22 or absf(pose.origin.y-car.position.y)>4: continue
+			var wall=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(car.position+Vector3.UP,pose.origin+Vector3.UP,1))
+			if not wall.is_empty(): continue
 		var nearest=INF; var visible=0
 		for other in game.cars:
 			if other==car or other.health<=0: continue
@@ -44,6 +50,7 @@ func recovery_pose(car: Node3D, respawn: bool) -> Variant:
 		if score>best_score: best_score=score; best=pose
 	return best
 func recover(car: Node3D) -> bool:
+	if game.is_royale() and game.arena.rules.places[car.index]>0: return false
 	if car.health<=0 or car.reset_pending or car.recovery_lock>0: return false
 	var outside=not game.track.map_bounds.has_point(Vector2(car.position.x,car.position.z)) or car.position.y< -4
 	if not outside and car.overturned_time<0.5 and car.stuck_time<2: return false
@@ -55,9 +62,12 @@ func recover(car: Node3D) -> bool:
 func tick(delta: float) -> void:
 	if game.state=="race": game.elapsed+=delta
 	game._update_conditions(game.elapsed)
+	if game.is_royale() and game.state=="race": game.royale.tick_before(delta)
 	for car in game.cars:
 		if car.health<=0:
 			if game.state!="race": continue
+			if game.is_royale():
+				car.freeze=true; car.collision_layer=0; car.disabled_time=0; car.shield=0; car.immune=0; game.controls.neutral(car); car.update_visuals(); continue
 			var previous_kills: int=rules.rows[game.player_index].kills
 			if rules.wreck(car.index,game.elapsed):
 				car.freeze=true; car.collision_layer=0; game.controls.neutral(car)
@@ -78,7 +88,9 @@ func tick(delta: float) -> void:
 		if car.firing and game.state=="race": shoot(car)
 	if game.state=="race":
 		update_rockets(delta)
-		if game.elapsed>=Rules.DURATION: game.finish_race(); return
+		if game.is_royale():
+			if game.royale.tick_after(): return
+		elif game.elapsed>=Rules.DURATION: game.finish_race(); return
 		game.hud.message=rules.feed if game.elapsed<rules.feed_time else ""
 	for pickup in game.pickups:
 		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0; pickup.node.rotation.y+=delta

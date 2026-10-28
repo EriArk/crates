@@ -52,8 +52,8 @@ func _session(is_host: bool) -> void:
 		bot_settings=game.cup.store.bot_settings("quick"); game.hud.menu("network_setup")
 
 func select_event(mode: String) -> void:
-	if not online or not host or phase!="waiting" or mode not in ["race","arena"]: return
-	event_track=game.Tracks.ARENA if mode=="arena" else Wire.TRACK
+	if not online or not host or phase!="waiting" or mode not in ["race","arena","royale"]: return
+	event_track=game.Tracks.ROYALE if mode=="royale" else game.Tracks.ARENA if mode=="arena" else Wire.TRACK
 	_prepare()
 
 func _prepare() -> void:
@@ -61,7 +61,7 @@ func _prepare() -> void:
 	phase="preparing"; deadline=Time.get_ticks_msec()+15000
 	game.bot_count=15; starting=true; game.start_race(); starting=false
 	game.state="network_wait"; game.hud.message="Waiting for everyone to get ready…"
-	if not bridge.send({"type":"prepare","round":round_id,"track":event_track,"mode":"arena" if game.is_arena() else "race","rules":1,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
+	if not bridge.send({"type":"prepare","round":round_id,"track":event_track,"mode":game.event_mode(),"rules":1,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
 
 func _begin() -> void:
 	phase="playing"; game.state="countdown"; game.countdown=3; game.hud.message=""
@@ -75,7 +75,7 @@ func _receive(member: String, data: Dictionary) -> void:
 	var kind = data.get("type")
 	if data.get("namespace")=="traineros.avatar.v1": return
 	if kind=="prepare" and not host and member==bridge.session.hostMember:
-		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track") not in [Wire.TRACK,game.Tracks.ARENA] or data.get("laps")!=4 or data.get("rules",1)!=1 or data.get("mode","race")!=("arena" if data.get("track")==game.Tracks.ARENA else "race") or not data.get("conditions") is Dictionary:
+		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track") not in [Wire.TRACK,game.Tracks.ARENA,game.Tracks.ROYALE] or data.get("laps")!=4 or data.get("rules",1)!=1 or data.get("mode","race")!=("royale" if data.get("track")==game.Tracks.ROYALE else "arena" if data.get("track")==game.Tracks.ARENA else "race") or not data.get("conditions") is Dictionary:
 			abort("Incompatible race conditions."); return
 		var conditions = game.Conditions.new()
 		if not conditions.configure(data.conditions): abort("Invalid race conditions."); return
@@ -104,9 +104,11 @@ func _receive(member: String, data: Dictionary) -> void:
 	if kind=="state" and not host and phase in ["playing","results"]:
 		if (game.is_arena() and not game.arena.valid_state(data.get("arena"))) or not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
 			abort("Could not sync the race."); return
+		if game.is_royale() and not game.royale.valid_state(data.get("royale"),data.arena): abort("Invalid survival state."); return
 		if game.is_arena(): game.arena.apply_snapshot(data.arena)
 		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
 		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
+		if game.is_royale(): game.royale.apply_snapshot(data.royale)
 		for i in game.pickups.size():
 			var pickup: Dictionary=game.pickups[i]
 			if pickup.cooldown<=0 and data.pickups[i]>0: game.effects.burst(pickup.node.position,Color("8defff"))
@@ -133,7 +135,7 @@ func tick_client(delta: float) -> void:
 	apply_targets(delta)
 	if game.is_arena(): game.arena.display_client(delta)
 	if phase=="playing":
-		if game.state=="race" and not overlay:
+		if game.state=="race" and not overlay and game.player().health>0:
 			if game.demo_auto:
 				game.player().bot_drive(game.cars,delta); game.player().bot.combat(game.player(),game.cars,delta)
 			else: game.controls.read(game.player(),game.camera)
@@ -199,6 +201,7 @@ func _process(delta: float) -> void:
 	if host:
 		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
 		if game.is_arena(): packet.arena=game.arena.snapshot()
+		if game.is_royale(): packet.royale=game.royale.snapshot()
 		for member in bridge.channels:
 			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
 		beams.clear()

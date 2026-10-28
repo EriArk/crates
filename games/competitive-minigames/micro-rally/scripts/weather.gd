@@ -94,7 +94,8 @@ func update_headlights(cars: Array, delta: float, player_index: int = 0) -> void
 		if not is_instance_valid(car): light.visible=false; light.light_energy=0; continue
 		var forward: Vector3=-car.global_basis.z
 		light.global_position=car.global_position+forward*1.6+Vector3.UP*0.3
-		light.look_at(light.global_position+forward*12-Vector3.UP*2.4,Vector3.UP)
+		var beam=forward*12-Vector3.UP*2.4
+		light.look_at(light.global_position+beam,Vector3.RIGHT if absf(beam.normalized().dot(Vector3.UP))>0.99 else Vector3.UP)
 		var fade = 1.0 if i==0 else 1.0-smoothstep(27,40,car.position.distance_to(focus))
 		light.light_energy=lerpf(light.light_energy,darkness*fade*(1.1 if _compatibility() else 1.7),1.0-exp(-delta*7))
 		light.visible=light.light_energy>0.01

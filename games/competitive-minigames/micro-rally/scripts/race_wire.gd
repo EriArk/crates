@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const TRACK = preload("track_registry.gd").VALLEY
-const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,600100],[0,3000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]] + [[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4]]
+const CAR_LIMITS = [[-30000,30000],[-10000,10000],[-30000,30000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,720100],[0,3000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]] + [[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4]]
 
 static func integer(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
@@ -48,7 +48,7 @@ static func car_state(car: Node3D) -> Array:
 	return result
 
 static func valid_snapshot(data: Dictionary, pickup_count: int) -> bool:
-	if not integer(data.get("seq"),0,2147483647) or not integer(data.get("ms"),0,600100) or not integer(data.get("countdown"),0,3000): return false
+	if not integer(data.get("seq"),0,2147483647) or not integer(data.get("ms"),0,720100) or not integer(data.get("countdown"),0,3000): return false
 	if data.get("phase") not in ["countdown","race","results"]: return false
 	var cars = data.get("cars"); var pickups = data.get("pickups")
 	if not cars is Array or cars.size()!=16 or not pickups is Array or pickups.size()!=pickup_count: return false

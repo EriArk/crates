@@ -107,11 +107,12 @@ func menu(mode: String) -> void:
 		list.add_child(label("Choose the event for everyone.\nUp to 16 cars · empty seats use bots",20))
 		button(list,"Racing · Dirty Valley",func(): game.net.select_event("race"))
 		button(list,"Arena battle · Rust Pit",func(): game.net.select_event("arena"))
+		button(list,"Battle royale · Deadwater",func(): game.net.select_event("royale"))
 		button(list,"Leave",game.return_menu)
 	elif mode=="quick":
-		list.add_child(label("ARENA BATTLE" if game.is_arena() else "RACING",36,GOLD))
+		list.add_child(label("BATTLE ROYALE" if game.is_royale() else "ARENA BATTLE" if game.is_arena() else "RACING",36,GOLD))
 		list.add_child(label(game.track_title(),22))
-		list.add_child(label(("8 minutes · respawns" if game.is_arena() else "1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
+		list.add_child(label(("Last car standing · one life" if game.is_royale() else "8 minutes · respawns" if game.is_arena() else "1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
 		button(list,"Battle" if game.is_arena() else "Race",game.start_race)
 		if not game.is_arena(): button(list,"Change track",game.cycle_track)
 		button(list,"Car: "+game.car_title(),game.cycle_car)
@@ -131,7 +132,7 @@ func menu(mode: String) -> void:
 		list.add_child(label("CONTROLS",36,GOLD))
 		BotMenu.option(self,list,"Transmission: "+("manual" if game.cup.store.manual_gears() else "automatic"),func(_step): toggle_gearbox())
 		BotMenu.option(self,list,"Vibration: "+game.haptics.TITLES[game.cup.store.haptics_level()],cycle_haptics)
-		BotMenu.option(self,list,"Aim assist: "+game.arena.Aim.TITLES[game.arena.assist_level]+" · arena",game.arena.change_assist)
+		BotMenu.option(self,list,"Aim assist: "+game.arena.Aim.TITLES[game.arena.assist_level]+" · combat",game.arena.change_assist)
 		button(list,"Button layout",func(): menu("bindings"))
 		list.add_child(label("Steer left / right relative to your car.\nAim independently with the right stick.\n\nManual transmission has five gears.\nTop face button shifts up; right shifts down.",22,Color("bed0c6")))
 		if not gearbox_notice.is_empty(): list.add_child(label(gearbox_notice,16,GOLD))
@@ -163,7 +164,7 @@ func menu(mode: String) -> void:
 		else: button(list,"Return to TrainerOS",game.quit_game)
 		button(list,"Solo play",func(): menu("main"))
 	elif mode=="results":
-		list.add_child(label("BATTLE OVER" if game.is_arena() else "FINISH!",38,GOLD))
+		list.add_child(label(("SURVIVOR!" if game.arena.rules.places[game.player_index]==1 else "NO SURVIVORS" if game.royale.alive()==0 else "BATTLE OVER") if game.is_royale() else "BATTLE OVER" if game.is_arena() else "FINISH!",38,GOLD))
 		list.add_child(label(game.track_title()+" · "+game.BotSettings.title(game.race_bots),24))
 		var rank = game.standings()
 		var columns = HBoxContainer.new(); columns.add_theme_constant_override("separation",30); list.add_child(columns)
@@ -172,7 +173,9 @@ func menu(mode: String) -> void:
 			var car: Node3D=rank[i]
 			var column = left if i<8 else right
 			var text=str(i+1)+"  "+car.driver_title()+"   "+("%.1f s" % car.finish_time if car.finish_time>=0 else "DNF")
-			if game.is_arena():
+			if game.is_royale():
+				text="%d  %s   %d KOs" % [game.arena.rules.places[car.index],car.driver_title(),game.arena.rules.rows[car.index].kills]
+			elif game.is_arena():
 				var row=game.arena.rules.ranked()[i]
 				text="%d  %s   %d pts · %d K / %d D" % [row.place,car.driver_title(),row.score,row.kills,row.deaths]
 			column.add_child(label(text,17 if game.is_arena() else 19,GOLD if car.local_player else PAPER))
@@ -274,11 +277,12 @@ func _draw() -> void:
 		return
 	var rank: Array=game.standings()
 	draw_style_box(_plate(),Rect2(22,20,194,108))
-	write(str(game.arena.rules.place(car.index) if game.is_arena() else rank.find(car)+1),Vector2(38,77),58,GOLD); write("/"+str(game.cars.size()),Vector2(110,76),31)
-	var seconds = int(maxf(0,game.arena.Rules.DURATION-game.elapsed) if game.is_arena() else game.elapsed)
+	write(str(game.royale.alive() if game.is_royale() else game.arena.rules.place(car.index) if game.is_arena() else rank.find(car)+1),Vector2(38,77),58,GOLD); write("/"+str(game.cars.size()),Vector2(110,76),31)
+	var seconds = int(maxf(0,(game.royale.DURATION if game.is_royale() else game.arena.Rules.DURATION)-game.elapsed) if game.is_arena() else game.elapsed)
 	write("%02d:%02d.%01d" % [seconds/60,seconds%60,int(game.elapsed*10)%10],Vector2(37,111),23)
-	var section: String=game.track.section_name(car.checkpoint)
-	if game.is_arena(): write("%d PTS · %d KOs" % [game.arena.rules.rows[car.index].score,game.arena.rules.rows[car.index].kills],Vector2(238,53),24,GOLD)
+	var section: String=game.track.district(game.view_car().position) if game.is_royale() else game.track.section_name(car.checkpoint)
+	if game.is_royale(): write("SURVIVORS · %d KOs" % game.arena.rules.rows[car.index].kills,Vector2(238,53),24,GOLD)
+	elif game.is_arena(): write("%d PTS · %d KOs" % [game.arena.rules.rows[car.index].score,game.arena.rules.rows[car.index].kills],Vector2(238,53),24,GOLD)
 	else: write("LAP %d / %d" % [mini(game.laps,car.laps+1),game.laps] if section.is_empty() else "%.1f / %.1f km" % [maxf(0,float(car.passed)/game.track.COUNT*game.track.length/1000),game.track.length/1000],Vector2(238,53),24)
 	if not section.is_empty(): write(section,Vector2(240,106),20,GOLD)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
@@ -297,7 +301,7 @@ func _draw() -> void:
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
 	write("OVERHEATED" if car.overheated else (car.weapon.to_upper()+" · "+str(car.ammo) if game.is_arena() and car.weapon_selected and car.ammo>0 else "MACHINE GUN"),weapon+Vector2(14,26),17,heat_color)
-	write("∞",weapon+Vector2(142,28),26,PAPER)
+	if not (game.is_arena() and car.weapon_selected and car.ammo>0): write("∞",weapon+Vector2(142,28),26,PAPER)
 	draw_style_box(_plate(),Rect2(weapon+Vector2(14,38),Vector2(153,13)))
 	draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
 	if car.weapon_heat>0: draw_line(weapon+Vector2(15,44),weapon+Vector2(15+151*car.weapon_heat/100,44),heat_color,9,true)
@@ -311,7 +315,17 @@ func _draw() -> void:
 	if game.state=="countdown":
 		var text = str(maxi(1,ceili(game.countdown)))
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
-	if car.disabled_time>0: write("RECOVERING",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
+	if game.is_royale():
+		var warning="STORM CLOSING" if game.royale.phase in [1,3,5,7,8] else "NEXT STORM IN %ds" % maxi(0,int(game.royale.next_change-game.elapsed))
+		if car.health<=0: warning="ELIMINATED · SPECTATING %s · ← / →" % game.view_car().driver_title()
+		elif game.royale.outside(car.position)>0: warning="IN THE STORM · REACH SAFETY"
+		write(warning,Vector2(40,size.y-185),22,GOLD)
+		if car.health>0 and game.royale.outside(car.position)>-20:
+			var safe=game.royale.safe_goal(car,car.position+Vector3(1000,0,0))
+			var from=game.camera.unproject_position(car.position); var to=game.camera.unproject_position(safe); var direction=(to-from).normalized()
+			draw_line(from+direction*35,from+direction*75,Color("7de6ff"),4,true)
+			draw_circle(from+direction*75,5,Color("7de6ff"))
+	elif car.disabled_time>0: write("RECOVERING",Vector2(size.x*0.5-110,size.y*0.4),25,GOLD)
 	elif car.missing_wheels!=0: write("WHEEL LOST",Vector2(size.x*0.5-112,size.y-140),20,Color("ff995b"))
 	if not message.is_empty(): write(message,Vector2(240,106 if section.is_empty() else 132),18,GOLD)
 	if game.show_metrics: write("%.0f FPS · %d cars" % [Engine.get_frames_per_second(),game.cars.size()],Vector2(240,115),18)
@@ -365,6 +379,10 @@ func _map() -> void:
 	var center=bounds.get_center()
 	if game.is_arena():
 		draw_rect(Rect2(origin-bounds.size*scale_value/2,bounds.size*scale_value),Color(0.06,0.08,0.07,0.7))
+		if game.is_royale():
+			for road in game.track.roads: draw_rect(Rect2(origin+(road.position-center)*scale_value,road.size*scale_value),Color("555e5d"))
+			draw_line(origin+Vector2(0,-180)*scale_value,origin+Vector2(0,144)*scale_value,Color("397b99"),2,true)
+			for z in game.track.BRIDGES: draw_line(origin+Vector2(-40,z)*scale_value,origin+Vector2(40,z)*scale_value,Color("c5ba8e"),3,true)
 		for cover in game.track.covers: draw_rect(Rect2(origin+(cover.position-center)*scale_value,cover.size*scale_value),Color("9e9d87"))
 	else:
 		var path = PackedVector2Array()
@@ -372,6 +390,15 @@ func _map() -> void:
 		for i in range(0,game.track.COUNT,maxi(1,ceili(game.track.COUNT/512.0))):
 			var p: Vector3=game.track.points[i]; path.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
 		path.append(path[0]); draw_polyline(path,Color(0.04,0.08,0.07,0.7),9,true); draw_polyline(path,Color("b5c5b6"),5,true)
+	if game.is_royale():
+		_zone_arc(origin+(game.royale.center-center)*scale_value,game.royale.radius*scale_value,Rect2(origin-bounds.size*scale_value/2,bounds.size*scale_value),Color("83bfff"),2)
+		_zone_arc(origin+(game.royale.next_center-center)*scale_value,game.royale.next_radius*scale_value,Rect2(origin-bounds.size*scale_value/2,bounds.size*scale_value),Color("f0d77c"),1)
 	for c in game.cars:
+		if game.is_royale() and (c.health<=0 or c!=game.view_car() and not game.royale.can_see(game.view_car(),c)): continue
 		var p: Vector2=origin+(Vector2(c.position.x,c.position.z)-center)*scale_value
 		draw_circle(p,5 if c.local_player else 3.5,Car.COLORS[c.index%8])
+
+func _zone_arc(center: Vector2,radius: float,clip: Rect2,color: Color,width: float) -> void:
+	for i in 96:
+		var a=center+Vector2.from_angle(TAU*i/96.0)*radius; var b=center+Vector2.from_angle(TAU*(i+1)/96.0)*radius
+		if clip.has_point(a) and clip.has_point(b): draw_line(a,b,color,width,true)

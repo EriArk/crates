@@ -6,12 +6,13 @@ import argparse, json, pathlib, re, shlex, subprocess, uuid
 p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
-p.add_argument('--track',choices=['rust-pit.1','dirty-valley.4','quarry.1','forest-pass.1','nordschleife.1'],default='quarry.1')
+p.add_argument('--track',choices=['rust-pit.1','deadwater.1','dirty-valley.4','quarry.1','forest-pass.1','nordschleife.1'],default='quarry.1')
 p.add_argument('--screen',choices=['race','main','cups','modes','settings','audio','quick','bots','cup','controls','bindings','credits','cup_replace','garage'],default='race')
 p.add_argument('--renderer',choices=['mobile','gl_compatibility'],default='mobile')
 p.add_argument('--at',type=int)
 p.add_argument('--after',type=float,default=10)
 p.add_argument('--overview',action='store_true')
+p.add_argument('--county-view',choices=['town','bridge','underpass','storm','storm-deep'])
 p.add_argument('--time',choices=['day','dawn','sunset','night'],default='sunset')
 p.add_argument('--weather',choices=['clear','overcast','rain'],default='clear')
 a=p.parse_args()
@@ -20,7 +21,7 @@ if not re.fullmatch('[a-f0-9]{16}',snapshot): p.error('Invalid snapshot')
 a.output.mkdir(parents=True,exist_ok=True)
 remote='/home/abysscloud/traineros-micro-rally'
 name='rally-capture-'+uuid.uuid4().hex
-filename='capture-'+a.track+'-'+a.renderer+('-at'+str(a.at) if a.at is not None else '')+('-'+a.screen if a.screen!='race' else '')+('-overview' if a.overview else '')+'.png'
+filename='capture-'+a.track+'-'+a.renderer+('-at'+str(a.at) if a.at is not None else '')+('-'+a.screen if a.screen!='race' else '')+('-overview' if a.overview else '')+('-'+a.county_view if a.county_view else '')+'.png'
 target='/work/exports/'+snapshot+'/'+filename
 argv=['docker','run','--init','--rm','--name',name,'--network','none','--user','1000:1000',
       '-e','HOME=/tmp','-e','LIBGL_ALWAYS_SOFTWARE=1','-e','XDG_RUNTIME_DIR=/tmp',
@@ -28,7 +29,7 @@ argv=['docker','run','--init','--rm','--name',name,'--network','none','--user','
       'xvfb-run','-a','-s','-screen 0 1280x720x24',
       '/work/exports/'+snapshot+'/micro-rally.x86_64','--audio-driver','Dummy',
       '--rendering-method',a.renderer,'--',('--autodrive' if a.screen=='race' else '--screen='+a.screen),'--track='+a.track,
-      '--capture-after='+str(a.after),'--time='+a.time,'--weather='+a.weather,'--capture='+target]+(['--capture-at='+str(a.at)] if a.at is not None else [])+(['--arena-overview'] if a.overview else [])
+      '--capture-after='+str(a.after),'--time='+a.time,'--weather='+a.weather,'--capture='+target]+(['--capture-at='+str(a.at)] if a.at is not None else [])+(['--arena-overview'] if a.overview else [])+(['--county-view='+a.county_view] if a.county_view else [])
 try:
     result=subprocess.run(['ssh','books-server',shlex.join(argv)],capture_output=True,timeout=180)
     log=result.stdout+result.stderr

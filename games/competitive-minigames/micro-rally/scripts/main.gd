@@ -4,6 +4,7 @@ const Track = preload("track.gd")
 const Tracks = preload("track_registry.gd")
 const Arena=preload("arena.gd")
 var arena=Arena.new()
+var royale=preload("royale.gd").new()
 var current_track = Tracks.VALLEY
 var quick_track = Tracks.VALLEY
 var quick_race_track = Tracks.VALLEY
@@ -58,7 +59,7 @@ var race_limit_seconds = 600.0 # Dirty Valley only; future cup stages own their 
 func _ready() -> void:
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps=60
-	arena.game=self; arena.load_settings()
+	arena.game=self; royale.game=self; arena.load_settings()
 	net.game=self; add_child(net)
 	cup.game=self; add_child(cup)
 	add_child(haptics)
@@ -97,7 +98,7 @@ func _ready() -> void:
 		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
 	if demo_auto: start_race()
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--capture-at=") and not capture_path.is_empty():
+		if arg.begins_with("--capture-at=") and not capture_path.is_empty() and not is_arena():
 			var at=posmod(int(arg.trim_prefix("--capture-at=")),track.COUNT)
 			state="race"; set_physics_process(false)
 			for car in cars:
@@ -105,6 +106,24 @@ func _ready() -> void:
 				car.freeze=true; car.transform=track.road_pose(car.checkpoint,(car.index%3-1)*2.5)
 				car.reset_pending=false; car.ghost_time=0; car.immune=0; car.aim=-car.basis.z
 				car.update_visuals()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--county-view=") and is_royale() and not capture_path.is_empty():
+			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-96,12,-72)
+			if view=="bridge": pos=Vector3(-12,12,0)
+			elif view=="underpass": pos=Vector3(12,track.height_at(Vector3(12,0,0)),0)
+			elif view in ["storm","storm-deep"]:
+				elapsed=510; royale.update_zone(elapsed)
+				var best=INF
+				for id in track.graph.get_point_ids():
+					var candidate: Vector3=track.graph.get_point_position(id)
+					var score=absf(royale.outside(candidate)-(30 if view=="storm-deep" else 3))
+					if score<best: best=score; pos=candidate
+			state="race"; set_physics_process(false)
+			for car in cars:
+				car.freeze=true; car.reset_pending=false; car.ghost_time=0; car.immune=0
+			player().position=pos+Vector3.UP*0.9; player().update_visuals()
+	if arena_overview:
+		for node in track.find_children("*","GeometryInstance3D",true,false): node.visibility_range_end=0
 	_camera(1,true)
 	if "--physics-benchmark" in OS.get_cmdline_user_args():
 		net.platform_enabled=false
@@ -113,12 +132,15 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
 
-func is_arena() -> bool: return current_track==Tracks.ARENA
+func is_arena() -> bool: return current_track in [Tracks.ARENA,Tracks.ROYALE]
+func is_royale() -> bool: return current_track==Tracks.ROYALE
+func event_mode() -> String: return "royale" if is_royale() else "arena" if is_arena() else "race"
+func view_car() -> Node3D: return royale.focus() if is_royale() else player()
 
 func select_mode(mode: String) -> void:
 	cup.running=false
-	if quick_track!=Tracks.ARENA: quick_race_track=quick_track
-	quick_track=Tracks.ARENA if mode=="arena" else quick_race_track
+	if quick_track not in [Tracks.ARENA,Tracks.ROYALE]: quick_race_track=quick_track
+	quick_track=Tracks.ROYALE if mode=="royale" else Tracks.ARENA if mode=="arena" else quick_race_track
 	load_track(quick_track); _spawn_cars(); _spawn_pickups(); arena.reset(); _camera(1,true); hud.menu("quick")
 
 func player() -> Node3D: return cars[player_index]
@@ -188,9 +210,9 @@ func _spawn_pickups() -> void:
 		node.material_override=Art.material(Color("50c9ff") if i%2 else Color("ffc44b"),0.6)
 		node.position=track.pickup_spots[i]; add_child(node)
 		var icon = Label3D.new(); icon.text="+" if i%2 else "COOL"; icon.font_size=48; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
-		if is_arena(): icon.text=track.PICKUP_TYPES[i].to_upper()
+		if is_arena(): icon.text=track.pickup_kind(i).to_upper() if is_royale() else track.PICKUP_TYPES[i].to_upper()
 		icon.position.y=0.75; node.add_child(icon)
-		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1,"kind":track.PICKUP_TYPES[i] if is_arena() else "shield" if i%2 else "cool"})
+		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1,"kind":track.pickup_kind(i) if is_royale() else track.PICKUP_TYPES[i] if is_arena() else "shield" if i%2 else "cool"})
 
 func load_track(id: String) -> bool:
 	if not Tracks.has_track(id): return false
@@ -206,7 +228,7 @@ func load_track(id: String) -> bool:
 
 func track_title() -> String: return Tracks.TRACKS[current_track].title
 func cycle_track() -> void:
-	var ids=Tracks.TRACKS.keys().filter(func(id): return id!=Tracks.ARENA); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
+	var ids=Tracks.TRACKS.keys().filter(func(id): return id not in [Tracks.ARENA,Tracks.ROYALE]); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
 	load_track(quick_track); effects.clear(); feedback.reset(); _spawn_cars(); _spawn_pickups(); _camera(1,true); hud.menu("quick")
 
 func start_race() -> void:
@@ -283,6 +305,9 @@ func _recover(car: Node3D) -> bool:
 	return false
 
 func _input(event: InputEvent) -> void:
+	if is_royale() and state=="race" and player().health<=0 and not net.overlay:
+		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+			royale.cycle_spectator(-1 if event.is_action_pressed("ui_left") else 1); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("ui_cancel"):
 		if (state=="pause" or net.overlay) and hud.menu_mode not in ["pause","net_pause"]: hud.back(); get_viewport().set_input_as_handled(); return
 		if net.online and net.overlay: resume_race(); return
@@ -384,7 +409,8 @@ func _shoot(car: Node3D) -> void:
 
 func _process(delta: float) -> void:
 	if cars.is_empty(): return
-	track.update_view(player().position)
+	track.update_view(view_car().position)
+	if is_royale(): royale.visual_update(delta)
 	_camera(delta)
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)
@@ -401,16 +427,16 @@ func _process(delta: float) -> void:
 
 func _camera(delta: float, snap: bool = false) -> void:
 	if arena_overview and is_arena():
-		camera.position=Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=400
+		camera.position=Vector3(0,340,250) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=700
 		tilt_shift.set_shader_parameter("strength",0.0)
 		return
-	var target: Vector3=player().position
-	var lookahead: Vector3=player().linear_velocity.limit_length(12)*0.20
+	var target: Vector3=view_car().position
+	var lookahead: Vector3=view_car().linear_velocity.limit_length(12)*0.20
 	lookahead.y=0; target+=lookahead
 	var desired_pos = target+Vector3(0,29,23)
 	camera.position=desired_pos if snap else camera.position.lerp(desired_pos,1-exp(-delta*5))
 	camera.rotation_degrees=Vector3(-51.6,0,0)
-	var focus: Vector2=camera.unproject_position(player().position)
+	var focus: Vector2=camera.unproject_position(view_car().position)
 	tilt_shift.set_shader_parameter("focus_y",clampf(focus.y/get_viewport().get_visible_rect().size.y,0.4,0.65))
 
 func standings() -> Array:

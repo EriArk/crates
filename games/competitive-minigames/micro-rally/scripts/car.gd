@@ -253,7 +253,7 @@ func tick_weapon(delta: float) -> void:
 	if overheated and weapon_heat<=RESUME_HEAT: overheated=false
 
 func begin_shot() -> bool:
-	if replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0 or (arena_mode and immune>0): return false
+	if health<=0 or replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0 or (arena_mode and immune>0): return false
 	fire_cooldown=0.28; cooling_delay=0.45
 	weapon_heat=minf(100,weapon_heat+HEAT_PER_SHOT)
 	if weapon_heat>=100: overheated=true
@@ -267,6 +267,7 @@ func activate_shield() -> void:
 
 func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF, attacker: int=-1) -> bool:
 	if replica or immune>0 or disabled_time>0 or finish_time>=0 or ghost_time>0: return false
+	if get_parent().has_method("is_royale") and get_parent().is_royale(): amount*=0.28
 	var before=health
 	var absorbed = minf(shield,amount); shield-=absorbed; amount-=absorbed
 	health=maxf(0,health-amount)

@@ -108,7 +108,8 @@ func combat(car: Node3D, others: Array, delta: float) -> void:
 		combat_clock=[0.45,0.2,0.12][int(settings.reaction)]; clear_shot=false
 		var selected: Node3D=null; var best_score = INF
 		for other in others:
-			if other==car or other.finish_time>=0 or other.ghost_time>0 or other.disabled_time>0: continue
+			if other==car or other.health<=0 or other.finish_time>=0 or other.ghost_time>0 or other.disabled_time>0: continue
+			if car.get_parent().has_method("is_royale") and car.get_parent().is_royale() and not car.get_parent().royale.can_see(car,other): continue
 			var diff: Vector3=other.position-car.position; var distance = diff.length()
 			if distance>[20,25,30][int(settings.aggression)] or absf(diff.y)>vertical_range: continue
 			var score: float=distance-(4.0 if other==opponent else 0.0)

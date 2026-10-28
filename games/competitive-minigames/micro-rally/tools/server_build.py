@@ -9,7 +9,7 @@ IMAGE = 'traineros-golf-backend-ci:20261025'
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--tests', action='store_true')
-TESTS=['arena_test.gd','arena_battle_test.gd','arena_network_test.gd','tire_test.gd','menu_test.gd','nord_test.gd','nord_race_test.gd','haptics_test.gd','pass_test.gd','pass_race_test.gd','transmission_test.gd','driver_feedback_test.gd','difficulty_race_test.gd','difficulty_test.gd','difficulty_behavior_test.gd','scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
+TESTS=['royale_storm_test.gd','royale_test.gd','royale_battle_test.gd','royale_network_test.gd','arena_test.gd','arena_battle_test.gd','arena_network_test.gd','tire_test.gd','menu_test.gd','nord_test.gd','nord_race_test.gd','haptics_test.gd','pass_test.gd','pass_race_test.gd','transmission_test.gd','driver_feedback_test.gd','difficulty_race_test.gd','difficulty_test.gd','difficulty_behavior_test.gd','scenery_test.gd','quarry_test.gd','quarry_race_test.gd','physics_test.gd','weapon_test.gd','surface_test.gd','drive_test.gd','journey_test.gd','weather_test.gd','timeline_test.gd','bot_test.gd','recovery_test.gd','race_test.gd','network_test.gd','cup_test.gd','cup_journey_test.gd','cup_race_test.gd','audio_feedback_test.gd','audio_mix_test.gd']
 parser.add_argument('--test', action='append', choices=TESTS)
 parser.add_argument('--export', action='store_true')
 args = parser.parse_args()
@@ -29,7 +29,7 @@ with tarfile.open(archive,'w:gz') as tar:
 
 def remote(argv, log):
     command=' '.join(shlex.quote(str(x)) for x in argv)
-    result=subprocess.run(['ssh','books-server',command],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=1800 if log=='nord_race_test.gd.log' else 600 if log in ['pass_race_test.gd.log','nord_test.gd.log'] else 300)
+    result=subprocess.run(['ssh','books-server',command],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=1800 if log=='nord_race_test.gd.log' else 600 if log in ['pass_race_test.gd.log','nord_test.gd.log','royale_storm_test.gd.log','royale_battle_test.gd.log'] else 300)
     (args.output/log).write_text(result.stdout+result.stderr,encoding='utf-8')
     if result.returncode or 'SCRIPT ERROR:' in result.stdout+result.stderr or 'ERROR:' in result.stdout+result.stderr:
         raise RuntimeError(f'{log}: '+(result.stdout+result.stderr)[-5000:])
