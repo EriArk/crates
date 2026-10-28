@@ -1,0 +1,19 @@
+{
+  "cars": 16,
+  "completed_races": 6,
+  "engine_static_memory_peak": 0,
+  "finite": true,
+  "frame_ms_p50": 54.392,
+  "frame_ms_p95": 84.514,
+  "frame_ms_p99": 100.0,
+  "frames": 20839,
+  "maximum_loose_wheels": 11,
+  "physics_ms_p50": 16.834,
+  "physics_ms_p95": 20.507,
+  "physics_ms_p99": 26.376,
+  "renderer": "gl_compatibility",
+  "scale": 0.666666686534882,
+  "wall_seconds": 1200.012,
+  "wheel_solve_ms_p95": 9.302,
+  "wheel_solve_ms_p99": 10.259
+}
