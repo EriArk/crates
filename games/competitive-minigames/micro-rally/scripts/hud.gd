@@ -25,7 +25,7 @@ const GOLD = Color("ffcc42")
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter=Control.MOUSE_FILTER_IGNORE; font=ThemeDB.fallback_font
-	portrait=Portrait.new(); portrait.shared_sdk=game.net.bridge; add_child(portrait)
+	portrait=Portrait.new(); portrait.shared_sdk=game.net.bridge; portrait.game=game; add_child(portrait)
 	panel=PanelContainer.new(); panel.position=Vector2(40,42); panel.custom_minimum_size=Vector2(390,490)
 	var style = StyleBoxFlat.new(); style.bg_color=Color(0.025,0.055,0.06,0.93); style.set_corner_radius_all(24)
 	style.content_margin_left=25; style.content_margin_right=25; style.content_margin_top=24; style.content_margin_bottom=24
@@ -165,7 +165,7 @@ func write(text: String, pos: Vector2, size_value: int, color: Color = PAPER) ->
 	draw_string(font,pos,text,HORIZONTAL_ALIGNMENT_LEFT,-1,size_value,color)
 
 func _process(_delta: float) -> void:
-	portrait.position=Vector2(size.x*0.5-37,size.y-109); portrait.size=Vector2(74,74)
+	portrait.position=Vector2(size.x-284,size.y-290); portrait.size=Vector2(270,270)
 	portrait.visible=game.state in ["race","countdown","pause","results"]
 	queue_redraw()
 
@@ -187,22 +187,16 @@ func _draw() -> void:
 	write("КРУГ %d / %d" % [mini(game.laps,car.laps+1),game.laps],Vector2(238,53),24)
 	write(game.conditions.live_title(game.elapsed),Vector2(240,79),17,Color("d1dfd4"))
 	_map()
-	var center = Vector2(size.x*0.5,size.y-72)
-	draw_circle(center,55,INK)
-	draw_arc(center,49,deg_to_rad(95),deg_to_rad(265),42,Color("28483e"),7,true)
-	draw_arc(center,49,deg_to_rad(95),deg_to_rad(95+170*car.health/100),42,Color("9ddd4f"),7,true)
-	draw_arc(center,49,deg_to_rad(-85),deg_to_rad(85),42,Color("24394a"),7,true)
-	if car.shield>0: draw_arc(center,49,deg_to_rad(-85),deg_to_rad(-85+170*car.shield/100),42,Color("45c7ff"),7,true)
-	if portrait.texture==null:
-		# Neutral driver icon while the SDK is absent; no substituted wardrobe.
-		draw_circle(center,31,Color("d9aa79")); draw_arc(center+Vector2(0,-3),28,PI,TAU,24,Color("4d3431"),11,true)
-		draw_circle(center+Vector2(-10,-2),3,INK); draw_circle(center+Vector2(10,-2),3,INK)
-		draw_line(center+Vector2(-9,14),center+Vector2(9,14),INK,3,true)
+	# Compact status bars sit below the chair; gameplay has no bottom panel.
+	var status_origin=Vector2(size.x-240,size.y-24)
+	draw_line(status_origin,status_origin+Vector2(182,0),INK,10,true)
+	draw_line(status_origin,status_origin+Vector2(182*car.health/100,0),Color("9ddd4f"),6,true)
+	if car.shield>0: draw_line(status_origin+Vector2(0,10),status_origin+Vector2(182*car.shield/100,10),Color("45c7ff"),4,true)
 	var boost_center = Vector2(83,size.y-79)
 	draw_circle(boost_center,52,INK); draw_arc(boost_center,43,-PI*0.88,PI*0.88,48,Color("224d5c"),9,true)
 	draw_arc(boost_center,43,-PI*0.88,-PI*0.88+PI*1.76*car.boost/100,48,Color("42cff6"),9,true)
 	write("BOOST",boost_center+Vector2(-32,8),19); write(str(int(car.boost)),boost_center+Vector2(-20,31),21)
-	var weapon = Vector2(size.x-203,size.y-115)
+	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
 	write("ПЕРЕГРЕВ" if car.overheated else "ПУЛЕМЁТ",weapon+Vector2(14,26),17,heat_color)

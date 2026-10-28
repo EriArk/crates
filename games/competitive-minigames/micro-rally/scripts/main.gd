@@ -181,7 +181,7 @@ func start_race() -> void:
 	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
-	sound.reset_round(); feedback.reset(); effects.clear()
+	sound.reset_round(); feedback.reset(); effects.clear(); hud.portrait.reset_race()
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); hud.panel.hide(); hud.message=""; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
@@ -200,7 +200,7 @@ func return_menu() -> void:
 	player_index=0
 	load_track(quick_track)
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
-	sound.reset_round(); feedback.reset(); effects.clear()
+	sound.reset_round(); feedback.reset(); effects.clear(); hud.portrait.reset_race()
 	weather.apply(conditions); _update_conditions(0)
 
 func resume_race() -> void:
@@ -348,7 +348,6 @@ func _process(delta: float) -> void:
 	weather.update(delta,player().position,state in ["menu","race","countdown"])
 	weather.update_headlights(cars,delta,player_index)
 	sound.update(self,delta); feedback.update(self,delta)
-	if state=="race" and player().boosting: hud.portrait.set_mood("excited")
 	capture_time+=delta
 	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)
 	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>10) and not screenshot_done:
