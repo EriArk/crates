@@ -108,9 +108,12 @@ func _ready() -> void:
 				car.update_visuals()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--county-view=") and is_royale() and not capture_path.is_empty():
-			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-96,12,-72)
-			if view=="bridge": pos=Vector3(-12,12,0)
-			elif view=="underpass": pos=Vector3(12,track.height_at(Vector3(12,0,0)),0)
+			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-145,12,40)
+			if view=="bridge": pos=(track.bridges[1].a+track.bridges[1].b)/2
+			elif view=="underpass":
+				var lower=track.roads.filter(func(r):return r.kind=="lower")[0].points
+				for p in lower:
+					if track.bridge_at(p)==1: pos=p; break
 			elif view in ["storm","storm-deep"]:
 				elapsed=510; royale.update_zone(elapsed)
 				var best=INF
@@ -427,7 +430,7 @@ func _process(delta: float) -> void:
 
 func _camera(delta: float, snap: bool = false) -> void:
 	if arena_overview and is_arena():
-		camera.position=Vector3(0,340,250) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=700
+		camera.position=Vector3(0,850,650) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=1800 if is_royale() else 700
 		tilt_shift.set_shader_parameter("strength",0.0)
 		return
 	var target: Vector3=view_car().position

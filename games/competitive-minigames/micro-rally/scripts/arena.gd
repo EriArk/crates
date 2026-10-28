@@ -156,7 +156,7 @@ static func valid_state(data) -> bool:
 	var ids=[]
 	for key in ["scores","weapons","rockets"]:
 		for row in data[key]:
-			var bounds=[[ -1000,10000],[0,2000],[0,2000],[0,2000],[0,2000]] if key=="scores" else [[1,2],[0,3],[0,1]] if key=="weapons" else [[0,2147483647],[0,15],[-30000,30000],[-10000,10000],[-30000,30000]]
+			var bounds=[[ -1000,10000],[0,2000],[0,2000],[0,2000],[0,2000]] if key=="scores" else [[1,2],[0,3],[0,1]] if key=="weapons" else [[0,2147483647],[0,15],[-60000,60000],[-10000,10000],[-60000,60000]]
 			if not row is Array or row.size()!=bounds.size(): return false
 			for i in row.size():
 				if not preload("race_wire.gd").integer(row[i],bounds[i][0],bounds[i][1]): return false

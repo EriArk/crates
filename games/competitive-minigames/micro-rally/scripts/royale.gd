@@ -6,9 +6,9 @@ const Storm=preload("storm_front.gd")
 var game: Node3D
 var final_index=0
 var center=Vector2.ZERO
-var radius=280.0
+var radius=600.0
 var next_center=Vector2.ZERO
-var next_radius=200.0
+var next_radius=410.0
 var next_change=90.0
 var phase=0
 var storm: Node3D
@@ -25,8 +25,8 @@ func reset() -> void:
 func update_zone(time: float) -> void:
 	var final: Vector2=game.track.FINALS[final_index]
 	var times=[0.0,90.0,210.0,270.0,390.0,450.0,540.0,570.0,630.0,660.0]
-	var radii=[280.0,280.0,200.0,200.0,110.0,110.0,55.0,55.0,20.0,0.0]
-	var shifts=[0.0,0.0,0.4,0.4,0.9,0.9,1.0,1.0,1.0,1.0]
+	var radii=[600.0,600.0,410.0,410.0,240.0,240.0,120.0,120.0,45.0,0.0]
+	var shifts=[0.0,0.0,0.35,0.35,0.75,0.75,1.0,1.0,1.0,1.0]
 	phase=0
 	while phase<times.size()-2 and time>=times[phase+1]: phase+=1
 	var blend=clampf((time-times[phase])/(times[phase+1]-times[phase]),0,1)
@@ -61,8 +61,10 @@ func tick_after() -> bool:
 	return false
 func safe_goal(car: Node3D,goal: Vector3) -> Vector3:
 	var projected=Vector2(goal.x,goal.z)
-	var target_center=next_center if next_change-game.elapsed<35 else center
-	var target_radius=next_radius if next_change-game.elapsed<35 else radius
+	var travel=maxf(0,Vector2(car.position.x,car.position.z).distance_to(next_center)-maxf(0,next_radius-35))/8.0+25
+	var anticipate=next_change-game.elapsed<clampf(travel,35,120)
+	var target_center=next_center if anticipate else center
+	var target_radius=next_radius if anticipate else radius
 	if projected.distance_to(target_center)<target_radius-18 and outside(car.position)< -12: return goal
 	var offset=Vector2.from_angle(car.index*TAU/16)*minf(22,maxf(0,target_radius-12)*0.5)
 	var p=Vector3(target_center.x+offset.x,0,target_center.y+offset.y); p.y=game.track.height_at(p)

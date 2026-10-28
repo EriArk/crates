@@ -1,0 +1,310 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16)
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(16) RALLY attached
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=0 phase=waiting elapsed=0.0 silence_ms=105 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=10 phase=waiting elapsed=0.0 silence_ms=198 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=1 phase=waiting elapsed=0.0 silence_ms=50 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=11 phase=waiting elapsed=0.0 silence_ms=207 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=2 phase=waiting elapsed=0.0 silence_ms=198 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=6 phase=waiting elapsed=0.0 silence_ms=206 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=13 phase=waiting elapsed=0.0 silence_ms=195 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=5 phase=waiting elapsed=0.0 silence_ms=169 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=4 phase=waiting elapsed=0.0 silence_ms=187 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=8 phase=waiting elapsed=0.0 silence_ms=195 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=3 phase=waiting elapsed=0.0 silence_ms=251 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=12 phase=waiting elapsed=0.0 silence_ms=275 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=14 phase=waiting elapsed=0.0 silence_ms=422 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=7 phase=waiting elapsed=0.0 silence_ms=412 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=9 phase=waiting elapsed=0.0 silence_ms=408 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=15 phase=waiting elapsed=0.0 silence_ms=366 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=0 phase=preparing elapsed=0.0 silence_ms=10132 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=2 phase=preparing elapsed=0.0 silence_ms=4464 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=5 phase=preparing elapsed=0.0 silence_ms=4598 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=4 phase=preparing elapsed=0.0 silence_ms=4429 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=3 phase=preparing elapsed=0.0 silence_ms=4565 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=12 phase=preparing elapsed=0.0 silence_ms=4605 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=11 phase=preparing elapsed=0.0 silence_ms=4829 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=7 phase=preparing elapsed=0.0 silence_ms=5300 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=15 phase=preparing elapsed=0.0 silence_ms=5212 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=10 phase=preparing elapsed=0.0 silence_ms=5317 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=13 phase=preparing elapsed=0.0 silence_ms=5432 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=14 phase=preparing elapsed=0.0 silence_ms=5428 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=6 phase=preparing elapsed=0.0 silence_ms=5445 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=9 phase=preparing elapsed=0.0 silence_ms=5664 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=1 phase=preparing elapsed=0.0 silence_ms=5786 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=8 phase=preparing elapsed=0.0 silence_ms=5787 seq=0 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=0 phase=playing elapsed=3.2 silence_ms=479 seq=61 snapshot=-1 queued=15 pending=30
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=2 phase=playing elapsed=5.5 silence_ms=5307 seq=130 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=4 phase=playing elapsed=5.7 silence_ms=5534 seq=133 snapshot=38.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=5 phase=playing elapsed=5.5 silence_ms=5328 seq=135 snapshot=39.0 queued=0 pending=1
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=3 phase=playing elapsed=5.6 silence_ms=5419 seq=135 snapshot=39.0 queued=0 pending=1
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=12 phase=playing elapsed=5.6 silence_ms=5423 seq=136 snapshot=39.0 queued=1 pending=1
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=11 phase=playing elapsed=5.9 silence_ms=5815 seq=138 snapshot=38.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=15 phase=playing elapsed=6.2 silence_ms=6029 seq=148 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=7 phase=playing elapsed=0.0 silence_ms=6329 seq=147 snapshot=37.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=10 phase=playing elapsed=6.5 silence_ms=6407 seq=148 snapshot=38.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=13 phase=playing elapsed=6.3 silence_ms=6129 seq=149 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=14 phase=playing elapsed=6.4 silence_ms=6265 seq=149 snapshot=39.0 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=6 phase=playing elapsed=6.4 silence_ms=6286 seq=151 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=9 phase=playing elapsed=0.0 silence_ms=6694 seq=155 snapshot=37.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=8 phase=playing elapsed=6.6 silence_ms=6501 seq=158 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=1 phase=playing elapsed=6.6 silence_ms=6505 seq=157 snapshot=39.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY peer=0 phase=playing elapsed=6.2 silence_ms=8204 seq=84 snapshot=-1 queued=15 pending=0
+
+QINFO  : HostIntegration::groupRace(16) RALLY session ended: Connection to a driver lost. / Connection to a driver lost.
+
+QINFO  : HostIntegration::groupRace(16) RALLY session ended: Connection to a driver lost. / Connection to a driver lost.
+
+QINFO  : HostIntegration::groupRace(16) RALLY session ended: Connection to a driver lost. / Connection to a driver lost.
+
+QINFO  : HostIntegration::groupRace(16) RALLY stage=failed round=1 progress=126
+
+FAIL!  : HostIntegration::groupRace(16) 'std::all_of(nodes.begin(),nodes.end(),[&](const auto& n){return report(n->report)["stage"]=="rematch";})' returned FALSE. ()
+   Loc: [/rally/snapshots/df1ee868052120b8/tests/HostIntegration.cpp(51)]
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 0  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 1  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 2  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 3  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 4  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY stage=failed round=1 progress=91
+
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 5  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 6  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 7  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY stage=failed round=1 progress=14
+
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 8  code= 3  status= QProcess::NormalExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 9  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 10  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 11  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 12  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 13  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 14  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+QINFO  : HostIntegration::groupRace(16) RALLY process exit slot= 15  code= 9  status= QProcess::CrashExit
+QINFO  : HostIntegration::groupRace(16)
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 96331ms
+********* Finished testing of HostIntegration *********

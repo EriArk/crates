@@ -11,6 +11,7 @@ var last_reset = -1
 var round_one = false
 var forced_finish = false
 var test_started = 0
+var next_diagnostic = 0
 func _initialize() -> void: call_deferred("run")
 func run() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -23,6 +24,11 @@ func run() -> void:
 	while Time.get_ticks_msec()-test_started<600000:
 		await process_frame
 		if game.net.online:
+			if Time.get_ticks_msec()>next_diagnostic:
+				next_diagnostic=Time.get_ticks_msec()+10000
+				var silence=0
+				for member in game.net.seen: silence=maxi(silence,Time.get_ticks_msec()-game.net.seen[member])
+				print("RALLY peer=",game.player_index," phase=",game.net.phase," elapsed=",snappedf(game.elapsed,0.1)," silence_ms=",silence," seq=",game.net.sequence," snapshot=",game.net.last_snapshot," queued=",game.net.bridge.records.size()," pending=",game.net.bridge.pending.size())
 			if game.net.host and game.net.phase=="waiting": game.net.select_event(OS.get_environment("RALLY_TEST_MODE") if OS.get_environment("RALLY_TEST_MODE") in ["arena","royale"] else "race")
 			round_one=true
 			if game.is_arena():

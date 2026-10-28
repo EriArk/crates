@@ -17,33 +17,51 @@ func run() -> void:
 	for i in 16:
 		check(game.track.safe_point(game.track.spawn_pose(i).origin),"Safe start")
 		for j in range(i+1,16): check(game.track.spawn_pose(i).origin.distance_to(game.track.spawn_pose(j).origin)>30,"Separated starts")
-	for z in game.track.BRIDGES:
-		var high=PhysicsRayQueryParameters3D.create(Vector3(12,18,z),Vector3(12,-5,z),1)
-		var low=PhysicsRayQueryParameters3D.create(Vector3(12,8,z),Vector3(12,-5,z),1)
-		var above=game.get_world_3d().direct_space_state.intersect_ray(high); var below=game.get_world_3d().direct_space_state.intersect_ray(low)
+	check(game.track.map_bounds.size==Vector2(900,700),"Expanded county bounds")
+	# Every authored start/major junction must remain represented, not silently pruned.
+	for key in game.track.data.nodes:
+		var p=game.track.v3(game.track.data.nodes[key]); p.y=game.track.height_at(p)
+		check(graph.get_point_position(graph.get_closest_point(p)).distance_to(p)<9,"Authored junction remains navigable: "+key)
+	for bridge in game.track.bridges:
+		var midpoint: Vector3=(bridge.a+bridge.b)/2
+		var above=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(midpoint+Vector3.UP*8,midpoint-Vector3.UP*20,1))
 		check(not above.is_empty() and above.position.y>11.9,"Solid bridge deck")
-		check(not below.is_empty() and below.position.y<2,"Real underpass below same XZ")
-		var path=game.track.path(Vector3(-60,12,z),Vector3(60,12,z))
-		check(path.size()>3 and Array(path).any(func(p): return absf(p.x)<20 and p.y>10),"Bridge is a distinct traversable route")
+		var path=game.track.path(bridge.a,bridge.b)
+		check(path.size()>3 and Array(path).any(func(p):return p.y>11 and game.track.on_bridge(p)),"Bridge connected at both approaches")
 	for car in game.cars: car.freeze=false
 	for frame in 120: await physics_frame
 	for car in game.cars:
-		check(car.position.y>game.track.height_at(car.position)+0.1,"Spawn suspension supported by height field"); car.freeze=true
-	# Real tyres cross the upper deck and pass below it; ray probes alone are insufficient.
+		check(car.position.y>game.track.height_at(car.position)+0.1,"Spawn suspension supported"); car.freeze=true
 	var driver=game.player()
 	for car in game.cars: car.collision_layer=0
-	for passage in ["over","under"]:
-		var start=Vector3(-60,12.9,0) if passage=="over" else Vector3(12,game.track.height_at(Vector3(12,0,-30))+0.9,-30)
-		var direction=Vector3.RIGHT if passage=="over" else Vector3.BACK
-		driver.reset_at(Transform3D(Basis(Vector3.UP,-PI/2 if passage=="over" else PI),start)); driver.freeze=false
+	# Exercise each real bridge approach/deck with wheels, without recovery teleports.
+	for bridge in game.track.bridges:
+		var direction: Vector3=(bridge.b-bridge.a).normalized(); var start: Vector3=bridge.a-direction*12
+		start.y=game.track.height_at(start)+0.9
+		driver.reset_at(Transform3D(Basis(Vector3.UP,atan2(-direction.x,-direction.z)),start)); driver.freeze=false
+		var reached=false
+		for frame in 60*35:
+			driver.throttle=0.45; driver.brake=0; driver.steer_towards(direction); driver.tick(1.0/60)
+			await physics_frame
+			if (driver.position-bridge.b).dot(direction)>5: reached=true; break
+		check(reached,"Physical bridge "+bridge.name+" at "+str(driver.position)); driver.freeze=true
+	# Lower-bank road crosses beneath the first three upper decks at the same XZ.
+	var lower=game.track.roads.filter(func(r):return r.kind=="lower")[0].points
+	for bridge in game.track.bridges.slice(0,3):
+		var at=-1
+		for i in lower.size():
+			if game.track.bridge_at(lower[i])>=0 and lower[i].distance_to((bridge.a+bridge.b)/2)<bridge.a.distance_to(bridge.b)*0.55: at=i; break
+		check(at>=8 and at<lower.size()-8,"Lower path beneath "+bridge.name)
+		if at<8 or at>=lower.size()-8: continue
+		var target: Vector3=lower[at+8]; var start: Vector3=lower[at-8]; start.y=game.track.height_at(start)+0.9
+		var direction: Vector3=(target-start).normalized(); direction.y=0
+		driver.reset_at(Transform3D(Basis(Vector3.UP,atan2(-direction.x,-direction.z)),start)); driver.freeze=false
 		var reached=false
 		for frame in 60*18:
-			driver.throttle=0.5; driver.brake=0; driver.steer_towards(direction); driver.tick(1.0/60)
+			driver.throttle=0.4; driver.brake=0; driver.steer_towards(target-driver.position); driver.tick(1.0/60)
 			await physics_frame
-			if (driver.position.x>52 if passage=="over" else driver.position.z>25): reached=true; break
-		check(reached,"Physical drive across "+passage+" bridge at "+str(driver.position))
-		check(driver.position.y>11 if passage=="over" else driver.position.y<3,"Correct bridge layer "+passage)
-		driver.freeze=true
+			if Vector2(driver.position.x-target.x,driver.position.z-target.z).length()<5: reached=true; break
+		check(reached and driver.position.y<5,"Physical lower passage "+bridge.name+" at "+str(driver.position)); driver.freeze=true
 	var rules=game.royale.Rules.new(); rules.reset(4)
 	rules.damage(2,0,100,10); rules.eliminate([2,3],10)
 	check(rules.places==[0,0,4,4] and rules.rows[0].kills==1,"Simultaneous eliminations share place and retain kill credit")
@@ -51,24 +69,37 @@ func run() -> void:
 	rules.eliminate([1],12); rules.finish(); check(rules.places==[1,2,4,4],"Last survivor wins")
 	for final in 4:
 		game.royale.final_index=final
-		var previous_radius=280.0; var previous_center=Vector2.ZERO
+		var previous_radius=600.0; var previous_center=Vector2.ZERO
 		for t in range(0,661,15):
 			game.royale.update_zone(t)
 			check(game.royale.radius<=previous_radius and game.royale.center.distance_to(previous_center)<=previous_radius-game.royale.radius+0.01,"Successive safe circles are nested")
 			previous_radius=game.royale.radius; previous_center=game.royale.center
 		for t in range(90,631,30):
 			game.royale.update_zone(t)
-			var valid: Array=[]
+			var valid: Dictionary={}
 			for id in ids:
-				if game.royale.outside(graph.get_point_position(id))< -3: valid.append(id)
-			var reachable: Array=[]
-			if not valid.is_empty(): reachable=[valid[0]]
-			var cursor=0
-			while cursor<reachable.size():
-				for other in graph.get_point_connections(reachable[cursor]):
-					if other in valid and other not in reachable: reachable.append(other)
+				if game.royale.outside(graph.get_point_position(id))< -3: valid[id]=true
+			# Circle clipping can cut a courtyard. Measure the actual shortest exit,
+			# including exposure, with the SAME storm weights used by actual bots.
+			var target=Vector3(game.royale.center.x,0,game.royale.center.y); target.y=game.track.height_at(target)
+			var goal=graph.get_closest_point(target)
+			for id in ids: graph.set_point_weight_scale(id,1+maxf(0,game.royale.outside(graph.get_point_position(id))+10)*0.12)
+			var reachable={goal:true}; var queue=[goal]; var cursor=0
+			while cursor<queue.size():
+				for other in graph.get_point_connections(queue[cursor]):
+					if valid.has(other) and not reachable.has(other): reachable[other]=true; queue.append(other)
 				cursor+=1
-			check(reachable.size()==valid.size(),"Safe circle preserves routes final=%d time=%d islands=%d" % [final,t,valid.size()-reachable.size()])
+			var worst=0.0; var worst_id=-1
+			for id in valid:
+				if reachable.has(id): continue
+				var route=graph.get_point_path(id,goal); var exposure=0.0
+				for i in route.size()-1:
+					if game.royale.outside((route[i]+route[i+1])/2)>0: exposure+=route[i].distance_to(route[i+1])
+				if exposure>worst: worst=exposure; worst_id=id
+			print("ZONE EXIT final=",final," time=",t," metres=",snappedf(worst,0.1)," at=",graph.get_point_position(worst_id) if worst_id>=0 else Vector3.ZERO)
+			check(worst<=40,"Safe-area exit exposure bounded to five seconds at 8m/s final=%d time=%d distance=%.1f" % [final,t,worst])
+			for id in ids: graph.set_point_weight_scale(id,1)
+
 		var final_pos=game.track.FINALS[final]; var p=Vector3(final_pos.x,0,final_pos.y); p.y=game.track.height_at(p)
 		check(game.track.safe_point(p,8),"Final venue is open and reachable")
 	game.start_race(); game.state="race"; game.set_physics_process(false)

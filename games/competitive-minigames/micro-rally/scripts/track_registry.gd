@@ -4,7 +4,7 @@ const VALLEY = "dirty-valley.4"
 const QUARRY = "quarry.1"
 const NORD = "nordschleife.1"
 const ARENA="rust-pit.1"
-const ROYALE="deadwater.1"
+const ROYALE="deadwater.2"
 const PASS = "forest-pass.1"
 const TRACKS = {
 	VALLEY: {"scene":preload("track.gd"),"title":"Dirty Valley","sign":"DIRTY VALLEY","limit":600.0,"finish_grace":45.0},

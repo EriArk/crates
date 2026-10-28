@@ -12,7 +12,7 @@ func admit(game,seat: int) -> void:
 	if seat==0:
 		for i in range(1,16): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links=[{"peer":"p0","channel":"host"}]
-	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.7","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
+	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.8","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	game.set_physics_process(false); game.net.set_process(false)

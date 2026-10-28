@@ -7,11 +7,13 @@ p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
 p.add_argument('--mode',choices=['race','arena','royale'],default='race')
 p.add_argument('--case',choices=['2','16'],required=True)
+p.add_argument('--cpus',type=int,choices=[4,6],default=4,help='Aggregate CPU budget for all native game processes, not a device profile')
 a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 identity=json.loads(a.manifest.read_text())['source_snapshot']
 assert len(identity)==16 and all(c in '0123456789abcdef' for c in identity)
+(a.output/'run.json').write_text(json.dumps({'snapshot':identity,'players':int(a.case),'mode':a.mode,'aggregate_cpus':a.cpus,'memory_gib':6,'network':'isolated localhost TLS; fixture signaling'},indent=2)+'\n',encoding='utf-8')
 root='/home/abysscloud/traineros-micro-rally'
-base=['docker','run','--rm','--network','none','--cpus','4','--memory','6g','--user','1000:1000','-e','HOME=/tmp','-e','QT_QPA_PLATFORM=offscreen',
+base=['docker','run','--rm','--network','none','--cpus',str(a.cpus),'--memory','6g','--user','1000:1000','-e','HOME=/tmp','-e','QT_QPA_PLATFORM=offscreen',
       '-v',root+':/rally','-v','/home/abysscloud/traineros-account-ci-20261025:/work:ro',
       'traineros-golf-backend-ci:20261025']
 def run(argv,name,timeout=120):

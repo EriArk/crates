@@ -26,14 +26,15 @@ private slots:
         for(int i=0;i<count;++i){
             ids<<QString::number(100+i);auto n=std::make_unique<Node>();n->lobby.configure(ids[i],"P"+QString::number(i),true);n->runtime.configure(ids[i],true);
             n->network=std::make_unique<SdkNetwork>(n->lobby,n->runtime,python,QString::fromUtf8(SDK_SOURCE)+"/packaging/emulators/melonds/secure-channel.py","127.0.0.1");
-            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.micro-rally"},{"title","Micro Rally"},{"protocol","micro-rally.7"},{"seats",16},{"local","crates:micro-rally"}}});
+            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.micro-rally"},{"title","Micro Rally"},{"protocol","micro-rally.8"},{"seats",16},{"local","crates:micro-rally"}}});
             n->controls.setOwner(ids[i]);n->host.setContext({{"profile",ids[i]}});n->host.setNetwork(n->network.get());
             n->endpoint=dir.filePath(ids[i]+"/endpoint.json");n->report=dir.filePath(ids[i]+".json");QString error;QVERIFY2(n->host.start(n->endpoint,&error),qPrintable(error));
             n->process.setProcessChannelMode(QProcess::MergedChannels);
+            connect(&n->process,&QProcess::finished,this,[i](int code,QProcess::ExitStatus status){qInfo()<<"RALLY process exit slot="<<i<<" code="<<code<<" status="<<status;});
             connect(&n->process,&QProcess::readyReadStandardOutput,this,[node=n.get()]{auto bytes=node->process.readAllStandardOutput();node->output+=bytes;node->registered=node->output.contains("RALLY attached");qInfo().noquote()<<bytes;});
             auto* node=n.get();n->network->launchInstalled=[node,godot,project](QString local){
                 if(local!="crates:micro-rally")return false;if(node->process.state()!=QProcess::NotRunning)return true;
-                node->process.start(godot,{"--headless","--path",project,"--script","tests/network_peer.gd","--","--sdk-endpoint="+node->endpoint,"--report="+node->report});return node->process.waitForStarted();};
+                node->process.start(godot,{"--headless","--max-fps","60","--path",project,"--script","tests/network_peer.gd","--","--sdk-endpoint="+node->endpoint,"--report="+node->report});return node->process.waitForStarted();};
             nodes.push_back(std::move(n));
         }
         for(int i=0;i<count;++i)connect(&nodes[i]->lobby,&LobbyCoordinator::outgoing,this,[&,i](QString target,QJsonObject packet){int j=ids.indexOf(target);if(j>=0)nodes[j]->lobby.receive(ids[i],"P"+QString::number(i),packet);});
@@ -54,7 +55,7 @@ private slots:
         for(int i=0;i<count;++i)QCOMPARE(report(nodes[i]->report)["registered"].toBool(),i!=count-1);
         for(auto& n:nodes){QTRY_COMPARE_WITH_TIMEOUT(n->process.state(),QProcess::NotRunning,30000);QCOMPARE(n->process.exitCode(),0);}
         QCOMPARE(nodes[0]->lobby.state()["members"].toArray().size(),count);
-        qInfo()<<"RALLY SDK/TLS PASS players="<<count<<"same result, rematch, profile revocation, retained lobby; terminal fixture="<<(count==16);
+        qInfo()<<"RALLY SDK/TLS PASS players="<<count<<"same result, rematch, profile revocation, retained lobby; terminal fixture="<<(count==16||qEnvironmentVariable("RALLY_TEST_MODE")=="royale");
         for(auto& n:nodes)n->lobby.leave();
     }
 };

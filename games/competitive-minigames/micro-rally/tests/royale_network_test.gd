@@ -12,7 +12,7 @@ func admit(game,seat: int) -> void:
 	if seat==0:
 		for i in range(1,16): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links=[{"peer":"p0","channel":"host"}]
-	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.7","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
+	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.8","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	game.set_physics_process(false); game.net.set_process(false)
@@ -21,6 +21,7 @@ func run() -> void:
 	game.net.select_event("royale")
 	check(game.is_arena() and game.state=="network_wait" and game.cars.size()==16,"Host prepares the real arena with the admitted roster")
 	var prepare=JSON.parse_string(Marshalls.base64_to_raw(game.net.bridge.records[0].data).get_string_from_utf8())
+	check(game.cars.any(func(c):return absf(c.position.x)>300),"Expanded-map starts exercise old wire limits")
 	check(prepare.track==game.Tracks.ROYALE and prepare.mode=="royale" and prepare.rules==1,"Prepare identifies arena, mode and rules")
 	for i in range(1,16): game.net._receive("p"+str(i),{"type":"ready","round":1})
 	check(game.state=="countdown","All-ready starts one arena countdown")
@@ -32,7 +33,12 @@ func run() -> void:
 	packet.royale[1][15]=1
 	for i in 15: packet.arena.scores[i][3]=1; packet.royale[1][i]=i+2; packet.cars[i][8]=0
 	packet.cars[0][15]=3000
-	check(game.arena.valid_state(packet.arena) and Wire.valid_snapshot(packet,16),"Sixteen-car arena packet validates")
+	check(game.arena.valid_state(packet.arena) and Wire.valid_snapshot(packet,game.pickups.size()),"Sixteen-car arena packet validates")
+	var edge=packet.duplicate(true); edge.cars[0][0]=45000; edge.cars[0][2]=35000; edge.beams=[[0,-45000,1200,-35000,45000,1200,35000]]
+	check(Wire.valid_snapshot(edge,game.pickups.size()),"County edge cars and beams survive wire validation")
+	edge.cars[0][0]=60001; check(not Wire.valid_snapshot(edge,game.pickups.size()),"Out-of-contract coordinates remain rejected")
+	var edge_combat=packet.arena.duplicate(true); edge_combat.rockets=[[1,0,45000,1200,35000]]
+	check(game.arena.valid_state(edge_combat),"County edge rocket survives wire validation")
 	var invalid=packet.royale.duplicate(true); invalid[1][0]=17
 	check(not game.royale.valid_state(invalid,packet.arena),"Invalid placement rejected")
 	print("ROYALE PACKET bytes=",JSON.stringify(packet).to_utf8_buffer().size())

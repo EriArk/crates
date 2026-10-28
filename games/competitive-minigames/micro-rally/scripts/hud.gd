@@ -96,7 +96,7 @@ func menu(mode: String) -> void:
 		FrontMenu.build(self,list,mode)
 	elif mode=="credits":
 		list.add_child(label("CREDITS AND DATA",28,GOLD))
-		list.add_child(label("Micro Rally · TrainerOS\nCode: GPL-3.0-or-later\nModels: Kenney (CC0)\nFont: Roboto Condensed · SIL OFL 1.1\n\nNordschleife:\n© OpenStreetMap contributors · ODbL\nopenstreetmap.org/copyright\n\nElevation: Terrain Tiles (Mapzen)\nCopernicus EU-DEM / USGS SRTM\nregistry.opendata.aws/terrain-tiles\n\nGeodata and licenses are included.\nGame adaptation, not affiliated with the circuit owner.",16))
+		list.add_child(label("Micro Rally · TrainerOS\nCode: GPL-3.0-or-later\nModels: Kenney (CC0)\nFont: Roboto Condensed · SIL OFL 1.1\n\nNordschleife / Deadwater map data:\n© OpenStreetMap contributors · ODbL\nopenstreetmap.org/copyright\n\nElevation: Terrain Tiles (Mapzen)\nCopernicus EU-DEM / USGS SRTM\nregistry.opendata.aws/terrain-tiles\n\nGeodata and licenses are included.\nGame adaptation, not affiliated with the circuit owner.",16))
 		button(list,"Back",func(): menu("settings"))
 	elif mode in ["cup","cup_replace","standings","garage"]:
 		CupMenu.build(self,list,mode)
@@ -380,9 +380,13 @@ func _map() -> void:
 	if game.is_arena():
 		draw_rect(Rect2(origin-bounds.size*scale_value/2,bounds.size*scale_value),Color(0.06,0.08,0.07,0.7))
 		if game.is_royale():
-			for road in game.track.roads: draw_rect(Rect2(origin+(road.position-center)*scale_value,road.size*scale_value),Color("555e5d"))
-			draw_line(origin+Vector2(0,-180)*scale_value,origin+Vector2(0,144)*scale_value,Color("397b99"),2,true)
-			for z in game.track.BRIDGES: draw_line(origin+Vector2(-40,z)*scale_value,origin+Vector2(40,z)*scale_value,Color("c5ba8e"),3,true)
+			for road in game.track.roads:
+				var line=PackedVector2Array()
+				for p in road.points: line.append(origin+(Vector2(p.x,p.z)-center)*scale_value)
+				draw_polyline(line,Color("c5ba8e") if road.kind=="bridge" else Color("626d65"),2,true)
+			var water=PackedVector2Array()
+			for p in game.track.river: water.append(origin+(p-center)*scale_value)
+			draw_polyline(water,Color("397b99"),2,true)
 		for cover in game.track.covers: draw_rect(Rect2(origin+(cover.position-center)*scale_value,cover.size*scale_value),Color("9e9d87"))
 	else:
 		var path = PackedVector2Array()

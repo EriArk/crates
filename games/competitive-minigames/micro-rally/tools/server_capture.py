@@ -6,7 +6,7 @@ import argparse, json, pathlib, re, shlex, subprocess, uuid
 p=argparse.ArgumentParser()
 p.add_argument('--manifest',type=pathlib.Path,required=True)
 p.add_argument('--output',type=pathlib.Path,required=True)
-p.add_argument('--track',choices=['rust-pit.1','deadwater.1','dirty-valley.4','quarry.1','forest-pass.1','nordschleife.1'],default='quarry.1')
+p.add_argument('--track',choices=['rust-pit.1','deadwater.2','dirty-valley.4','quarry.1','forest-pass.1','nordschleife.1'],default='quarry.1')
 p.add_argument('--screen',choices=['race','main','cups','modes','settings','audio','quick','bots','cup','controls','bindings','credits','cup_replace','garage'],default='race')
 p.add_argument('--renderer',choices=['mobile','gl_compatibility'],default='mobile')
 p.add_argument('--at',type=int)
