@@ -27,7 +27,11 @@ func receive(description: Dictionary) -> void:
 		check(ui.anchor.player_id=="alice","host identity installed in actual golf scene")
 		old_visual=ui.anchor.visual
 		old_revision=old_visual.appearance_revision
-		check(old_visual.find_children("*","MeshInstance3D",true,false).size()==4,"external body/outfit/hair/shoes")
+		# Wardrobe revisions can add separate eye/accessory meshes. The game must
+		# consume the full resolved scene rather than assume four mesh objects.
+		var meshes = old_visual.find_children("*","MeshInstance3D",true,false)
+		check(meshes.size()>=4,"external body/outfit/hair/shoes and optional components")
+		for mesh in meshes: check(mesh.mesh!=null,"resolved component has geometry")
 		check(old_visual.find_children("*","CollisionObject3D",true,false).is_empty(),"visual has no collision")
 		ui.game.bridge.closed.emit()
 		check(ui.anchor.visual==old_visual,"match connection lifecycle does not revoke local profile")

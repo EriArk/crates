@@ -4,6 +4,13 @@ A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
 Three greens: First Light, The Bank Shot, and Sand & Stone. Play against an island
 rival, pass a controller locally, or join a group through TrainerOS Lobby.
 
+**0.1.24 updates the shared avatar SDK for revision 4.** The Compatibility
+renderer now matches the intended face colors. The game still loads the shared
+external model; no character assets are bundled. A real SDK-host test covers
+new eye styles, palette changes after a shot, guests and immediate profile
+revocation. Developer setup: [TrainerOS avatar quickstart](https://github.com/EriArk/TrainerOS/blob/main/sdk/AVATAR_QUICKSTART.md).
+Device delivery is recorded separately in the repository evidence.
+
 **Prepared 0.1.22 connects online rounds to shared records and wins.** Every
 participant joins and confirms the full scorecard through the TrainerOS account;
 teams retain one shared ball and score. Menu / result → Shared tables includes

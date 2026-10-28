@@ -27,6 +27,9 @@ static func from_descriptor(descriptor: Dictionary) -> TrainerAvatarPresenter:
 	if not scene is Node3D:
 		if scene != null: scene.free()
 		return null
+	if not _prepare_vertex_colors(scene):
+		scene.free()
+		return null
 	var presenter := TrainerAvatarPresenter.new()
 	presenter.profile_id = descriptor.get("profile", "")
 	presenter.appearance_revision = descriptor.get("revision", "")
@@ -35,6 +38,33 @@ static func from_descriptor(descriptor: Dictionary) -> TrainerAvatarPresenter:
 	presenter.add_child(scene)
 	presenter.animation_player = scene.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	return presenter
+
+static func _prepare_vertex_colors(scene: Node3D) -> bool:
+	# glTF COLOR_0 is linear. Compatibility multiplies vertex colors in sRGB
+	# space and ignores BaseMaterial3D.vertex_color_is_srgb. Convert only the
+	# imported GPU color attribute; retain geometry, UVs, skin and morph buffers.
+	if DisplayServer.get_name()=="headless" or RenderingServer.get_current_rendering_method()!="gl_compatibility": return true
+	var visited: Dictionary = {}
+	for node in scene.find_children("*","MeshInstance3D",true,false):
+		var mesh := (node as MeshInstance3D).mesh as ArrayMesh
+		if mesh==null or visited.has(mesh.get_instance_id()): continue
+		visited[mesh.get_instance_id()]=true
+		for surface in mesh.get_surface_count():
+			var material := mesh.surface_get_material(surface) as BaseMaterial3D
+			if material==null or not material.vertex_color_use_as_albedo or material.vertex_color_is_srgb: continue
+			var format := mesh.surface_get_format(surface)
+			if not (format & Mesh.ARRAY_FORMAT_COLOR): continue
+			var count := mesh.surface_get_array_len(surface)
+			var stride := RenderingServer.mesh_surface_get_format_attribute_stride(format,count)
+			var offset := RenderingServer.mesh_surface_get_format_offset(format,count,Mesh.ARRAY_COLOR)
+			var data: PackedByteArray = RenderingServer.mesh_get_surface(mesh.get_rid(),surface).get("attribute_data",PackedByteArray())
+			if count<1 or stride<4 or offset<0 or offset+(count-1)*stride+4>data.size(): return false
+			for i in count:
+				var start := offset+i*stride
+				var color := Color(data[start]/255.0,data[start+1]/255.0,data[start+2]/255.0).linear_to_srgb()
+				data[start]=roundi(color.r*255);data[start+1]=roundi(color.g*255);data[start+2]=roundi(color.b*255)
+			mesh.surface_update_attribute_region(surface,0,data)
+	return true
 
 func play_action(action: String) -> bool:
 	# Unsupported game actions are explicit; wave is not a fabricated golf stroke.
