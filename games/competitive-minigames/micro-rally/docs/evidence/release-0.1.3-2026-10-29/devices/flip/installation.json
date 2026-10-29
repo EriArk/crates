@@ -1,0 +1,15 @@
+{
+  "title": "Micro Rally (альфа)",
+  "version": "0.1.3",
+  "catalogue_revision": 40,
+  "download_url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.3/micro-rally-0.1.3-aarch64.tar.gz",
+  "sha256": "401a20b4ca12742dacbfb7505a34f8062bf51fdd4bf600d83d55be5695c3e0c6",
+  "installed": true,
+  "other_receipts_unchanged": true,
+  "old_objects_retained": true,
+  "old_data_files_retained": true,
+  "old_data_hashes_unchanged_after_install": true,
+  "game_launched": false,
+  "gameplay_tested": false,
+  "shell_process_unchanged": true
+}
