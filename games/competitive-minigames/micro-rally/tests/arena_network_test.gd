@@ -12,7 +12,7 @@ func admit(game,seat: int) -> void:
 	if seat==0:
 		for i in range(1,16): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links=[{"peer":"p0","channel":"host"}]
-	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.8","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
+	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.9","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	game.set_physics_process(false); game.net.set_process(false)
@@ -24,7 +24,7 @@ func run() -> void:
 	check(prepare.track==game.Tracks.ARENA and prepare.mode=="arena" and prepare.rules==1,"Prepare identifies arena, mode and rules")
 	for i in range(1,16): game.net._receive("p"+str(i),{"type":"ready","round":1})
 	check(game.state=="countdown","All-ready starts one arena countdown")
-	game.net._receive("p15",{"type":"input","round":1,"seq":1,"values":[0,0,0,700,0,0,0,0,0,1,1]})
+	game.net._receive("p15",{"type":"input","round":1,"seq":1,"values":[0,0,0,700,0,0,0,0,0,1,1,0,0]})
 	game.cars[15].ammo=3; game.net.apply_remote(game.cars[15])
 	check(game.cars[15].throttle==0.7 and game.cars[15].assist_level==1 and game.cars[15].weapon_selected,"Authenticated seat input includes bounded assistance and weapon choice")
 	var packet={"type":"state","round":1,"seq":1,"phase":"race","ms":5000,"countdown":0,"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(_p): return 0),"beams":[],"arena":game.arena.snapshot()}

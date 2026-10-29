@@ -24,9 +24,10 @@ func run() -> void:
 	for row in game.arena.rules.rows: total_kills+=row.kills; lives+=row.life
 	for car in game.cars:
 		pickups+=car.bot.pickups_collected; recoveries+=car.recovery_count
+		check(car.lives==3-game.arena.rules.rows[car.index].deaths and game.arena.rules.rows[car.index].life<=2,"Every arena bot obeys the three-life limit")
 		check(distances[car.index]>150,"Every bot travels through the arena")
 		check(car.position.is_finite() and car.linear_velocity.is_finite(),"Finite physics")
-	check(game.state=="results" and game.elapsed>=480,"Complete eight-minute battle reaches results")
+	check(game.state=="results" and (game.elapsed>=480 or game.cars.filter(func(c):return c.lives>0).size()<=1),"Battle reaches results at time limit or last remaining participant")
 	check(total_kills>=16 and lives>=16,"Combat and repeated respawns occur in normal play")
 	check(pickups>=16,"Bots contest supplies")
 	check(falls==0,"No cars fall through arena geometry")

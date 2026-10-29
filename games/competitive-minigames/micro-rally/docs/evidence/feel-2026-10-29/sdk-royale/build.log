@@ -1,0 +1,5 @@
+[1/5] Running qmlimportscanner for rally-host-tests
+[2/5] Automatic MOC for target rally-host-tests
+[3/5] Building CXX object CMakeFiles/rally-host-tests.dir/rally-host-tests_autogen/mocs_compilation.cpp.o
+[4/5] Building CXX object CMakeFiles/rally-host-tests.dir/HostIntegration.cpp.o
+[5/5] Linking CXX executable rally-host-tests

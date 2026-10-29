@@ -27,7 +27,22 @@ func damaged(car: Node3D, attacker: int, amount: float) -> void:
 func recovery_pose(car: Node3D, respawn: bool) -> Variant:
 	var best: Variant=null; var best_score=-INF
 	var candidates: Array=[]
-	if respawn:
+	if respawn and game.is_royale():
+		# Sample the current safe interior, never an old start under the storm.
+		for i in 32:
+			var angle=TAU*float(i)/32; var radius=minf(80,maxf(0,game.royale.radius-18))
+			var offset=Vector2.from_angle(angle)*radius*(0.35 if i%2 else 0.8)
+			var p=Vector3(game.royale.center.x+offset.x,0,game.royale.center.y+offset.y); p.y=game.track.height_at(p)
+			p=game.track.graph.get_point_position(game.track.graph.get_closest_point(p))
+			if game.royale.outside(p)>-2 and game.royale.radius>3: continue
+			candidates.append(Transform3D(Basis.IDENTITY,p+Vector3.UP*0.9))
+		if candidates.is_empty():
+			# The final circle can be smaller than navigation spacing. Its authored
+			# final ground remains usable; do not strand a living driver in respawn.
+			var p=Vector3(game.royale.center.x,0,game.royale.center.y)
+			p.y=game.track.height_at(p)+0.9
+			candidates.append(Transform3D(Basis.IDENTITY,p))
+	elif respawn:
 		for i in 16: candidates.append(game.track.spawn_pose((i+car.index)%16))
 	else:
 		for id in game.track.graph.get_point_ids():
@@ -45,7 +60,7 @@ func recovery_pose(car: Node3D, respawn: bool) -> Variant:
 			if other_pos.distance_to(pose.origin)<34:
 				var query=PhysicsRayQueryParameters3D.create(pose.origin,other_pos,1)
 				if game.get_world_3d().direct_space_state.intersect_ray(query).is_empty(): visible+=1
-		if nearest<8: continue
+		if nearest<8 and not (respawn and game.is_royale()): continue
 		var score=minf(nearest,50)-visible*12 if respawn else -car.position.distance_to(pose.origin)
 		if score>best_score: best_score=score; best=pose
 	return best
@@ -59,6 +74,12 @@ func recover(car: Node3D) -> bool:
 	if pose==null: return false
 	car.reset_at(pose,false); car.recovery_count+=1
 	return true
+func record_wreck(car: Node3D) -> void:
+	car.register_wreck()
+	var previous_kills: int=rules.rows[game.player_index].kills
+	if rules.wreck(car.index,game.elapsed):
+		car.freeze=true; car.collision_layer=0; game.controls.neutral(car)
+		if rules.rows[game.player_index].kills>previous_kills: game.hud.portrait.set_mood("victory")
 func tick(delta: float) -> void:
 	if game.state=="race": game.elapsed+=delta
 	game._update_conditions(game.elapsed)
@@ -66,12 +87,8 @@ func tick(delta: float) -> void:
 	for car in game.cars:
 		if car.health<=0:
 			if game.state!="race": continue
-			if game.is_royale():
-				car.freeze=true; car.collision_layer=0; car.disabled_time=0; car.shield=0; car.immune=0; game.controls.neutral(car); car.update_visuals(); continue
-			var previous_kills: int=rules.rows[game.player_index].kills
-			if rules.wreck(car.index,game.elapsed):
-				car.freeze=true; car.collision_layer=0; game.controls.neutral(car)
-				if rules.rows[game.player_index].kills>previous_kills: game.hud.portrait.set_mood("victory")
+			record_wreck(car)
+			if car.lives<=0: car.update_visuals(); continue
 			car.disabled_time=maxf(0.1,3-(game.elapsed-rules.death_time[car.index]))
 			if game.elapsed-rules.death_time[car.index]>=3:
 				var pose=recovery_pose(car,true)
@@ -88,9 +105,13 @@ func tick(delta: float) -> void:
 		if car.firing and game.state=="race": shoot(car)
 	if game.state=="race":
 		update_rockets(delta)
+		# A later driver/projectile may kill a slot already visited above. Settle
+		# every death before checking the last survivor or publishing results.
+		for car in game.cars:
+			if car.health<=0: record_wreck(car)
 		if game.is_royale():
 			if game.royale.tick_after(): return
-		elif game.elapsed>=Rules.DURATION: game.finish_race(); return
+		elif game.elapsed>=Rules.DURATION or game.cars.filter(func(c): return c.lives>0).size()<=1: game.finish_race(); return
 		game.hud.message=rules.feed if game.elapsed<rules.feed_time else ""
 	for pickup in game.pickups:
 		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0; pickup.node.rotation.y+=delta

@@ -81,7 +81,7 @@ func solve(car: RigidBody3D, state: PhysicsDirectBodyState3D) -> void:
 	car.grounded=contacts>0
 	var active_boost=car.boosting and car.boost>0 and car.throttle>0 and car.disabled_time<=0 and contacts>0
 	car.boost=clampf(car.boost+dt*(-23.0 if active_boost else 10.0),0,100)
-	var max_speed=19.0+(8.0 if active_boost else 0.0)
+	var max_speed=26.0+(9.0 if active_boost else 0.0)
 	var wheel_speed=0.0; var driven=0
 	for w in wheels:
 		if not w.missing and (w.contact or contacts==0): wheel_speed+=w.omega*w.radius; driven+=1

@@ -38,13 +38,16 @@ func run() -> void:
 					if distance<4: driven_distance+=distance
 				last_position=car.position; last_reset=car.reset_serial
 			maximum_progress=maxi(maximum_progress,int(driven_distance) if game.is_arena() else game.player().passed)
+			if game.net.round_id==1 and game.is_royale() and game.net.host and game.elapsed>60:
+				# Exercise all three deaths and the real respawn/replication path.
+				# Only terminal damage is forced; admission, driving and recovery are real.
+				for car in game.cars:
+					if car.index!=game.player_index and car.health>0: car.health=0
 			if game.net.round_id==1 and (game.net.members.size()==16 or game.is_royale()) and game.net.host and game.elapsed>(60 if game.is_arena() else 15) and not forced_finish:
 				# Only terminal presentation/rematch is accelerated in the 16-process case.
 				# Initial driving, admission and all inputs use the real game/SDK/physics.
 				forced_finish=true
-				if game.is_royale():
-					for car in game.cars:
-						if car.index!=game.player_index: car.health=0
+				if game.is_royale(): pass
 				elif game.is_arena(): game.elapsed=game.arena.Rules.DURATION
 				else:
 					for car in game.cars: car.passed=1280; car.laps=4

@@ -13,6 +13,12 @@ var banks = PackedFloat32Array()
 var view_cell = Vector2i(999999,999999)
 var pending: Array[Vector2i] = []
 var max_scenery = 0
+var near_cache: Dictionary={}
+var scenery_job: Dictionary={}
+var grass_mesh: ArrayMesh
+var grass_material: ShaderMaterial
+var stream_usec=0
+var stream_steps=0
 
 func _init() -> void:
 	super(false)
@@ -56,11 +62,22 @@ func nearest(p: Vector3, hint: int = -1) -> int:
 	if hint>=0: return super.nearest(p,hint)
 	var key=Vector2i(floori(p.x/32),floori(p.z/32))
 	if not lookup.has(key): return super.nearest(p)
+	# Prune the broad route lookup once per 16m cell using the triangle inequality.
+	# Winner order/ties remain identical to the original broad candidate search.
+	var fine=Vector2i(floori(p.x/16),floori(p.z/16))
+	if not near_cache.has(fine):
+		var center=Vector2(fine.x*16+8,fine.y*16+8); var closest=INF
+		for i in lookup[key]: closest=minf(closest,center.distance_squared_to(Vector2(points[i].x,points[i].z)))
+		var radius=sqrt(closest)+16*sqrt(2.0)+0.0001; var candidates=PackedInt32Array()
+		for i in lookup[key]:
+			if center.distance_squared_to(Vector2(points[i].x,points[i].z))<=radius*radius: candidates.append(i)
+		near_cache[fine]=candidates
 	var best=0; var distance=INF
-	for i in lookup[key]:
+	for i in near_cache[fine]:
 		var d=Vector2(p.x-points[i].x,p.z-points[i].z).length_squared()
 		if d<distance: distance=d; best=i
 	return best
+
 func section_name(index: int) -> String:
 	var name="T13"
 	for section in data.sections:
@@ -182,47 +199,65 @@ func _landmarks() -> void:
 			var block=Art.box(root,Vector3(7+i*1.5,0.7,24),Vector3(i*1.4,i*0.75,0),Color("7c8a80")); block.visibility_range_end=150
 
 func update_view(position: Vector3) -> void:
+	var began=Time.get_ticks_usec(); stream_steps=0
 	var key=Vector2i(floori(position.x/CELL),floori(position.z/CELL))
 	if key!=view_cell:
 		view_cell=key; pending.clear()
 		for cell in scenery.keys():
 			if absi(cell.x-key.x)>1 or absi(cell.y-key.y)>1: scenery[cell].queue_free(); scenery.erase(cell)
+		if not scenery_job.is_empty() and (absi(scenery_job.key.x-key.x)>1 or absi(scenery_job.key.y-key.y)>1): scenery_job.clear()
 		for z in range(-1,2):
 			for x in range(-1,2):
 				var cell=key+Vector2i(x,z)
 				if tiles.has(cell) and not scenery.has(cell): pending.append(cell)
-	# One tile per frame; bounded nine-tile scenery set, independent of lap length.
-	if not pending.is_empty():
-		var cell=pending.pop_front(); scenery[cell]=_scenery_tile(cell)
+		pending.sort_custom(func(a,b): return (a-key).length_squared()<(b-key).length_squared())
+	if scenery_job.is_empty() and not pending.is_empty(): _begin_scenery(pending.pop_front())
+	# Bound both time and work; never run 6400 placement searches in one frame.
+	while not scenery_job.is_empty() and Time.get_ticks_usec()-began<1500 and stream_steps<384:
+		_scenery_step(); stream_steps+=1
+	stream_usec=Time.get_ticks_usec()-began
 	max_scenery=maxi(max_scenery,scenery.size())
-func _scenery_tile(key: Vector2i) -> Node3D:
-	var root=Node3D.new(); root.name="ForestTile"; add_child(root)
+
+func _begin_scenery(key: Vector2i) -> void:
+	var root=Node3D.new(); root.name="ForestTile"; add_child(root); scenery[key]=root
 	var random=RandomNumberGenerator.new(); random.seed=absi(key.x*73856093^key.y*19349663)+38021
-	var batches={"tree_pineTallA":[],"tree_pineRoundA":[],"plant_bushDetailed":[],"rock_largeA":[],"flower_yellowA":[]}
-	for i in 190:
+	scenery_job={"key":key,"root":root,"random":random,"stage":0,"index":0,
+		"batches":{"tree_pineTallA":[],"tree_pineRoundA":[],"plant_bushDetailed":[],"rock_largeA":[],"flower_yellowA":[]},"grass":{}}
+	if grass_mesh==null: grass_mesh=_grass_mesh(); grass_material=meadow_material(true)
+
+func _scenery_step() -> void:
+	var job=scenery_job; var key: Vector2i=job.key; var random: RandomNumberGenerator=job.random
+	var i: int=job.index; job.index+=1
+	if job.stage==0:
+		if i>=190: job.stage=1; job.index=0; return
 		var p=Vector3((key.x+random.randf())*CELL,0,(key.y+random.randf())*CELL); var at=nearest(p); var edge=road_distance(p,at)
-		if edge<10: continue
+		if edge<10: return
 		p.y=surface_height(p.x,p.z); var id="tree_pineTallA" if i%3 else "tree_pineRoundA"; var factor=random.randf_range(4.5,7)
 		if i>100: id="plant_bushDetailed" if i%2 else "flower_yellowA"; factor=random.randf_range(0.8,1.6)
 		elif i>85: id="rock_largeA"; factor=random.randf_range(0.8,2.2)
-		elif at in range(430,740) and i%3!=0: continue # Flugplatz/Schwedenkreuz clearings.
+		elif at>=430 and at<740 and i%3!=0: return
 		if edge<16: factor*=0.65
-		batches[id].append(Transform3D(Basis(Vector3.UP,random.randf()*TAU).scaled(Vector3.ONE*factor),p))
-	for id in batches: Art.instances(root,"nature",id,batches[id])
-	var poses: Array=[]
-	for z in 80:
-		for x in 80:
-			var p=Vector3(key.x*CELL+x*0.8+random.randf()*0.25,0,key.y*CELL+z*0.8+random.randf()*0.25)
-			var edge=road_distance(p,nearest(p))
-			if edge<6.7 or edge>25: continue
-			p.y=surface_height(p.x,p.z)-0.02
-			poses.append(Transform3D(Basis(Vector3.UP,random.randf()*TAU).scaled(Vector3.ONE*random.randf_range(1.5,2.2)),p))
-	if not poses.is_empty():
-		var node=MultiMeshInstance3D.new(); var multi=MultiMesh.new(); multi.transform_format=MultiMesh.TRANSFORM_3D; multi.mesh=_grass_mesh(); multi.instance_count=poses.size()
-		var origin=Vector3((key.x+0.5)*CELL,0,(key.y+0.5)*CELL)
-		for i in poses.size(): var pose: Transform3D=poses[i]; pose.origin-=origin; multi.set_instance_transform(i,pose)
-		node.position=origin; node.multimesh=multi; node.material_override=meadow_material(true); node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=90; root.add_child(node)
-	return root
+		job.batches[id].append(Transform3D(Basis(Vector3.UP,random.randf()*TAU).scaled(Vector3.ONE*factor),p))
+	elif job.stage==1:
+		if i>=5: job.stage=2; job.index=0; return
+		var id: String=job.batches.keys()[i]; Art.instances(job.root,"nature",id,job.batches[id])
+	elif job.stage==2:
+		if i>=6400: job.stage=3; job.index=0; return
+		var x=i%80; var z=i/80
+		var p=Vector3(key.x*CELL+x*0.8+random.randf()*0.25,0,key.y*CELL+z*0.8+random.randf()*0.25)
+		var edge=road_distance(p,nearest(p))
+		if edge<6.7 or edge>25: return
+		p.y=surface_height(p.x,p.z)-0.02
+		var cell=Vector2i(floori(p.x/16),floori(p.z/16))
+		if not job.grass.has(cell): job.grass[cell]=[]
+		job.grass[cell].append(Transform3D(Basis(Vector3.UP,random.randf()*TAU).scaled(Vector3.ONE*random.randf_range(1.5,2.2)),p))
+	else:
+		if i>=job.grass.size(): scenery_job.clear(); return
+		var cell: Vector2i=job.grass.keys()[i]; var poses: Array=job.grass[cell]
+		var node=MultiMeshInstance3D.new(); var multi=MultiMesh.new(); multi.transform_format=MultiMesh.TRANSFORM_3D; multi.mesh=grass_mesh; multi.instance_count=poses.size()
+		var origin=Vector3(cell.x*16+8,poses[0].origin.y,cell.y*16+8)
+		for n in poses.size(): var pose: Transform3D=poses[n]; pose.origin-=origin; multi.set_instance_transform(n,pose)
+		node.position=origin; node.multimesh=multi; node.material_override=grass_material; node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=65; node.visibility_range_end_margin=10; job.root.add_child(node)
 
 func road_surface(point: Vector3, at: int) -> int:
 	# Same bank spans and inside 66% of the ribbon as nord_road.gdshader.

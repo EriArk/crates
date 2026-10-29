@@ -2,9 +2,9 @@
 extends SceneTree
 class ContactCar extends "res://scripts/car.gd":
 	var recorded_hit=Vector3.INF
-	func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF) -> bool:
+	func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vector3 = Vector3.INF, attacker: int=-1) -> bool:
 		recorded_hit=hit_point
-		return super.take_damage(amount,impulse,hit_point)
+		return super.take_damage(amount,impulse,hit_point,attacker)
 var failures=0
 var game: Node3D
 var car: RigidBody3D
@@ -18,7 +18,7 @@ func box(size: Vector3, pos: Vector3, tilt: float = 0.0) -> StaticBody3D:
 	game.add_child(body); body.position=pos; body.rotation.x=tilt
 	return body
 func settle(pos: Vector3, orientation: Basis = Basis.IDENTITY, frames: int = 150) -> void:
-	car.reset_at(Transform3D(orientation,pos)); car.health=100; car.disabled_time=0; car.immune=100
+	car.health=100; car.freeze=false; car.reset_at(Transform3D(orientation,pos)); car.health=100; car.disabled_time=0; car.immune=100
 	car.throttle=0; car.brake=0; car.handbrake=false; car.boosting=false; car.steer_input=0
 	for i in frames:
 		await physics_frame; car.update_visuals()
@@ -96,17 +96,9 @@ func run() -> void:
 	car.shield=100; car.take_damage(15,Vector3.ZERO,point)
 	check(car.missing_wheels==0,"Shield protects wheel damage")
 	car.shield=0; car.take_damage(15,Vector3.ZERO,point); car.update_visuals()
-	check(car.missing_wheels==1,"Critical local hit detaches the struck wheel")
-	var count=game.effects.loose_wheels.size()
-	car.update_visuals(); car.update_visuals()
-	check(game.effects.loose_wheels.size()==count,"Repeated state does not spawn duplicate wheels")
-	car.throttle=0.6; var before=car.position
-	await step_frames(100)
-	print("LIMP distance=",car.position.distance_to(before)," contacts=",car.physics.contacts," rpm=",car.transmission.rpm)
-	check(car.physics.contacts<=3 and car.position.distance_to(before)>2,"Three-wheel car loses support and can limp onward")
-	check(game.effects.loose_wheels.all(func(w): return w.node.collision_layer==0 and w.node.collision_mask==1),"Loose wheels are bounded world-only cosmetics")
-	car.damage_wheel(1,100)
-	check(car.health==0 and car.disabled_time>0,"Second wheel loss schedules normal recovery")
+	check(car.missing_wheels==0,"Critical local damage retains all four wheels")
+	var count=game.effects.loose_wheels.size();car.update_visuals();car.update_visuals()
+	check(game.effects.loose_wheels.size()==count,"Ordinary damage spawns no loose wheels")
 	await settle(Vector3(0,40.8,0))
 	check(car.missing_wheels==0 and car.physics.contacts==4,"Recovery repairs wheels and clears compression history")
 	# Engine contact callback away from the origin, with a rotated chassis. The
@@ -120,7 +112,7 @@ func run() -> void:
 	print("IMPACT health=",car.health," point=",car.recorded_hit," missing=",car.missing_wheels," wheels=",car.physics.wheels.map(func(w): return [w.health,car.global_transform*(w.anchor-Vector3.UP*w.length)]))
 	check(car.health<35 and car.recorded_hit.is_finite(),"Real chassis collision delivers impact damage")
 	check(car.recorded_hit.distance_to(Vector3(21.5,40.75,12))<3,"Rotated offset collision retains world-space impact point")
-	check(car.missing_wheels!=0,"Critical physical collision can detach the nearby wheel")
+	check(car.missing_wheels==0,"Critical physical collision retains steering wheels")
 	barrier.queue_free(); await physics_frame
 	# Compare the cheap reference ray and volume footprint on the same small obstacle.
 	var step=box(Vector3(6,0.16,1.0),Vector3(0,40.08,-5))

@@ -2,6 +2,7 @@
 extends RefCounted
 const TITLES=["Off","Low","Normal"]
 static func resolve(car: Node3D, others: Array, level: int) -> Vector3:
+	if car.aim_3d: return resolve_spatial(car,others,level)
 	var raw: Vector3=Vector3(car.aim.x,0,car.aim.z).normalized()
 	var origin: Vector3=car.position+Vector3.UP*0.6
 	var result=raw; var best=INF
@@ -26,3 +27,19 @@ static func resolve(car: Node3D, others: Array, level: int) -> Vector3:
 		result=raw.rotated(Vector3.UP,correction)
 		result.y=diff.y/maxf(1,Vector2(diff.x,diff.z).length()); result=result.normalized()
 	return result
+
+static func resolve_spatial(car: Node3D,others: Array,level: int) -> Vector3:
+	var raw: Vector3=car.aim.normalized()
+	if level<=0: return raw
+	var origin: Vector3=car.muzzle_origin(); var best=deg_to_rad(2.5 if level==1 else 4.0); var result=raw
+	for other in others:
+		if other==car or other.health<=0 or other.ghost_time>0 or other.finish_time>=0: continue
+		if car.get_parent().is_royale() and not car.get_parent().royale.can_see(car,other): continue
+		var diff: Vector3=other.position+Vector3.UP*0.15-origin
+		if diff.length()>34 or diff.length()<2: continue
+		var angle=raw.angle_to(diff.normalized())
+		if angle>=best: continue
+		var hit=car.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(origin,origin+diff,3,[car.get_rid()]))
+		if hit.is_empty() or hit.collider!=other: continue
+		best=angle; result=raw.slerp(diff.normalized(),0.55 if level==1 else 0.8)
+	return result.normalized()

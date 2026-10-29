@@ -40,7 +40,9 @@ func run() -> void:
 			projection_error=maxf(projection_error,absf(p.y-track.surface_height(p.x,p.z)-0.035))
 	check(projection_error<0.003,"Clipped visual road follows the long-track terrain grid inside triangles")
 	for at in [460,2378,2805,3550,0]:
-		for i in 10: track.update_view(track.points[at]); await process_frame
+		for i in 2200:
+			track.update_view(track.points[at]); await process_frame
+			if track.pending.is_empty() and track.scenery_job.is_empty(): break
 		check(track.scenery.size()<=9 and track.pending.is_empty(),"Scenery streams with a fixed nine-tile budget")
 	var report={"length":track.length,"elevation":high-low,"grade":grade,"descent":descent,"support_hits":hits,"support_error":error,"projection_error":projection_error,"max_scenery":track.max_scenery,"terrain_tiles":track.tiles.size()}
 	game.finish_race() # Award fixture only; a separate test drives the final in full.

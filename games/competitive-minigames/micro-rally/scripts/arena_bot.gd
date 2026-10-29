@@ -45,7 +45,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	var direction: Vector3=route[waypoint]-car.position; direction.y=0
 	car.desired=direction.normalized(); car.steer_towards(car.desired)
 	var angle: float=absf(car.last_forward.signed_angle_to(car.desired,Vector3.UP))
-	target_speed=(14.0 if objective=="hunt" else 12.0)*[0.82,1.0,1.10][int(settings.pace)]
+	target_speed=(19.0 if objective=="hunt" else 16.0)*[0.82,1.0,1.10][int(settings.pace)]
 	if angle>0.4: target_speed=minf(target_speed,9)
 	if angle>1: target_speed=5
 	for other in others:

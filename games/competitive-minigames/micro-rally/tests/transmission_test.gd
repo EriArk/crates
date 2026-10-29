@@ -12,15 +12,15 @@ func run() -> void:
 	for i in 300: box.step(1.0/60,0,0,1,0,false,false)
 	check(box.gear==1 and box.rpm>7900,"Airborne free revs cannot run automatic through gears")
 	box.reset()
-	for speed in range(26):
+	for speed in range(36):
 		for i in 60: box.step(1.0/60,speed,speed,1,0,true,false)
 	check(box.gear==5,"Automatic climbs through five ratios")
 	for i in 180: box.step(1.0/60,0,0,0,0,true,false)
 	check(box.gear==1,"Automatic recovers first gear after a stop")
 	box.reset()
-	for i in 180: box.step(1.0/60,12,12,1,0,true,true)
+	for i in 180: box.step(1.0/60,16,16,1,0,true,true)
 	check(box.gear==1 and box.drive_acceleration(false)==0,"Manual holds first and limiter removes engine torque")
-	box.gear=5; box.cooldown=0; box.request(-1); box.step(1.0/60,27,27,1,0,true,true)
+	box.gear=5; box.cooldown=0; box.request(-1); box.step(1.0/60,36,36,1,0,true,true)
 	check(box.gear==5,"Downshift that would overrev is rejected")
 	box.request(-1); box.step(1.0/60,10,10,1,0,true,true)
 	check(box.gear==4 and box.shift_left>0 and box.drive_acceleration(false)<0.1,"Accepted downshift briefly interrupts drive")
@@ -65,7 +65,7 @@ func run() -> void:
 	for i in 5: game.controls.read(car,game.camera)
 	check(car.shift_serial==serial+1 and car.shift_direction==1,"Actual C key produces exactly one upshift")
 	key=key.duplicate(); key.pressed=false; Input.parse_input_event(key); Input.flush_buffered_events()
-	var remote=game.cars[1]; var command=[0,0,0,1000,0,0,1,5,1]
+	var remote=game.cars[1]; var command=[0,0,0,1000,0,0,1,5,1,0,0,0,0]
 	check(Wire.valid_input(command),"Manual command is bounded")
 	Wire.apply_input(remote,command); remote.transmission.step(0.01,4,4,1,0,true,remote.manual_gears)
 	check(remote.transmission.gear==2,"Host applies manual input to admitted car")
@@ -93,7 +93,7 @@ func run() -> void:
 		car.throttle=1
 		for i in 300: await physics_frame
 		speeds.append(-car.linear_velocity.z); gears.append(car.transmission.gear)
-	check(speeds[0]<10 and speeds[1]>14 and speeds[1]>speeds[0]*1.5 and gears[1]>=4,"Gearing changes actual chassis acceleration and reachable speed")
+	check(speeds[0]<13.5 and speeds[1]>21 and speeds[1]>speeds[0]*1.5 and gears[1]>=4,"Gearing changes actual chassis acceleration and reachable speed")
 	print("PHYSICAL GEARING speeds_mps=",speeds," gears=",gears)
 	print("TRANSMISSION TEST failures=",failures)
 	await preload("audio_drain.gd").dispose(game,self); quit(1 if failures else 0)

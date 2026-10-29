@@ -113,7 +113,7 @@ func menu(mode: String) -> void:
 	elif mode=="quick":
 		list.add_child(label("BATTLE ROYALE" if game.is_royale() else "ARENA BATTLE" if game.is_arena() else "RACING",36,GOLD))
 		list.add_child(label(game.track_title(),22))
-		list.add_child(label(("Last car standing · one life" if game.is_royale() else "8 minutes · respawns" if game.is_arena() else "1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · up to 16 cars",18,Color("bed0c6")))
+		list.add_child(label(("Last car standing" if game.is_royale() else "8 minutes" if game.is_arena() else "1 full lap · 20+ min" if game.Tracks.TRACKS[game.current_track].get("quick_laps",4)==1 else "4 laps")+" · 3 lives · up to 16 cars",18,Color("bed0c6")))
 		button(list,"Battle" if game.is_arena() else "Race",game.start_race)
 		if not game.is_arena(): button(list,"Change track",game.cycle_track)
 		button(list,"Car: "+game.car_title(),game.cycle_car)
@@ -146,13 +146,13 @@ func menu(mode: String) -> void:
 			var next=posmod(game.cup.store.camera_button()+step,game.race_camera.BUTTONS.size())
 			camera_notice="" if game.cup.store.set_camera_option("camera_button",next) else "Could not save this setting."
 			menu("camera"))
-		list.add_child(label("Press V or the selected controller button\nto cycle all five views during an event.\n\nThree overhead distances and chase.\nWindshield view with the bonnet visible.\nAim stays relative to the screen.\nEach profile remembers its own view.",20,Color("bed0c6")))
+		list.add_child(label("Press V or the selected controller button\nto cycle all five views during an event.\n\nThree overhead distances and chase.\nWindshield view with the bonnet visible.\nLow views: move the reticle with right stick.\nEach profile remembers its own view.",20,Color("bed0c6")))
 		if not camera_notice.is_empty(): list.add_child(label(camera_notice,16,GOLD))
 		button(list,"Back",func(): menu("controls"))
 	elif mode=="bindings":
 		list.add_child(label("BUTTON LAYOUT",36,GOLD))
 		var columns=HBoxContainer.new(); columns.add_theme_constant_override("separation",32); list.add_child(columns)
-		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift\nD-pad left / right — weapon",18))
+		columns.add_child(label("CONTROLLER\n\nLeft stick — steer\nRight stick — aim / move reticle\nRight trigger — accelerate\nLeft trigger — brake\nRight bumper — fire\nLeft bumper — boost\nBottom face button — handbrake\nLeft face button — shield\nTop / right face buttons — shift\nD-pad left / right — weapon",18))
 		columns.add_child(label("KEYBOARD\n\nA / D or ← / → — steer\nW / S or ↑ / ↓ — accelerate / brake\nMouse — aim and fire\nShift — boost\nSpace — handbrake\nE — shield\nR — recover car\nC / Z — shift gears\nEscape — pause\nQ — weapon",18,Color("bed0c6")))
 		list.add_child(label("Camera: V / "+game.race_camera.BUTTON_TITLES[game.cup.store.camera_button()],18,GOLD))
 		button(list,"Back",func(): menu("controls"))
@@ -311,6 +311,9 @@ func _draw() -> void:
 	draw_circle(boost_center,52,INK); draw_arc(boost_center,43,-PI*0.88,PI*0.88,48,Color("224d5c"),9,true)
 	draw_arc(boost_center,43,-PI*0.88,-PI*0.88+PI*1.76*car.boost/100,48,Color("42cff6"),9,true)
 	write("BOOST",boost_center+Vector2(-32,8),19); write(str(int(car.boost)),boost_center+Vector2(-20,31),21)
+	write("LIVES  "+str(car.lives)+" / 3",Vector2(35,size.y-147),18,GOLD)
+	if car.health<=0 and game.state=="race":
+		write("OUT OF LIVES · SPECTATING · ← / →" if car.lives<=0 else "WRECKED · RESPAWNING",Vector2(40,size.y-215),22,GOLD)
 	_speedometer(car)
 	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
@@ -323,8 +326,8 @@ func _draw() -> void:
 	write("SHIELD: "+("READY" if car.shield_item else "—"),weapon+Vector2(14,76),15,Color("7edbff"))
 	if game.state in ["race","countdown"]:
 		var target: Vector3=car.position+car.aim*8+Vector3.UP*0.4
-		if not game.camera.is_position_behind(target):
-			var p: Vector2=game.camera.unproject_position(target)
+		if car.aim_3d or not game.camera.is_position_behind(target):
+			var p: Vector2=game.controls.reticle*size if car.aim_3d else game.camera.unproject_position(target)
 			draw_arc(p,12,0,TAU,28,PAPER,2,true)
 			for direction in [Vector2.UP,Vector2.DOWN,Vector2.LEFT,Vector2.RIGHT]: draw_line(p+direction*8,p+direction*18,PAPER,2,true)
 	if game.state=="countdown":
@@ -332,7 +335,7 @@ func _draw() -> void:
 		write(text,Vector2(size.x*0.5-25,size.y*0.4),90,GOLD)
 	if game.is_royale():
 		var warning="STORM CLOSING" if game.royale.phase in [1,3,5,7,8] else "NEXT STORM IN %ds" % maxi(0,int(game.royale.next_change-game.elapsed))
-		if car.health<=0: warning="ELIMINATED · SPECTATING %s · ← / →" % game.view_car().driver_title()
+		if car.lives<=0: warning="ELIMINATED · SPECTATING %s · ← / →" % game.view_car().driver_title()
 		elif game.royale.outside(car.position)>0: warning="IN THE STORM · REACH SAFETY"
 		write(warning,Vector2(40,size.y-185),22,GOLD)
 		if car.health>0 and game.royale.outside(car.position)>-20:

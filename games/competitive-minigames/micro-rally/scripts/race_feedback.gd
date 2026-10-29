@@ -22,12 +22,10 @@ func update(game: Node, delta: float) -> void:
 		if now.grounded and not before.grounded and before.vertical< -3:
 			game.sound.play_event("impact0",distance)
 			game.effects.dust(car,game.current_wetness)
-		if now.health<before.health:
-			if now.health<=0:
-				game.effects.wreck(car.position); game.sound.play_event("wreck",distance)
-			else:
-				game.effects.burst(car.position+Vector3.UP*0.4,Color("ffc069"))
-				game.sound.play_event("impact0" if car.index%2==0 else "impact1",distance)
+		# Death effects come from the authoritative death serial, including replicas.
+		if now.health<before.health and now.health>0:
+			game.effects.burst(car.position+Vector3.UP*0.4,Color("ffc069"))
+			game.sound.play_event("impact0" if car.index%2==0 else "impact1",distance)
 		if now.shield>before.shield or now.shield<before.shield-3.0:
 			game.effects.ring(car.position,Color("68dfff"))
 			game.sound.play_event("shield",distance)

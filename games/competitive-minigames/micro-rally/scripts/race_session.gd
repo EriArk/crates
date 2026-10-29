@@ -175,7 +175,10 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 			car.offroad=game.track.road_distance(car.position,game.track.nearest(car.position,car.checkpoint))>game.track.WIDTH*0.5+0.5
 		car.linear_velocity=velocity
 		# Local aim reacts immediately; everyone else displays the authoritative turret.
-		if i!=game.player_index: car.aim=Vector3(sin(s[7]/1000.0),0,cos(s[7]/1000.0))
+		if i!=game.player_index:
+			var pitch=s[58]/1000.0; car.aim=Vector3(sin(s[7]/1000.0)*cos(pitch),sin(pitch),cos(s[7]/1000.0)*cos(pitch)); car.aim_3d=s[59]==1
+		if car.death_serial<int(s[57]) and not snap: game.wreck_effect(position)
+		car.lives=int(s[56]); car.death_serial=int(s[57])
 		if car.local_player:
 			if s[8]<car.health: game.hud.portrait.set_mood("hurt")
 			elif s[14]>=0 and car.finish_time<0: game.hud.portrait.set_mood("victory")
@@ -185,7 +188,7 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		car.ghost_time=1 if (int(s[12])&8)!=0 else 0
 		car.boosting=(int(s[12])&4)!=0; car.grounded=(int(s[12])&16)!=0
 		car.passed=s[13]; car.laps=0 if game.is_arena() else int(s[13])/game.track.COUNT; car.finish_time=s[14]/1000.0 if s[14]>=0 else -1
-		car.disabled_time=s[15]/1000.0; car.update_visuals()
+		car.disabled_time=s[15]/1000.0; car.collision_layer=0 if car.health<=0 else 4 if car.ghost_time>0 else 2; car.update_visuals()
 
 func _process(delta: float) -> void:
 	if not online: return

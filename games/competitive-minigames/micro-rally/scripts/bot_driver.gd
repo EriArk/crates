@@ -32,7 +32,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	decision_clock-=delta; lane_hold=maxf(0,lane_hold-delta)
 	var at: int=track.nearest(car.position,car.checkpoint)
 	# Look ahead in metres: longer tracks must not make the same sample count cut corners.
-	var ahead: int=track.steps_ahead(at,clampf(7.0+speed*0.55,7,17))
+	var ahead: int=track.steps_ahead(at,clampf(7.0+speed*0.65,7,25))
 	var target_at: int=(at+ahead)%track.COUNT
 	var tangent: Vector3=track.tangents[target_at]
 	var side = Vector3(-tangent.z,0,tangent.x)
@@ -72,7 +72,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 		var distance: float=maxf(2,track.points[at].distance_to(track.points[next]))
 		bend=maxf(bend,absf(track.tangents[at].signed_angle_to(track.tangents[next],Vector3.UP))/distance)
 	var grip=Tires.profile(track.tire_surface_at(target),Tires.wetness(car.surface_grip)).x/1.12
-	target_speed=clampf(sqrt((9.0+[0.0,0.3,-0.8,1.2][style])*grip/maxf(bend,0.015)),8,19)
+	target_speed=clampf(sqrt((9.0+[0.0,0.3,-0.8,1.2][style])*grip/maxf(bend,0.010)),8,26)
 	if angle>0.6: target_speed=minf(target_speed,10.0)
 	if angle>1.1: target_speed=6.0
 	if car.offroad: target_speed=minf(target_speed,9.0)

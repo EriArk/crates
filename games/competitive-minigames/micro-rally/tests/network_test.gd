@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.8","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.9","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -35,7 +35,7 @@ func run() -> void:
 	check(game.state=="network_wait","One missing ready prevents early start")
 	game.net._receive("p15",{"type":"ready","round":1})
 	check(game.state=="countdown" and game.net.phase=="playing","All ready starts shared countdown")
-	game.net._receive("p15",{"type":"input","round":1,"seq":0,"values":[1000,0,0,750,0,0,0,0,0]})
+	game.net._receive("p15",{"type":"input","round":1,"seq":0,"values":[1000,0,0,750,0,0,0,0,0,0,0,0,0]})
 	game.net.apply_remote(game.cars[15]); game.net.apply_remote(game.cars[14])
 	check(game.cars[15].steer_input==1 and game.cars[15].throttle==0.75 and game.cars[14].throttle==0,"Sender controls only its admitted seat")
 	game.net.inputs.p15.at=Time.get_ticks_msec()-1000; game.net.apply_remote(game.cars[15])
@@ -60,6 +60,17 @@ func run() -> void:
 	check(game.player().weapon_heat==91 and game.player().overheated,"Replica restores host heat and overheat lock")
 	check(game.player().physics.wheels[0].long_slip== -2.5 and game.player().physics.wheels[0].slip==3.2 and game.player().physics.wheels[0].surface==4,"Replica restores signed slip and material without local tire simulation")
 	check(game.player().transmission.gear==4 and game.player().transmission.rpm==5760 and game.player().transmission.shift_left==0.08,"Replica instruments use authoritative gear, rpm and shift")
+	var wrecks=int(game.sound.events.get("wreck",0))
+	snapshot.cars[15][8]=0; snapshot.cars[15][12]=0; snapshot.cars[15][56]=2; snapshot.cars[15][57]=1
+	game.net.apply_targets(1.0,false); game.net.apply_targets(1.0,false)
+	check(game.player().lives==2 and game.player().collision_layer==0,"Replica immediately removes the wreck and displays remaining lives")
+	check(int(game.sound.events.get("wreck",0))==wrecks+1,"Repeated network state does not repeat the explosion")
+	snapshot.cars[15][8]=100; snapshot.cars[15][12]=8; snapshot.cars[15][24]=1
+	game.net.apply_targets(1.0,false)
+	check(game.player().lives==2 and game.player().ghost_time>0 and game.player().collision_layer==4,"Network respawn preserves the spent life and enables ghost protection")
+	for field in [56,57,58,59]:
+		var invalid_life=snapshot.duplicate(true); invalid_life.cars[15][field]=2147483648
+		check(not Wire.valid_snapshot(invalid_life,game.pickups.size()),"Invalid life, death and 3D aiming fields are rejected")
 	for field in [44,45,46]:
 		var invalid_tire=snapshot.duplicate(true); invalid_tire.cars[15][field]=6001
 		check(not Wire.valid_snapshot(invalid_tire,game.pickups.size()),"Reject out-of-range tire telemetry atomically")

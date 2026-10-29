@@ -24,9 +24,15 @@ var finish_time = -1.0
 var health = 100.0
 var shield = 0.0
 var shield_item = true
-const HEAT_PER_SHOT = 8.5
-const COOLING_PER_SECOND = 24.0
-const RESUME_HEAT = 30.0
+const HEAT_PER_SHOT = 4.0
+const BULLET_DAMAGE = 4.0
+const SHOT_INTERVAL = 0.22
+const START_LIVES = 3
+var lives = START_LIVES
+var death_serial = 0
+var death_registered = false
+const COOLING_PER_SECOND = 32.0
+const RESUME_HEAT = 35.0
 var weapon_heat = 0.0
 var overheated = false
 var cooling_delay = 0.0
@@ -37,6 +43,7 @@ var fire_cooldown = 0.0
 var desired = Vector3.ZERO # Route target for bots only.
 var steer_input = 0.0 # -1 left, +1 right; independent of camera/world heading.
 var aim = Vector3.FORWARD
+var aim_3d=false
 var throttle = 0.0
 var brake = 0.0
 var handbrake = false
@@ -129,10 +136,11 @@ func _ready() -> void:
 		lamp.material_override=lamp_material; lamp.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func reset_at(pose: Transform3D, restore_wheels: bool=true) -> void:
-	reset_pose=pose; reset_pending=true; immune=2.0; reset_serial+=1
+	reset_pose=pose; reset_pending=true; immune=2.5; reset_serial+=1
+	if health>0: death_registered=false
 	if restore_wheels: repair_wheels()
 	overturned_time=0
-	ghost_time=2.0; collision_layer=4; collision_mask=1
+	ghost_time=2.5; collision_layer=4; collision_mask=1
 	bot.reversing=0; stuck_time=0; recovery_lock=2.0
 
 func _setup_wheels(model: Node3D) -> void:
@@ -165,14 +173,14 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var impulse=state.get_contact_impulse(c).length()
 		if impulse/mass>impact_speed:
 			impact_speed=impulse/mass; strongest_contact=c
-	if impact_speed>5.5 and impact_cooldown<=0:
+	if impact_speed>8.0 and impact_cooldown<=0:
 		impact_cooldown=0.35
 		# Select the strongest contact before applying the shared cooldown. A small
 		# first contact must not mask the main impact in the same solver step.
 		# Despite "local" in its name, Godot returns this point in world coordinates.
 		var collider=state.get_contact_collider_object(strongest_contact)
 		var attacker=int(collider.index) if is_instance_valid(collider) and collider.get("index")!=null else -1
-		take_damage(minf(24,(impact_speed-5.5)*2.0),Vector3.ZERO,state.get_contact_local_position(strongest_contact),attacker)
+		take_damage(minf(22,(impact_speed-8.0)*1.4),Vector3.ZERO,state.get_contact_local_position(strongest_contact),attacker)
 	physics.solve(self,state)
 
 func repair_wheels() -> void:
@@ -257,7 +265,7 @@ func tick_weapon(delta: float) -> void:
 
 func begin_shot() -> bool:
 	if health<=0 or replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0 or (arena_mode and immune>0): return false
-	fire_cooldown=0.28; cooling_delay=0.45
+	fire_cooldown=SHOT_INTERVAL; cooling_delay=0.30
 	weapon_heat=minf(100,weapon_heat+HEAT_PER_SHOT)
 	if weapon_heat>=100: overheated=true
 	return true
@@ -274,13 +282,20 @@ func take_damage(amount: float, impulse: Vector3 = Vector3.ZERO, hit_point: Vect
 	var before=health
 	var absorbed = minf(shield,amount); shield-=absorbed; amount-=absorbed
 	health=maxf(0,health-amount)
-	if amount>0 and health<=35 and hit_point.is_finite():
-		var nearest_wheel=-1; var distance=1.15
-		for i in physics.wheels.size():
-			var d=wheel_pivots[i].global_position.distance_to(hit_point)
-			if d<distance: nearest_wheel=i; distance=d
-		if nearest_wheel>=0: damage_wheel(nearest_wheel,amount*8)
+	# Routine damage no longer removes a wheel; keep control until the car is wrecked.
 	if health<before: damaged.emit(self,attacker,before-health)
 	apply_central_impulse(impulse.limit_length(150))
-	if health<=0: disabled_time=1.6; throttle=0; boosting=false
+	if health<=0: register_wreck()
 	return true
+
+func register_wreck() -> bool:
+	if replica or health>0 or death_registered: return false
+	death_registered=true; lives=maxi(0,lives-1); death_serial+=1
+	disabled_time=1.6; throttle=0; brake=0; firing=false; boosting=false
+	collision_layer=0; collision_mask=0; freeze=true; linear_velocity=Vector3.ZERO
+	shield=0; immune=0; ghost_time=0
+	update_visuals()
+	if get_parent().has_method("wreck_effect"): get_parent().call_deferred("wreck_effect",global_position)
+	return true
+
+func muzzle_origin() -> Vector3: return global_position+Vector3.UP*0.6

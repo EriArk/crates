@@ -1,0 +1,83 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::groupRace(2) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(2) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(2)
+
+QINFO  : HostIntegration::groupRace(2)
+
+QINFO  : HostIntegration::groupRace(2) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(2) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(2) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=waiting elapsed=0.0 silence_ms=14 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(2) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(2) RALLY attached
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=waiting elapsed=0.0 silence_ms=12 seq=0 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=4.1 silence_ms=130 seq=142 snapshot=100.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=4.1 silence_ms=53 seq=102 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=14.1 silence_ms=33 seq=342 snapshot=232.0 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=14.2 silence_ms=49 seq=233 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=24.1 silence_ms=50 seq=543 snapshot=352.0 queued=1 pending=0
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=24.2 silence_ms=66 seq=353 snapshot=-1 queued=0 pending=0
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=34.1 silence_ms=67 seq=743 snapshot=472.0 queued=1 pending=1
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=34.2 silence_ms=54 seq=473 snapshot=-1 queued=0 pending=1
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=44.1 silence_ms=16 seq=943 snapshot=593.0 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=44.2 silence_ms=17 seq=593 snapshot=-1 queued=0 pending=1
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=54.2 silence_ms=49 seq=1144 snapshot=713.0 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=54.2 silence_ms=33 seq=714 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=1 phase=playing elapsed=64.2 silence_ms=66 seq=1344 snapshot=833.0 queued=0 pending=1
+
+QINFO  : HostIntegration::groupRace(2) RALLY peer=0 phase=playing elapsed=64.2 silence_ms=16 seq=834 snapshot=-1 queued=0 pending=2
+
+QINFO  : HostIntegration::groupRace(2) RALLY movement slot=0 distance=542 position=(-40.59574, 17.29866, -50.22832) health=36.16
+
+QINFO  : HostIntegration::groupRace(2) RALLY movement slot=1 distance=325 position=(64.0, 12.9, 0.0) health=0.0
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=rematch round=2 progress=553
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=rematch round=2 progress=332
+
+QINFO  : HostIntegration::groupRace(2) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(2) SDK TrainerOS disconnected. Local play is available.
+
+QINFO  : HostIntegration::groupRace(2) RALLY session ended: Race interrupted. Return to the lobby to start again. / A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(2) RALLY session ended: Race interrupted. Return to the lobby to start again. / TrainerOS disconnected. Local play is available.
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=revoked round=2 progress=554
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=revoked round=2 progress=332
+
+QINFO  : HostIntegration::groupRace(2) RALLY process exit slot= 0  code= 0  status= QProcess::NormalExit
+QINFO  : HostIntegration::groupRace(2) RALLY process exit slot= 1  code= 0  status= QProcess::NormalExit
+QINFO  : HostIntegration::groupRace(2) RALLY SDK/TLS PASS players= 2 same result, rematch, profile revocation, retained lobby; terminal fixture= true
+QINFO  : HostIntegration::groupRace(2)
+QINFO  : HostIntegration::groupRace(2)
+PASS   : HostIntegration::groupRace(2)
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 83537ms
+********* Finished testing of HostIntegration *********

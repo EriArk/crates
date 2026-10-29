@@ -34,7 +34,7 @@ func update_zone(time: float) -> void:
 	var target=mini(phase+2 if radii[phase]==radii[phase+1] else phase+1,times.size()-1)
 	next_center=final*shifts[target]; next_radius=radii[target]; next_change=times[phase+1]
 func outside(p: Vector3) -> float: return Vector2(p.x,p.z).distance_to(center)-radius
-func alive() -> int: return game.cars.filter(func(c): return c.health>0).size()
+func alive() -> int: return game.cars.filter(func(c): return c.lives>0).size()
 func damage_rate() -> float: return 2.0+float(phase)*0.65
 func tick_before(delta: float) -> void:
 	update_zone(game.elapsed); path_clock-=delta
@@ -49,10 +49,11 @@ func tick_before(delta: float) -> void:
 			# Storm damage bypasses repair/recovery immunity and shield; no invulnerability camping.
 			var loss=minf(car.health,(damage_rate() if game.elapsed<DURATION else 30.0)*delta)
 			car.health-=loss; game.arena.damaged(car,-1,loss)
+			if car.health<=0: car.register_wreck()
 func tick_after() -> bool:
 	var eliminated: Array=[]
 	for car in game.cars:
-		if car.health<=0 and game.arena.rules.places[car.index]==0:
+		if car.lives<=0 and game.arena.rules.places[car.index]==0:
 			eliminated.append(car.index)
 			eliminations.append({"slot":car.index,"time":snappedf(game.elapsed,0.1),"position":str(car.position),"last_attacker":game.arena.rules.ledger[car.index][-1].source if not game.arena.rules.ledger[car.index].is_empty() else -1})
 	game.arena.rules.eliminate(eliminated,game.elapsed)
@@ -92,15 +93,16 @@ func focus() -> Node3D:
 func cycle_spectator(step: int) -> void:
 	for offset in range(1,game.cars.size()+1):
 		var slot=posmod(maxi(spectator,0)+offset*step,game.cars.size())
-		if game.cars[slot].health>0: spectator=slot; return
+		if game.cars[slot].health>0 and game.cars[slot].finish_time<0: spectator=slot; return
 	spectator=-1
 func snapshot() -> Array: return [final_index,game.arena.rules.places.duplicate()]
 static func valid_state(value,combat: Dictionary) -> bool:
 	if not value is Array or value.size()!=2 or not preload("race_wire.gd").integer(value[0],0,3) or not value[1] is Array or value[1].size()!=16: return false
 	for i in 16:
 		if not preload("race_wire.gd").integer(value[1][i],0,16): return false
-		if value[1][i]>1 and combat.scores[i][3]!=1: return false
-		if combat.scores[i][3]>1 or combat.scores[i][4]!=0: return false
+		var deaths=int(combat.scores[i][3]); var revivals=int(combat.scores[i][4])
+		if value[1][i]>1 and deaths!=3: return false
+		if deaths>3 or revivals>2 or revivals>deaths or deaths-revivals>1: return false
 	return true
 func apply_snapshot(value: Array) -> void:
 	final_index=int(value[0]); game.arena.rules.places.assign(value[1]); update_zone(game.elapsed)

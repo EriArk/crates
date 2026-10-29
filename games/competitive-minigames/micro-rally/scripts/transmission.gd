@@ -7,7 +7,7 @@ const REDLINE = 8000.0
 const SHIFT_RPM = 6200.0
 const SHIFT_TIME = 0.16
 # Final drive / rolling radius: equal gearing across the differently sized toy cars.
-const REDUCTION_PER_METRE = 28.0
+const REDUCTION_PER_METRE = 21.0
 var gear = 1
 var rpm = IDLE
 var shift_left = 0.0
@@ -60,7 +60,7 @@ func step(dt: float, speed: float, wheel_speed: float, throttle: float, brake: f
 	torque_factor=RATIOS[gear-1]*curve*limiter*clutch
 
 func drive_acceleration(boost: bool) -> float:
-	return minf(22.0 if boost else 13.0,14.0*torque_factor*(1.7 if boost else 1.0))
+	return minf(27.0 if boost else 18.0,18.0*torque_factor*(1.7 if boost else 1.0))
 
 func gear_label() -> String:
 	return "R" if reverse else str(gear)

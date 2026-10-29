@@ -1,30 +1,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 const TRACK = preload("track_registry.gd").VALLEY
-const CAR_LIMITS = [[-60000,60000],[-10000,10000],[-60000,60000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,720100],[0,3000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]] + [[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4]]
+const CAR_LIMITS = [[-60000,60000],[-10000,10000],[-60000,60000],[-3142,3142],[-5000,5000],[-5000,5000],[-5000,5000],[-3142,3142],[0,100],[0,100],[0,100],[0,100],[0,63],[-320,1291],[-1,720100],[0,3000]] + [[-10000,10000],[-10000,10000],[-10000,10000],[-10000,10000],[-5000,5000],[-5000,5000],[-5000,5000],[0,15],[0,2147483647],[-1000,1000]] + [[0,1000],[0,1000],[0,1000],[0,1000]] + [[-3142,3142],[-3142,3142],[-3142,3142],[-3142,3142]] + [[-100000,100000],[-100000,100000],[-100000,100000],[-100000,100000]] + [[0,15]] + [[1,5],[0,8000],[0,160],[0,1],[0,1]] + [[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4],[-6000,6000],[0,6000],[0,4]] + [[0,3],[0,2147483647],[-1571,1571],[0,1]]
 
 static func integer(value, low: int, high: int) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value==int(value) and value>=low and value<=high
 
 static func valid_input(values) -> bool:
-	if not values is Array or values.size() not in [9,11]: return false
+	if not values is Array or values.size()!=13: return false
 	for i in 9:
 		var bounds = [[-1000,1000],[0,0],[-3142,3142],[0,1000],[0,1000],[0,15],[0,1],[0,2147483647],[-1,1]][i]
 		if not integer(values[i],bounds[0],bounds[1]): return false
-	if values.size()==11 and (not integer(values[9],0,2) or not integer(values[10],0,1)): return false
+	if not integer(values[9],0,2) or not integer(values[10],0,1) or not integer(values[11],-1571,1571) or not integer(values[12],0,1): return false
 	return Vector2(values[0],values[1]).length()<=1420
 
 static func input(car: Node3D) -> Array:
-	return [roundi(car.steer_input*1000),0,roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.throttle*1000),roundi(car.brake*1000),(1 if car.boosting else 0)|(2 if car.firing else 0)|(4 if car.handbrake else 0)|(8 if car.shield_pressed else 0),1 if car.manual_gears else 0,car.shift_serial,car.shift_direction,car.assist_level,1 if car.weapon_selected else 0]
+	return [roundi(car.steer_input*1000),0,roundi(atan2(car.aim.x,car.aim.z)*1000),roundi(car.throttle*1000),roundi(car.brake*1000),(1 if car.boosting else 0)|(2 if car.firing else 0)|(4 if car.handbrake else 0)|(8 if car.shield_pressed else 0),1 if car.manual_gears else 0,car.shift_serial,car.shift_direction,car.assist_level,1 if car.weapon_selected else 0,roundi(asin(clampf(car.aim.y,-1,1))*1000),1 if car.aim_3d else 0]
 
 static func apply_input(car: Node3D, values: Array) -> void:
 	car.steer_input=values[0]/1000.0; car.desired=Vector3.ZERO
-	car.aim=Vector3(sin(values[2]/1000.0),0,cos(values[2]/1000.0))
+	var pitch=values[11]/1000.0
+	car.aim=Vector3(sin(values[2]/1000.0)*cos(pitch),sin(pitch),cos(values[2]/1000.0)*cos(pitch)); car.aim_3d=values[12]==1
 	car.throttle=values[3]/1000.0; car.brake=values[4]/1000.0
 	car.boosting=(int(values[5])&1)!=0; car.firing=(int(values[5])&2)!=0; car.handbrake=(int(values[5])&4)!=0
 	if (int(values[5])&8)!=0: car.activate_shield()
-	car.assist_level=int(values[9]) if values.size()==11 else 0
-	car.weapon_selected=values.size()==11 and values[10]==1 and car.ammo>0
+	car.assist_level=int(values[9])
+	car.weapon_selected=values[10]==1 and car.ammo>0
 	car.manual_gears=values[6]==1
 	if values[7]>car.received_shift:
 		car.received_shift=int(values[7])
@@ -45,6 +46,7 @@ static func car_state(car: Node3D) -> Array:
 	result.append(contacts)
 	result.append_array([car.transmission.gear,roundi(car.transmission.rpm),roundi(car.transmission.shift_left*1000),1 if car.transmission.reverse else 0,1 if car.manual_gears else 0])
 	for w in car.physics.wheels: result.append_array([roundi(w.long_slip*100),roundi(w.slip*100),w.surface])
+	result.append_array([car.lives,car.death_serial,roundi(asin(clampf(car.aim.y,-1,1))*1000),1 if car.aim_3d else 0])
 	return result
 
 static func valid_snapshot(data: Dictionary, pickup_count: int) -> bool:

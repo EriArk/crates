@@ -103,19 +103,19 @@ func run() -> void:
 		var final_pos=game.track.FINALS[final]; var p=Vector3(final_pos.x,0,final_pos.y); p.y=game.track.height_at(p)
 		check(game.track.safe_point(p,8),"Final venue is open and reachable")
 	game.start_race(); game.state="race"; game.set_physics_process(false)
-	var car=game.player(); car.health=5; car.immune=100; car.ghost_time=100; car.shield=100
+	var car=game.player(); car.lives=1; car.health=5; car.immune=100; car.ghost_time=100; car.shield=100
 	game.elapsed=650; car.position=game.track.spawn_pose(0).origin; game.royale.tick_before(1)
 	check(car.health==0,"Storm ignores shield and recovery protection")
 	game.arena.tick(0.02); check(game.arena.rules.places[0]==16 and car.health==0,"Elimination enters real gameplay state")
-	game.arena.tick(4); check(car.health==0 and game.arena.rules.rows[0].life==0,"No respawn in royale")
+	game.arena.tick(4); check(car.health==0 and game.arena.rules.rows[0].life==0,"No respawn after the final royale life")
 	check(not game.arena.recover(car) and game.royale.focus()!=car,"Dead input cannot recover; camera follows a survivor")
 	for other in game.cars:
-		if other.index!=1: other.health=0
+		if other.index!=1 and other.lives>0: other.lives=1; other.health=0
 	game.arena.tick(0.01)
 	check(game.state=="results" and game.arena.rules.places[1]==1,"Ordinary last survivor produces results")
 	game.start_race(); check(game.arena.rules.places.count(0)==16 and game.elapsed==0,"Rematch restores fresh roster")
 	game.state="race"
-	for other in game.cars: other.health=0
+	for other in game.cars: other.lives=1; other.health=0
 	game.arena.tick(0.01); game.sound.events.clear(); game.sound.finish_played=false; game.sound.update(game,0.1)
 	check(game.arena.rules.places.count(1)==0 and game.sound.events.get("win",0)==0,"A simultaneous wipe has no arbitrary winner or victory jingle")
 	game.return_menu(); game.select_mode("arena"); game.start_race(); check(not game.is_royale() and not "places" in game.arena.rules,"Arena respawn rules restored")

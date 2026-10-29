@@ -31,6 +31,7 @@ var effects: Node3D
 var camera: Camera3D
 var race_camera=preload("race_camera.gd").new()
 var tilt_shift: ShaderMaterial
+var optics: ColorRect
 var hud: Control
 var sound: Node
 var controls = Controls.new()
@@ -82,7 +83,7 @@ func _ready() -> void:
 	sound=Audio.new(); add_child(sound)
 	camera=Camera3D.new(); camera.fov=48; camera.near=0.15; camera.far=160; add_child(camera)
 	var optics_layer = CanvasLayer.new(); optics_layer.layer=0; add_child(optics_layer)
-	var optics = ColorRect.new(); optics.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	optics = ColorRect.new(); optics.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	optics.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tilt_shift=ShaderMaterial.new(); tilt_shift.shader=preload("res://shaders/tilt_shift.gdshader")
 	optics.material=tilt_shift; optics_layer.add_child(optics)
@@ -145,7 +146,7 @@ func _ready() -> void:
 func is_arena() -> bool: return current_track in [Tracks.ARENA,Tracks.ROYALE]
 func is_royale() -> bool: return current_track==Tracks.ROYALE
 func event_mode() -> String: return "royale" if is_royale() else "arena" if is_arena() else "race"
-func view_car() -> Node3D: return royale.focus() if is_royale() else player()
+func view_car() -> Node3D: return royale.focus() if is_royale() or player().lives<=0 else player()
 
 func select_mode(mode: String) -> void:
 	cup.running=false
@@ -292,7 +293,7 @@ func network_pause() -> void:
 
 func _recover(car: Node3D) -> bool:
 	if is_arena(): return arena.recover(car)
-	if car.finish_time>=0 or car.reset_pending or car.recovery_lock>0: return false
+	if car.finish_time>=0 or car.lives<=0 or car.reset_pending or car.recovery_lock>0: return false
 	for back in [0,2,4,6]:
 		var at: int=posmod(car.checkpoint-back,track.COUNT)
 		var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
@@ -301,7 +302,7 @@ func _recover(car: Node3D) -> bool:
 			var pos: Vector3=recovery_pose.origin
 			var occupied = false
 			for other in cars:
-				if other==car or other.finish_time>=0: continue
+				if other==car or other.finish_time>=0 or other.health<=0: continue
 				var other_pos: Vector3=other.reset_pose.origin if other.reset_pending else other.position
 				if other_pos.distance_to(pos)<4.2: occupied=true; break
 			if occupied: continue
@@ -309,8 +310,8 @@ func _recover(car: Node3D) -> bool:
 			car.recovery_count+=1
 			if car.position.y< -5: car.fall_count+=1
 			car.checkpoint=at; car.passed-=back; car.laps=car.passed/track.COUNT
+			if car.health<=0: car.health=100; car.disabled_time=0; car.freeze=false; car.cool_weapon()
 			car.reset_at(Transform3D(basis,pos))
-			if car.health<=0: car.health=100
 			return true
 	car.recovery_lock=0.25
 	return false
@@ -318,7 +319,7 @@ func _recover(car: Node3D) -> bool:
 func _input(event: InputEvent) -> void:
 	if state in ["race","countdown"] and not net.overlay and race_camera.pressed(event,cup.store.camera_button()):
 		cycle_camera(); get_viewport().set_input_as_handled(); return
-	if is_royale() and state=="race" and player().health<=0 and not net.overlay:
+	if (is_royale() or player().lives<=0) and state=="race" and player().health<=0 and not net.overlay:
 		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			royale.cycle_spectator(-1 if event.is_action_pressed("ui_left") else 1); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("ui_cancel"):
@@ -359,7 +360,12 @@ func _physics_process(delta: float) -> void:
 	_update_conditions(elapsed if state=="race" else 0.0)
 	effect_clock+=delta
 	for car in cars:
-		if car.finish_time>=0: continue
+		if car.finish_time>=0 or car.lives<=0: continue
+		if car.health<=0:
+			car.register_wreck(); car.disabled_time=maxf(0,car.disabled_time-delta)
+			car.recovery_lock=maxf(0,car.recovery_lock-delta)
+			if car.disabled_time<=0: _recover(car)
+			continue
 		if net.online and car.human and not car.local_player: net.apply_remote(car)
 		elif car.local_player and net.online and net.overlay: controls.neutral(car)
 		elif car.local_player and state=="race" and not demo_auto: controls.read(car,camera)
@@ -377,7 +383,7 @@ func _physics_process(delta: float) -> void:
 					finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
 					if not cup.running: _save_best()
 	if state=="race":
-		if cars.all(func(c): return c.finish_time>=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
+		if cars.all(func(c): return c.finish_time>=0 or c.lives<=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
 			finish_race(); return
 		if player().finish_time>=0: hud.message="Finished! Other drivers have %d s left" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
 	for pickup in pickups:
@@ -385,7 +391,7 @@ func _physics_process(delta: float) -> void:
 		pickup.node.rotation.y+=delta
 		if pickup.cooldown>0: continue
 		for car in cars:
-			if car.finish_time>=0: continue
+			if car.finish_time>=0 or car.health<=0: continue
 			if car.position.distance_to(pickup.node.position)<2:
 				car.bot.pickups_collected+=1
 				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20); car.repair_wheels()
@@ -406,15 +412,15 @@ func finish_race() -> void:
 func _shoot(car: Node3D) -> void:
 	if not car.begin_shot(): return
 	car.bot.shots+=1
-	var direction=arena.Aim.resolve(car,cars,car.assist_level if car.human or car.local_player and not demo_auto else 0) if is_arena() else car.aim
-	var from: Vector3=car.position+Vector3.UP*0.6 if is_arena() else car.position+Vector3.UP*0.2+direction*0.9
+	var direction=arena.Aim.resolve(car,cars,car.assist_level if car.human or car.local_player and not demo_auto else 0) if is_arena() or car.aim_3d else car.aim
+	var from: Vector3=car.muzzle_origin()
 	var to: Vector3=from+direction*34
 	var query = PhysicsRayQueryParameters3D.create(from,to,3,[car.get_rid()])
 	var hit = get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		to=hit.position
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
-			hit.collider.take_damage(9,direction*75,hit.position,car.index)
+			hit.collider.take_damage(Car.BULLET_DAMAGE,direction*35,hit.position,car.index)
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")
 		effects.burst(to,Color("ffbb51"))
 	effects.beam(from,to); net.shot(car,from,to)
@@ -445,6 +451,7 @@ func _camera(delta: float, snap: bool = false) -> void:
 		tilt_shift.set_shader_parameter("strength",0.0)
 		return
 	race_camera.update(camera,view_car(),tilt_shift,delta,snap)
+	optics.visible=not race_camera.tilt_disabled and race_camera.mode<=race_camera.Mode.WIDE
 
 func cycle_camera(step: int=1) -> void:
 	race_camera.select(race_camera.mode+step)
@@ -479,3 +486,8 @@ func _save_best() -> void:
 	file.set_value(section,"bot_count",bot_count)
 	if file.save(path+".pending")==OK:
 		DirAccess.rename_absolute(path+".pending",path)
+
+func wreck_effect(pos: Vector3) -> void:
+	var distance=minf(pos.distance_to(view_car().position),pos.distance_to(player().position))
+	if distance<80: effects.wreck(pos)
+	sound.play_event("wreck",distance)

@@ -6,6 +6,9 @@ var neutral_required = true
 var shift_up_held = false
 var shift_down_held = false
 var weapon_held=false
+var reticle=Vector2(0.5,0.48)
+var low_view=false
+var aim_reset=-1
 
 func _init() -> void:
 	# Do not depend on engine/editor defaults for controller menu navigation.
@@ -59,20 +62,40 @@ func read(car: Node3D, camera: Camera3D) -> void:
 	car.shield_pressed=shielding
 	car.steer_input=steering_axis(steer.x)
 	car.desired=Vector3.ZERO
-	if aiming.length()>0.22: car.aim=aim_direction(aiming,camera.global_basis)
+	var low=camera.fov>50
+	if low!=low_view or aim_reset!=car.reset_serial:
+		reticle=Vector2(0.5,0.48); low_view=low; aim_reset=car.reset_serial
+		if not low:
+			car.aim=Vector3(car.aim.x,0,car.aim.z).normalized()
+			if car.aim.length_squared()<0.01: car.aim=-car.basis.z
+	car.aim_3d=low
+	if low:
+		if device>=0:
+			move_reticle(aiming,car.get_physics_process_delta_time())
+		elif mouse_aim:
+			reticle=camera.get_viewport().get_mouse_position()/camera.get_viewport().get_visible_rect().size
+			reticle=reticle.clamp(Vector2(0.15,0.18),Vector2(0.85,0.75))
+		var point=aim_point(camera,car,reticle)
+		car.aim=(point-car.muzzle_origin()).normalized()
+	elif aiming.length()>0.22: car.aim=aim_direction(aiming,camera.global_basis)
 	elif device<0 and mouse_aim:
-		var pos = camera.get_viewport().get_mouse_position()
-		var origin = camera.project_ray_origin(pos); var direction = camera.project_ray_normal(pos)
+		var pos=camera.get_viewport().get_mouse_position()
+		var origin=camera.project_ray_origin(pos); var direction=camera.project_ray_normal(pos)
 		var distance=(car.position.y-origin.y)/direction.y if absf(direction.y)>0.01 else -1.0
-		# Low cameras can point above the horizon; never aim at an intersection behind
-		# the player. Use the ray ahead and keep the existing horizontal gun contract.
 		var target=origin+direction*(distance if distance>0 and distance<80 else 40.0)
 		var flat=Vector3(target.x-car.position.x,0,target.z-car.position.z)
 		if flat.length_squared()>0.01: car.aim=flat.normalized()
-	elif device>=0 and camera.fov>50:
-		# Releasing the aim stick returns the low driving views' weapon to the nose.
-		var nose=-car.global_basis.z; nose.y=0
-		if nose.length_squared()>0.01: car.aim=nose.normalized()
+
+func move_reticle(stick: Vector2,delta: float) -> void:
+	if stick.length()<=0.18: return
+	var rate=stick.normalized()*pow(clampf((stick.length()-0.18)/0.82,0,1),1.4)
+	reticle=(reticle+rate*delta*0.55).clamp(Vector2(0.15,0.18),Vector2(0.85,0.75))
+
+static func aim_point(camera: Camera3D,car: Node3D,screen: Vector2) -> Vector3:
+	var pixel=screen*camera.get_viewport().get_visible_rect().size
+	var origin=camera.project_ray_origin(pixel); var direction=camera.project_ray_normal(pixel)
+	var hit=car.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(origin,origin+direction*100,3,[car.get_rid()]))
+	return hit.position if not hit.is_empty() else origin+direction*100
 
 func neutral(car: Node3D) -> void:
 	car.shield_pressed=false; car.steer_input=0; car.shift_direction=0; car.transmission.pending=0

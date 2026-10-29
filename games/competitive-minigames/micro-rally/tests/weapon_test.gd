@@ -25,10 +25,10 @@ func run() -> void:
 				locks+=1
 				if first_burst==0: first_burst=shots
 		check(car.weapon_heat>=0 and car.weapon_heat<=100,"Heat stays bounded")
-	check(first_burst==12 and locks>10 and shots>150,"Unlimited gun repeatedly overheats and resumes under held trigger")
-	check(first_lock_frames>=195 and first_lock_frames<=205,"Full overheat requires about 3.4 seconds cooling")
+	check(first_burst>=25 and locks>=10 and shots>300,"Unlimited gun repeatedly overheats and resumes under held trigger")
+	check(first_lock_frames>=135 and first_lock_frames<=145,"Full overheat requires about 2.3 seconds cooling")
 	car.cool_weapon(); car.fire_cooldown=0; check(car.begin_shot(),"Cold gun fires")
-	car.tick_weapon(0.4); check(is_equal_approx(car.weapon_heat,car.HEAT_PER_SHOT),"Cooling delay prevents free heat loss between rapid shots")
+	car.tick_weapon(0.25); check(is_equal_approx(car.weapon_heat,car.HEAT_PER_SHOT),"Cooling delay prevents free heat loss between rapid shots")
 	car.tick_weapon(1.0); check(car.weapon_heat==0,"Released trigger fully cools a short burst")
 	for blocked in ["replica","disabled","finished","ghost"]:
 		car.replica=blocked=="replica"; car.disabled_time=1 if blocked=="disabled" else 0

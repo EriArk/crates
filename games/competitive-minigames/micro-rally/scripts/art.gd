@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends RefCounted
 static var models: Dictionary = {}
+static var instance_parts: Dictionary = {}
 static var materials: Dictionary = {}
 
 static func material(color: Color, glow: float = 0.0) -> StandardMaterial3D:
@@ -45,26 +46,32 @@ static func instances(parent: Node3D, kind: String, id: String, transforms: Arra
 		var cell=Vector2i(floori(transform.origin.x/BATCH_SIZE),floori(transform.origin.z/BATCH_SIZE))
 		if not cells.has(cell): cells[cell]=[]
 		cells[cell].append(transform)
-	var source = model(kind,id)
-	for part in mesh_parts(source):
-		var mesh = part[0].duplicate()
-		for i in mesh.get_surface_count():
-			var original = mesh.surface_get_material(i)
-			if not original is StandardMaterial3D: continue
-			var key = "nature/"+original.resource_name+id
-			if not materials.has(key):
-				var mat = ShaderMaterial.new(); mat.shader=preload("res://shaders/surface.gdshader")
-				var tint = original.albedo_color; var surface_kind = 4
-				if original.resource_name.to_lower().contains("leaf"): tint=Color("4e7143") if id.contains("Tall") else Color("62804a")
-				elif original.resource_name.to_lower().contains("wood"): tint=Color("755037"); surface_kind=2
-				elif id.contains("rock") or id.contains("stone"): tint=Color("7c8478"); surface_kind=3
-				elif original.resource_name.to_lower().contains("grass"): tint=Color("5c812e")
-				mat.set_shader_parameter("tint",tint); mat.set_shader_parameter("kind",surface_kind)
-				mat.set_shader_parameter("grain_axis",Vector3.UP); materials[key]=mat
-			mesh.surface_set_material(i,materials[key])
+	var cache_key=kind+"/"+id
+	if not instance_parts.has(cache_key):
+		var source=model(kind,id); var prepared=[]
+		for part in mesh_parts(source):
+			var mesh = part[0].duplicate()
+			for i in mesh.get_surface_count():
+				var original = mesh.surface_get_material(i)
+				if not original is StandardMaterial3D: continue
+				var key = "nature/"+original.resource_name+id
+				if not materials.has(key):
+					var mat = ShaderMaterial.new(); mat.shader=preload("res://shaders/surface.gdshader")
+					var tint = original.albedo_color; var surface_kind = 4
+					if original.resource_name.to_lower().contains("leaf"): tint=Color("4e7143") if id.contains("Tall") else Color("62804a")
+					elif original.resource_name.to_lower().contains("wood"): tint=Color("755037"); surface_kind=2
+					elif id.contains("rock") or id.contains("stone"): tint=Color("7c8478"); surface_kind=3
+					elif original.resource_name.to_lower().contains("grass"): tint=Color("5c812e")
+					mat.set_shader_parameter("tint",tint); mat.set_shader_parameter("kind",surface_kind)
+					mat.set_shader_parameter("grain_axis",Vector3.UP); materials[key]=mat
+				mesh.surface_set_material(i,materials[key])
+			prepared.append([mesh,part[1]])
+		source.free(); instance_parts[cache_key]=prepared
+	for part in instance_parts[cache_key]:
+		var mesh: Mesh=part[0]
 		for cell in cells:
 			var node=MultiMeshInstance3D.new(); var multi=MultiMesh.new()
-			node.position=Vector3((cell.x+0.5)*BATCH_SIZE,0,(cell.y+0.5)*BATCH_SIZE)
+			node.position=Vector3((cell.x+0.5)*BATCH_SIZE,cells[cell][0].origin.y,(cell.y+0.5)*BATCH_SIZE)
 			multi.transform_format=MultiMesh.TRANSFORM_3D; multi.mesh=mesh
 			multi.instance_count=cells[cell].size()
 			for i in cells[cell].size():
@@ -74,7 +81,6 @@ static func instances(parent: Node3D, kind: String, id: String, transforms: Arra
 			node.visibility_range_end_margin=12
 			if id.contains("grass") or id.contains("flower"): node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; node.visibility_range_end=52
 			parent.add_child(node)
-	source.free()
 
 static func collider(parent: Node3D, size: Vector3, pos: Vector3) -> StaticBody3D:
 	var body = StaticBody3D.new(); body.position=pos

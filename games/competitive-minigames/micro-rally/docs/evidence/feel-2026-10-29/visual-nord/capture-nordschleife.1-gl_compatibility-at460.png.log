@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 4.5 (Core Profile) Mesa 25.0.7-2+deb13u1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 19.1.7, 256 bits)
+
+CAPTURE 0 /work/exports/a945c4ac914dea9b/capture-nordschleife.1-gl_compatibility-at460.png
+METRICS {"cars":16,"fps":5.0,"frames":53,"passed":460,"player_position":"(-1768.956, 267.5737, -823.8152)","renderer":"gl_compatibility","scale":1.0}
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
