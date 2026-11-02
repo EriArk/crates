@@ -1,0 +1,20 @@
+{
+  "id": "home-companion",
+  "title": "Companion (alpha)",
+  "kind": "app",
+  "version": "0.1.0",
+  "entry": "launch.py",
+  "icon": "icon.svg",
+  "license": "GPL-3.0-or-later",
+  "repository": "https://github.com/EriArk/crates.git",
+  "revision": "647eb9624799499aa7b8a1b5f22be4ec7f75a661",
+  "size": 5636623,
+  "unpackedSize": 7451406,
+  "sha256": "629bf4fec6206d6c6a0a80b6917e5bddf40cf73934d390cdca9738436e1b896a",
+  "channel": "Experimental",
+  "compatibility": "untested",
+  "compatibilityNote": "Requires updated TrainerOS with ui.home.widget:1 and avatar-care-v1. Handheld acceptance pending.",
+  "notes": "Home pet using your profile avatar. Feed, rest, three scenes and gameplay-filled playtime. State survives removal.",
+  "url": "https://github.com/EriArk/crates/releases/download/home-companion-v0.1.0/home-companion-0.1.0-linux.tar.gz",
+  "architecture": "x86_64"
+}

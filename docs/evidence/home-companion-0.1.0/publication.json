@@ -1,0 +1,16 @@
+{
+  "checkedUtc": "2026-11-02T14:50:53.525841+00:00",
+  "catalogueRevision": 41,
+  "signatureVerified": true,
+  "architectures": [
+    "aarch64",
+    "x86_64"
+  ],
+  "version": "0.1.0",
+  "sourceRevision": "647eb9624799499aa7b8a1b5f22be4ec7f75a661",
+  "size": 5636623,
+  "sha256": "629bf4fec6206d6c6a0a80b6917e5bddf40cf73934d390cdca9738436e1b896a",
+  "publicDownloadAndInstall": true,
+  "unrelatedProjectsPreserved": true,
+  "hostInstalledOnDevices": false
+}
