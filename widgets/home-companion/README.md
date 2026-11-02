@@ -12,6 +12,15 @@ use the same actions; extra options live in the hamburger menu.
 
 ## Requirements
 
+Version 0.1.1 records the updated host integration: seven autonomous idle
+behaviors, a notification wave with a speech bubble, lifting the achievement
+icon overhead, and sliding shutters around model suspension/loading. These
+behaviors run in TrainerOS, not inside the downloaded package. They require
+[host commit 5420614a](https://github.com/EriArk/TrainerOS/commit/5420614ab8e214f9409065acd201a69e14dc8a23)
+or a later build containing it. Older compatible hosts retain their existing
+behavior; the manifest remains `avatar-care-v1`. This release also explicitly
+declares the Home-only policy (`allowStartWidgets: false`).
+
 - TrainerOS with `ui.home.widget:1` and the trusted `avatar-care-v1` renderer
   (the Home companion integration from 2 November 2026 or newer).
 - The shared TrainerOS avatar pack and a selected local profile.

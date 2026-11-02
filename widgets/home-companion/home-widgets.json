@@ -1,6 +1,7 @@
 {
   "schema": 1,
   "app": "home-companion",
+  "allowStartWidgets": false,
   "widgets": [
     {"id": "pet", "title": "Companion", "renderer": "avatar-care-v1", "assets": "assets"}
   ]

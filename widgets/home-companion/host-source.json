@@ -1,9 +1,9 @@
 {
   "repository": "https://github.com/EriArk/TrainerOS",
-  "revision": "bf2bd9b30c089176657a2da37e47676a7d44b28d",
+  "revision": "5420614ab8e214f9409065acd201a69e14dc8a23",
   "capability": "ui.home.widget:1",
   "renderer": "avatar-care-v1",
   "client": "sdk/python/traineros.py",
   "license": "GPL-3.0-or-later",
-  "sourceArchive": "https://github.com/EriArk/TrainerOS/archive/bf2bd9b30c089176657a2da37e47676a7d44b28d.tar.gz"
+  "sourceArchive": "https://github.com/EriArk/TrainerOS/archive/5420614ab8e214f9409065acd201a69e14dc8a23.tar.gz"
 }

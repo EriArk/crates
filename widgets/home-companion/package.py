@@ -11,7 +11,7 @@ import re
 import tarfile
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 
 def main():
@@ -51,8 +51,8 @@ def main():
                   size=archive.stat().st_size, unpackedSize=sum(map(len, package.values())) + 1048576,
                   sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), channel="Experimental",
                   compatibility="untested",
-                  compatibilityNote="Requires updated TrainerOS with ui.home.widget:1 and avatar-care-v1. Handheld acceptance pending.",
-                  notes="Home pet using your profile avatar. Feed, rest, three scenes and gameplay-filled playtime. State survives removal.",
+                  compatibilityNote="New reactions and shutters require TrainerOS host commit 5420614a or newer. Package does not update the shell. Handheld acceptance pending.",
+                  notes="Companion host integration refresh: autonomous idle, notification wave, achievement lift and sliding shutters with updated TrainerOS. Home-only widget; care state preserved.",
                   url=f"https://github.com/EriArk/crates/releases/download/home-companion-v{VERSION}/{name}")
     for arch in ("aarch64", "x86_64"):
         (args.output / f"home-companion-{arch}-record.json").write_text(

@@ -66,17 +66,18 @@ def main():
             info = tarfile.TarInfo("update-fixture.txt")
             info.size = len(content)
             target.addfile(info, io.BytesIO(content))
-        newer = dict(record, version="0.1.1", size=update.stat().st_size,
+        next_version = record["version"].rsplit(".", 1)[0] + "." + str(int(record["version"].rsplit(".", 1)[1]) + 1)
+        newer = dict(record, version=next_version, size=update.stat().st_size,
                      sha256=hashlib.sha256(update.read_bytes()).hexdigest())
         validate_records([newer])
         updated = store.activate(update, newer, lambda *args: None, lambda: False)
         assert updated["previousObject"] == receipt["object"]
-        assert store.receipt("home-companion")["version"] == "0.1.1"
+        assert store.receipt("home-companion")["version"] == next_version
         store.remove("home-companion")
         assert store.receipt("home-companion") is None and data.read_text() == "retained care fixture"
         store.activate(archive, record, lambda *args: None, lambda: False)
         assert data.read_text() == "retained care fixture"
-        assert store.receipt("home-companion")["version"] == "0.1.0"
+        assert store.receipt("home-companion")["version"] == record["version"]
     print("PASS: real installer install/update/remove/reinstall, launcher wire, manifest and retained data")
 
 
