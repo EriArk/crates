@@ -1,0 +1,20 @@
+{
+  "id": "home-companion",
+  "title": "Companion (alpha)",
+  "kind": "app",
+  "version": "0.1.1",
+  "entry": "launch.py",
+  "icon": "icon.svg",
+  "license": "GPL-3.0-or-later",
+  "repository": "https://github.com/EriArk/crates.git",
+  "revision": "80f55bb8ba58fc26eeec6fd34aed24d96619aaa6",
+  "size": 5636835,
+  "unpackedSize": 7452072,
+  "sha256": "12718ee2ddf875694209f8af74679ceb643fafad4247c422e566c6b15f8d9432",
+  "channel": "Experimental",
+  "compatibility": "untested",
+  "compatibilityNote": "New reactions and shutters require TrainerOS host commit 5420614a or newer. Package does not update the shell. Handheld acceptance pending.",
+  "notes": "Companion host integration refresh: autonomous idle, notification wave, achievement lift and sliding shutters with updated TrainerOS. Home-only widget; care state preserved.",
+  "url": "https://github.com/EriArk/crates/releases/download/home-companion-v0.1.1/home-companion-0.1.1-linux.tar.gz",
+  "architecture": "x86_64"
+}

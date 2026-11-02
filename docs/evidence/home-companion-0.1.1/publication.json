@@ -1,0 +1,22 @@
+{
+  "checkedUtc": "2026-11-02T18:50:20.123429+00:00",
+  "catalogueRevision": 42,
+  "catalogueResponse": "delta",
+  "signatureVerified": true,
+  "architectures": [
+    "aarch64",
+    "x86_64"
+  ],
+  "version": "0.1.1",
+  "sourceRevision": "80f55bb8ba58fc26eeec6fd34aed24d96619aaa6",
+  "hostRevision": "5420614ab8e214f9409065acd201a69e14dc8a23",
+  "size": 5636835,
+  "sha256": "12718ee2ddf875694209f8af74679ceb643fafad4247c422e566c6b15f8d9432",
+  "sourceSha256": "6ada6158275d1a57a72f90fef54a58aff15492abc621afd465f219ac6c2889fe",
+  "publicDownloadAndInstall": true,
+  "upgradeFrom": "0.1.0",
+  "retainedDataVerified": true,
+  "unrelatedProjectsPreserved": true,
+  "handheldsTouched": false,
+  "hostIncludedInPackage": false
+}
