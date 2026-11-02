@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "reviewed": "2026-11-02",
+  "license": "CC0-1.0",
+  "status": "prepared-not-integrated",
+  "author": "Kenney",
+  "packs": [
+    {
+      "id": "food-kit",
+      "source": "https://kenney.nl/assets/food-kit",
+      "archiveSha256": "cdad90853682499b94c9fda2f87678b24bfd8f3264e0ed323f6b6a27fd7c6f6f",
+      "models": [
+        {
+          "file": "food-kit/apple.glb",
+          "sourcePath": "Models/GLB format/apple.glb",
+          "sourceSha256": "2a80ab65d5bc2cb4f2bca1e8176cbb591849a288596d4b2e76e411338761a526",
+          "sha256": "442f7e20fc4551e1294c86338084bfcd0fcc72e78875138c53d487517f17027b",
+          "bytes": 25140,
+          "triangles": 136
+        },
+        {
+          "file": "food-kit/banana.glb",
+          "sourcePath": "Models/GLB format/banana.glb",
+          "sourceSha256": "67c90aa8bef35b8886d6b67c0c4c3249556e28176c893d451b95cd83a156908c",
+          "sha256": "94dbe363cec3b738216e7db212a93daa13a708f9488466b07df04549564d56fe",
+          "bytes": 23108,
+          "triangles": 104
+        },
+        {
+          "file": "food-kit/cookie-chocolate.glb",
+          "sourcePath": "Models/GLB format/cookie-chocolate.glb",
+          "sourceSha256": "bf7894020a6d0d0acd120a69d96a9088b226f5d557b7d7a3441e9fc8169d2fe6",
+          "sha256": "6adf6ba7b5dcf5e4c9b7d3bbb259a6b70e781a846f1ea71c0f013ccc8da75d38",
+          "bytes": 23112,
+          "triangles": 136
+        },
+        {
+          "file": "food-kit/burger.glb",
+          "sourcePath": "Models/GLB format/burger.glb",
+          "sourceSha256": "b982f15d980ef49f3aa295fda03b1926b0b9a29d3d000d139e111d734474c99b",
+          "sha256": "99e1162f032eeb02295da8a61f9bed4265cb7a63fc8d6f1faac6a2dd540508e8",
+          "bytes": 45260,
+          "triangles": 294
+        },
+        {
+          "file": "food-kit/cup-tea.glb",
+          "sourcePath": "Models/GLB format/cup-tea.glb",
+          "sourceSha256": "c2d60aeca48197b75ddb9f1ba145bd5e9c9e66e720b8ab67947f0b2a49ee1edd",
+          "sha256": "107874f153ec3011205c07f38d0be26764a73bdc9c8d8b665c2d41d82534daeb",
+          "bytes": 20552,
+          "triangles": 144
+        },
+        {
+          "file": "food-kit/cupcake.glb",
+          "sourcePath": "Models/GLB format/cupcake.glb",
+          "sourceSha256": "84b2681793445607b846023f0314abe74f70a65ee51c999df4322348934fb2ce",
+          "sha256": "11e08b9c263b60a2bd89579181be0158320908f4c936fee71cfc921bf171957b",
+          "bytes": 33476,
+          "triangles": 204
+        }
+      ],
+      "licenseSourceSha256": "32a081c2035dd4db47d850c83244da048165f0e53d71c076b76c1afc0590bc7f"
+    },
+    {
+      "id": "furniture-kit",
+      "source": "https://kenney.nl/assets/furniture-kit",
+      "archiveSha256": "e67652d0932cee41683f74711c03d3e192a2af9979ef8e6b237711f5482d46b0",
+      "models": [
+        {
+          "file": "furniture-kit/bedSingle.glb",
+          "sourcePath": "Models/GLTF format/bedSingle.glb",
+          "sourceSha256": "ca00c63f9a12da3138d902b2f5f18e0360fb6e8a5ac42ccb4bc3f185724b65d1",
+          "sha256": "41128adeda31527ea90dfbb8229059461149c5a8304de2d47c098d0e43210cc2",
+          "bytes": 18636,
+          "triangles": 214
+        },
+        {
+          "file": "furniture-kit/loungeChair.glb",
+          "sourcePath": "Models/GLTF format/loungeChair.glb",
+          "sourceSha256": "ddfe6bc4b3451bca61666d7b614552d6ed2a03d82fc76244b72ae3155874dc6c",
+          "sha256": "ddfe6bc4b3451bca61666d7b614552d6ed2a03d82fc76244b72ae3155874dc6c",
+          "bytes": 9648,
+          "triangles": 128
+        },
+        {
+          "file": "furniture-kit/tableCoffee.glb",
+          "sourcePath": "Models/GLTF format/tableCoffee.glb",
+          "sourceSha256": "e38bea760fbd514efbb75528d09b4752c91af44677bbb97e6d4386c263525179",
+          "sha256": "8ed57bd15369eecac5b3e45d4eb9d4d087e5b17189594e07426fc37934e2e88c",
+          "bytes": 8256,
+          "triangles": 124
+        },
+        {
+          "file": "furniture-kit/rugRound.glb",
+          "sourcePath": "Models/GLTF format/rugRound.glb",
+          "sourceSha256": "c4cdc8f51ed2dbfb853b147521ed40e995307392fd3b19045b2203ea50f376db",
+          "sha256": "c4cdc8f51ed2dbfb853b147521ed40e995307392fd3b19045b2203ea50f376db",
+          "bytes": 10164,
+          "triangles": 188
+        },
+        {
+          "file": "furniture-kit/plantSmall1.glb",
+          "sourcePath": "Models/GLTF format/plantSmall1.glb",
+          "sourceSha256": "2b9c022feb47be857b2c4fdc29f36522766ba9b70c578c31d7c05d71b4377d15",
+          "sha256": "2b9c022feb47be857b2c4fdc29f36522766ba9b70c578c31d7c05d71b4377d15",
+          "bytes": 8224,
+          "triangles": 102
+        },
+        {
+          "file": "furniture-kit/books.glb",
+          "sourcePath": "Models/GLTF format/books.glb",
+          "sourceSha256": "b8dc56e5d29f6fc1f4727fccb1b9642627fee9942c48060a00034e98df02701c",
+          "sha256": "b8dc56e5d29f6fc1f4727fccb1b9642627fee9942c48060a00034e98df02701c",
+          "bytes": 6864,
+          "triangles": 62
+        }
+      ],
+      "licenseSourceSha256": "bc0de1a0742cb490f9ed4bae0bd284286ebb27e23149b9917c7d8c0d590b8b29"
+    },
+    {
+      "id": "toy-car-kit",
+      "source": "https://kenney.nl/assets/toy-car-kit",
+      "archiveSha256": "26c11bbb77102b8dd00cdaf7b2c7ab692416d750dd064de886d809acec346782",
+      "models": [
+        {
+          "file": "toy-car-kit/vehicle-racer.glb",
+          "sourcePath": "Models/GLB format/vehicle-racer.glb",
+          "sourceSha256": "2cdf369f231bf3e38bdf3a376144971f1b4d1a1e558000047ac927c5ac81a42c",
+          "sha256": "a01da5fcc0fba5a0eab03a2c74321d94b7ed373c7740acb577ac6f4b89fb1916",
+          "bytes": 113056,
+          "triangles": 1076
+        },
+        {
+          "file": "toy-car-kit/vehicle-monster-truck.glb",
+          "sourcePath": "Models/GLB format/vehicle-monster-truck.glb",
+          "sourceSha256": "5cab772a63005db81504a3403b54c5de73f23bfb731c93405811d73025d6db3e",
+          "sha256": "c65411c99a8904ef0c2dd0e42faffcd7b28565d93af09e9c43ace6e3e347e768",
+          "bytes": 130356,
+          "triangles": 1272
+        }
+      ],
+      "licenseSourceSha256": "2406ba62730af7633689439c1e3e913b93e54eada8e73da415003a2bb96b099e"
+    }
+  ]
+}

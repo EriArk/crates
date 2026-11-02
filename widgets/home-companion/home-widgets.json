@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "app": "home-companion",
+  "widgets": [
+    {"id": "pet", "title": "Companion", "renderer": "avatar-care-v1", "assets": "assets"}
+  ]
+}

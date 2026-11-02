@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "backgrounds": [
+    {
+      "id": "cozy-room",
+      "file": "backgrounds/cozy-room.png",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1835207,
+      "sha256": "228521f5f0ea73f0bcef21651f58cf1c9b830a9a6a01494ef12f593183aee538",
+      "generator": "built-in image_gen",
+      "integration": "pending-live-avatar-review"
+    },
+    {
+      "id": "evening-nook",
+      "file": "backgrounds/evening-nook.png",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1903457,
+      "sha256": "2d28d18ac84f69d9ea82222ab1392439e56c75d9b418b8c6c51659a457bdc507",
+      "generator": "built-in image_gen",
+      "integration": "pending-live-avatar-review"
+    },
+    {
+      "id": "sunny-garden",
+      "file": "backgrounds/sunny-garden.png",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2117528,
+      "sha256": "5fbc8a9d4dff4d5420b76850323943201dc81745a2d498d77f3038aa47a038e4",
+      "generator": "built-in image_gen",
+      "integration": "pending-live-avatar-review"
+    }
+  ]
+}

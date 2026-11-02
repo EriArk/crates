@@ -1,6 +1,8 @@
 # Widgets
 
-Small Start → Extensions contributions for TrainerOS. Each approved concept has its own folder.
+Home and Start contributions for TrainerOS. Each approved concept has its own folder.
+
+- [Companion (alpha)](home-companion/) — a gentle Home pet using your profile avatar, with food, rest, gameplay-filled playtime and three scenes. Requires updated Home widget support.
 
 - [Game Roulette](game-roulette/) — one big “Surprise Me!” button, a brief cover roulette, and a random launchable game from the TrainerOS library.
 - [Friend Radar](friend-radar/) — on-demand animated radar for Fluxer friends and discoverable nearby TrainerOS users, with game titles and a Nearby scanning toggle.
