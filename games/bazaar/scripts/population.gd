@@ -29,6 +29,7 @@ var hired_sellers: Array[Dictionary] = []
 var ambient_paused := false
 var decisions := 0.0
 var complexion_materials: Dictionary = {}
+var figure_bounds: Dictionary = {}
 
 func complexion(visual: Node3D, tone: int) -> void:
 	# Surface overrides belong to the instance; vendor materials, mesh/skin data,
@@ -47,7 +48,20 @@ func complexion(visual: Node3D, tone: int) -> void:
 
 func figure(species: String, at: Vector3, size: float, tone := -1) -> Dictionary:
 	var actor := Node3D.new();add_child(actor);actor.position=at
-	var visual: Node3D=SPECIES[species].instantiate();actor.add_child(visual);visual.scale=Vector3.ONE*size
+	var visual: Node3D=SPECIES[species].instantiate();actor.add_child(visual)
+	if species!="Pigeon":
+		if not figure_bounds.has(species):
+			var bounds := AABB();var first := true
+			for part in visual.find_children("*","MeshInstance3D",true,false):
+				if part.name=="Carrot":continue
+				var box: AABB=(visual.global_transform.affine_inverse()*part.global_transform)*part.get_aabb()
+				bounds=box if first else bounds.merge(box);first=false
+			figure_bounds[species]=bounds
+		var bounds: AABB=figure_bounds[species]
+		# size retains caller variation; 0.48 means a 1.50 m resident.
+		var uniform := (1.50*size/0.48)/maxf(bounds.size.y,0.01)
+		visual.scale=Vector3.ONE*uniform;visual.position.y=-bounds.position.y*uniform
+	else:visual.scale=Vector3.ONE*size
 	var player: AnimationPlayer=visual.find_child("AnimationPlayer",true,false)
 	if species in HUMAN_SPECIES:
 		if tone<0:tone=residents.size()%SKIN_TONES.size()
@@ -96,19 +110,19 @@ func setup(owner_world: Node3D, visitor: Node3D) -> void:
 	var names := ["Pip","Moru","Nim","Bram","Tavi","Oru"]
 	var descriptions := ["Pip is getting a small produce stall ready.","Moru is sorting cloth for the festival.","Nim hopes to open a garden stall.","Bram is preparing a place for travelling merchants.","Tavi is looking after this corner of the market.","Oru is waiting for the festival to open."]
 	var n := 0
-	for side in [-1,1]:
-		for z in [-12.0,7.0,17.0]:
-			merchant(["Chef_Female","Yeti","Bunny","Kimono_Female","OldClassy_Male","Witch"][n],ground(Vector3(side*7.65,0,z)), -side*PI/2,names[n],descriptions[n],Vector3(side*5.9,0,z))
-			n+=1
+	for slot in [2,4,6,8,10,12]:
+		var layout: Dictionary=world.stall_layout(slot)
+		merchant(["Chef_Female","Yeti","Bunny","Kimono_Female","OldClassy_Male","Witch"][n],ground(layout.seller),layout.yaw,names[n],descriptions[n],layout.approach)
+		n+=1
 	for i in 3:
 		merchant(["Chef_Female","Kimono_Female","Wizard"][i],Vector3(210+i*20,0.055,-3.45),0,["Moss","Wisp","Rook"][i],["Moss will welcome visitors to the tea shop.","Wisp is preparing the tailor's workbench.","Rook is arranging curious finds."][i],Vector3(210+i*20,0,-1.65))
-	var park: Array[Vector3]=[Vector3(-4.8,0,19),Vector3(-4.8,0,-19),Vector3(4.8,0,-19),Vector3(4.8,0,19)]
+	var park: Array[Vector3]=[Vector3(-3.6,0,19),Vector3(-3.6,0,-19),Vector3(3.6,0,-19),Vector3(3.6,0,19)]
 	for i in 4:pedestrian(["Casual_Female","Bunny","Casual_Male","Yeti"][i],park,i,0.68)
 	var town: Array[Vector3]=[Vector3(42,0,-27),Vector3(51,0,-27),Vector3(51,0,-13),Vector3(42,0,-13)]
 	for i in 2:pedestrian(["OldClassy_Male","Witch"][i],town,i*2,0.62)
 	# Three further animal folk use spare stalls and the clear garden center.
-	merchant("Dino",ground(Vector3(-7.65,0,-7)),PI/2,"Kip","Kip is preparing a travelling trader's stall.",Vector3(-5.9,0,-7))
-	merchant("Birb",ground(Vector3(7.65,0,-17)),-PI/2,"Sora","Sora is looking after the northern festival stalls.",Vector3(5.9,0,-17))
+	merchant("Dino",ground(world.stall_layout(3).seller),PI/2,"Kip","Kip is preparing a travelling trader's stall.",world.stall_layout(3).approach)
+	merchant("Birb",ground(world.stall_layout(7).seller),-PI/2,"Sora","Sora is looking after the northern festival stalls.",world.stall_layout(7).approach)
 	var garden: Array[Vector3]=[Vector3(-41,0,-29),Vector3(-37,0,-29),Vector3(-37,0,-21),Vector3(-41,0,-21)]
 	pedestrian("Frog",garden,2,0.60)
 	for i in 6:
@@ -133,14 +147,13 @@ func apply_stall_sellers(places: Array) -> void:
 		var slot := int(row.get("slot",0));var species := str(row.get("species", ""))
 		if slot<1 or slot>12 or seen.has(slot) or species not in SPECIES or species=="Pigeon" or row.get("rental_id")==null:continue
 		seen[slot]=true
-		var side := -1 if slot<=6 else 1
-		var z: float=[-17.0,-12.0,-7.0,7.0,12.0,17.0][(slot-1)%6]
-		var at := ground(Vector3(side*7.65,0,z))
+		var layout: Dictionary=world.stall_layout(slot)
+		var at := ground(layout.seller)
 		for ambient in residents:
 			if ambient.route.is_empty() and ambient.node.position.distance_to(at)<0.5:ambient.covered_by_seller=true
 		var actor := figure(species,at,0.49 if species=="Bunny" else 0.53 if species=="Yeti" else 0.48,slot%5)
-		actor.node.rotation.y=-side*PI/2
-		actor.merge({"route":[],"wait":0.0,"cooldown":1.0,"gesture":0.0,"home_yaw":-side*PI/2,"speed":0.0})
+		actor.node.rotation.y=layout.yaw
+		actor.merge({"route":[],"wait":0.0,"cooldown":1.0,"gesture":0.0,"home_yaw":layout.yaw,"speed":0.0})
 		hired_sellers.append(actor)
 	update_activity()
 

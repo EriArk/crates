@@ -20,6 +20,8 @@ var fov_label: Label
 var sound: CheckButton
 var reconnect: Button
 var quit_button: Button
+var compass: Label
+var touch_actions: HBoxContainer
 var nearest: Dictionary = {}
 var modal := false
 var smoke_mode := false
@@ -59,28 +61,40 @@ func _ready() -> void:
 	var root := Control.new();root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);root.mouse_filter=Control.MOUSE_FILTER_IGNORE;hud.add_child(root)
 	root.add_child(touch_pad);touch_pad.move_changed.connect(func(value: Vector2):visitor.touch_move=value)
 	touch_pad.look_changed.connect(visitor.look)
-	var heading_frame := PanelContainer.new();root.add_child(heading_frame);heading_frame.position=Vector2(14,14);heading_frame.add_theme_stylebox_override("panel",backdrop());heading_frame.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	var heading := VBoxContainer.new();heading_frame.add_child(heading);heading.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	heading.add_child(label("OFFICIAL BAZAAR",12,Color("f4cf8b")))
-	district_label=label("Festival Park",24);heading.add_child(district_label)
-	identity.add_theme_font_size_override("font_size",12);identity.add_theme_color_override("font_color",Color("e6eadb"));heading.add_child(identity)
-	if identity.text.is_empty():identity.text="Guest appearance · TrainerOS is not connected"
-	var badge := label("EARLY BUILD · LOCAL WALKTHROUGH",12,Color("f7d494"))
-	root.add_child(badge);badge.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT);badge.offset_left=-330;badge.offset_right=-24;badge.offset_top=23;badge.offset_bottom=42
-	var pause_button := button("Menu  ☰",func():show_menu());root.add_child(pause_button)
-	pause_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT);pause_button.offset_left=-150;pause_button.offset_right=-24;pause_button.offset_top=48;pause_button.offset_bottom=90
-	var footer := PanelContainer.new();root.add_child(footer);footer.add_theme_stylebox_override("panel",backdrop())
-	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);footer.offset_left=14;footer.offset_right=-14;footer.offset_top=-43;footer.offset_bottom=-10;footer.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	var controls := label("WASD / LS Move · Shift / LB Run · RMB / RS Look · E / A Inspect · Esc / B Menu",13)
-	footer.add_child(controls);controls.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;controls.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	# Small map/location corner; the view and contextual interaction stay central.
+	var location := VBoxContainer.new();root.add_child(location);location.position=Vector2(22,18)
+	location.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	district_label=label("Festival Park",20);location.add_child(district_label)
+	location.add_child(label("BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab")))
+	compass=label("N",13);root.add_child(compass)
+	compass.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP);compass.position.y=18
+	compass.name="Compass";compass.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var pause_button := button("☰",func():show_menu());root.add_child(pause_button)
+	pause_button.tooltip_text="Menu · Esc / B"
+	pause_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT);pause_button.offset_left=-62;pause_button.offset_right=-18;pause_button.offset_top=18;pause_button.offset_bottom=58
+	var hint := label("Shift / LB  Sprint     C / R3  Crouch     Space / X  Jump",11,Color("eee4ce"))
+	root.add_child(hint);hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT);hint.offset_left=22;hint.offset_top=-30;hint.offset_bottom=-12
+	hint.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	# Touch actions share the same motor flags as physical input. Show on touch,
+	# hide on pad/keyboard; no permanent wall of desktop controls over the world.
+	touch_actions=HBoxContainer.new();touch_actions.name="TouchActions";root.add_child(touch_actions)
+	touch_actions.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT);touch_actions.offset_left=-270;touch_actions.offset_right=-22;touch_actions.offset_top=-72;touch_actions.offset_bottom=-26
+	var sprint := button("Run",func():visitor.touch_sprint=not visitor.touch_sprint)
+	touch_actions.add_child(sprint)
+	touch_actions.add_child(button("Crouch",func():visitor.crouch_toggle=not visitor.crouch_toggle))
+	touch_actions.add_child(button("Jump",func():visitor.jump_requested=true))
+	touch_actions.hide()
+	var hint_timer := get_tree().create_timer(12.0)
+	hint_timer.timeout.connect(func():if is_instance_valid(hint):hint.hide())
 	dress_button(prompt);prompt.add_theme_font_size_override("font_size",17);prompt.text="Inspect";prompt.custom_minimum_size=Vector2(230,44);root.add_child(prompt)
-	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM);prompt.offset_left=-150;prompt.offset_right=150;prompt.offset_top=-94;prompt.offset_bottom=-50
+	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM);prompt.offset_left=-150;prompt.offset_right=150;prompt.offset_top=-76;prompt.offset_bottom=-32
 	prompt.pressed.connect(inspect_spot)
 	root.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER);panel.offset_left=-215;panel.offset_right=215;panel.offset_top=-202;panel.offset_bottom=202
 	var style := StyleBoxFlat.new();style.bg_color=Color("183e42");style.border_color=Color("bba374");style.set_border_width_all(2);style.set_corner_radius_all(14)
 	style.content_margin_left=24;style.content_margin_right=24;style.content_margin_top=20;style.content_margin_bottom=20;panel.add_theme_stylebox_override("panel",style)
 	var menu := VBoxContainer.new();menu.add_theme_constant_override("separation",8);panel.add_child(menu)
 	menu_title.add_theme_font_size_override("font_size",25);menu.add_child(menu_title)
+	identity.add_theme_font_size_override("font_size",12);menu.add_child(identity)
 	menu_body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;menu_body.custom_minimum_size=Vector2(382,58);menu.add_child(menu_body)
 	var camera_row := HBoxContainer.new();camera_row.add_theme_constant_override("separation",12);menu.add_child(camera_row)
 	fov_label=label("Field of view · 90°",14);fov_label.custom_minimum_size.x=146;camera_row.add_child(fov_label)
@@ -108,8 +122,9 @@ func _ready() -> void:
 		if method=="bazaar.world":population.apply_stall_sellers([]))
 	if smoke_mode:call_deferred("run_smoke")
 
-func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Multiplayer and trading are still in development.") -> void:
+func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Alt / light LS: walk · Shift / LB: sprint · C / R3: crouch · Space / X: jump. Trading is in development.") -> void:
 	if services.visible:services.hide();services.destroy_preview()
+	touch_actions.hide()
 	modal=true;population.set_paused(true);square.life.set_sound(sound.button_pressed,true);visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
@@ -127,6 +142,7 @@ func inspect_spot() -> void:
 	else:show_menu(nearest.title,nearest.detail)
 
 func _process(_delta: float) -> void:
+	if compass!=null:compass.text=["N","W","S","E"][posmod(roundi(visitor.yaw/(PI/2)),4)]
 	district_label.text=square.district(visitor.position)
 	if modal:return
 	nearest={};var distance := 2.1
@@ -137,6 +153,9 @@ func _process(_delta: float) -> void:
 	if prompt.visible:prompt.text="E / A  ·  "+str(nearest.title)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if touch_actions!=null:
+		if event is InputEventScreenTouch:touch_actions.visible=not modal
+		elif event is InputEventKey or event is InputEventJoypadButton:touch_actions.hide()
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode==KEY_ESCAPE:
 			if modal:hide_menu()

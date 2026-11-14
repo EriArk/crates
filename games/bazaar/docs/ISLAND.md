@@ -107,7 +107,7 @@ or publication in the Crates catalogue.
 ## Third-party assets
 
 - [Quaternius Universal Animation Library](https://quaternius.itch.io/universal-animation-library):
-  `assets/animations/provenance.json`, `licenses/Quaternius-UAL-CC0.txt`.
+  `addons/traineros/animations/provenance.json`, `licenses/Quaternius-UAL-CC0.txt`.
 - [Kenney Nature Kit](https://kenney.nl/assets/nature-kit): flowers, trees, bushes and
   grass; `assets/nature/provenance.json`, `licenses/Kenney-Nature-CC0.txt`.
 - [Kenney Fantasy Town Kit](https://kenney.nl/assets/fantasy-town-kit): retained

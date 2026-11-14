@@ -61,7 +61,7 @@ func run() -> void:
 	scene.visitor.position=Vector3(230,0,-1.65);scene._process(0);scene.inspect_spot()
 	check(menu.service=="tailor" and menu.visible,"THREAD opens clothing interface")
 	await capture("thread-clothing");scene.hide_menu()
-	scene.visitor.position=Vector3(-5.9,0,-12);scene._process(0);scene.inspect_spot()
+	scene.visitor.position=scene.square.stall_layout(2).approach;scene._process(0);scene.inspect_spot()
 	check(menu.service=="stall" and menu.selected==2,"Stall interaction opens its own goods")
 	check(not menu.goods_confirmed,"Unavailable goods are not a confirmed empty shop")
 	await capture("stall-goods")

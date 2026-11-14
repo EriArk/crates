@@ -42,7 +42,7 @@ func run(world: Node3D) -> void:
 		window.size=viewport_size;await get_tree().process_frame;await frames(2)
 		for angle in [75.0,90.0,105.0]:
 			world.fov_slider.value=angle;await frames(2)
-			var head: Vector2=world.visitor.camera.unproject_position(world.visitor.position+Vector3(0,0.95,0))
+			var head: Vector2=world.visitor.camera.unproject_position(world.visitor.position+Vector3(0,1.75,0))
 			var feet: Vector2=world.visitor.camera.unproject_position(world.visitor.position+Vector3(0,0.03,0))
 			var viewport: Rect2=get_viewport().get_visible_rect()
 			check(viewport.has_point(head) and viewport.has_point(feet),"Character fits FOV/aspect: "+str(viewport_size)+" / "+str(angle))
@@ -54,7 +54,7 @@ func run(world: Node3D) -> void:
 	check(world.visitor.arm.get_hit_length()<1.25,"Camera retracts before a wall")
 	check(world.visitor.camera.global_position.z<wall.global_position.z-0.1,"Camera stays on visitor side of wall")
 	wall.queue_free();await frames(5)
-	check(world.visitor.arm.get_hit_length()>2.8,"Camera returns after obstruction clears")
+	check(world.visitor.arm.get_hit_length()>5.0,"Camera returns after obstruction clears")
 	await capture("arrival")
 	var start: Vector3=world.visitor.position
 	key(KEY_W,true);await frames(240);key(KEY_W,false);await frames(12)
@@ -99,7 +99,7 @@ func run(world: Node3D) -> void:
 				var thigh: int=motion.target.find_bone("thigh.L")
 				var pose: Quaternion=motion.target.get_bone_pose_rotation(thigh)
 				world.visitor.touch_move=Vector2(0,-1);await frames(22)
-				check(motion.current=="Walk","Real walk clip selected")
+				check(motion.current=="Jog_Fwd","Default full input selects the run clip")
 				check(pose.angle_to(motion.target.get_bone_pose_rotation(thigh))>0.04,"Retargeted leg moves")
 				world.visitor.touch_move=Vector2.ZERO
 				await capture("walk")

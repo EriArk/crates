@@ -110,11 +110,11 @@ func lantern(at: Vector3, color: String, parent: Node3D = self) -> void:
 	mesh.material_override=mat;parent.add_child(mesh);mesh.position=at
 
 func festival_line(z: float) -> void:
-	for side in [-1,1]:block(Vector3(side*9,2.6,z),Vector3(0.13,5.2,0.13),"715444")
+	for side in [-1,1]:block(Vector3(side*6.8,1.8,z),Vector3(0.13,3.6,0.13),"715444")
 	# Strung paper lanterns with a low central sag, well above a visitor's head.
-	for i in 13:
-		var x := -9.0+i*1.5;var y := 4.5+0.6*pow(x/9.0,2)
-		block(Vector3(x,y,z),Vector3(1.55,0.025,0.025),"645845",false)
+	for i in 11:
+		var x := -6.8+i*1.36;var y := 3.15+0.4*pow(x/6.8,2)
+		block(Vector3(x,y,z),Vector3(1.40,0.025,0.025),"645845",false)
 		lantern(Vector3(x,y-0.36,z),"f1c88b" if i%2==0 else "d67e64")
 
 func terrain() -> void:
@@ -127,21 +127,33 @@ func fountain() -> void:
 	var water := MeshInstance3D.new();var disk := CylinderMesh.new();disk.top_radius=2.35;disk.bottom_radius=2.35;disk.height=0.02
 	water.mesh=disk;water.material_override=life.water_material();water.position.y=0.43;add_child(water);add_child(life)
 
+# Slot IDs survive layout changes: props, interaction and sellers share one map.
+func stall_layout(slot: int) -> Dictionary:
+	assert(slot>=1 and slot<=12)
+	var side := -1 if slot<=6 else 1
+	var z: float=[-13.6,-10.55,-7.5,7.5,10.55,13.6][(slot-1)%6]
+	return {"slot":slot,"side":side,"position":Vector3(side*5.7,0.025,z),
+		"seller":Vector3(side*6.15,0,z),"approach":Vector3(side*4.15,0,z),"yaw":-side*PI/2}
+
 func park_market() -> void:
-	path(Vector3.ZERO,Vector3(18,0,44));path(Vector3(0,0,0),Vector3(28,0,17))
+	path(Vector3.ZERO,Vector3(14,0,44));path(Vector3(0,0,0),Vector3(28,0,17))
 	fountain()
-	# Two parallel festival rows face a generous central promenade. The fountain
-	# interrupts the rows, preserving cross routes. No houses ring this park.
+	# Closely spaced stalls face the promenade, with an open fountain court
+	# separating two groups. Cross routes reach the park, town and rest pockets.
+	for slot in range(1,13):
+		var layout := stall_layout(slot)
+		var side: int=layout.side;var at: Vector3=layout.position
+		var stall := model("stall-red" if slot%3==0 else "stall-green",at,Vector3(2.8,1.8,1.8),layout.yaw)
+		collider(stall,Vector3(0,0.48,0),Vector3(1.0,0.96,0.85))
+		destinations.append({"title":"Stall %02d"%slot,"position":layout.approach,"service":"stall","slot":slot})
+		# A fabric counter skirt and a readable front valance unify each row.
+		var front := Vector3(side*4.79,0,at.z)
+		var skirt := block(front+Vector3(0,0.52,0),Vector3(0.035,0.56,2.65),"a76e5d" if slot%3==0 else "507f73",false)
+		var banner := block(front+Vector3(0,1.81,0),Vector3(0.035,0.26,2.65),"a76e5d" if slot%3==0 else "507f73",false)
+		skirt.name="CounterSkirt";banner.name="StallValance"
+		text3d("%02d  ·  MARKET"%slot,front+Vector3(-side*0.03,1.81,0),0.004,self,layout.yaw)
+		lantern(front+Vector3(0,2.22,1.06),"f1cc8d")
 	for side in [-1,1]:
-		for stall_index in 6:
-			var z: float=[-17.0,-12.0,-7.0,7.0,12.0,17.0][stall_index]
-			var stall := model("stall-red" if int(z)%2==0 else "stall-green",Vector3(side*7.2,0.025,z),Vector3.ONE*1.8,-side*PI/2)
-			collider(stall,Vector3(0,0.48,0),Vector3(1.0,0.96,0.85))
-			# A small cloth pennant, animated independently from the rigid stall.
-			var flag := block(Vector3(side*8.4,2.1,z),Vector3(0.5,0.7,0.025),"e2b96c",false);life.cloth.append(flag)
-			var slot := stall_index+1+(0 if side<0 else 6)
-			destinations.append({"title":"Stall %02d"%slot,"position":Vector3(side*5.9,0,z),"service":"stall","slot":slot})
-			text3d("%02d"%slot,Vector3(side*6.25,1.8,z),0.005,self,-side*PI/2)
 		for z in [-22.0,-10.0,10.0,22.0]:
 			tree(Vector3(side*16,0,z),3.2)
 			flowerbed(Vector3(side*12,0,z),Vector2(3,2))
@@ -151,7 +163,7 @@ func park_market() -> void:
 		for z in [-4.5,4.5]:
 			model("stall-bench",Vector3(side*11,0,z),Vector3.ONE*1.7,side*PI/2)
 			model("lantern",Vector3(side*12,0,z+2),Vector3.ONE*1.8)
-	for z in [-20.0,-10.0,10.0,20.0]:festival_line(z)
+	for z in [-17.0,17.0]:festival_line(z)
 	spot("Festival stalls","An open-air market in the park. Trading comes later; no items or Sparks change.",Vector3(-3.8,0,-4.8))
 	spot("Island paths","East: Stall Office and shops. West: gardens. South: harbor.",Vector3(3.8,0,5.8))
 

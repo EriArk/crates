@@ -61,7 +61,7 @@ func run() -> void:
 	scene.visitor.position=Vector3(250,0,1);pop.update_activity()
 	check(not pop.residents[0].active and not pop.residents[0].player.active and not pop.residents[0].node.visible,"Distant park residents sleep indoors")
 	check(pop.residents[8].active,"Current shop merchant stays active")
-	scene.visitor.position=Vector3(-5.9,0,-12);scene._process(0)
+	scene.visitor.position=scene.square.stall_layout(2).approach;scene._process(0)
 	check(scene.nearest.get("service")=="stall","Merchant interaction reachable from the aisle")
 	scene.inspect_spot()
 	check(scene.modal and scene.services.visible and scene.services.page=="goods","Stall opens the goods service")

@@ -1,0 +1,91 @@
+{
+  "clips": {
+    "Crouch_Fwd": {
+      "max_arm_direction_error_degrees": 0.0000432300650331282,
+      "max_shoulder_helper_error_degrees": 0.0884693258953794,
+      "max_support_foot_error": 0.0000000372529029846191,
+      "minimum_wrist_lateral_metres": 0.166756957769394,
+      "pelvis_height_range": [
+        0.200494319200516,
+        0.246915653347969
+      ],
+      "playback_rate": 1.72536182403564,
+      "sampled_frames": 360
+    },
+    "Crouch_Idle": {
+      "max_arm_direction_error_degrees": 0.000045692839054966,
+      "max_shoulder_helper_error_degrees": 0.0884693258953794,
+      "max_support_foot_error": 0.0000000372529029846191,
+      "minimum_wrist_lateral_metres": 0.170561924576759,
+      "pelvis_height_range": [
+        0.227131605148315,
+        0.231080368161201
+      ],
+      "playback_rate": 1.0,
+      "sampled_frames": 360
+    },
+    "Idle": {
+      "max_arm_direction_error_degrees": 0.0000449449110116255,
+      "max_shoulder_helper_error_degrees": 0.0791293690406109,
+      "max_support_foot_error": 0.000000044703483581543,
+      "minimum_wrist_lateral_metres": 0.141590610146523,
+      "pelvis_height_range": [
+        0.409843623638153,
+        0.414888173341751
+      ],
+      "playback_rate": 1.0,
+      "sampled_frames": 360
+    },
+    "Jog_Fwd": {
+      "max_arm_direction_error_degrees": 0.0000478303802417411,
+      "max_shoulder_helper_error_degrees": 0.0884693258953794,
+      "max_support_foot_error": 0.000000044703483581543,
+      "minimum_wrist_lateral_metres": 0.184791803359985,
+      "pelvis_height_range": [
+        0.291811883449554,
+        0.363001376390457
+      ],
+      "playback_rate": 1.04932272434235,
+      "sampled_frames": 360
+    },
+    "Jump": {
+      "max_arm_direction_error_degrees": 0.0000428255921131759,
+      "max_shoulder_helper_error_degrees": 0.0884693258953794,
+      "max_support_foot_error": 0.0393829494714737,
+      "minimum_wrist_lateral_metres": 0.303789645433426,
+      "pelvis_height_range": [
+        0.411752253770828,
+        0.412088990211487
+      ],
+      "playback_rate": 1.0,
+      "sampled_frames": 360
+    },
+    "Sprint": {
+      "max_arm_direction_error_degrees": 0.0000537148407898848,
+      "max_shoulder_helper_error_degrees": 0.0884693258953794,
+      "max_support_foot_error": 0.000000044703483581543,
+      "minimum_wrist_lateral_metres": 0.118768036365509,
+      "pelvis_height_range": [
+        0.322873383760452,
+        0.404641479253769
+      ],
+      "playback_rate": 0.96541029214859,
+      "sampled_frames": 360
+    },
+    "Walk": {
+      "max_arm_direction_error_degrees": 0.0000385387979703999,
+      "max_shoulder_helper_error_degrees": 0.0791293690406109,
+      "max_support_foot_error": 0.000000044703483581543,
+      "minimum_wrist_lateral_metres": 0.14260046184063,
+      "pelvis_height_range": [
+        0.402010560035706,
+        0.434742003679276
+      ],
+      "playback_rate": 1.92660462856293,
+      "sampled_frames": 360
+    }
+  },
+  "failures": [],
+  "legacy": false,
+  "success": true
+}

@@ -1,5 +1,9 @@
 # Bazaar 0.0.4 — character deformation repair
 
+**Superseded implementation location:** 0.0.8 moves this repair into the shared
+SDK and adds calibrated locomotion/crouch. See [movement and market](MOVEMENT_AND_MARKET.md).
+The historical measurements below describe 0.0.4, not the new cadence.
+
 14 November 2026. The owner correctly identified broken anatomy in the 0.0.2/0.0.3
 screenshots. Previous tests proved that animation played and a leg moved; they did
 **not** establish correct deformation. That earlier animation acceptance is withdrawn.

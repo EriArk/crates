@@ -5,5 +5,17 @@
   "files": {
     "avatar_client.gd": "d5684fb44e41114cce97b85edca4a4d58c5f2d742d32eb48eff468acbc5c158f",
     "avatar_presenter.gd": "afecb2bbc19ec1d9ea9afc11aa324b1b4f480b3deefa75a741e96e4c72279312"
+  },
+  "movement": {
+    "repository": "https://github.com/EriArk/OctoFox-OS",
+    "commit": "94b57480f467731b5a045a169f3cad19a3af33e1",
+    "upstream": "sdk/godot",
+    "files": {
+      "avatar_locomotion.gd": "8fca7c2a07367b223626c69e27900a263e10b06656e2b8534e894ce59dfa2bba",
+      "character_motor.gd": "daadc964fb1b75456482eb222043431ca23cdd1e4998c639c6e5719d53d0d0ee",
+      "animations/UAL1_Standard.glb": "69591853d817488edaa8fd9bf8fc1d821eaeaf789f8627b3cd23b41c4ed67997",
+      "animations/provenance.json": "d8e73d017fce072f01ccccaf719e3f1ffefc80d3cc16f7d4f4651316a83e970f",
+      "animations/LICENSE.txt": "6d01f55c6e4c49a2c9963e147e561945ae2c83958c8ca667d90a6bffdbfac061"
+    }
   }
 }

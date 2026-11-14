@@ -74,7 +74,7 @@ The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
   CC0; [animal provenance](assets/residents/provenance.json), [human provenance](assets/residents/humans-provenance.json).
   Original rigs and animations are used directly, without avatar retargeting.
 - Nature assets: [Kenney Nature Kit](https://kenney.nl/assets/nature-kit), [provenance](assets/nature/provenance.json).
-- Locomotion: [Quaternius](https://quaternius.itch.io/universal-animation-library), [provenance](assets/animations/provenance.json).
+- Locomotion: [Quaternius](https://quaternius.itch.io/universal-animation-library), [provenance](addons/traineros/animations/provenance.json).
 - Environment models and palette: [Kenney](https://kenney.nl/assets/fantasy-town-kit),
   [original CC0 notice](licenses/Kenney-Fantasy-Town-CC0.txt),
   [source archive and file hashes](assets/town/provenance.json).
@@ -85,3 +85,5 @@ The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
   [source commit/hashes](addons/traineros/SOURCE.json). Update both together.
 - Generated import caches, local endpoints, test descriptors and binary builds
   are not source assets and are not committed.
+
+[0.0.8 shared movement, proportions and festival layout](docs/MOVEMENT_AND_MARKET.md).

@@ -1,5 +1,14 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.8 source
+
+Bazaar consumes shared SDK walking/running/sprinting/crouching/jumping. Corrected
+visitor/NPC proportions, compacted the HUD and arranged the existing twelve
+stalls into festival rows with side seating. Rental slot IDs and spending gates
+are unchanged. Host checks and visual review passed; device delivery is recorded
+separately in [movement evidence](games/bazaar/docs/movement-evidence/README.md).
+
+
 ## 14 November 2026 — corrected handheld entry
 
 Use **Online → Bazaar → Official Bazaar** on both handhelds. Shell sequence 43

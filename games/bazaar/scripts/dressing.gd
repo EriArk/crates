@@ -43,7 +43,7 @@ func park() -> void:
 		for z in [-15.0,15.0]:
 			world.model("hedge",Vector3(side*17,0,z),Vector3(2.8,1.3,1.6))
 		# Gravel edge bands keep the promenade readable without blocking movement.
-		piece("box",Vector3(side*8.85,0.032,0),Vector3(0.30,0.025,44),"bcb49a")
+		piece("box",Vector3(side*6.85,0.032,0),Vector3(0.30,0.025,44),"bcb49a")
 	piece("box",Vector3(0,4.05,23),Vector3(10.2,0.22,0.3),"886b48")
 	piece("box",Vector3(0,3.95,23.18),Vector3(3.9,0.65,0.12),"305950")
 	world.text3d("FESTIVAL PARK",Vector3(0,3.95,23.26),0.009)
@@ -52,11 +52,19 @@ func park() -> void:
 	for i in 8:
 		var a := i*TAU/8
 		piece("box",Vector3(sin(a)*4.5,0.036,cos(a)*4.5),Vector3(0.26,0.025,0.55),"b6c7b1",-a)
-	# Empty crates and folded cloth are decoration, never saleable inventory.
+	# Work/storage belongs behind the counter, never in the walking lane.
+	# Display cloth is decoration, not advertised inventory.
+	for slot in range(1,13):
+		var layout: Dictionary=world.stall_layout(slot)
+		var at: Vector3=layout.position
+		crate(Vector3(layout.side*7.1,0,at.z+0.65))
+		for n in 3:piece("box",Vector3(at.x,0.82+n*0.07,at.z),Vector3(0.38,0.06,0.65),["e1c397","779f91","b87565"][n])
+	# Rest pockets off the cross promenade, not in front of sellers.
 	for side in [-1,1]:
-		for z in [-17.0,-7.0,7.0,17.0]:
-			crate(Vector3(side*8.1,0,z+1.0))
-			for n in 3:piece("box",Vector3(side*7.2,0.82+n*0.07,z),Vector3(0.38,0.06,0.46),["e1c397","779f91","b87565"][n])
+		for z in [-2.0,2.0]:
+			var at := Vector3(side*11,0,z)
+			table(at)
+			for x in [-1.2,1.2]:world.model("stall-stool",at+Vector3(x,0,0),Vector3.ONE*1.6)
 
 func storefront(at: Vector3, yaw: float, index: int) -> void:
 	var palette := ["537e70","ad766c","687c92","b29350"]
