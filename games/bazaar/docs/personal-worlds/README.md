@@ -49,5 +49,40 @@ across the empty pad, running, pause, fall recovery, beach support / station edg
 The official walkthrough regression also passed. Render checks inspect arrival,
 shore/edge, exterior overview and catalogue covers in Compatibility/OpenGL.
 The resulting catalogue images show shipped scenery rather than concept art.
-Host render timings are not handheld performance acceptance. Delivery evidence
-will record the actual installed versions and device checks separately.
+Host render timings are not handheld performance acceptance.
+
+## Installed delivery
+
+**Bazaar 0.0.10 / Software 47** is installed on **Flip 2 and Odin 2**. Game source
+`029ff24e4a5affee524287e3bfc5be04be37fa75` and shell source
+`a1eb3c6829e380793231c02473cac28003b9aaf1` remain on their separate branches;
+no merge or public release. [Package](evidence/package.json).
+
+Both devices passed observed card entry, profile avatar loading, movement,
+menu and normal Leave for island, station and official Festival Park. Catalogue
+selection/scroll returned correctly; game logs had no errors/warnings. Verification
+checked running binary hashes, database integrity and unchanged profile counts /
+game settings. [Flip](evidence/flip-verification.json),
+[Odin](evidence/odin-verification.json). Input was remote keyboard/pointer;
+physical controller/touch and sustained performance are still owner acceptance.
+
+Task staging and superseded game 0.0.8 / Software 45 were cleaned after checking
+live references. **Game 0.0.9 and Software 46** remain as verified rollback.
+[Flip cleanup](evidence/flip-cleanup.json), [Odin cleanup](evidence/odin-cleanup.json).
+Private backups and personal data remain on each device. No sleep/lid tests.
+
+[Island physics](evidence/island-checks.json),
+[station physics](evidence/station-checks.json),
+[official regression](evidence/official-checks.json) all passed. All three exports
+completed; normal exported x86-64 startup passed for both personal variants.
+
+### Actual world overviews
+
+These renders contain no personal avatar or account data.
+
+![Mika's empty beach island](evidence/island.png)
+
+![Ren's orbital station under glass](evidence/station.png)
+
+Paid facility placement, provisioned player ownership, commerce and peer-hosted
+multiplayer are not part of these local frames.

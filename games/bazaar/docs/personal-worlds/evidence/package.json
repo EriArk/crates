@@ -1,0 +1,24 @@
+{
+  "source": "029ff24e4a5affee524287e3bfc5be04be37fa75",
+  "version": "0.0.10",
+  "files": {
+    "Linux-ARM64": {
+      "archive": "Bazaar-0.0.10-Linux-ARM64.zip",
+      "archiveSha256": "04ac2c1eb37206f7f3ef2a632fbdc48f1a22876664f591b7f5ec7eeb872e79ac",
+      "binarySha256": "8a6f81f127d26c46d8f774284ce9bf6829a719e7877388169bd5a2e54b6b99a4",
+      "bytes": 33844185
+    },
+    "Linux-x86_64": {
+      "archive": "Bazaar-0.0.10-Linux-x86_64.zip",
+      "archiveSha256": "36b0526097fc47d6c298e78dcbccb074c8f6a99e9977d9e90269916ea203fd3c",
+      "binarySha256": "f551e0ba6fbcbd49725f5ae17c42e3059d7fa785968caa1fba2685fde01de0a1",
+      "bytes": 34245118
+    },
+    "Windows": {
+      "archive": "Bazaar-0.0.10-Windows.zip",
+      "archiveSha256": "9754f5abef7bde363d7cc0c30a4b9b425fe29097d40cf1f865e5c629041554b0",
+      "binarySha256": "0bf3a2af9c0a3305faaa9158aceb03390932cb4a1f618daf71e38a32fe78ec7a",
+      "bytes": 44160574
+    }
+  }
+}

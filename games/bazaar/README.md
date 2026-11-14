@@ -1,8 +1,10 @@
 # Bazaar 0.0.10 — personal starting worlds
 
-**Previous device delivery:** 0.0.9 includes the shared SDK gait fixes and
-20% outer left-stick zone. That game-only update preserved shell Software 45; physical-stick feel
-remains owner acceptance. [Checks and delivery](docs/response-evidence/README.md).
+**Installed on Flip 2 and Odin 2:** Bazaar 0.0.10 with shell Software 47.
+Both personal frames launch from Online → Bazaar through their Mika/Ren cards.
+All three worlds passed remote entry, movement and normal return. SDK gait fixes
+and the 20% outer stick zone are retained; physical controls remain owner
+acceptance. [Checks and delivery](docs/personal-worlds/README.md).
 
 Version 0.0.10 adds [two empty personal starting worlds](docs/personal-worlds/README.md):
 Mika’s sea island and Ren’s orbital station under glass. The central square stays
