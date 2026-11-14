@@ -43,7 +43,10 @@ stalls; fabric valances, counter skirts and lanterns make the front obvious.
 Homes remain in the separate town district.
 
 `Square.stall_layout(slot)` owns each physical slot's prop, seller and approach
-positions. Rental IDs and server slot numbers do not change with scenery moves.
+positions. A four-sided model inspection confirmed Kenney’s counter faces +X,
+whereas the avatar/NPC front is +Z. Prop yaw and seller yaw are therefore distinct;
+the earlier shared yaw incorrectly presented the side post to the aisle.
+Rental IDs and server slot numbers do not change with scenery moves.
 NPC routes follow the clear aisle. The catalogue cover is an actual render of
 this scene; no web photograph is bundled. The screenshots use a synthetic avatar,
 not a personal profile. Decorative folded cloth is not saleable inventory.

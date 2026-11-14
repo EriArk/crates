@@ -128,12 +128,13 @@ func fountain() -> void:
 	water.mesh=disk;water.material_override=life.water_material();water.position.y=0.43;add_child(water);add_child(life)
 
 # Slot IDs survive layout changes: props, interaction and sellers share one map.
+# Kenney counter faces +X; SDK/NPC front is +Z. Their local yaws must differ.
 func stall_layout(slot: int) -> Dictionary:
 	assert(slot>=1 and slot<=12)
 	var side := -1 if slot<=6 else 1
 	var z: float=[-13.6,-10.55,-7.5,7.5,10.55,13.6][(slot-1)%6]
 	return {"slot":slot,"side":side,"position":Vector3(side*5.7,0.025,z),
-		"seller":Vector3(side*6.15,0,z),"approach":Vector3(side*4.15,0,z),"yaw":-side*PI/2}
+		"seller":Vector3(side*6.15,0,z),"approach":Vector3(side*4.15,0,z),"yaw":-side*PI/2,"model_yaw":0.0 if side<0 else PI}
 
 func park_market() -> void:
 	path(Vector3.ZERO,Vector3(14,0,44));path(Vector3(0,0,0),Vector3(28,0,17))
@@ -143,8 +144,8 @@ func park_market() -> void:
 	for slot in range(1,13):
 		var layout := stall_layout(slot)
 		var side: int=layout.side;var at: Vector3=layout.position
-		var stall := model("stall-red" if slot%3==0 else "stall-green",at,Vector3(2.8,1.8,1.8),layout.yaw)
-		collider(stall,Vector3(0,0.48,0),Vector3(1.0,0.96,0.85))
+		var stall := model("stall-red" if slot%3==0 else "stall-green",at,Vector3(1.8,1.8,2.8),layout.model_yaw)
+		collider(stall,Vector3(0,0.48,0),Vector3(0.85,0.96,1.0))
 		destinations.append({"title":"Stall %02d"%slot,"position":layout.approach,"service":"stall","slot":slot})
 		# A fabric counter skirt and a readable front valance unify each row.
 		var front := Vector3(side*4.79,0,at.z)

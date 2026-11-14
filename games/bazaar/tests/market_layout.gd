@@ -15,6 +15,9 @@ func run() -> void:
 	var positions: Array[Vector3]=[]
 	for slot in range(1,13):
 		var layout: Dictionary=scene.square.stall_layout(slot)
+		var facing := (layout.approach-layout.position) as Vector3;facing.y=0;facing=facing.normalized()
+		check(Vector3.RIGHT.rotated(Vector3.UP,layout.model_yaw).dot(facing)>0.99,"Kenney counter front faces the aisle: "+str(slot))
+		check(Vector3.BACK.rotated(Vector3.UP,layout.yaw).dot(facing)>0.99,"Seller faces the same aisle: "+str(slot))
 		scene.visitor.position=layout.approach;scene._process(0)
 		check(scene.nearest.get("slot")==slot,"Approach reaches correct persistent slot: "+str(slot))
 		query.transform=Transform3D(Basis.IDENTITY,layout.approach+Vector3(0,0.94,0))
