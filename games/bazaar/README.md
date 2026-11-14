@@ -1,4 +1,4 @@
-# Bazaar 0.0.3 — island walkthrough
+# Bazaar 0.0.4 — island walkthrough
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -9,6 +9,8 @@ lightweight approach as Pocket Golf. Three signed shops have enterable preview r
 
 The existing TrainerOS avatar SDK supplies the profile character. CC0 Quaternius
 idle/walk/jog animations are retargeted in the game; the donor model stays hidden.
+Version 0.0.4 corrects the SDK arms-down / donor T-pose mismatch, shoulder helpers
+and finger motion. [Deformation review and before/after](docs/ANIMATION_REPAIR.md).
 Missing host/assets use a labelled guest capsule. Revocation or disconnection
 removes profile identity and its retargeter. No personal model is bundled.
 No trading, multiplayer, purchases or Sparks spending are enabled.

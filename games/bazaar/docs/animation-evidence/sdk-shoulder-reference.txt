@@ -1,0 +1,25 @@
+Native SDK clip inspection, same synthetic fixture. Quaternions are local rest-relative.
+Arms_Up
+shoulder_blend.L localDelta=(-0.032056, 0.009771, -0.282565, 0.958663)
+upper_arm.L localDelta=(-0.061461, 0.018734, -0.54177, 0.838068)
+Flex
+shoulder_blend.L localDelta=(-0.010687, 0.003257, -0.094202, 0.995491)
+upper_arm.L localDelta=(-0.021277, 0.006485, -0.187553, 0.982003)
+Sit
+shoulder_blend.L localDelta=(-0.063476, -0.007987, -0.035353, 0.997325)
+upper_arm.L localDelta=(-0.126613, -0.015932, -0.070518, 0.989314)
+Squat
+shoulder_blend.L localDelta=(-0.193471, -0.028965, -0.019155, 0.980491)
+upper_arm.L localDelta=(-0.379394, -0.056801, -0.037563, 0.922726)
+Step
+shoulder_blend.L localDelta=(0.067882, 0.016902, -0.007117, 0.997525)
+upper_arm.L localDelta=(0.135428, 0.03372, -0.014198, 0.990111)
+T_Pose
+shoulder_blend.L localDelta=(-0.022832, 0.006959, -0.20126, 0.979247)
+upper_arm.L localDelta=(-0.044716, 0.01363, -0.394166, 0.91785)
+Twist
+shoulder_blend.L localDelta=(-0.022832, 0.006959, -0.20126, 0.979247)
+upper_arm.L localDelta=(-0.044716, 0.01363, -0.394166, 0.91785)
+Wave
+shoulder_blend.L localDelta=(-0.022832, 0.006959, -0.20126, 0.979247)
+upper_arm.L localDelta=(-0.044716, 0.01363, -0.394166, 0.91785)

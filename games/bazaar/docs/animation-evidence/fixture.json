@@ -1,0 +1,7 @@
+{
+  "rig": "trainer-humanoid-54-v1",
+  "model_sha256": "fc64c7f837b3d141c44d99839a85ef85f5e22a5f413f0ef37e677d0b33d48cfb",
+  "kind": "existing synthetic resolved SDK avatar; not bundled",
+  "donor_sha256": "69591853d817488edaa8fd9bf8fc1d821eaeaf789f8627b3cd23b41c4ed67997",
+  "before_implementation_commit": "f70e1518f5e33a05f69351d54b564d476f0922ac"
+}

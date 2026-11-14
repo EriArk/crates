@@ -1,5 +1,8 @@
 # Bazaar 0.0.3 — polish and third-person camera
 
+Historical 0.0.3 evidence. Its avatar arm deformation was incorrect; see
+[0.0.4 animation repair](ANIMATION_REPAIR.md) for the corrected transfer and checks.
+
 14 November 2026. Separate local-world branch; no catalogue publication, merge,
 Backend update, handheld installation or enabled Sparks spending.
 

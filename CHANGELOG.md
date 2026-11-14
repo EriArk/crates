@@ -1,5 +1,13 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.4 animation deformation repair
+
+Corrected the arms-down SDK / T-pose donor mismatch that folded arms through the
+body, restored half-angle shoulder helpers and mapped fingers. Shared SDK, body
+assets, bind pose and skin weights stay unchanged. [Before/after and regression](games/bazaar/docs/ANIMATION_REPAIR.md).
+Earlier “animation plays” checks were insufficient; explicit anatomy checks now
+reject the previous implementation. Separate local branch, no merge or deployment.
+
 ## 14 November 2026 — Bazaar 0.0.3 polish and third-person camera
 
 Closer terrain-following camera, wall retraction, shorter indoor boom and local

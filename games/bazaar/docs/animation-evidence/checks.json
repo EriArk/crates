@@ -1,0 +1,25 @@
+{
+  "clips": {
+    "Idle": {
+      "max_arm_direction_error_degrees": 0.411258309768176,
+      "max_shoulder_helper_error_degrees": 0.0791293690406109,
+      "minimum_wrist_lateral_metres": 0.14138850569725,
+      "sampled_frames": 360
+    },
+    "Jog_Fwd": {
+      "max_arm_direction_error_degrees": 7.80957255642182,
+      "max_shoulder_helper_error_degrees": 0.0791293690406109,
+      "minimum_wrist_lateral_metres": 0.178795769810677,
+      "sampled_frames": 360
+    },
+    "Walk": {
+      "max_arm_direction_error_degrees": 2.70351395133022,
+      "max_shoulder_helper_error_degrees": 0.0791293690406109,
+      "minimum_wrist_lateral_metres": 0.143867552280426,
+      "sampled_frames": 360
+    }
+  },
+  "failures": [],
+  "legacy": false,
+  "success": true
+}
