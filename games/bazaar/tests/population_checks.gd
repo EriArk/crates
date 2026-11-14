@@ -10,13 +10,13 @@ func run() -> void:
 	var pop=scene.population
 	pop.set_physics_process(false);scene.visitor.set_physics_process(false)
 	await physics_frame;await physics_frame
-	check(pop.residents.size()==15 and pop.birds.size()==6,"Fixed population budget")
+	check(pop.residents.size()==18 and pop.birds.size()==6,"Fixed population budget")
 	var merchants := 0;var walkers := 0;var route_samples := 0;var humans := 0
 	var space=scene.get_world_3d().direct_space_state
 	var shape := SphereShape3D.new();shape.radius=0.34
 	var query := PhysicsShapeQueryParameters3D.new();query.shape=shape;query.exclude=[scene.visitor.get_rid()]
 	for actor in pop.residents:
-		if actor.species not in ["Bunny","Yeti"]:humans+=1
+		if actor.species in pop.HUMAN_SPECIES:humans+=1
 		for clip in (["Idle","Walk","Wave"] if actor.player.has_animation("Wave") else ["Idle","Walk"]):check(actor.player.has_animation(clip),"Own-rig clip exists: "+actor.species+" "+clip)
 		var sk: Skeleton3D=actor.visual.find_child("Skeleton3D",true,false)
 		check(sk!=null,"Imported skeleton present")
@@ -39,8 +39,8 @@ func run() -> void:
 				var point: Vector3=pop.ground(a.lerp(b,float(i)/steps))
 				query.transform=Transform3D(Basis.IDENTITY,point+Vector3(0,0.65,0));route_samples+=1
 				check(space.intersect_shape(query,1).is_empty(),"Route clear of static obstacles: "+str(point))
-	check(humans==11,"Human majority: eleven humans and four animal folk")
-	check(merchants==9 and walkers==6,"Merchant / pedestrian roles")
+	check(humans==11,"Human majority: eleven humans and seven animal folk")
+	check(merchants==11 and walkers==7,"Merchant / pedestrian roles")
 	var walker: Dictionary=pop.residents[9]
 	walker.wait=0;scene.visitor.position=walker.node.position+Vector3(0.5,0,0)
 	var before: Vector3=walker.node.position
@@ -69,7 +69,7 @@ func run() -> void:
 	scene.visitor.position=Vector3(250,0,1);pop.update_activity()
 	scene.show_menu();check(pop.ambient_paused and not pop.residents[8].player.active,"Menu pauses residents")
 	scene.hide_menu();check(not pop.ambient_paused and pop.residents[8].player.active,"Menu resumes residents")
-	var result := {"pass":failures.is_empty(),"failures":failures,"residents":15,"birds":6,"route_samples":route_samples}
+	var result := {"pass":failures.is_empty(),"failures":failures,"residents":18,"birds":6,"route_samples":route_samples}
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--output="):
 			var file := FileAccess.open(arg.trim_prefix("--output="),FileAccess.WRITE);file.store_string(JSON.stringify(result,"  "))

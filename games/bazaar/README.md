@@ -1,4 +1,4 @@
-# Bazaar 0.0.5 — island walkthrough
+# Bazaar 0.0.6 — island walkthrough
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -7,10 +7,11 @@ future districts. The park has twelve stalls, flowers, lantern strings and a
 working fountain. Hills, a grassy meadow, clouds and distance haze use the same
 lightweight approach as Pocket Golf. Three signed shops have enterable preview rooms and exits.
 
-People, rabbits and yetis now inhabit the island: nine merchants and six
-pedestrians, with humans in the majority. Six animated birds fly around the
+People, rabbits, yetis, dino, frog and bird folk inhabit the island: eleven
+merchants and seven pedestrians, with humans in the majority. Humans have five
+skin tones and dark facial details. Six animated birds fly around the
 districts and climb away from a nearby visitor. Residents greet, stroll, pause
-at corners and stop for the player. [Population and visual review](docs/POPULATION.md).
+at corners and stop for the player. [Appearances and animation checks](docs/RESIDENT_APPEARANCE.md).
 
 The existing TrainerOS avatar SDK supplies the profile character. CC0 Quaternius
 idle/walk/jog animations are retargeted in the game; the donor model stays hidden.

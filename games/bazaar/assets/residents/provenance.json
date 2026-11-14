@@ -25,6 +25,21 @@
       "original_path": "Flying/glTF/Pigeon.gltf",
       "original_sha256": "502f0530567fd912b24ba15990e4a4ccca84cf4e4f63f1d7376d73202089a763",
       "sha256": "fd9ba4011647da3d123c472931ae002d0160da8a1d1ff7b64becbf6ed8991a01"
+    },
+    "Dino.glb": {
+      "original_path": "Big/glTF/Dino.gltf",
+      "original_sha256": "d7c57a4ad6444f9c845ecdc13782a7430fcb377594a00f719cd2d37b9434b6de",
+      "sha256": "af39167b46476ae5b708914dccbe44dbd662430dcf323329c807d3c447e723b5"
+    },
+    "Frog.glb": {
+      "original_path": "Big/glTF/Frog.gltf",
+      "original_sha256": "8a73522affc7483fbd43736e95d5581ff993685312995d2c7ebb112eb7d5c004",
+      "sha256": "4b8848449ce565207380c1a99e11949b9c649ce3fa67f4b9d4ba282fdce08301"
+    },
+    "Birb.glb": {
+      "original_path": "Big/glTF/Birb.gltf",
+      "original_sha256": "d2422f23943125b397078377026172d36ccfd5a657057ffc3803be4a9e983307",
+      "sha256": "81c283c10d71b3252c31e378b8bca3450bcfb7980fac9fe599827edceb14412d"
     }
   }
 }

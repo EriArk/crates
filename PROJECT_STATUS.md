@@ -1,5 +1,15 @@
 # Crates — состояние проекта
 
+## 14 November 2026 — Bazaar 0.0.6 resident variety and animation review
+
+Added Dino, Frog and Birb from the same CC0 pack; eighteen local NPCs now include
+eleven humans and seven animal folk. Human skin/face material overrides provide
+five skin tones without changing clothes, hair or rigs. Native Wave had a sharp
+arm rise; playback is slowed to 0.65× with the full greeting duration preserved.
+[Evidence and limits](games/bazaar/docs/RESIDENT_APPEARANCE.md): thirteen model
+animation checks, 35 color combinations, route/world/OpenGL and exported Linux
+exit. No merge, device install or enabled trading; hardware FPS remains unverified.
+
 ## 14 November 2026 — Bazaar 0.0.5 residents and birds
 
 Added a mixed local population: eleven humans and four animal folk, with nine

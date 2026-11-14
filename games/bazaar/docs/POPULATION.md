@@ -1,5 +1,7 @@
 # Bazaar 0.0.5 — people, animal folk and birds
 
+Historical 0.0.5 evidence. See [0.0.6 additions and skin/animation checks](RESIDENT_APPEARANCE.md) for the current population.
+
 14 November 2026. Local standalone prototype on `codex/bazaar-world-20261114`.
 The owner's follow-up asks for a mixed population with **more humans**: this build
 has **11 humans, two rabbits and two yetis**, plus **six birds**. They are NPC

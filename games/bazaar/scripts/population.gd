@@ -2,8 +2,14 @@
 extends Node3D
 ## Bounded local scenery. Residents are NPCs, never connected-player occupancy.
 const ACTIVE_DISTANCE := 52.0
+const GREETING_SPEED := 0.65
 const VISIBLE_DISTANCE := 64.0
+const HUMAN_SPECIES := ["Casual_Female","Casual_Male","Chef_Female","Kimono_Female","OldClassy_Male","Wizard","Witch"]
+const SKIN_TONES := [Color("efc5a5"),Color("dba47d"),Color("bb805a"),Color("925d40"),Color("68432f")]
 const SPECIES := {
+	"Dino": preload("res://assets/residents/Dino.glb"),
+	"Frog": preload("res://assets/residents/Frog.glb"),
+	"Birb": preload("res://assets/residents/Birb.glb"),
 	"Casual_Female": preload("res://assets/residents/Casual_Female.glb"),
 	"Casual_Male": preload("res://assets/residents/Casual_Male.glb"),
 	"Chef_Female": preload("res://assets/residents/Chef_Female.glb"),
@@ -21,11 +27,30 @@ var residents: Array[Dictionary] = []
 var birds: Array[Dictionary] = []
 var ambient_paused := false
 var decisions := 0.0
+var complexion_materials: Dictionary = {}
 
-func figure(species: String, at: Vector3, size: float) -> Dictionary:
+func complexion(visual: Node3D, tone: int) -> void:
+	# Surface overrides belong to the instance; vendor materials, mesh/skin data,
+	# clothes and hair are untouched. A small cache bounds material variants.
+	for part in visual.find_children("*","MeshInstance3D",true,false):
+		for surface in part.mesh.get_surface_count():
+			var source = part.mesh.surface_get_material(surface)
+			if not source is StandardMaterial3D or source.resource_name not in ["Skin","Face"]:continue
+			var key := str(source.get_instance_id())+":"+str(tone)
+			if not complexion_materials.has(key):
+				var material: StandardMaterial3D=source.duplicate()
+				material.albedo_color=SKIN_TONES[tone] if source.resource_name=="Skin" else Color("29201e")
+				material.roughness=0.82
+				complexion_materials[key]=material
+			part.set_surface_override_material(surface,complexion_materials[key])
+
+func figure(species: String, at: Vector3, size: float, tone := -1) -> Dictionary:
 	var actor := Node3D.new();add_child(actor);actor.position=at
 	var visual: Node3D=SPECIES[species].instantiate();actor.add_child(visual);visual.scale=Vector3.ONE*size
 	var player: AnimationPlayer=visual.find_child("AnimationPlayer",true,false)
+	if species in HUMAN_SPECIES:
+		if tone<0:tone=residents.size()%SKIN_TONES.size()
+		complexion(visual,posmod(tone,SKIN_TONES.size()))
 	# Share the original immutable mesh/skin resources. Only per-instance playback
 	# state changes. Retargeting and SDK avatar bones are deliberately not involved.
 	for clip in ["Idle","Walk","Flying_Idle","Fast_Flying"]:
@@ -34,7 +59,7 @@ func figure(species: String, at: Vector3, size: float) -> Dictionary:
 		if part.name=="Carrot":part.hide() # The source's optional weapon prop.
 		part.visibility_range_end=VISIBLE_DISTANCE
 		part.visibility_range_end_margin=5
-	var result := {"node":actor,"visual":visual,"player":player,"active":true,"species":species,"clip":""}
+	var result := {"node":actor,"visual":visual,"player":player,"active":true,"species":species,"clip":"","tone":tone}
 	play(result,"Flying_Idle" if species=="Pigeon" else "Idle")
 	player.advance(0)
 	return result
@@ -42,8 +67,9 @@ func figure(species: String, at: Vector3, size: float) -> Dictionary:
 func play(actor: Dictionary, clip: String, speed := 1.0) -> void:
 	var player: AnimationPlayer=actor.player
 	if actor.clip!=clip:
-		actor.clip=clip;player.play(clip,0.18)
-	player.speed_scale=speed
+		var blend := 0.0 if actor.clip.is_empty() else 0.18
+		actor.clip=clip;player.play(clip,blend)
+	player.speed_scale=speed*(GREETING_SPEED if clip=="Wave" else 1.0)
 
 func merchant(species: String, at: Vector3, yaw: float, title: String, detail: String, approach: Vector3) -> void:
 	var actor := figure(species,at,0.49 if species=="Bunny" else 0.53 if species=="Yeti" else 0.48)
@@ -79,6 +105,11 @@ func setup(owner_world: Node3D, visitor: Node3D) -> void:
 	for i in 4:pedestrian(["Casual_Female","Bunny","Casual_Male","Yeti"][i],park,i,0.68)
 	var town: Array[Vector3]=[Vector3(42,0,-27),Vector3(51,0,-27),Vector3(51,0,-13),Vector3(42,0,-13)]
 	for i in 2:pedestrian(["OldClassy_Male","Witch"][i],town,i*2,0.62)
+	# Three further animal folk use spare stalls and the clear garden center.
+	merchant("Dino",ground(Vector3(-7.65,0,-7)),PI/2,"Kip","Kip is preparing a travelling trader's stall.",Vector3(-5.9,0,-7))
+	merchant("Birb",ground(Vector3(7.65,0,-17)),-PI/2,"Sora","Sora is looking after the northern festival stalls.",Vector3(5.9,0,-17))
+	var garden: Array[Vector3]=[Vector3(-41,0,-29),Vector3(-37,0,-29),Vector3(-37,0,-21),Vector3(-41,0,-21)]
+	pedestrian("Frog",garden,2,0.60)
 	for i in 6:
 		var center: Vector3=[Vector3(-10,0,0),Vector3(11,0,12),Vector3(0,0,-9),Vector3(-39,0,-25),Vector3(0,0,56),Vector3(46,0,-20)][i]
 		var bird := figure("Pigeon",center,0.21+(i%2)*0.025)
@@ -117,7 +148,7 @@ func update_resident(actor: Dictionary, delta: float) -> void:
 		if to_player.length()<3.6 and actor.cooldown<=0:
 			actor.cooldown=14.0;actor.gesture=2.0
 			if actor.player.has_animation("Wave"):
-				actor.gesture=actor.player.get_animation("Wave").length;play(actor,"Wave")
+				actor.gesture=actor.player.get_animation("Wave").length/GREETING_SPEED;play(actor,"Wave")
 		elif actor.gesture<=0:play(actor,"Idle")
 		var facing: float=actor.home_yaw
 		if to_player.length()<3.6:

@@ -35,7 +35,7 @@ manifest = {
     'files': {}
 }
 with zipfile.ZipFile(archive) as z:
-    for name, source in [('Bunny', 'Big/glTF/Bunny.gltf'), ('Yeti', 'Big/glTF/Yeti.gltf'), ('Pigeon', 'Flying/glTF/Pigeon.gltf')]:
+    for name, source in [('Bunny', 'Big/glTF/Bunny.gltf'), ('Yeti', 'Big/glTF/Yeti.gltf'), ('Pigeon', 'Flying/glTF/Pigeon.gltf'), ('Dino', 'Big/glTF/Dino.gltf'), ('Frog', 'Big/glTF/Frog.gltf'), ('Birb', 'Big/glTF/Birb.gltf')]:
         original = z.read(source)
         glb = package_glb(original)
         (destination / (name + '.glb')).write_bytes(glb)
