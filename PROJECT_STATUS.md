@@ -1,5 +1,15 @@
 # Crates — состояние проекта
 
+## 14 November 2026 — Bazaar 0.0.5 residents and birds
+
+Added a mixed local population: eleven humans and four animal folk, with nine
+merchant roles and six walking residents, plus six animated birds. Merchants
+acknowledge nearby visitors, pedestrians pause/yield, birds climb away; bounded
+distance activity and menu pause keep the scope small. Native Quaternius rigs and
+CC0 notices are preserved. [Implementation and evidence](games/bazaar/docs/POPULATION.md).
+Population/world/OpenGL checks and exported Linux menu exit passed; Windows and
+ARM64 are export-only. Separate branch, no merge/install or enabled trading.
+
 ## 14 November 2026 — Bazaar 0.0.4 animation deformation repair
 
 Corrected the arms-down SDK / T-pose donor mismatch that folded arms through the

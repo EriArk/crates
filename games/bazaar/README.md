@@ -1,4 +1,4 @@
-# Bazaar 0.0.4 — island walkthrough
+# Bazaar 0.0.5 — island walkthrough
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -6,6 +6,11 @@ houses and shops**, connected by paths to gardens, a harbor terrace and room for
 future districts. The park has twelve stalls, flowers, lantern strings and a
 working fountain. Hills, a grassy meadow, clouds and distance haze use the same
 lightweight approach as Pocket Golf. Three signed shops have enterable preview rooms and exits.
+
+People, rabbits and yetis now inhabit the island: nine merchants and six
+pedestrians, with humans in the majority. Six animated birds fly around the
+districts and climb away from a nearby visitor. Residents greet, stroll, pause
+at corners and stop for the player. [Population and visual review](docs/POPULATION.md).
 
 The existing TrainerOS avatar SDK supplies the profile character. CC0 Quaternius
 idle/walk/jog animations are retargeted in the game; the donor model stays hidden.
@@ -29,7 +34,7 @@ character explicitly reconnects. Ordinary standalone walking works offline.
 
 - **Keyboard:** WASD moves, Shift runs; right-mouse drag or arrows rotates the camera.
 - **Controller:** left stick moves, LB runs, right stick looks, A inspects a nearby
-  sign, B/Start opens/closes the menu. The controller's ordinary UI navigation
+  sign or merchant, B/Start opens/closes the menu. The controller's ordinary UI navigation
   handles menu buttons.
 - **Touch:** drag in the lower-left area to move, right side to look; tap the
   contextual inspect button or Menu. Opening a menu clears held touch input.
@@ -42,7 +47,8 @@ character explicitly reconnects. Ordinary standalone walking works offline.
 
 This is an actual local walkthrough with collision, district navigation, shop
 entry/return, pause, animated water and locomotion. Shop displays remain scenery;
-there are no fabricated visitors, stock, occupancy counts or successful trades.
+the residents are local NPCs, not connected visitors. There is no saleable stock,
+fabricated player occupancy or successful trading.
 
 Multiplayer, host migration, parallel-realm selection, real shops/inventory
 transfers and catalogue-managed Crate launch/return are **not implemented**.
@@ -50,12 +56,16 @@ The TrainerOS catalogue remains on its explicit placeholder until a real package
 and admission path is connected. This world does not unlock Bazaar spending.
 
 Separate Crates branch `codex/bazaar-world-20261114`; no merge, catalogue release
-or handheld install. [Current polish/camera evidence](docs/POLISH.md).
+or handheld install. [Earlier polish/camera evidence](docs/POLISH.md).
 The [island design report](docs/ISLAND.md) records version 0.0.2.
 The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 
 ## Assets and code
 
+- Residents/birds: [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html)
+  and [Ultimate Animated Character Pack](https://quaternius.com/packs/ultimatedanimatedcharacter.html),
+  CC0; [animal provenance](assets/residents/provenance.json), [human provenance](assets/residents/humans-provenance.json).
+  Original rigs and animations are used directly, without avatar retargeting.
 - Nature assets: [Kenney Nature Kit](https://kenney.nl/assets/nature-kit), [provenance](assets/nature/provenance.json).
 - Locomotion: [Quaternius](https://quaternius.itch.io/universal-animation-library), [provenance](assets/animations/provenance.json).
 - Environment models and palette: [Kenney](https://kenney.nl/assets/fantasy-town-kit),

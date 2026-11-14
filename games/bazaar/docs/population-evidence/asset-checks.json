@@ -1,0 +1,42 @@
+{
+  "Bunny.glb": {
+    "triangles": 8284,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Yeti.glb": {
+    "triangles": 6094,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Pigeon.glb": {
+    "triangles": 3512,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Casual_Female.glb": {
+    "triangles": 6624,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Casual_Male.glb": {
+    "triangles": 6492,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Chef_Female.glb": {
+    "triangles": 8768,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Kimono_Female.glb": {
+    "triangles": 9236,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "OldClassy_Male.glb": {
+    "triangles": 5432,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Wizard.glb": {
+    "triangles": 6482,
+    "original_rig_animation_buffer_unchanged": true
+  },
+  "Witch.glb": {
+    "triangles": 7066,
+    "original_rig_animation_buffer_unchanged": true
+  }
+}

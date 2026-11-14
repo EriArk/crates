@@ -6,6 +6,7 @@ const TouchPad = preload("res://scripts/touch_pad.gd")
 var square = Square.new()
 var visitor = Walker.new()
 var touch_pad = TouchPad.new()
+var population = preload("res://scripts/population.gd").new()
 var identity := Label.new()
 var district_label: Label
 var prompt := Button.new()
@@ -52,6 +53,7 @@ func _ready() -> void:
 	add_child(square)
 	visitor.identity_changed.connect(func(text: String):identity.text=text)
 	add_child(visitor);visitor.enter_space(Vector3(0,0.2,10),0)
+	add_child(population);population.setup(square,visitor)
 	var hud := CanvasLayer.new();add_child(hud)
 	var root := Control.new();root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);root.mouse_filter=Control.MOUSE_FILTER_IGNORE;hud.add_child(root)
 	root.add_child(touch_pad);touch_pad.move_changed.connect(func(value: Vector2):visitor.touch_move=value)
@@ -100,11 +102,11 @@ func _ready() -> void:
 	if smoke_mode:call_deferred("run_smoke")
 
 func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Multiplayer and trading are still in development.") -> void:
-	modal=true;square.life.set_sound(sound.button_pressed,true);visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
+	modal=true;population.set_paused(true);square.life.set_sound(sound.button_pressed,true);visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
 func hide_menu() -> void:
-	modal=false;square.life.set_sound(sound.button_pressed);panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
+	modal=false;population.set_paused(false);square.life.set_sound(sound.button_pressed);panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
 func inspect_spot() -> void:
 	if nearest.is_empty():return

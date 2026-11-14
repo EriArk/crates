@@ -1,0 +1,30 @@
+{
+  "author": "Quaternius",
+  "pack": "Ultimate Monsters (October 2022)",
+  "source": "https://quaternius.com/packs/ultimatemonsters.html",
+  "original_folder": "https://drive.google.com/drive/folders/18m4KpzpEzhC9wl7jzr6dUc0N8Jozr79C",
+  "download": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemonsters/data.zip",
+  "download_note": "Public CC0 mirror used because the author-linked Drive download reported quota exceeded.",
+  "downloaded": "2026-11-14",
+  "license": "CC0-1.0",
+  "license_note": "Supplied License.txt says Ultimate Platformer Pack; retained verbatim. The Ultimate Monsters author page also explicitly specifies CC0.",
+  "archive_sha256": "0bc43f50c9cfb9297280f8b232b8aa6a1df4d26ab90a5b68e2d12f5200886001",
+  "conversion": "Embedded base64 buffer repackaged as GLB without changing meshes, skins, materials or animations.",
+  "files": {
+    "Bunny.glb": {
+      "original_path": "Big/glTF/Bunny.gltf",
+      "original_sha256": "89fce228bdcefac4e498378fa061b9d928bca01b680101530648f8b28c9c9ad9",
+      "sha256": "3108b1b080894ced53dd269b4970faafa34821b70646c9033ba1b79d0778d746"
+    },
+    "Yeti.glb": {
+      "original_path": "Big/glTF/Yeti.gltf",
+      "original_sha256": "ab60f4fbc1c2e1fdc3ed4f63023dc2185240dbd55751df568099557b29af6fd5",
+      "sha256": "45344017507b7b9e49662114f46a2f0f00431e7abf18c168455356bdcf541df8"
+    },
+    "Pigeon.glb": {
+      "original_path": "Flying/glTF/Pigeon.gltf",
+      "original_sha256": "502f0530567fd912b24ba15990e4a4ccca84cf4e4f63f1d7376d73202089a763",
+      "sha256": "fd9ba4011647da3d123c472931ae002d0160da8a1d1ff7b64becbf6ed8991a01"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "editor_sha256": "8d106cbe6144c2dc7e881d61d2429c1a8a76e6b22ef48bd5e48dcf934953f71e",
+  "binaries": {
+    "bazaar.x86_64": "2ccba64be16d7722a00e4a7845174de967a7944d9c37e56336763a09ddf373ee",
+    "bazaar.arm64": "cf3c3032c4cbc17cb6ba69170c430b6a92b7d96f52f3fc20625d33e7f746c975",
+    "bazaar.exe": "b51f94e3e39e7e70b6e0efd8dfef260290f5dd8300dfda580611176b2ed3bb44"
+  }
+}
