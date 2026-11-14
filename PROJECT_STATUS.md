@@ -1,5 +1,17 @@
 # Crates — состояние проекта
 
+## 14 November 2026 — Bazaar island, park market and town shops
+
+Replaced the enclosed square with a larger connected island. The festival stalls
+sit in a park; houses and three enterable shop previews occupy a separate square.
+Added flowers, trees, lantern strings, fountain jets and animated water. Free CC0
+Quaternius locomotion is retargeted onto the SDK character. [Scope/evidence](games/bazaar/docs/ISLAND.md).
+Added walkable hills, chunked opaque grass, clouds and depth haze using Pocket
+Golf’s meadow/sea work. Local prototype: catalogue launch, multiplayer and commerce remain open.
+Headless and OpenGL walkthroughs plus SDK socket revocation passed; exported
+Linux x86_64 boots. Windows/ARM64 are exports only. Separate branch, no merge,
+public release or handheld installation.
+
 ## 14 November 2026 — first Bazaar square (separate branch)
 
 [The first official Bazaar](games/bazaar/) is now a standalone local Godot world:

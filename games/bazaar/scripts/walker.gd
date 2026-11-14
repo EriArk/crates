@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends CharacterBody3D
 const Client = preload("res://addons/traineros/avatar_client.gd")
+const Locomotion = preload("res://scripts/locomotion.gd")
+var locomotion: Node
 const Presenter = preload("res://addons/traineros/avatar_presenter.gd")
 signal identity_changed(message: String)
 var client = Client.new()
@@ -28,7 +30,7 @@ func _ready() -> void:
 	get_parent().add_child(rig);rig.add_child(arm);arm.add_child(camera)
 	arm.spring_length=4.8;arm.margin=0.16;arm.add_excluded_object(get_rid())
 	var camera_shape := SphereShape3D.new();camera_shape.radius=0.15;arm.shape=camera_shape
-	camera.fov=62;camera.near=0.07;camera.far=110;camera.current=true
+	camera.fov=62;camera.near=0.07;camera.far=420;camera.current=true
 	client.app_id="org.traineros.bazaar"
 	client.appearance_changed.connect(appearance)
 	client.unavailable.connect(clear_identity)
@@ -45,9 +47,13 @@ func appearance(description: Dictionary) -> void:
 	if replacement==null:
 		identity_changed.emit("Guest appearance · shared avatar unavailable");return
 	visual=replacement;anchor.add_child(visual);fallback.hide()
+	locomotion=Locomotion.new();add_child(locomotion)
+	if not locomotion.bind(visual):locomotion.queue_free();locomotion=null
 	identity_changed.emit("Your TrainerOS character")
 
 func clear_identity(_reason: String) -> void:
+	if is_instance_valid(locomotion):remove_child(locomotion);locomotion.queue_free()
+	locomotion=null
 	if is_instance_valid(visual):
 		visual.clear_identity();anchor.remove_child(visual);visual.queue_free()
 	visual=null;fallback.show();identity_changed.emit("Guest appearance · connect through the pause menu")
@@ -81,7 +87,7 @@ func _physics_process(delta: float) -> void:
 		var arrow := Vector2(float(Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_UP)))
 		look(arrow*delta*1.6)
 	var direction := Vector3(axis.x,0,axis.y).rotated(Vector3.UP,yaw)
-	var speed := 4.0 if running else 2.4
+	var speed := 5.5 if running else 2.8
 	velocity.x=move_toward(velocity.x,direction.x*speed,delta*18)
 	velocity.z=move_toward(velocity.z,direction.z*speed,delta*18)
 	velocity.y=-0.1 if is_on_floor() else velocity.y-14*delta
@@ -92,15 +98,9 @@ func _physics_process(delta: float) -> void:
 		anchor.rotation.y=lerp_angle(anchor.rotation.y,atan2(velocity.x,velocity.z),1.0-exp(-delta*14))
 		travel_time+=delta*(1.4 if running else 1.0)
 	fallback.position.y=absf(sin(travel_time*10))*0.035 if moving else 0.0
-	# SDK currently supplies a Step gesture, not a locomotion controller. Sample
-	# that supported clip back and forth; movement/collision stays game-owned.
-	if is_instance_valid(visual) and visual.animation_player!=null and visual.actions.has("step"):
-		var clip: String=visual.actions["step"]
-		if visual.animation_player.has_animation(clip):
-			visual.animation_player.play(clip)
-			var duration: float=visual.animation_player.get_animation(clip).length
-			visual.animation_player.seek((0.5-0.5*cos(travel_time*8))*duration if moving else 0.0,true)
-			visual.animation_player.pause()
+	if is_instance_valid(locomotion):
+		locomotion.advance(delta,Vector2(velocity.x,velocity.z).length(),input_enabled)
+
 	rig.global_position=global_position+Vector3(0,0.85,0);rig.rotation.y=yaw;arm.rotation.x=pitch
 
 func _exit_tree() -> void:

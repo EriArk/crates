@@ -1,5 +1,7 @@
 # First official square — 14 November 2026
 
+Historical **0.0.1** evidence. The current layout is the [island](ISLAND.md).
+
 ## Scope and layout
 
 A standalone **local playable prototype**, not a mock webpage and not a network

@@ -1,16 +1,17 @@
-# Bazaar — first walkable square
+# Bazaar — island walkthrough
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
-This is an actual 3D local walkthrough: move around the fountain, browse market
-scenery and inspect signs for the future spaces. Buildings, stalls, trees and
-lanterns use **Kenney Fantasy Town Kit 2.0 (CC0)**. No payment is involved.
+The island separates a **festival market in a park** from a **town square with
+houses and shops**, connected by paths to gardens, a harbor terrace and room for
+future districts. The park has twelve stalls, flowers, lantern strings and a
+working fountain. Hills, a grassy meadow, clouds and distance haze use the same
+lightweight approach as Pocket Golf. Three signed shops have enterable preview rooms and exits.
 
-The player uses the shared TrainerOS avatar SDK. With a running local shell and
-selected profile, the existing client resolves and validates the character;
-profile revocation/disconnection removes that identity immediately. Without it,
-the game uses an explicitly anonymous capsule. No character art is bundled.
-The supported SDK `step` gesture supplies provisional motion; a proper walking /
-running animation set is still needed. Physics never depends on the avatar mesh.
+The existing TrainerOS avatar SDK supplies the profile character. CC0 Quaternius
+idle/walk/jog animations are retargeted in the game; the donor model stays hidden.
+Missing host/assets use a labelled guest capsule. Revocation or disconnection
+removes profile identity and its retargeter. No personal model is bundled.
+No trading, multiplayer, purchases or Sparks spending are enabled.
 
 ## Run from source
 
@@ -35,23 +36,23 @@ character explicitly reconnects. Ordinary standalone walking works offline.
 
 ## Implemented and still pending
 
-The square has a continuous walkable route around its fountain, static collision
-for buildings/stalls/trees and closed world boundaries. Signs identify the market,
-a future garden court and personal bazaars. These are previews of functions;
-there are no fabricated visitors, occupancy counts, shop goods or successful trades.
+This is an actual local walkthrough with collision, district navigation, shop
+entry/return, pause, animated water and locomotion. Shop displays remain scenery;
+there are no fabricated visitors, stock, occupancy counts or successful trades.
 
-Multiplayer, host migration, parallel-realm selection, linked secondary plazas,
-real shops/inventory transfers and the catalogue → installed Crate launch/return
-integration are **not implemented** in this first world increment. The TrainerOS
-catalogue remains on its explicit placeholder until a real package/admission path
-is connected. Creating this prototype does not unlock Bazaar spending.
+Multiplayer, host migration, parallel-realm selection, real shops/inventory
+transfers and catalogue-managed Crate launch/return are **not implemented**.
+The TrainerOS catalogue remains on its explicit placeholder until a real package
+and admission path is connected. This world does not unlock Bazaar spending.
 
-This lives on a separate Crates branch (`codex/bazaar-world-20261114`) alongside
-the separate TrainerOS Bazaar branch. It is not merged, published to the catalogue
-or installed on handhelds. [Evidence](docs/FIRST_SQUARE.md).
+Separate Crates branch `codex/bazaar-world-20261114`; no merge, catalogue release
+or handheld install. [Island design and evidence](docs/ISLAND.md).
+The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 
 ## Assets and code
 
+- Nature assets: [Kenney Nature Kit](https://kenney.nl/assets/nature-kit), [provenance](assets/nature/provenance.json).
+- Locomotion: [Quaternius](https://quaternius.itch.io/universal-animation-library), [provenance](assets/animations/provenance.json).
 - Environment models and palette: [Kenney](https://kenney.nl/assets/fantasy-town-kit),
   [original CC0 notice](licenses/Kenney-Fantasy-Town-CC0.txt),
   [source archive and file hashes](assets/town/provenance.json).

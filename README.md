@@ -5,9 +5,9 @@ concepts; implementation and verification are recorded per project.
 
 **Implemented projects:**
 
-- [Bazaar](games/bazaar/) — an early walkable fantasy square with the shared
+- [Bazaar](games/bazaar/) — an early walkable fantasy island with a park market, town shops and the shared
   TrainerOS character. Prepared in a separate branch; multiplayer, trading and
-  catalogue launch are pending. [First-square evidence](games/bazaar/docs/FIRST_SQUARE.md).
+  catalogue launch are pending. [Island and evidence](games/bazaar/docs/ISLAND.md).
 
 - [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
   Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.

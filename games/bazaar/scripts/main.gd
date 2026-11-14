@@ -7,6 +7,7 @@ var square = Square.new()
 var visitor = Walker.new()
 var touch_pad = TouchPad.new()
 var identity := Label.new()
+var district_label: Label
 var prompt := Button.new()
 var panel := PanelContainer.new()
 var menu_title := Label.new()
@@ -37,7 +38,7 @@ func _ready() -> void:
 	touch_pad.look_changed.connect(visitor.look)
 	var heading := VBoxContainer.new();root.add_child(heading);heading.position=Vector2(24,18);heading.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	heading.add_child(label("OFFICIAL BAZAAR",12,Color("f4cf8b")))
-	heading.add_child(label("Fountain Square",28))
+	district_label=label("Festival Park",28);heading.add_child(district_label)
 	identity.add_theme_font_size_override("font_size",12);identity.add_theme_color_override("font_color",Color("e6eadb"));heading.add_child(identity)
 	if identity.text.is_empty():identity.text="Guest appearance · TrainerOS is not connected"
 	var badge := label("EARLY BUILD · LOCAL WALKTHROUGH",12,Color("f7d494"))
@@ -61,7 +62,7 @@ func _ready() -> void:
 	panel.hide()
 	if smoke_mode:call_deferred("run_smoke")
 
-func show_menu(title := "Fountain Square", detail := "The first walkable area of the official Bazaar. Multiplayer, other squares and trading are still in development.") -> void:
+func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Multiplayer and trading are still in development.") -> void:
 	modal=true;visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
@@ -69,11 +70,16 @@ func hide_menu() -> void:
 	modal=false;panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
 func inspect_spot() -> void:
-	if not nearest.is_empty():show_menu(nearest.title,nearest.detail)
+	if nearest.is_empty():return
+	if nearest.has("arrival"):
+		visitor.position=nearest.arrival;visitor.velocity=Vector3.ZERO;visitor.yaw=nearest.yaw
+		visitor.touch_move=Vector2.ZERO;touch_pad.reset();nearest={};prompt.hide()
+	else:show_menu(nearest.title,nearest.detail)
 
 func _process(_delta: float) -> void:
+	district_label.text=square.district(visitor.position)
 	if modal:return
-	nearest={};var distance := 1.7
+	nearest={};var distance := 2.1
 	for spot in square.destinations:
 		var candidate: float=visitor.global_position.distance_to(spot.position)
 		if candidate<distance:distance=candidate;nearest=spot

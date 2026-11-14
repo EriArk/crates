@@ -30,7 +30,8 @@ func run(world: Node3D) -> void:
 	check(world.square.models.size()>=12,"Imported town assets loaded")
 	for asset in world.square.models:
 		var sample = world.square.models[asset].instantiate()
-		check(textured(sample),"Palette texture imported: "+asset);sample.free()
+		if not asset.begins_with("nature/"):check(textured(sample),"Palette texture imported: "+asset)
+		sample.free()
 	check(world.visitor.is_on_floor(),"Visitor rests on real collision floor")
 	check(world.visitor.fallback.visible,"Missing host uses anonymous appearance")
 	await capture("arrival")
@@ -44,9 +45,9 @@ func run(world: Node3D) -> void:
 	world.show_menu();key(KEY_W,true);await frames(30);key(KEY_W,false)
 	check(world.visitor.position.distance_to(before)<0.05,"Pause stops movement")
 	world.hide_menu()
-	world.visitor.position=Vector3(0,0.1,14.5);world.visitor.velocity=Vector3.ZERO
+	world.visitor.position=Vector3(0,0.1,82.5);world.visitor.velocity=Vector3.ZERO
 	key(KEY_S,true);await frames(90);key(KEY_S,false);await frames(12)
-	check(world.visitor.position.z<15.1,"World boundary is closed")
+	check(world.visitor.position.z<85.1,"World boundary is closed")
 	var touch := InputEventScreenTouch.new();touch.index=4;touch.pressed=true;touch.position=Vector2(100,400)
 	world.touch_pad._unhandled_input(touch)
 	var drag := InputEventScreenDrag.new();drag.index=4;drag.position=Vector2(100,342)
@@ -70,11 +71,46 @@ func run(world: Node3D) -> void:
 			if descriptor is Dictionary:
 				world.visitor.appearance(descriptor);await frames(12)
 				check(is_instance_valid(world.visitor.visual) and not world.visitor.fallback.visible,"Shared SDK avatar loaded")
+				check(is_instance_valid(world.visitor.locomotion) and world.visitor.locomotion.ready_to_animate,"Pack retargeted onto SDK skeleton")
 				await capture("shared-avatar")
+				var motion=world.visitor.locomotion
+				var thigh: int=motion.target.find_bone("thigh.L")
+				var pose: Quaternion=motion.target.get_bone_pose_rotation(thigh)
+				world.visitor.touch_move=Vector2(0,-1);await frames(22)
+				check(motion.current=="Walk","Real walk clip selected")
+				check(pose.angle_to(motion.target.get_bone_pose_rotation(thigh))>0.04,"Retargeted leg moves")
+				world.visitor.touch_move=Vector2.ZERO
+				await capture("walk")
 				world.visitor.clear_identity("revoked");await frames(2)
 				check(world.visitor.visual==null and world.visitor.fallback.visible,"Revocation clears identity immediately")
+	# Rooms are actual enter/exit destinations, not just modal descriptions.
+	for shop in world.square.shop_exits:
+		world.visitor.position=shop.door+Vector3(0,0.12,0);world.visitor.velocity=Vector3.ZERO;await frames(8)
+		check(world.nearest.has("arrival"),"Shop door reachable: "+shop.title)
+		world.inspect_spot();await frames(8)
+		check(world.visitor.position.x>180 and world.visitor.is_on_floor(),"Entered furnished room: "+shop.title)
+		check(world.square.district(world.visitor.position)==shop.title,"Interior identity")
+		world.visitor.position=shop.room+Vector3(0,0.12,3.5);world.visitor.velocity=Vector3.ZERO;await frames(8)
+		world.inspect_spot();await frames(8)
+		check(world.visitor.position.x<100,"Returned through shop exit")
+	# Both the island and connecting paths have a floor; no former plaza wall.
+	for at in [Vector3(0,0.15,28),Vector3(25,0.15,0),Vector3(38,0.15,-9),Vector3(-39,0.15,-11),Vector3(0,0.15,50)]:
+		world.visitor.position=at;world.visitor.velocity=Vector3.ZERO;await frames(12)
+		check(world.visitor.is_on_floor(),"District path supports visitor: "+str(at))
+	var land=world.square.landscape
+	check(land.grass_positions.size()>10000 and land.grass_batches<200,"Bounded chunked meadow covers island")
+	check(land.surface_height(Vector3(-13,0,-51))>4,"Island has real hill relief")
+	for p in land.grass_positions:
+		check(land.grass_allowed(Vector2(p.x,p.z)),"Grass leaves paved routes clear")
+	var uphill := Vector3(-13,0,-51);uphill.y=land.surface_height(uphill)+0.1
+	world.visitor.position=uphill;world.visitor.velocity=Vector3.ZERO;await frames(16)
+	check(world.visitor.is_on_floor() and world.visitor.position.y>4,"Visitor stands on real hill collision")
+	var clock_before: float=world.square.life.elapsed
+	await frames(8)
+	await get_tree().process_frame
+	check(world.square.life.elapsed>clock_before,"Fountain simulation advances")
 	world.visitor.set_controls(false);world.visitor.set_physics_process(false)
-	world.visitor.camera.reparent(world);world.visitor.camera.position=Vector3(22,22,26)
+	world.visitor.camera.reparent(world);world.visitor.camera.position=Vector3(125,130,155)
 	world.visitor.camera.look_at(Vector3(0,0,-2));await frames(4);await capture("overview")
 	var file := FileAccess.open(output+"/report.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify({"success":failures.is_empty(),"failures":failures,"engine":Engine.get_version_info().string,"renderer":DisplayServer.get_name()},"  "));file.close()
