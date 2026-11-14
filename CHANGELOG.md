@@ -1,5 +1,15 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.7 handheld installation
+
+Installed the ARM64 walkthrough on Flip 2 and Odin 2, with owner authorization:
+**Apps → Bazaar (Alpha 0.0.7)**. Real-device launch, own SDK avatar, island rendering,
+remote movement/menu and return to Apps were observed. Existing shells remain
+unchanged; they lack `bazaar.read`, so commerce stays unavailable. Physical input,
+audio and sustained performance remain owner acceptance. No merge or public release.
+[Delivery record](https://github.com/EriArk/OctoFox-OS/blob/codex/bazaar-catalogue-20261110/docs/evidence/2026-11-14-bazaar-handheld/README.md).
+
+
 ## 14 November 2026 — Bazaar 0.0.7 service preview
 
 Added the walk-in Stall Office, twelve-place picker, twelve native NPC previews,
