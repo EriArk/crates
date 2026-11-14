@@ -1,13 +1,14 @@
 # История Crates
 
-## 14 November 2026 — Bazaar 0.0.8 source
+## 14 November 2026 — Bazaar 0.0.8 delivered
 
-Bazaar consumes shared SDK walking/running/sprinting/crouching/jumping. Corrected
-visitor/NPC proportions, compacted the HUD and arranged the existing twelve
-stalls into festival rows with side seating. Rental slot IDs and spending gates
-are unchanged. Host checks and visual review passed; device delivery is recorded
-separately in [movement evidence](games/bazaar/docs/movement-evidence/README.md).
-
+Installed on Flip 2 and Odin 2 with shell Software 45. Shared SDK locomotion,
+corrected visitor/NPC proportions, compact HUD and twelve festival stalls now
+face the promenade. Prop and seller axes are handled separately. Source/native
+checks and remote-device running/crouch/jump/menu/return passed. Existing slot
+IDs, personal settings and spending gates are unchanged; 0.0.7 rollback remains.
+Physical input and sustained performance remain acceptance work.
+[Movement and delivery evidence](games/bazaar/docs/movement-evidence/README.md).
 
 ## 14 November 2026 — corrected handheld entry
 

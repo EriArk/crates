@@ -56,6 +56,6 @@ not a personal profile. Decorative folded cloth is not saleable inventory.
 Source checks cover the motor, seven retargeted states, complete world movement,
 NPC routes/appearances and service interactions. Render review includes standing
 next to a merchant/counter, crouch and all movement states. Exact reports and the
-installed-device result are recorded in `movement-evidence/README.md` after the
-candidate is verified. A rendered pose is not a physical gamepad test or an FPS
+installed-device result are recorded in [movement evidence](movement-evidence/README.md).
+Version 0.0.8 is installed on both Flip and Odin. A rendered pose is not a physical gamepad test or an FPS
 benchmark. Spending, multiplayer and the public release remain unchanged.
