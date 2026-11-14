@@ -25,6 +25,9 @@ var field_of_view := 90.0
 var camera_scale := 1.8
 var camera_target_height := 1.53
 var indoor := false
+var spawn_point := Vector3(0,0.2,10)
+var fall_height := -3.0
+var world_radius := 0.0
 var travel_time := 0.0
 var moving := false
 
@@ -123,7 +126,7 @@ func _physics_process(delta: float) -> void:
 	var direction := Vector3(axis.x,0,axis.y).rotated(Vector3.UP,yaw)
 	motor.step(delta,direction,running,crouch_toggle or Input.is_physical_key_pressed(KEY_CTRL),jump_requested,input_enabled,walking)
 	jump_requested=false
-	if global_position.y < -3:global_position=Vector3(0,0.2,10);motor.reset()
+	if global_position.y < fall_height or (world_radius>0 and Vector2(position.x,position.z).length()>world_radius):enter_space(spawn_point,0)
 	moving=motor.actual_speed>0.08
 	if moving:
 		var travel := get_real_velocity()

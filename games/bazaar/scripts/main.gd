@@ -3,11 +3,13 @@ extends Node3D
 const Square = preload("res://scripts/square.gd")
 const Walker = preload("res://scripts/walker.gd")
 const TouchPad = preload("res://scripts/touch_pad.gd")
-var square = Square.new()
+var square: Node3D
+var world_kind := "official"
+var personal := false
 var visitor = Walker.new()
 var touch_pad = TouchPad.new()
-var services = preload("res://scripts/service_menu.gd").new()
-var population = preload("res://scripts/population.gd").new()
+var services: Control
+var population: Node3D
 var identity := Label.new()
 var district_label: Label
 var prompt := Button.new()
@@ -51,12 +53,23 @@ func button(text: String, action: Callable) -> Button:
 
 func _ready() -> void:
 	smoke_mode="--smoke" in OS.get_cmdline_user_args()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--world="):world_kind=arg.trim_prefix("--world=")
+	if world_kind not in ["official","island","station"]:
+		push_error("Unknown Bazaar world");get_tree().quit(2);set_process(false);return
+	personal=world_kind!="official"
+	if personal:
+		square=load("res://scripts/personal_world.gd").new();square.kind=world_kind
+	else:square=Square.new()
 	get_tree().auto_accept_quit=false
 	get_tree().root.close_requested.connect(leave_bazaar)
 	add_child(square)
 	visitor.identity_changed.connect(func(text: String):identity.text=text)
-	add_child(visitor);visitor.enter_space(Vector3(0,0.2,10),0)
-	add_child(population);population.setup(square,visitor)
+	add_child(visitor)
+	if personal:visitor.camera.far=1000;visitor.spawn_point=square.spawn;visitor.fall_height=-2.3;visitor.world_radius=54.0 if world_kind=="island" else 36.0
+	visitor.enter_space(visitor.spawn_point,0)
+	if not personal:
+		population=load("res://scripts/population.gd").new();add_child(population);population.setup(square,visitor)
 	var hud := CanvasLayer.new();add_child(hud)
 	var root := Control.new();root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);root.mouse_filter=Control.MOUSE_FILTER_IGNORE;hud.add_child(root)
 	root.add_child(touch_pad);touch_pad.move_changed.connect(func(value: Vector2):visitor.touch_move=value)
@@ -65,7 +78,7 @@ func _ready() -> void:
 	var location := VBoxContainer.new();root.add_child(location);location.position=Vector2(22,18)
 	location.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	district_label=label("Festival Park",20);location.add_child(district_label)
-	location.add_child(label("BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab")))
+	location.add_child(label("EMPTY STARTING SQUARE  /  LOCAL ALPHA" if personal else "BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab")))
 	compass=label("N",13);root.add_child(compass)
 	compass.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP);compass.position.y=18
 	compass.name="Compass";compass.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -104,7 +117,7 @@ func _ready() -> void:
 	fov_slider.value_changed.connect(func(value: float):visitor.set_field_of_view(value);fov_label.text="Field of view · %d°"%value)
 	camera_row.add_child(fov_slider)
 	sound=CheckButton.new();sound.text="Fountain sound";sound.button_pressed=true;sound.custom_minimum_size.y=32
-	sound.toggled.connect(func(enabled: bool):square.life.set_sound(enabled,modal));menu.add_child(sound)
+	sound.toggled.connect(func(enabled: bool):if not personal:square.life.set_sound(enabled,modal));menu.add_child(sound);sound.visible=not personal
 	resume=button("Continue exploring",hide_menu);menu.add_child(resume)
 	reconnect=button("Use my TrainerOS character",func():visitor.reconnect();hide_menu());menu.add_child(reconnect)
 	quit_button=button("Leave Bazaar",leave_bazaar);menu.add_child(quit_button)
@@ -114,23 +127,30 @@ func _ready() -> void:
 			fov_slider.value=clampf(float(saved.get_value("camera","fov",90.0)),75,105)
 			sound.button_pressed=bool(saved.get_value("audio","fountain",true))
 	panel.hide()
-	root.add_child(services);services.closed.connect(hide_menu)
-	services.client.snapshot.connect(func(method: String, value: Dictionary):
-		if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
-	services.client.unavailable.connect(func(_reason: String):population.apply_stall_sellers([]))
-	services.client.read_failed.connect(func(method: String, _reason: String):
-		if method=="bazaar.world":population.apply_stall_sellers([]))
+	if not personal:
+		services=load("res://scripts/service_menu.gd").new()
+		root.add_child(services);services.closed.connect(hide_menu)
+		services.client.snapshot.connect(func(method: String, value: Dictionary):
+			if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
+		services.client.unavailable.connect(func(_reason: String):population.apply_stall_sellers([]))
+		services.client.read_failed.connect(func(method: String, _reason: String):
+			if method=="bazaar.world":population.apply_stall_sellers([]))
 	if smoke_mode:call_deferred("run_smoke")
 
 func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Alt / light LS: walk · Shift / LB: sprint · C / R3: crouch · Space / X: jump. Trading is in development.") -> void:
-	if services.visible:services.hide();services.destroy_preview()
+	if is_instance_valid(services) and services.visible:services.hide();services.destroy_preview()
 	touch_actions.hide()
-	modal=true;population.set_paused(true);square.life.set_sound(sound.button_pressed,true);visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
+	modal=true
+	if not personal:population.set_paused(true);square.life.set_sound(sound.button_pressed,true)
+	visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
+	if personal and title=="Bazaar Island":title=square.title();detail=square.description()
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
 func hide_menu() -> void:
-	if services.visible:services.hide();services.destroy_preview()
-	modal=false;population.set_paused(false);square.life.set_sound(sound.button_pressed);panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
+	if is_instance_valid(services) and services.visible:services.hide();services.destroy_preview()
+	modal=false
+	if not personal:population.set_paused(false);square.life.set_sound(sound.button_pressed)
+	panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
 func inspect_spot() -> void:
 	if nearest.is_empty():return
@@ -171,7 +191,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func leave_bazaar(code := 0) -> void:
 	if leaving:return
-	leaving=true;visitor.set_controls(false);square.life.stop_sound()
+	leaving=true;visitor.set_controls(false)
+	if not personal:square.life.stop_sound()
 	# Let the audio mixer retire playback before engine shutdown.
 	await get_tree().create_timer(0.15).timeout
 	get_tree().quit(code)
@@ -181,7 +202,7 @@ func _notification(what: int) -> void:
 	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and is_node_ready() and not smoke_mode and not modal:show_menu()
 
 func run_smoke() -> void:
-	var suite = load("res://tests/walkthrough.gd").new()
+	var suite = load("res://tests/personal_checks.gd" if personal else "res://tests/walkthrough.gd").new()
 	add_child(suite);await suite.run(self)
 
 func _exit_tree() -> void:

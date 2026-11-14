@@ -1,8 +1,12 @@
-# Bazaar 0.0.9 — island services preview
+# Bazaar 0.0.10 — personal starting worlds
 
-**Installed on Flip 2 and Odin 2:** 0.0.9 includes the shared SDK gait fixes and
-20% outer left-stick zone. Shell Software 45 is unchanged; physical-stick feel
+**Previous device delivery:** 0.0.9 includes the shared SDK gait fixes and
+20% outer left-stick zone. That game-only update preserved shell Software 45; physical-stick feel
 remains owner acceptance. [Checks and delivery](docs/response-evidence/README.md).
+
+Version 0.0.10 adds [two empty personal starting worlds](docs/personal-worlds/README.md):
+Mika’s sea island and Ren’s orbital station under glass. The central square stays
+clear for future paid facilities; no Sparks spending is enabled.
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -70,7 +74,7 @@ The installed shell opens the local island from Online → Bazaar → Official B
 Network admission is still absent. This world does not unlock Bazaar spending.
 
 Separate Crates branch `codex/bazaar-world-20261114`; no merge or public catalogue
-release. Private 0.0.9 is installed on both handhelds. [Earlier polish/camera evidence](docs/POLISH.md).
+release. The previous private 0.0.9 delivery is recorded separately. [Earlier polish/camera evidence](docs/POLISH.md).
 The [island design report](docs/ISLAND.md) records version 0.0.2.
 The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 
