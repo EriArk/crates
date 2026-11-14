@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/EriArk/OctoFox-OS",
+  "commit": "906414f243821a999abcb10a57e45415fb4e5a61",
+  "license": "GPL-3.0-or-later",
+  "files": {
+    "avatar_client.gd": "d5684fb44e41114cce97b85edca4a4d58c5f2d742d32eb48eff468acbc5c158f",
+    "avatar_presenter.gd": "afecb2bbc19ec1d9ea9afc11aa324b1b4f480b3deefa75a741e96e4c72279312"
+  }
+}

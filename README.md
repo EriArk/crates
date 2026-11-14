@@ -5,6 +5,10 @@ concepts; implementation and verification are recorded per project.
 
 **Implemented projects:**
 
+- [Bazaar](games/bazaar/) — an early walkable fantasy square with the shared
+  TrainerOS character. Prepared in a separate branch; multiplayer, trading and
+  catalogue launch are pending. [First-square evidence](games/bazaar/docs/FIRST_SQUARE.md).
+
 - [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
   Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.
   Version 0.1.18 is published and installed on Odin/Flip, with static player

@@ -1,5 +1,14 @@
 # История Crates
 
+## 14 November 2026 — first Bazaar square (separate branch)
+
+[The first official Bazaar](games/bazaar/) is now a standalone local Godot world:
+a walkable fantasy square using CC0 town assets and the shared TrainerOS avatar.
+Keyboard/controller/touch paths, camera collision, pause and explanatory signs
+are prepared. This is source/export preparation, not public multiplayer or trade.
+Catalogue launch/admission, parallel realms and real commerce remain open.
+No merge, catalogue publication or handheld install. [Evidence](games/bazaar/docs/FIRST_SQUARE.md).
+
 ## 24 октября 2026 — плавное наведение Pocket Golf 0.1.19
 
 - Левый стик плавно меняет направление и силу удара; слабый наклон позволяет
