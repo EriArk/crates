@@ -1,7 +1,8 @@
 # Bazaar 0.0.9 — island services preview
 
-**Source preparation only:** handheld work is paused by the owner; 0.0.8 remains
-installed. [Latest movement and read-service checks](docs/response-evidence/README.md).
+**Installed on Flip 2 and Odin 2:** 0.0.9 includes the shared SDK gait fixes and
+20% outer left-stick zone. Shell Software 45 is unchanged; physical-stick feel
+remains owner acceptance. [Checks and delivery](docs/response-evidence/README.md).
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -68,8 +69,8 @@ transfers and catalogue-managed Crate launch/return are **not implemented**.
 The installed shell opens the local island from Online → Bazaar → Official Bazaar.
 Network admission is still absent. This world does not unlock Bazaar spending.
 
-Separate Crates branch `codex/bazaar-world-20261114`; no merge, catalogue release
-or handheld install. [Earlier polish/camera evidence](docs/POLISH.md).
+Separate Crates branch `codex/bazaar-world-20261114`; no merge or public catalogue
+release. Private 0.0.9 is installed on both handhelds. [Earlier polish/camera evidence](docs/POLISH.md).
 The [island design report](docs/ISLAND.md) records version 0.0.2.
 The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 

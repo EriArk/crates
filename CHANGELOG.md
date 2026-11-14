@@ -1,5 +1,15 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.9 installed on both handhelds
+
+Shared SDK gait/flight fixes and the 20% outer left-stick zone are installed on
+Flip 2 and Odin 2. Remote walk/run/sprint/crouch/jump, normal entry/return and
+error-free logs passed; physical stick/touch feel remains owner acceptance.
+Shell Software 45 and its live process were preserved. Preferences/database
+checks passed, staging was cleaned and game 0.0.8 is retained for rollback.
+[Delivery evidence](games/bazaar/docs/response-evidence/README.md#delivered-on-flip-2-and-odin-2).
+No merge, public release or spending activation.
+
 ## 14 November 2026 — Bazaar 0.0.9 prepared, devices paused
 
 Shared SDK movement now reaches full speed at 80% left-stick travel, without

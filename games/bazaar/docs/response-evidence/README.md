@@ -1,5 +1,29 @@
 # Bazaar 0.0.9 source checks — 14 November 2026
 
+## Delivered on Flip 2 and Odin 2
+
+The owner resumed handheld installation later on 14 November. Bazaar **0.0.9**
+from `d8e371668799f887d02b14c85645c56b90b6e55a`, embedding shared SDK
+`c45675a5b59d2e481e6b3f3883a6b5492b8088d2`, is now installed on both devices.
+[Export/package hashes](package.json). The existing shell Software 45 and its
+running process were preserved; no new shell sequence was consumed.
+
+Actual-device remote keyboard/pointer checks covered Online → Bazaar → Festival
+Park, both profile avatars, walk/run/sprint, crouch, jump, menu and normal Leave
+back to the selected card. Godot logs were free of errors/warnings, with no live
+game process after leaving. [Flip verification](flip-verification.json),
+[Odin verification](odin-verification.json). This does not establish physical
+stick/touch feel or sustained frame times; the 80% threshold has SDK test coverage.
+
+Preferences remained byte-identical (Flip FOV 90°, Odin 75°); SQLite quick checks
+and profile/owner/adventure counts passed. Personal captures remain private.
+Task SD staging, scripts and screenshot caches were cleaned. The known old game
+0.0.7 was removed after success; verified 0.0.8 remains as the one game rollback.
+[Flip cleanup](flip-cleanup.json), [Odin cleanup](odin-cleanup.json).
+No merge, public release, shell replacement or spending activation.
+
+## Earlier source validation
+
 No handheld contact, installation, merge or catalogue release. Installed 0.0.8
 and shell Software 45 remain unchanged. Current SDK source/hashes are pinned in
 `addons/traineros/SOURCE.json`.
