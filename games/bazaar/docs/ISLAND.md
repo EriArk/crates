@@ -1,5 +1,7 @@
 # Bazaar island — 14 November 2026
 
+Historical 0.0.2 report. See [0.0.3 polish and camera](POLISH.md) for current evidence.
+
 This replaces the enclosed first-square layout. The owner's correction separates
 **the festival market in a park** from **the town square with houses and shops**.
 Both belong to one local island. No network room or commerce is created here.

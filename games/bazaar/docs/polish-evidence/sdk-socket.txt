@@ -1,0 +1,2 @@
+Godot 4.7.2; synthetic loopback descriptor. Verbose asset import lines omitted.
+SDK socket subscribe -> shared avatar -> context revocation: PASS

@@ -9,6 +9,7 @@ var landscape = preload("res://scripts/landscape.gd").new()
 var shop_exits: Array[Dictionary] = []
 var life = preload("res://scripts/island_life.gd").new()
 var paving: ShaderMaterial
+var dressing = preload("res://scripts/dressing.gd").new()
 const MARKET := Vector3(0,0,0)
 const TOWN := Vector3(46,0,-20)
 const GARDEN := Vector3(-39,0,-25)
@@ -77,13 +78,13 @@ func house(at: Vector3, width: int, depth: int, floors: int, yaw: float, roof_co
 func spot(title: String, detail: String, at: Vector3) -> void:
 	destinations.append({"title":title,"detail":detail,"position":at})
 	var post := block(at+Vector3(0,0.48,0),Vector3(0.07,0.96,0.07),"695247",false)
-	var sign := block(at+Vector3(0,0.96,0),Vector3(0.85,0.32,0.06),"355f59",false)
+	var sign := block(at+Vector3(0,0.96,0),Vector3(1.65,0.40,0.09),"355f59",false)
 	post.name="SignPost";sign.name="SignBoard"
-	text3d(title,at+Vector3(0,1.03,0.045),0.007)
+	text3d(title,at+Vector3(0,0.98,0.06),minf(0.005,1.42/ThemeDB.fallback_font.get_string_size(title,HORIZONTAL_ALIGNMENT_LEFT,-1,44).x))
 
 func text3d(text: String, at: Vector3, pixel := 0.013, parent: Node3D = self, yaw := 0.0) -> Label3D:
 	var label := Label3D.new();label.text=text;label.font_size=44;label.pixel_size=pixel
-	label.modulate=Color("fff1c9");label.outline_modulate=Color("243e3c");label.outline_size=7
+	label.modulate=Color("fff1c9");label.outline_modulate=Color("243e3c");label.outline_size=3
 	label.position=at;label.rotation.y=yaw;parent.add_child(label)
 	return label
 
@@ -132,12 +133,13 @@ func park_market() -> void:
 	# Two parallel festival rows face a generous central promenade. The fountain
 	# interrupts the rows, preserving cross routes. No houses ring this park.
 	for side in [-1,1]:
-		for z in [-17.0,-12.0,-7.0,7.0,12.0,17.0]:
+		for stall_index in 6:
+			var z: float=[-17.0,-12.0,-7.0,7.0,12.0,17.0][stall_index]
 			var stall := model("stall-red" if int(z)%2==0 else "stall-green",Vector3(side*7.2,0.025,z),Vector3.ONE*1.8,-side*PI/2)
 			collider(stall,Vector3(0,0.48,0),Vector3(1.0,0.96,0.85))
 			# A small cloth pennant, animated independently from the rigid stall.
 			var flag := block(Vector3(side*8.4,2.1,z),Vector3(0.5,0.7,0.025),"e2b96c",false);life.cloth.append(flag)
-			text3d("STALL",Vector3(side*6.25,1.8,z),0.006,self,-side*PI/2)
+			text3d("%02d"%(stall_index+1+(0 if side<0 else 6)),Vector3(side*6.25,1.8,z),0.005,self,-side*PI/2)
 		for z in [-22.0,-10.0,10.0,22.0]:
 			tree(Vector3(side*16,0,z),3.2)
 			flowerbed(Vector3(side*12,0,z),Vector2(3,2))
@@ -154,33 +156,29 @@ func park_market() -> void:
 func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	var home := house(at,4,3,2,yaw,"50897a")
 	var board := block(Vector3.ZERO,Vector3(3.1,0.45,0.12),"355449",false)
-	board.reparent(home,false);board.position=Vector3(0.4,1.25,1.58)
+	board.reparent(home,false);board.position=Vector3(0.4,1.8,1.58)
 	var door := at+Vector3(0.85,0,3.1).rotated(Vector3.UP,yaw)
-	text3d(title,Vector3(0.4,1.25,1.66),0.008,home)
+	text3d(title,Vector3(0.4,1.8,1.66),0.008,home)
 	# Mark the door clearly; interaction moves into a furnished local room.
 	var mat_node := block(door+Vector3(0,0.04,0),Vector3(2,0.08,1.5),"b58b62",false);mat_node.rotation.y=yaw
+	dressing.storefront(at,yaw,index)
 	var center := Vector3(210+index*20,0,0)
 	path(center,Vector3(10,0,10));block(center+Vector3(0,-0.25,0),Vector3(10,0.5,10),"77604a")
 	block(center+Vector3(0,4.15,0),Vector3(10,0.3,10),"bdab8b")
 	var light := OmniLight3D.new();light.position=center+Vector3(0,3.3,0);light.omni_range=10;light.light_color=Color("ffe3b7");light.light_energy=1.1;add_child(light)
 	for x in [-5,5]:block(center+Vector3(x,2,0),Vector3(0.25,4,10),"e6d4ae")
 	for z in [-5,5]:block(center+Vector3(0,2,z),Vector3(10,4,0.25),"c7b18d")
-	text3d(title,center+Vector3(0,2.8,-4.7),0.023)
-	text3d("INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.2,-4.7),0.010)
-	block(center+Vector3(0,0.6,-2.5),Vector3(6,1.2,0.9),"896343")
+	text3d(title,center+Vector3(0,2.7,-4.7),0.013)
+	text3d("INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.25,-4.7),0.006)
+	block(center+Vector3(0,0.38,-2.5),Vector3(6,0.76,0.9),"896343")
 	for side in [-1,1]:
-		model("stall-bench",center+Vector3(side*2.8,0,1),Vector3.ONE*1.8)
 		lantern(center+Vector3(side*3.8,2.8,-3.9),"edc178")
 		for shelf in [0.9,1.6]:
 			block(center+Vector3(side*3.8,shelf,-3.8),Vector3(1.4,0.12,1),"866341",false)
-			for n in 3:
-				block(center+Vector3(side*3.8+(n-1)*0.35,shelf+0.22,-3.8),Vector3(0.27,0.4,0.4),["b8c796","d08769","89b4bc"][index],false)
-	if index==0:flowerbed(center+Vector3(0,0,0.5),Vector2(2,1))
-	if index==1:model("banner-red",center+Vector3(0,1.6,-4.7),Vector3.ONE*2,-PI/2)
-	if index==2:model("cart",center+Vector3(2.8,0,2.6),Vector3.ONE*1.5)
-	var exit_position := center+Vector3(0,0,3.5)
-	text3d("EXIT",center+Vector3(0,2.0,4.7),0.015,self,PI)
-	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,2.5),"yaw":0.0})
+	dressing.room(center,index)
+	var exit_position := center+Vector3(0,0,4.0)
+	text3d("TO TOWN",center+Vector3(0,1.8,4.71),0.005,self,PI)
+	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,1.3),"yaw":0.0})
 	destinations.append({"title":"Return to town","position":exit_position,"arrival":door+Vector3(0,0.15,1).rotated(Vector3.UP,yaw),"yaw":yaw+PI})
 	shop_exits.append({"title":title,"door":door,"room":center})
 
@@ -240,12 +238,17 @@ func _ready() -> void:
 	var shader := Shader.new();shader.code="""shader_type spatial;
 	varying vec3 position_world;
 	void vertex(){position_world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;}
-	void fragment(){vec2 p=position_world.xz*1.5;p.x+=mod(floor(p.y),2.0)*0.5;
+	void fragment(){vec2 p=position_world.xz*1.35;p.x+=mod(floor(p.y),2.0)*0.5;
 	vec2 uv=fract(p);float edge=min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y));
+	float footprint=max(length(dFdx(p)),length(dFdy(p)));
+	float line=1.0-smoothstep(0.012,0.027+footprint*0.55,edge);
+	line*=1.0-smoothstep(0.12,0.6,footprint);
 	float shade=fract(sin(dot(floor(p),vec2(12.9898,78.233)))*43758.5453);
-	ALBEDO=mix(vec3(0.26,0.30,0.22),vec3(0.43,0.40,0.30)*(0.94+shade*0.12),smoothstep(0.010,0.025,edge));ROUGHNESS=0.95;}"""
+	vec3 stone=vec3(0.52,0.47,0.36)*(0.96+shade*0.08);
+	ALBEDO=mix(stone,vec3(0.34,0.34,0.27),line*0.55);ROUGHNESS=0.95;}"""
 	paving=ShaderMaterial.new();paving.shader=shader
-	terrain();park_market()
+	add_child(dressing);dressing.setup(self)
+	terrain();park_market();dressing.park()
 	path(Vector3(25,0,0),Vector3(30,0,6));path(Vector3(38,0,-9),Vector3(6,0,22))
 	path(Vector3(-25,0,0),Vector3(30,0,6));path(Vector3(-39,0,-11),Vector3(6,0,25))
 	path(Vector3(0,0,38),Vector3(7,0,37));path(Vector3(-20,0,35),Vector3(34,0,6))
@@ -264,14 +267,14 @@ func batch_static_props() -> void:
 	for root in prop_roots:
 		for part in root.find_children("*","MeshInstance3D",true,false):
 			var cell := Vector2i(floori(part.global_position.x/24),floori(part.global_position.z/24))
-			var key := str(part.mesh.get_instance_id())+":"+str(cell)+":"+str(part.cast_shadow)
-			if not groups.has(key):groups[key]={"mesh":part.mesh,"shadow":part.cast_shadow,"cell":cell,"transforms":[]}
+			var key := str(part.mesh.get_instance_id())+":"+str(cell)+":"+str(part.cast_shadow)+":"+str(part.material_override.get_instance_id() if part.material_override!=null else 0)
+			if not groups.has(key):groups[key]={"mesh":part.mesh,"shadow":part.cast_shadow,"material":part.material_override,"cell":cell,"transforms":[]}
 			groups[key].transforms.append(part.global_transform)
 			part.hide()
 	for group in groups.values():
 		var node := MultiMeshInstance3D.new();add_child(node)
 		node.position=Vector3(group.cell.x*24+12,0,group.cell.y*24+12)
-		node.cast_shadow=group.shadow;node.visibility_range_end=110
+		node.cast_shadow=group.shadow;node.material_override=group.material;node.visibility_range_end=110
 		var batch := MultiMesh.new();batch.transform_format=MultiMesh.TRANSFORM_3D;batch.mesh=group.mesh;batch.instance_count=group.transforms.size()
 		for i in group.transforms.size():batch.set_instance_transform(i,node.global_transform.affine_inverse()*group.transforms[i])
 		node.multimesh=batch

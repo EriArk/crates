@@ -1,5 +1,14 @@
 # Crates — состояние проекта
 
+## 14 November 2026 — Bazaar 0.0.3 polish and third-person camera
+
+Closer terrain-following camera, wall retraction, shorter indoor boom and local
+75–105° FOV control (horizontal reference at 16:9; default 90°). Added park gate,
+clear signs/numbered stalls, distinct shop dressing, filtered paving, readable HUD
+and optional original fountain sound. [Implementation/evidence](games/bazaar/docs/POLISH.md).
+Separate local prototype; no catalogue launch, network/trading, merge or handheld
+installation. Hardware performance and physical controls remain unverified.
+
 ## 14 November 2026 — Bazaar island, park market and town shops
 
 Replaced the enclosed square with a larger connected island. The festival stalls

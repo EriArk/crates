@@ -3,6 +3,8 @@ extends Node3D
 ## Bounded visual effects, independent of visitor count or game economy.
 var droplets := MultiMesh.new()
 var elapsed := 0.0
+var fountain_audio := AudioStreamPlayer3D.new()
+var sound_enabled := true
 var cloth: Array[Node3D] = []
 const COUNT := 192
 
@@ -30,7 +32,14 @@ func _ready() -> void:
 	var mat := StandardMaterial3D.new();mat.albedo_color=Color("cff9f5");mat.roughness=0.25
 	drop.material=mat;droplets.transform_format=MultiMesh.TRANSFORM_3D;droplets.mesh=drop
 	droplets.instance_count=COUNT;instance.multimesh=droplets
+	var water: AudioStreamWAV=load("res://assets/audio/fountain.wav")
+	water.loop_mode=AudioStreamWAV.LOOP_FORWARD;water.loop_end=water.data.size()/2
+	fountain_audio.stream=water;fountain_audio.volume_db=-20;fountain_audio.unit_size=3;fountain_audio.max_distance=18
+	add_child(fountain_audio);fountain_audio.position.y=0.8;fountain_audio.play()
 	update_jets()
+
+func set_sound(enabled: bool, paused := false) -> void:
+	sound_enabled=enabled;fountain_audio.stream_paused=not enabled or paused
 
 func update_jets() -> void:
 	# Eight continuous parabolic jets. All droplets land inside the real basin.
@@ -43,3 +52,12 @@ func update_jets() -> void:
 func _process(delta: float) -> void:
 	elapsed+=delta;update_jets()
 	for i in cloth.size():cloth[i].rotation.z=sin(elapsed*1.7+i)*0.035
+
+func stop_sound() -> void:
+	# Release the looping playback before the audio server is torn down.
+	fountain_audio.stream_paused=false
+	fountain_audio.stop()
+	fountain_audio.stream=null
+
+func _exit_tree() -> void:
+	stop_sound()

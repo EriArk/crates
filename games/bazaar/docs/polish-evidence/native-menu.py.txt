@@ -1,0 +1,49 @@
+import ctypes as c, subprocess, time, os, sys
+x=c.CDLL("libX11.so.6")
+x.XOpenDisplay.restype=c.c_void_p
+x.XDefaultRootWindow.argtypes=[c.c_void_p];x.XDefaultRootWindow.restype=c.c_ulong
+x.XQueryTree.argtypes=[c.c_void_p,c.c_ulong,c.POINTER(c.c_ulong),c.POINTER(c.c_ulong),c.POINTER(c.POINTER(c.c_ulong)),c.POINTER(c.c_uint)]
+x.XFetchName.argtypes=[c.c_void_p,c.c_ulong,c.POINTER(c.c_char_p)]
+x.XInternAtom.argtypes=[c.c_void_p,c.c_char_p,c.c_int];x.XInternAtom.restype=c.c_ulong
+x.XFree.argtypes=[c.c_void_p];x.XFlush.argtypes=[c.c_void_p]
+class Data(c.Union):_fields_=[("l",c.c_long*5),("b",c.c_char*20)]
+class Message(c.Structure):_fields_=[("type",c.c_int),("serial",c.c_ulong),("send_event",c.c_int),("display",c.c_void_p),("window",c.c_ulong),("message_type",c.c_ulong),("format",c.c_int),("data",Data)]
+class Event(c.Union):_fields_=[("client",Message),("pad",c.c_long*24)]
+x.XSendEvent.argtypes=[c.c_void_p,c.c_ulong,c.c_int,c.c_long,c.POINTER(Event)]
+d=x.XOpenDisplay(None);assert d
+root=x.XDefaultRootWindow(d)
+p=subprocess.Popen(["/work/polish-export/bazaar.x86_64","--windowed","--resolution","800x450","--audio-driver","Dummy"])
+try:
+ deadline=time.monotonic()+50;window=None
+ while time.monotonic()<deadline and p.poll() is None:
+  r=c.c_ulong();parent=c.c_ulong();children=c.POINTER(c.c_ulong)();count=c.c_uint()
+  x.XQueryTree(d,root,c.byref(r),c.byref(parent),c.byref(children),c.byref(count))
+  for i in range(count.value):
+   name=c.c_char_p()
+   if x.XFetchName(d,children[i],c.byref(name)) and name.value:
+    if b"TrainerOS Bazaar" in name.value:window=children[i]
+    x.XFree(name)
+  if children:x.XFree(children)
+  if window:break
+  time.sleep(.1)
+ assert window,"Exported game window did not open"
+ time.sleep(15)
+ x.XGetImage.argtypes=[c.c_void_p,c.c_ulong,c.c_int,c.c_int,c.c_uint,c.c_uint,c.c_ulong,c.c_int];x.XGetImage.restype=c.c_void_p
+ x.XGetPixel.argtypes=[c.c_void_p,c.c_int,c.c_int];x.XGetPixel.restype=c.c_ulong
+ frame=x.XGetImage(d,window,0,0,800,450,0xffffffff,2)
+ pixels=bytearray()
+ for y in range(450):
+  for xx in range(800):
+   color=x.XGetPixel(frame,xx,y);pixels.extend(((color>>16)&255,(color>>8)&255,color&255))
+ open("/work/polish-qa/export.ppm","wb").write(b"P6\n800 450\n255\n"+pixels)
+ print("Native window captured",flush=True)
+ x.XSetInputFocus.argtypes=[c.c_void_p,c.c_ulong,c.c_int,c.c_ulong];x.XSetInputFocus(d,window,1,0)
+ xt=c.CDLL("libXtst.so.6")
+ xt.XTestFakeMotionEvent.argtypes=[c.c_void_p,c.c_int,c.c_int,c.c_int,c.c_ulong]
+ xt.XTestFakeButtonEvent.argtypes=[c.c_void_p,c.c_uint,c.c_int,c.c_ulong]
+ def click(px,py):
+  xt.XTestFakeMotionEvent(d,0,px,py,0);xt.XTestFakeButtonEvent(d,1,1,0);xt.XTestFakeButtonEvent(d,1,0,0);x.XFlush(d)
+ click(720,60);time.sleep(2);click(400,330)
+ code=p.wait(timeout=20);print("Exported Linux OpenGL Leave Bazaar exit code:",code,flush=True);sys.exit(code)
+finally:
+ if p.poll() is None:p.kill();p.wait()

@@ -15,7 +15,11 @@ var camera := Camera3D.new()
 var input_enabled := true
 var touch_move := Vector2.ZERO
 var yaw := 0.0
-var pitch := -0.42
+var pitch := -0.18
+var field_of_view := 90.0
+var camera_scale := 1.0
+var camera_target_height := 0.85
+var indoor := false
 var travel_time := 0.0
 var moving := false
 
@@ -28,13 +32,13 @@ func _ready() -> void:
 	var color := StandardMaterial3D.new();color.albedo_color=Color("efc98a");color.roughness=0.9
 	anonymous.material_override=color;fallback.add_child(anonymous)
 	get_parent().add_child(rig);rig.add_child(arm);arm.add_child(camera)
-	arm.spring_length=4.8;arm.margin=0.16;arm.add_excluded_object(get_rid())
+	arm.spring_length=3.0;arm.margin=0.16;arm.add_excluded_object(get_rid())
 	var camera_shape := SphereShape3D.new();camera_shape.radius=0.15;arm.shape=camera_shape
-	camera.fov=62;camera.near=0.07;camera.far=420;camera.current=true
+	camera.keep_aspect=Camera3D.KEEP_HEIGHT;set_field_of_view(90);camera.near=0.07;camera.far=420;camera.current=true
 	client.app_id="org.traineros.bazaar"
 	client.appearance_changed.connect(appearance)
 	client.unavailable.connect(clear_identity)
-	add_child(client);identity_changed.emit("Guest appearance · connecting to TrainerOS")
+	add_child(client);identity_changed.emit("Guest · connecting to TrainerOS")
 	client.connect_host()
 
 func reconnect() -> void:
@@ -45,10 +49,11 @@ func appearance(description: Dictionary) -> void:
 	var replacement = Presenter.from_descriptor(description)
 	clear_identity("")
 	if replacement==null:
-		identity_changed.emit("Guest appearance · shared avatar unavailable");return
+		identity_changed.emit("Guest · character unavailable");return
 	visual=replacement;anchor.add_child(visual);fallback.hide()
 	locomotion=Locomotion.new();add_child(locomotion)
 	if not locomotion.bind(visual):locomotion.queue_free();locomotion=null
+	camera_scale=clampf(visual.eye_height/0.8,0.75,1.5);update_camera_size()
 	identity_changed.emit("Your TrainerOS character")
 
 func clear_identity(_reason: String) -> void:
@@ -56,18 +61,33 @@ func clear_identity(_reason: String) -> void:
 	locomotion=null
 	if is_instance_valid(visual):
 		visual.clear_identity();anchor.remove_child(visual);visual.queue_free()
-	visual=null;fallback.show();identity_changed.emit("Guest appearance · connect through the pause menu")
+	visual=null;fallback.show();camera_scale=1.0;update_camera_size();identity_changed.emit("Guest · connect in Menu")
 
 func set_controls(enabled: bool) -> void:
 	input_enabled=enabled;touch_move=Vector2.ZERO
 	if not enabled:velocity=Vector3.ZERO
 
+func set_field_of_view(horizontal_at_16_9: float) -> void:
+	field_of_view=clampf(horizontal_at_16_9,75.0,105.0)
+	camera.fov=rad_to_deg(2.0*atan(tan(deg_to_rad(field_of_view*0.5))*9.0/16.0))
+
+func update_camera_size() -> void:
+	camera_target_height=0.85*camera_scale
+	arm.spring_length=(2.4 if indoor else 3.0)*camera_scale
+
+func enter_space(at: Vector3, heading: float) -> void:
+	position=at;velocity=Vector3.ZERO;touch_move=Vector2.ZERO;yaw=heading
+	anchor.rotation.y=heading+PI;indoor=at.x>180;update_camera_size()
+	pitch=-0.12 if indoor else -0.18
+	rig.global_position=global_position+Vector3(0,camera_target_height,0);rig.rotation.y=yaw;arm.rotation.x=pitch
+
+
 func look(delta: Vector2) -> void:
 	if not input_enabled:return
-	yaw-=delta.x;pitch=clampf(pitch-delta.y,-1.05,-0.08)
+	yaw-=delta.x;pitch=clampf(pitch-delta.y,-1.05,0.35)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):look(event.relative*0.004)
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):look(event.screen_relative*0.004)
 
 func _physics_process(delta: float) -> void:
 	var axis := Vector2.ZERO
@@ -80,7 +100,7 @@ func _physics_process(delta: float) -> void:
 			var stick := Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
 			if stick.length()>0.18:axis+=stick.limit_length()*inverse_lerp(0.18,1.0,stick.length())
 			var right := Vector2(Input.get_joy_axis(device,JOY_AXIS_RIGHT_X),Input.get_joy_axis(device,JOY_AXIS_RIGHT_Y))
-			if right.length()>0.2:look(right*delta*1.8)
+			if right.length()>0.2:look(right.normalized()*inverse_lerp(0.2,1.0,minf(right.length(),1.0))*delta*1.8)
 			running=Input.is_joy_button_pressed(device,JOY_BUTTON_LEFT_SHOULDER)
 		axis=(axis+touch_move).limit_length()
 		running=running or Input.is_physical_key_pressed(KEY_SHIFT)
@@ -101,7 +121,13 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(locomotion):
 		locomotion.advance(delta,Vector2(velocity.x,velocity.z).length(),input_enabled)
 
-	rig.global_position=global_position+Vector3(0,0.85,0);rig.rotation.y=yaw;arm.rotation.x=pitch
+	# Keep the collision probe centered on the body in X/Z. Only the height and
+	# orbit angles ease, avoiding a lagging pivot on the far side of a thin wall.
+	var target_y := global_position.y+camera_target_height
+	rig.global_position=Vector3(global_position.x,lerpf(rig.global_position.y,target_y,1-exp(-delta*16)),global_position.z)
+	rig.rotation.y=lerp_angle(rig.rotation.y,yaw,1-exp(-delta*20))
+	arm.rotation.x=lerp_angle(arm.rotation.x,pitch,1-exp(-delta*20))
+	anchor.visible=arm.get_hit_length()>0.35*camera_scale
 
 func _exit_tree() -> void:
 	if is_instance_valid(rig):rig.queue_free()

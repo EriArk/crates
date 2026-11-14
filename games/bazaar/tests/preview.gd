@@ -17,19 +17,27 @@ func run() -> void:
 			var d=JSON.parse_string(FileAccess.get_file_as_string(arg.trim_prefix("--descriptor=")))
 			if d is Dictionary:scene.visitor.appearance(d)
 	DirAccess.make_dir_recursive_absolute(output)
-	scene.visitor.position=Vector3(0,0.1,15);scene.visitor.pitch=-0.25
+	scene.visitor.enter_space(Vector3(0,0.1,28),0)
+	await capture("park-gate")
+	scene.visitor.enter_space(Vector3(0,0.1,13),0)
 	await capture("park-arrival")
-	scene.visitor.position=Vector3(46,0.1,-12)
+	for value in [75,105]:
+		scene.fov_slider.value=value;await capture("fov-"+str(value))
+	scene.fov_slider.value=90
+	scene.visitor.enter_space(Vector3(46,0.1,-12),0)
 	await capture("town")
-	scene.visitor.position=Vector3(210,0.1,2.5)
-	await capture("tea-interior")
-	scene.visitor.position=Vector3(-39,0.1,-19)
+	for i in 3:
+		scene.visitor.enter_space(Vector3(210+i*20,0.1,1.3),0)
+		await capture(["tea-interior","tailor-interior","curios-interior"][i])
+	scene.visitor.enter_space(Vector3(-39,0.1,-19),0)
 	await capture("gardens")
-	scene.visitor.position=Vector3(-18,0.1,-25);scene.visitor.yaw=0.15;scene.visitor.pitch=-0.05
+	var hill := Vector3(-18,0,-25);hill.y=scene.square.landscape.surface_height(hill)+0.1
+	scene.visitor.enter_space(hill,0.15)
 	await capture("meadow-hills")
-	scene.visitor.position=Vector3(0,0.1,54);scene.visitor.yaw=PI;scene.visitor.pitch=-0.2
+	scene.visitor.enter_space(Vector3(0,0.1,54),PI)
 	await capture("harbor")
-	scene.visitor.position=Vector3(0,0.1,10);scene.visitor.yaw=PI;scene.visitor.pitch=-0.1;scene.visitor.arm.spring_length=2.2
+	scene.visitor.enter_space(Vector3(0,0.1,10),PI)
+	for i in 12:await physics_frame
 	await capture("avatar-idle")
 	scene.visitor.touch_move=Vector2(0,-0.7)
 	for i in 3:
@@ -42,5 +50,6 @@ func run() -> void:
 	await capture("island")
 	scene.visitor.camera.position=Vector3(27,28,35);scene.visitor.camera.look_at(Vector3.ZERO)
 	await capture("park-layout")
+	scene.square.life.stop_sound();await create_timer(0.15).timeout
 	scene.queue_free();for i in 3:await process_frame
 	quit()

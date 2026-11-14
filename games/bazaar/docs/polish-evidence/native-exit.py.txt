@@ -1,0 +1,41 @@
+import ctypes as c, subprocess, time, os, sys
+x=c.CDLL("libX11.so.6")
+x.XOpenDisplay.restype=c.c_void_p
+x.XDefaultRootWindow.argtypes=[c.c_void_p];x.XDefaultRootWindow.restype=c.c_ulong
+x.XQueryTree.argtypes=[c.c_void_p,c.c_ulong,c.POINTER(c.c_ulong),c.POINTER(c.c_ulong),c.POINTER(c.POINTER(c.c_ulong)),c.POINTER(c.c_uint)]
+x.XFetchName.argtypes=[c.c_void_p,c.c_ulong,c.POINTER(c.c_char_p)]
+x.XInternAtom.argtypes=[c.c_void_p,c.c_char_p,c.c_int];x.XInternAtom.restype=c.c_ulong
+x.XFree.argtypes=[c.c_void_p];x.XFlush.argtypes=[c.c_void_p]
+class Data(c.Union):_fields_=[("l",c.c_long*5),("b",c.c_char*20)]
+class Message(c.Structure):_fields_=[("type",c.c_int),("serial",c.c_ulong),("send_event",c.c_int),("display",c.c_void_p),("window",c.c_ulong),("message_type",c.c_ulong),("format",c.c_int),("data",Data)]
+class Event(c.Union):_fields_=[("client",Message),("pad",c.c_long*24)]
+x.XSendEvent.argtypes=[c.c_void_p,c.c_ulong,c.c_int,c.c_long,c.POINTER(Event)]
+d=x.XOpenDisplay(None);assert d
+root=x.XDefaultRootWindow(d)
+p=subprocess.Popen(["/work/polish-export/bazaar.x86_64","--windowed","--resolution","800x450","--audio-driver","Dummy"])
+try:
+ deadline=time.monotonic()+50;window=None
+ while time.monotonic()<deadline and p.poll() is None:
+  r=c.c_ulong();parent=c.c_ulong();children=c.POINTER(c.c_ulong)();count=c.c_uint()
+  x.XQueryTree(d,root,c.byref(r),c.byref(parent),c.byref(children),c.byref(count))
+  for i in range(count.value):
+   name=c.c_char_p()
+   if x.XFetchName(d,children[i],c.byref(name)) and name.value:
+    if b"TrainerOS Bazaar" in name.value:window=children[i]
+    x.XFree(name)
+  if children:x.XFree(children)
+  if window:break
+  time.sleep(.1)
+ assert window,"Exported game window did not open"
+ time.sleep(4)
+ event=Event();m=event.client;m.type=33;m.send_event=1;m.display=d;m.window=window
+ m.message_type=x.XInternAtom(d,b"WM_PROTOCOLS",0);m.format=32;m.data.l[0]=x.XInternAtom(d,b"WM_DELETE_WINDOW",0)
+ assert x.XSendEvent(d,window,0,0,c.byref(event));x.XFlush(d)
+ # The native window exists before scene loading finishes. Retry close until
+ # the game begins processing window events; never kill it as a passing exit.
+ deadline=time.monotonic()+90
+ while p.poll() is None and time.monotonic()<deadline:
+  x.XSendEvent(d,window,0,0,c.byref(event));x.XFlush(d);time.sleep(2)
+ code=p.wait(timeout=1);print("Exported Linux OpenGL window close exit code:",code,flush=True);sys.exit(code)
+finally:
+ if p.poll() is None:p.kill();p.wait()

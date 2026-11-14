@@ -64,6 +64,7 @@ func advance(delta: float, speed: float, enabled: bool) -> void:
 	if not ready_to_animate or not is_instance_valid(target):return
 	var clip := "Idle" if speed<0.1 or not enabled else "Jog_Fwd" if speed>3.2 else "Walk"
 	if clip!=current:player.play(clip,0.20);current=clip
+	player.speed_scale=1.0 if clip=="Idle" else clampf(speed/(4.8 if clip=="Jog_Fwd" else 2.4),0.65,1.35)
 	player.advance(delta)
 	source.force_update_all_bone_transforms()
 	var globals: Dictionary = {}

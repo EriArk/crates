@@ -1,4 +1,4 @@
-# Bazaar — island walkthrough
+# Bazaar 0.0.3 — island walkthrough
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -31,6 +31,8 @@ character explicitly reconnects. Ordinary standalone walking works offline.
   handles menu buttons.
 - **Touch:** drag in the lower-left area to move, right side to look; tap the
   contextual inspect button or Menu. Opening a menu clears held touch input.
+- **Menu:** field of view 75–105° (horizontal reference at 16:9, default 90°),
+  fountain sound toggle. Choices persist locally.
 - **Leave Bazaar** exits the ordinary game process. Losing window focus pauses
   movement. The third-person spring arm avoids clipping through world colliders.
 
@@ -46,7 +48,8 @@ The TrainerOS catalogue remains on its explicit placeholder until a real package
 and admission path is connected. This world does not unlock Bazaar spending.
 
 Separate Crates branch `codex/bazaar-world-20261114`; no merge, catalogue release
-or handheld install. [Island design and evidence](docs/ISLAND.md).
+or handheld install. [Current polish/camera evidence](docs/POLISH.md).
+The [island design report](docs/ISLAND.md) records version 0.0.2.
 The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 
 ## Assets and code
@@ -56,6 +59,8 @@ The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
 - Environment models and palette: [Kenney](https://kenney.nl/assets/fantasy-town-kit),
   [original CC0 notice](licenses/Kenney-Fantasy-Town-CC0.txt),
   [source archive and file hashes](assets/town/provenance.json).
+- Fountain bed: original procedural audio, reproducible with
+  `python3 games/bazaar/tools/generate_water.py`; GPL-3.0-or-later.
 - Game/SDK code: GPL-3.0-or-later; see [LICENSE](LICENSE).
 - The unmodified SDK client/presenter are copied from TrainerOS;
   [source commit/hashes](addons/traineros/SOURCE.json). Update both together.

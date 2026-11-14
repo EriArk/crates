@@ -34,6 +34,27 @@ func run(world: Node3D) -> void:
 		sample.free()
 	check(world.visitor.is_on_floor(),"Visitor rests on real collision floor")
 	check(world.visitor.fallback.visible,"Missing host uses anonymous appearance")
+	# Projection and collision are checked independently of the avatar art.
+	check(world.visitor.camera.keep_aspect==Camera3D.KEEP_HEIGHT,"Landscape camera preserves vertical FOV")
+	check(absf(world.visitor.camera.fov-58.7155)<0.02,"90 horizontal at 16:9 is converted to vertical FOV")
+	var window := get_window();var original_size := window.size
+	for viewport_size in [Vector2i(960,540),Vector2i(960,600),Vector2i(1260,540)]:
+		window.size=viewport_size;await get_tree().process_frame;await frames(2)
+		for angle in [75.0,90.0,105.0]:
+			world.fov_slider.value=angle;await frames(2)
+			var head: Vector2=world.visitor.camera.unproject_position(world.visitor.position+Vector3(0,0.95,0))
+			var feet: Vector2=world.visitor.camera.unproject_position(world.visitor.position+Vector3(0,0.03,0))
+			var viewport: Rect2=get_viewport().get_visible_rect()
+			check(viewport.has_point(head) and viewport.has_point(feet),"Character fits FOV/aspect: "+str(viewport_size)+" / "+str(angle))
+			var fraction: float=absf(feet.y-head.y)/viewport.size.y
+			check(fraction>0.16 and fraction<0.42,"Useful third-person framing")
+	window.size=original_size;world.fov_slider.value=90;await frames(3)
+	var wall=world.square.block(world.visitor.position+Vector3(0,1.2,1.0),Vector3(4,3,0.2),"888888")
+	await frames(5)
+	check(world.visitor.arm.get_hit_length()<1.25,"Camera retracts before a wall")
+	check(world.visitor.camera.global_position.z<wall.global_position.z-0.1,"Camera stays on visitor side of wall")
+	wall.queue_free();await frames(5)
+	check(world.visitor.arm.get_hit_length()>2.8,"Camera returns after obstruction clears")
 	await capture("arrival")
 	var start: Vector3=world.visitor.position
 	key(KEY_W,true);await frames(240);key(KEY_W,false);await frames(12)
@@ -44,6 +65,7 @@ func run(world: Node3D) -> void:
 	var before: Vector3=world.visitor.position
 	world.show_menu();key(KEY_W,true);await frames(30);key(KEY_W,false)
 	check(world.visitor.position.distance_to(before)<0.05,"Pause stops movement")
+	check(world.square.life.fountain_audio.stream_paused,"Pause silences ambience")
 	world.hide_menu()
 	world.visitor.position=Vector3(0,0.1,82.5);world.visitor.velocity=Vector3.ZERO
 	key(KEY_S,true);await frames(90);key(KEY_S,false);await frames(12)
@@ -82,7 +104,7 @@ func run(world: Node3D) -> void:
 				world.visitor.touch_move=Vector2.ZERO
 				await capture("walk")
 				world.visitor.clear_identity("revoked");await frames(2)
-				check(world.visitor.visual==null and world.visitor.fallback.visible,"Revocation clears identity immediately")
+				check(world.visitor.visual==null and world.visitor.fallback.visible and world.visitor.locomotion==null,"Revocation clears identity and animation immediately")
 	# Rooms are actual enter/exit destinations, not just modal descriptions.
 	for shop in world.square.shop_exits:
 		world.visitor.position=shop.door+Vector3(0,0.12,0);world.visitor.velocity=Vector3.ZERO;await frames(8)
@@ -90,9 +112,12 @@ func run(world: Node3D) -> void:
 		world.inspect_spot();await frames(8)
 		check(world.visitor.position.x>180 and world.visitor.is_on_floor(),"Entered furnished room: "+shop.title)
 		check(world.square.district(world.visitor.position)==shop.title,"Interior identity")
+		check(not world.nearest.has("arrival"),"Entry does not immediately offer exit")
+		check(is_equal_approx(world.visitor.arm.spring_length,2.4*world.visitor.camera_scale),"Interior camera shortens")
 		world.visitor.position=shop.room+Vector3(0,0.12,3.5);world.visitor.velocity=Vector3.ZERO;await frames(8)
 		world.inspect_spot();await frames(8)
 		check(world.visitor.position.x<100,"Returned through shop exit")
+		check(is_equal_approx(world.visitor.arm.spring_length,3.0*world.visitor.camera_scale),"Outdoor camera restored")
 	# Both the island and connecting paths have a floor; no former plaza wall.
 	for at in [Vector3(0,0.15,28),Vector3(25,0.15,0),Vector3(38,0.15,-9),Vector3(-39,0.15,-11),Vector3(0,0.15,50)]:
 		world.visitor.position=at;world.visitor.velocity=Vector3.ZERO;await frames(12)
@@ -115,4 +140,4 @@ func run(world: Node3D) -> void:
 	var file := FileAccess.open(output+"/report.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify({"success":failures.is_empty(),"failures":failures,"engine":Engine.get_version_info().string,"renderer":DisplayServer.get_name()},"  "));file.close()
 	print("BAZAAR CHECKS: ","PASS" if failures.is_empty() else "FAIL")
-	get_tree().quit(0 if failures.is_empty() else 1)
+	await world.leave_bazaar(0 if failures.is_empty() else 1)
