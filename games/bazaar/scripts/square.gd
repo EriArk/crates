@@ -139,7 +139,9 @@ func park_market() -> void:
 			collider(stall,Vector3(0,0.48,0),Vector3(1.0,0.96,0.85))
 			# A small cloth pennant, animated independently from the rigid stall.
 			var flag := block(Vector3(side*8.4,2.1,z),Vector3(0.5,0.7,0.025),"e2b96c",false);life.cloth.append(flag)
-			text3d("%02d"%(stall_index+1+(0 if side<0 else 6)),Vector3(side*6.25,1.8,z),0.005,self,-side*PI/2)
+			var slot := stall_index+1+(0 if side<0 else 6)
+			destinations.append({"title":"Stall %02d"%slot,"position":Vector3(side*5.9,0,z),"service":"stall","slot":slot})
+			text3d("%02d"%slot,Vector3(side*6.25,1.8,z),0.005,self,-side*PI/2)
 		for z in [-22.0,-10.0,10.0,22.0]:
 			tree(Vector3(side*16,0,z),3.2)
 			flowerbed(Vector3(side*12,0,z),Vector2(3,2))
@@ -151,7 +153,7 @@ func park_market() -> void:
 			model("lantern",Vector3(side*12,0,z+2),Vector3.ONE*1.8)
 	for z in [-20.0,-10.0,10.0,20.0]:festival_line(z)
 	spot("Festival stalls","An open-air market in the park. Trading comes later; no items or Sparks change.",Vector3(-3.8,0,-4.8))
-	spot("Island paths","East: shops. West: gardens. South: harbor. Walk the island; services are still in development.",Vector3(3.8,0,5.8))
+	spot("Island paths","East: Stall Office and shops. West: gardens. South: harbor.",Vector3(3.8,0,5.8))
 
 func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	var home := house(at,4,3,2,yaw,"50897a")
@@ -169,7 +171,7 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	for x in [-5,5]:block(center+Vector3(x,2,0),Vector3(0.25,4,10),"e6d4ae")
 	for z in [-5,5]:block(center+Vector3(0,2,z),Vector3(10,4,0.25),"c7b18d")
 	text3d(title,center+Vector3(0,2.7,-4.7),0.013)
-	text3d("INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.25,-4.7),0.006)
+	text3d("RENTALS · NPC SELLERS" if index==3 else "CLOTHING · IN DEVELOPMENT" if index==1 else "INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.25,-4.7),0.006)
 	block(center+Vector3(0,0.38,-2.5),Vector3(6,0.76,0.9),"896343")
 	for side in [-1,1]:
 		lantern(center+Vector3(side*3.8,2.8,-3.9),"edc178")
@@ -181,19 +183,20 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,1.3),"yaw":0.0})
 	destinations.append({"title":"Return to town","position":exit_position,"arrival":door+Vector3(0,0.15,1).rotated(Vector3.UP,yaw),"yaw":yaw+PI})
 	shop_exits.append({"title":title,"door":door,"room":center})
+	if index in [1,3]:destinations.append({"title":"Talk to the clerk" if index==3 else "Browse clothing","position":center+Vector3(0,0,-1.65),"service":"office" if index==3 else "tailor"})
 
 func town_square() -> void:
 	path(TOWN,Vector3(26,0,27))
 	shop("MOSS & TEA",TOWN+Vector3(-8,0,-14),0,0)
 	shop("THREAD",TOWN+Vector3(8,0,-14),0,1)
 	shop("CURIOS",TOWN+Vector3(15,0,1),-PI/2,2)
-	house(TOWN+Vector3(-8,0,15),3,3,2,PI,"c88969")
+	shop("STALL OFFICE",TOWN+Vector3(-8,0,15),PI,3)
 	house(TOWN+Vector3(6,0,15),4,3,2,PI,"d0ad63")
 	flowerbed(TOWN+Vector3(0,0,1),Vector2(6,3))
 	for x in [-7,7]:
 		model("stall-bench",TOWN+Vector3(x,0,2),Vector3.ONE*1.8,PI/2)
 		model("lantern",TOWN+Vector3(x,0,-6),Vector3.ONE*2)
-	spot("Town shops","Enter the three signed shops to explore their rooms. Displays are scenery; purchases and services come later.",TOWN+Vector3(-5,0,7))
+	spot("Town shops","Stall Office: rentals and sellers. THREAD: avatar clothing. Walk through the signed doors to meet the clerks.",TOWN+Vector3(-5,0,7))
 
 func gardens_and_harbor() -> void:
 	path(GARDEN,Vector3(20,0,20))

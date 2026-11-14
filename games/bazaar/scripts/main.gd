@@ -6,6 +6,7 @@ const TouchPad = preload("res://scripts/touch_pad.gd")
 var square = Square.new()
 var visitor = Walker.new()
 var touch_pad = TouchPad.new()
+var services = preload("res://scripts/service_menu.gd").new()
 var population = preload("res://scripts/population.gd").new()
 var identity := Label.new()
 var district_label: Label
@@ -99,13 +100,21 @@ func _ready() -> void:
 			fov_slider.value=clampf(float(saved.get_value("camera","fov",90.0)),75,105)
 			sound.button_pressed=bool(saved.get_value("audio","fountain",true))
 	panel.hide()
+	root.add_child(services);services.closed.connect(hide_menu)
+	services.client.snapshot.connect(func(method: String, value: Dictionary):
+		if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
+	services.client.unavailable.connect(func(_reason: String):population.apply_stall_sellers([]))
+	services.client.read_failed.connect(func(method: String, _reason: String):
+		if method=="bazaar.world":population.apply_stall_sellers([]))
 	if smoke_mode:call_deferred("run_smoke")
 
 func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Multiplayer and trading are still in development.") -> void:
+	if services.visible:services.hide();services.destroy_preview()
 	modal=true;population.set_paused(true);square.life.set_sound(sound.button_pressed,true);visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
 func hide_menu() -> void:
+	if services.visible:services.hide();services.destroy_preview()
 	modal=false;population.set_paused(false);square.life.set_sound(sound.button_pressed);panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
 func inspect_spot() -> void:
@@ -113,6 +122,8 @@ func inspect_spot() -> void:
 	if nearest.has("arrival"):
 		visitor.enter_space(nearest.arrival,nearest.yaw)
 		visitor.touch_move=Vector2.ZERO;touch_pad.reset();nearest={};prompt.hide()
+	elif nearest.has("service"):
+		show_menu();panel.hide();services.open(nearest.service,int(nearest.get("slot",1)))
 	else:show_menu(nearest.title,nearest.detail)
 
 func _process(_delta: float) -> void:
@@ -148,7 +159,7 @@ func leave_bazaar(code := 0) -> void:
 
 func _notification(what: int) -> void:
 	if what==NOTIFICATION_WM_CLOSE_REQUEST and is_node_ready():leave_bazaar()
-	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and is_node_ready() and not smoke_mode:show_menu()
+	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and is_node_ready() and not smoke_mode and not modal:show_menu()
 
 func run_smoke() -> void:
 	var suite = load("res://tests/walkthrough.gd").new()

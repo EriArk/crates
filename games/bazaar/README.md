@@ -1,13 +1,13 @@
-# Bazaar 0.0.6 — island walkthrough
+# Bazaar 0.0.7 — island services preview
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
 houses and shops**, connected by paths to gardens, a harbor terrace and room for
 future districts. The park has twelve stalls, flowers, lantern strings and a
 working fountain. Hills, a grassy meadow, clouds and distance haze use the same
-lightweight approach as Pocket Golf. Three signed shops have enterable preview rooms and exits.
+lightweight approach as Pocket Golf. Four signed buildings have enterable rooms and exits, including the Stall Office.
 
-People, rabbits, yetis, dino, frog and bird folk inhabit the island: eleven
+People, rabbits, yetis, dino, frog and bird folk inhabit the island: twelve
 merchants and seven pedestrians, with humans in the majority. Humans have five
 skin tones and dark facial details. Six animated birds fly around the
 districts and climb away from a nearby visitor. Residents greet, stroll, pause
@@ -20,6 +20,12 @@ and finger motion. [Deformation review and before/after](docs/ANIMATION_REPAIR.m
 Missing host/assets use a labelled guest capsule. Revocation or disconnection
 removes profile identity and its retargeter. No personal model is bundled.
 No trading, multiplayer, purchases or Sparks spending are enabled.
+
+[Rental office, NPC selection and trading preparation](docs/SERVICES.md): walk to
+the office for twelve numbered places and native seller previews. NPCs cost 100
+Sparks per rental; three planned new costumes are 50 each in alpha. The service
+interfaces read the Backend through TrainerOS, but payment buttons remain disabled
+until trusted checkout and actual item/costume delivery exist.
 
 ## Run from source
 

@@ -59,7 +59,7 @@ func park() -> void:
 			for n in 3:piece("box",Vector3(side*7.2,0.82+n*0.07,z),Vector3(0.38,0.06,0.46),["e1c397","779f91","b87565"][n])
 
 func storefront(at: Vector3, yaw: float, index: int) -> void:
-	var palette := ["537e70","ad766c","687c92"]
+	var palette := ["537e70","ad766c","687c92","b29350"]
 	var color: String=palette[index]
 	# An awning and hanging lamps frame the same physical entry used by interaction.
 	for side in [-1,1]:
@@ -81,7 +81,7 @@ func table(at: Vector3) -> void:
 	cup(at+Vector3(0.27,0.72,0.2));cup(at+Vector3(-0.25,0.72,-0.2));jar(at+Vector3(0,0.72,0),"709184",0.8)
 
 func room(center: Vector3, index: int) -> void:
-	var color: String=["527e71","a16d67","566f87"][index]
+	var color: String=["527e71","a16d67","566f87","977a42"][index]
 	# Wood floor, rug and beams give each preview a room scale and identity.
 	for i in 20:piece("box",center+Vector3(-4.75+i*0.5,0.031,0),Vector3(0.487,0.025,10),"8e7356" if i%3==0 else "a48762")
 	piece("box",center+Vector3(0,0.052,0.6),Vector3(3.7,0.014,3.8),"c9b188")
@@ -105,6 +105,13 @@ func room(center: Vector3, index: int) -> void:
 		for i in 6:
 			var bolt := piece("round",center+Vector3(2.8,0.18+(i/3)*0.34,-0.6+(i%3)*0.38),Vector3(0.3,1.2,0.3),["d6bd91","b68179","719489"][i%3]);bolt.rotation.z=PI/2
 		for i in 5:piece("box",center+Vector3(-1.1+i*0.5,0.94,-2.5),Vector3(0.42,0.12,0.65),["d6bd91","b68179","719489"][i%3])
+	elif index==3:
+		# Park plan, lease ledger and twelve hooks distinguish the rental office.
+		piece("box",center+Vector3(-3.2,1.8,-4.65),Vector3(2.2,1.65,0.09),"d5c393")
+		for side in [-1,1]:
+			for n in 6:piece("box",center+Vector3(-3.2+side*0.55,1.25+n*0.22,-4.56),Vector3(0.45,0.13,0.04),"607e68")
+		for n in 4:piece("box",center+Vector3(-1+n*0.5,0.94,-2.5),Vector3(0.4,0.12,0.55),"ddc995")
+		world.text3d("FESTIVAL PARK",center+Vector3(-3.2,2.82,-4.55),0.004)
 	else:
 		for side in [-1,1]:
 			var p := center+Vector3(side*2.65,0,-0.1)

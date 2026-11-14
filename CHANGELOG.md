@@ -1,5 +1,16 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.7 service preview
+
+Added the walk-in Stall Office, twelve-place picker, twelve native NPC previews,
+stall goods and THREAD clothing surfaces. Read-only TrainerOS SDK integration
+shows server directory/listings and applies leased NPC appearances without changing
+avatar rigs. Rent belongs to the real venue owner; NPC hire is 100 per rental;
+three new planned costumes are 50 each in alpha. [Implementation and remaining
+scope](games/bazaar/docs/SERVICES.md). Payments, custody, costume delivery and managed
+world entry remain unfinished; no merge, catalogue release or device install.
+
+
 ## 14 November 2026 — Bazaar 0.0.6 resident variety and animation review
 
 Added Dino, Frog and Birb from the same CC0 pack; eighteen local NPCs now include

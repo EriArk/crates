@@ -25,6 +25,7 @@ var world: Node3D
 var observer: Node3D
 var residents: Array[Dictionary] = []
 var birds: Array[Dictionary] = []
+var hired_sellers: Array[Dictionary] = []
 var ambient_paused := false
 var decisions := 0.0
 var complexion_materials: Dictionary = {}
@@ -118,13 +119,36 @@ func setup(owner_world: Node3D, visitor: Node3D) -> void:
 		bird.visual.position.y=-0.42
 		birds.append(bird)
 		update_bird(bird,0.0)
+	merchant("OldClassy_Male",Vector3(270,0.055,-3.45),0,"Vale","Vale handles stall rentals and NPC sellers.",Vector3(270,0,-1.65))
+	update_activity()
+
+func apply_stall_sellers(places: Array) -> void:
+	# Server projection only. Losing the account clears this layer; ambient NPCs
+	# never become evidence that a player rented or owns a place.
+	for actor in hired_sellers:actor.node.queue_free()
+	hired_sellers.clear()
+	for actor in residents:actor["covered_by_seller"]=false
+	var seen := {}
+	for row in places:
+		var slot := int(row.get("slot",0));var species := str(row.get("species", ""))
+		if slot<1 or slot>12 or seen.has(slot) or species not in SPECIES or species=="Pigeon" or row.get("rental_id")==null:continue
+		seen[slot]=true
+		var side := -1 if slot<=6 else 1
+		var z: float=[-17.0,-12.0,-7.0,7.0,12.0,17.0][(slot-1)%6]
+		var at := ground(Vector3(side*7.65,0,z))
+		for ambient in residents:
+			if ambient.route.is_empty() and ambient.node.position.distance_to(at)<0.5:ambient.covered_by_seller=true
+		var actor := figure(species,at,0.49 if species=="Bunny" else 0.53 if species=="Yeti" else 0.48,slot%5)
+		actor.node.rotation.y=-side*PI/2
+		actor.merge({"route":[],"wait":0.0,"cooldown":1.0,"gesture":0.0,"home_yaw":-side*PI/2,"speed":0.0})
+		hired_sellers.append(actor)
 	update_activity()
 
 func update_activity() -> void:
-	for actor in residents+birds:
+	for actor in residents+birds+hired_sellers:
 		var distance: float=actor.node.global_position.distance_to(observer.global_position)
-		actor.active=distance<ACTIVE_DISTANCE
-		actor.node.visible=distance<VISIBLE_DISTANCE
+		actor.active=distance<ACTIVE_DISTANCE and not actor.get("covered_by_seller",false)
+		actor.node.visible=distance<VISIBLE_DISTANCE and not actor.get("covered_by_seller",false)
 		actor.player.active=actor.active and not ambient_paused
 
 func _physics_process(delta: float) -> void:
@@ -133,7 +157,7 @@ func _physics_process(delta: float) -> void:
 	if decisions<=0:
 		decisions=0.25;update_activity()
 	if ambient_paused:return
-	for actor in residents:
+	for actor in residents+hired_sellers:
 		if actor.active:update_resident(actor,delta)
 	for bird in birds:
 		if bird.active:update_bird(bird,delta)
