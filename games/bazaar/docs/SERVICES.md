@@ -1,5 +1,12 @@
 # Bazaar 0.0.7 — rental office and service integration
 
+## 14 November 2026 — corrected handheld entry
+
+Use **Online → Bazaar → Official Bazaar** on both handhelds. Shell sequence 43
+opens the existing island 0.0.7 and returns to its catalogue card; the Apps-only
+route below is superseded. Commerce remains closed. [Evidence](https://github.com/EriArk/OctoFox-OS/blob/codex/bazaar-catalogue-20261110/docs/evidence/2026-11-14-bazaar-entry/README.md).
+
+
 ## 14 November 2026 — Bazaar 0.0.7 handheld installation
 
 Installed the ARM64 walkthrough on Flip 2 and Odin 2, with owner authorization:
