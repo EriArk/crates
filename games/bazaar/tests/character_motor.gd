@@ -23,6 +23,11 @@ func _physics_process(delta: float) -> bool:
 	if is_instance_valid(motor.body):motor.step(delta,direction,sprint,crouch,jump,enabled,walk);jump=false
 	return false
 func run() -> void:
+	check(Motor.stick_direction(Vector2(0.17,0)).is_zero_approx(),"Inner dead zone rejects drift")
+	check(absf(Motor.stick_direction(Vector2(0.49,0)).length()-0.5)<0.0001,"Stick midpoint is linear, not squared")
+	check(Motor.stick_direction(Vector2(0.8,0)).is_equal_approx(Vector2.RIGHT),"80 percent travel reaches full run")
+	check(Motor.stick_direction(Vector2(0.9,0)).is_equal_approx(Vector2.RIGHT),"Outer dead zone keeps full speed")
+	check(Motor.stick_direction(Vector2.ONE).length()<=1.0001,"Diagonal stick has no speed boost")
 	solid(Vector3(0,-0.5,0),Vector3(100,1,100));root.add_child(body);body.add_child(motor);motor.bind(body)
 	body.position=Vector3(0,0.1,0);await frames(30)
 	check(body.is_on_floor(),"Settles on floor")
@@ -33,6 +38,7 @@ func run() -> void:
 	check(absf(motor.actual_speed-motor.run_speed*0.30)<0.03 and motor.gait=="walk","Light analog walk retains proportional speed")
 	direction=Vector3.FORWARD*0.40;await frames(30)
 	check(absf(motor.actual_speed-motor.run_speed*0.40)<0.03,"Analog gait change does not jump requested speed")
+	check(motor.gait=="walk","Partial stick uses walking rather than slow-motion jogging")
 	direction=Vector3.FORWARD;sprint=true;await frames(30);check(absf(motor.actual_speed-motor.sprint_speed)<0.03,"Sprint")
 	sprint=false;direction=Vector3.ZERO;await frames(30);check(motor.actual_speed<0.01,"Brakes without drifting")
 	crouch=true;await frames(3);check(motor.crouched and is_equal_approx(motor.collider.shape.height,motor.crouch_height),"Crouch changes collision height")
@@ -47,5 +53,5 @@ func run() -> void:
 	wall.queue_free();direction=Vector3.ZERO;await frames(5)
 	enabled=false;jump=true;direction=Vector3.FORWARD;await frames(20)
 	check(motor.actual_speed<0.01 and body.is_on_floor(),"Disabled control prevents movement and jump")
-	print(JSON.stringify({"success":failures.is_empty(),"failures":failures,"checks":14}))
+	print(JSON.stringify({"success":failures.is_empty(),"failures":failures,"checks":20}))
 	quit(0 if failures.is_empty() else 1)

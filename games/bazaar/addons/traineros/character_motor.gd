@@ -9,6 +9,7 @@ extends Node
 @export var crouch_speed := 1.05
 @export var acceleration := 24.0
 @export var braking := 32.0
+@export var run_threshold := 2.4
 @export var gravity := 20.0
 @export var jump_speed := 6.0
 @export var standing_height := 1.8
@@ -22,6 +23,14 @@ var gait := "idle"
 var coyote := 0.0
 var jump_buffer := 0.0
 var landed := false
+
+## Map a radial stick once: dead zone then linear travel, never magnitude squared.
+static func stick_direction(value: Vector2, dead_zone := 0.18, outer_dead_zone := 0.20) -> Vector2:
+	var inner := clampf(dead_zone,0.0,0.95)
+	var full := maxf(inner+0.01,1.0-clampf(outer_dead_zone,0.0,0.95))
+	var amount := value.length()
+	if amount<=inner:return Vector2.ZERO
+	return value.normalized()*clampf(inverse_lerp(inner,full,amount),0.0,1.0)
 
 func bind(character: CharacterBody3D) -> void:
 	body=character
@@ -74,3 +83,9 @@ func step(delta: float, direction: Vector3, wants_sprint := false, wants_crouch 
 	var real := body.get_real_velocity()-body.get_platform_velocity()
 	actual_speed=Vector2(real.x,real.z).length()
 	if actual_speed<0.08:gait="idle"
+	elif crouched:gait="crouch"
+	# Do not slow a running clip almost to a stop for partial stick travel or
+	# acceleration. Choose the gait from actual travel; speed stays continuous.
+	elif actual_speed<=run_threshold:gait="walk"
+	elif wants_sprint and actual_speed>run_speed+0.2:gait="sprint"
+	else:gait="run"

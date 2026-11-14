@@ -22,6 +22,7 @@ func _packet(packet: Dictionary) -> void:
 	if not pending.has(id):_fail("Unexpected service response");return
 	var method: String=pending[id].method;pending.erase(id)
 	if packet.has("error"):
+		if method=="hello":_fail(str(packet.error.get("code","backend_unavailable")));return
 		read_failed.emit(method,str(packet.error.get("code","backend_unavailable")));return
 	var result=packet.get("result")
 	if not result is Dictionary:_fail("Invalid service response");return

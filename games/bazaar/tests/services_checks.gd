@@ -65,8 +65,30 @@ func run() -> void:
 	check(menu.service=="stall" and menu.selected==2,"Stall interaction opens its own goods")
 	check(not menu.goods_confirmed,"Unavailable goods are not a confirmed empty shop")
 	await capture("stall-goods")
-	menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[],"next":null})
+	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[],"next":null})
 	check(menu.goods_confirmed and menu.content.get_child(1).text=="No items listed.","Confirmed empty storefront is distinct from disconnected")
+	# A reply from a closed/reopened page cannot populate the next visit.
+	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected
+	menu.close();menu.view_serial+=1;menu.show();menu.server_items=[];menu.goods_confirmed=false
+	menu.received("bazaar.listings",{"items":[{"id":"old","price":999,"presentation":{"title":"Old reply"}}]})
+	check(menu.server_items.is_empty() and not menu.goods_confirmed,"Late response after close/reopen is ignored")
+	# Switch while one bounded transport request is outstanding: latest page is
+	# fetched after completion rather than silently losing the user's selection.
+	menu.client.active=true;menu.client.ready_for_reads=true
+	menu.client.pending={"fixture":{"method":"bazaar.world","deadline":Time.get_ticks_msec()+20000}}
+	menu.switch("sellers")
+	check(menu.queued_refresh,"Busy transport queues the new page")
+	menu.client.pending.clear()
+	menu.received("bazaar.world",{"places":[],"seller_price":275})
+	check(not menu.queued_refresh and menu.client.pending.values()[0].method=="bazaar.sellers","Completion fetches authoritative seller offers")
+	menu.client.pending.clear();menu.client.outgoing.clear()
+	menu.received("bazaar.sellers",{"items":[{"id":"Frog","price":275,"revision":2}]})
+	menu.seller=10;menu.render()
+	check("275 Sparks" in menu.detail.get_child(2).text,"Seller price uses server offer rather than local 100")
+	menu.failed("bazaar.sellers","backend_unavailable")
+	check(menu.seller_offers.is_empty() and "Price unavailable" in menu.detail.get_child(2).text,"Failed seller refresh clears stale price")
+	menu.client.disconnect_host()
+
 	scene.hide_menu()
 	# The fourth interior retains an unblocked exit trigger.
 	scene.visitor.position=Vector3(270,0,4);scene._process(0);scene.inspect_spot()

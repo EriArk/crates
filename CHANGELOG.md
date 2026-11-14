@@ -1,5 +1,15 @@
 # История Crates
 
+## 14 November 2026 — Bazaar 0.0.9 prepared, devices paused
+
+Shared SDK movement now reaches full speed at 80% left-stick travel, without
+multiplying partial input twice. Walking follows resolved speed; running retains
+its flight phase instead of being pulled down to the floor. Service tabs queue
+refreshes correctly, reject stale replies and show server seller prices.
+Motor, seven-state pose, service and full world checks passed; OpenGL comparison
+was reviewed. [Evidence and remaining work](games/bazaar/docs/response-evidence/README.md).
+Source only: no merge, release or handheld contact. 0.0.8 remains installed.
+
 ## 14 November 2026 — Bazaar 0.0.8 delivered
 
 Installed on Flip 2 and Odin 2 with shell Software 45. Shared SDK locomotion,

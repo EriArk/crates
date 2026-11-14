@@ -9,6 +9,7 @@ const LOOP_CLIPS := ["Idle", "Walk", "Jog_Fwd", "Sprint", "Crouch_Idle", "Crouch
 var stride_speed: Dictionary = {}
 var grounded := true
 var sole_height := 0.0
+var source_sole_height := 0.0
 var donor: Node3D
 var source: Skeleton3D
 var target: Skeleton3D
@@ -78,6 +79,7 @@ func bind(presenter: Node3D) -> bool:
 		if not player.has_animation(clip):return false
 		player.get_animation(clip).loop_mode=Animation.LOOP_LINEAR
 	sole_height=minf(target.get_bone_global_rest(target.find_bone("foot.L")).origin.y,target.get_bone_global_rest(target.find_bone("toes.L")).origin.y)
+	source_sole_height=minf(source.get_bone_global_rest(source.find_bone("foot_l")).origin.y,source.get_bone_global_rest(source.find_bone("ball_l")).origin.y)
 	ready_to_animate=true
 	_calibrate_stride()
 	current=""
@@ -170,5 +172,14 @@ func apply_pose(delta: float) -> void:
 		var low := INF
 		for name in ["foot.L","foot.R","toes.L","toes.R"]:
 			low=minf(low,target.get_bone_global_pose(target.find_bone(name)).origin.y)
-		position+=parent_rotation.inverse()*Vector3(0,sole_height-low,0)
+		# Running has a flight phase even while the physics capsule follows the
+		# ground. Pinning the lowest foot here erased take-off and sank the hips.
+		var clearance := 0.0
+		var clip := str(player.current_animation)
+		if clip in ["Jog_Fwd","Sprint"]:
+			var source_low := INF
+			for name in ["foot_l","foot_r","ball_l","ball_r"]:
+				source_low=minf(source_low,source.get_bone_global_pose(source.find_bone(name)).origin.y)
+			clearance=maxf(0.0,source_low-source_sole_height)*height_ratio
+		position+=parent_rotation.inverse()*Vector3(0,sole_height+clearance-low,0)
 		target.set_bone_pose_position(hips,position)

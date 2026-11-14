@@ -1,5 +1,8 @@
 # Bazaar 0.0.8 — shared locomotion and festival rows
 
+**Later source correction:** [0.0.9 response and gait evidence](response-evidence/README.md)
+adds the 20% outer stick zone and running flight preservation. Devices are on hold.
+
 14 November 2026. This increment replaces the game-owned retargeter with the
 optional Godot SDK motor/animation module. `addons/traineros/SOURCE.json` pins its
 upstream source and file hashes; `scripts/locomotion.gd` is only a compatibility

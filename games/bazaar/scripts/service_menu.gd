@@ -30,6 +30,10 @@ var request_page := ""
 var request_slot := 0
 var loading := false
 var refresh_clock := 0.0
+var view_serial := 0
+var request_view := -1
+var queued_refresh := false
+var seller_offers: Array = []
 
 func text(value: String, size := 17, color := Color("f4ead6")) -> Label:
 	var l := Label.new();l.text=value;l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
@@ -66,7 +70,7 @@ func _ready() -> void:
 	var note := text("SERVICES IN DEVELOPMENT · No Sparks are spent in this build",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
 	button("Refresh",refresh,footer)
 	add_child(client);client.connected.connect(func():refresh())
-	client.unavailable.connect(func(reason: String):world_data={};server_items=[];goods_confirmed=false;next_page="";loading=false;status=reason;if_visible_render())
+	client.unavailable.connect(func(reason: String):world_data={};server_items=[];goods_confirmed=false;next_page="";seller_offers=[];queued_refresh=false;loading=false;status=reason;if_visible_render())
 	client.read_failed.connect(failed);client.snapshot.connect(received)
 	hide()
 func _process(delta: float) -> void:
@@ -74,13 +78,16 @@ func _process(delta: float) -> void:
 	refresh_clock+=delta
 	if refresh_clock<30.0:return
 	refresh_clock=0.0
-	if not visible and not world_data.is_empty() and client.ready_for_reads:client.read("bazaar.world")
+	if not visible and not world_data.is_empty() and client.ready_for_reads and client.pending.is_empty():
+		request_view=-1;client.read("bazaar.world")
 func open(kind: String, slot := 1) -> void:
+	view_serial+=1;queued_refresh=false;loading=false
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
 	selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render();close_button.grab_focus()
 	if not client.active:client.connect_host()
 	else:refresh()
 func close() -> void:
+	view_serial+=1;queued_refresh=false;loading=false;server_items=[];goods_confirmed=false
 	hide();destroy_preview();closed.emit()
 func if_visible_render() -> void:
 	if visible:render()
@@ -88,26 +95,43 @@ func refresh(after := "") -> void:
 	if not visible:return
 	if not client.active:client.connect_host();return
 	if not client.ready_for_reads:return
+	if not client.pending.is_empty():
+		queued_refresh=true;loading=true;status="Checking server…";render();return
 	var method := "bazaar.world";var args := {}
 	if page=="goods":
 		var row := place()
 		if not row.has("id"):method="bazaar.world"
 		else:method="bazaar.listings";args={"place_id":row.id}
+	elif page=="sellers":method="bazaar.sellers"
 	elif page=="mine":method="bazaar.own_listings"
 	elif page=="clothes":method="bazaar.costumes"
 	if not after.is_empty() and method in ["bazaar.listings","bazaar.own_listings"]:args["after"]=after
 	if client.read(method,args):
-		request_page=page;request_slot=selected;loading=true;status="Checking server…";render()
+		request_view=view_serial;request_page=page;request_slot=selected;loading=true;status="Checking server…";render()
+func finish_queued() -> bool:
+	if not queued_refresh or not visible:return false
+	queued_refresh=false;refresh();return true
 func failed(method: String, reason: String) -> void:
-	loading=false
 	if method=="bazaar.world":world_data={}
-	server_items=[];goods_confirmed=false
+	if method=="bazaar.sellers":seller_offers=[]
+	if finish_queued():return
+	if not visible or request_view!=view_serial:return
+	loading=false;server_items=[];goods_confirmed=false;next_page=""
 	status={"sign_in_required":"Sign in to your TrainerOS account to use Bazaar services.","world_not_configured":"Stall rentals are not open on this island yet.","backend_unavailable":"Server unavailable. Availability and balances cannot be confirmed.","unsupported_bazaar_read":"This TrainerOS version does not support the requested service."}.get(reason,"Service unavailable · "+reason)
 	if_visible_render()
 func received(method: String, value: Dictionary) -> void:
+	# World and offers belong to this connection; per-page replies also need the
+	# exact open/switch generation, not just the same page name after reopening.
+	if method=="bazaar.world":world_data=value
+	if method=="bazaar.sellers":seller_offers=value.get("items",[])
+	if finish_queued():return
+	if not visible or request_view!=view_serial:return
 	loading=false
-	if method=="bazaar.world":world_data=value;status="Server directory refreshed. Payments are not enabled in this world build."
-	elif request_page==page and request_slot==selected:goods_confirmed=method in ["bazaar.listings","bazaar.own_listings"];server_items=value.get("items",[]);next_page=str(value.get("next") if value.get("next")!=null else "");status="Server inventory refreshed."
+	if method=="bazaar.world":status="Server directory refreshed. Payments are not enabled in this world build."
+	elif method=="bazaar.sellers":status="Server seller offers refreshed. Hiring is not enabled in this build."
+	elif request_page==page and request_slot==selected:
+		goods_confirmed=method in ["bazaar.listings","bazaar.own_listings"];server_items=value.get("items",[])
+		next_page=str(value.get("next") if value.get("next")!=null else "");status="Server inventory refreshed."
 	if_visible_render()
 	if method=="bazaar.world" and page=="goods" and place().has("id"):refresh()
 func place() -> Dictionary:
@@ -115,6 +139,7 @@ func place() -> Dictionary:
 		if int(row.get("slot",0))==selected:return row
 	return {}
 func switch(next_page: String) -> void:
+	view_serial+=1;loading=false
 	page=next_page;server_items=[];goods_confirmed=false;self.next_page="";render();refresh()
 func render() -> void:
 	destroy_preview();clear(tabs);clear(content);clear(detail)
@@ -143,7 +168,7 @@ func render_places() -> void:
 	detail.add_child(text("STALL %02d"%selected,24,Color("ffda89")))
 	detail.add_child(text("7 days from payment\nNo automatic renewal",17))
 	detail.add_child(text("Weekly rent\n"+(str(row.weekly_price)+" Sparks" if row.get("weekly_price")!=null else "Set by the Bazaar owner"),17))
-	detail.add_child(text("NPC seller · 100 Sparks\nPaid for each rental separately",17))
+	detail.add_child(text("NPC seller · "+(str(world_data.seller_price)+" Sparks" if world_data.has("seller_price") else "Price unavailable")+"\nPaid for each rental separately",17))
 	if row.get("expires_at")!=null:detail.add_child(text("Occupied until\n"+str(row.expires_at),14))
 	button("Choose a seller",func():switch("sellers"),detail)
 	var rent := button("Rent for 7 days",func():pass,detail);rent.disabled=true
@@ -153,14 +178,17 @@ func focus_stall(n: int) -> void:
 	grid.get_child(n-1).grab_focus()
 func render_sellers() -> void:
 	content.add_child(text("YOUR STALL'S SELLER",17,Color("ffda89")))
-	content.add_child(text("100 Sparks for the current rental. Choose before paying.",14))
+	content.add_child(text("Choose a seller for one rental. Hiring remains closed.",14))
 	var grid := GridContainer.new();grid.columns=3;grid.add_theme_constant_override("h_separation",8);grid.add_theme_constant_override("v_separation",6);content.add_child(grid)
 	for i in SELLERS.size():
 		var b := button(NAMES[i],func():seller=i;render();content.get_child(2).get_child(i).grab_focus(),grid)
 		b.custom_minimum_size=Vector2(165,55);b.size_flags_horizontal=Control.SIZE_EXPAND_FILL;b.toggle_mode=true;b.button_pressed=seller==i
 	detail.add_child(text(NAMES[seller].to_upper(),24,Color("ffda89")))
 	make_preview(SELLERS[seller])
-	detail.add_child(text("100 Sparks · Until rental ends",15))
+	var offer: Dictionary={}
+	for row in seller_offers:
+		if row.get("id")==SELLERS[seller]:offer=row;break
+	detail.add_child(text(str(offer.price)+" Sparks · Until rental ends" if not offer.is_empty() else "Price unavailable · Local model preview",15))
 	var hire := button("Hire this seller",func():pass,detail);hire.disabled=true
 	detail.add_child(text("Preview only. Hiring is not available yet.",14,Color("cad9d2")))
 func render_goods() -> void:

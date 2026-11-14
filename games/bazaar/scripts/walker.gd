@@ -111,7 +111,7 @@ func _physics_process(delta: float) -> void:
 		if not devices.is_empty():
 			var device: int=devices[0]
 			var stick := Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
-			if stick.length()>0.18:axis+=stick.limit_length()*inverse_lerp(0.18,1.0,stick.length())
+			axis+=Motor.stick_direction(stick)
 			var right := Vector2(Input.get_joy_axis(device,JOY_AXIS_RIGHT_X),Input.get_joy_axis(device,JOY_AXIS_RIGHT_Y))
 			if right.length()>0.2:look(right.normalized()*inverse_lerp(0.2,1.0,minf(right.length(),1.0))*delta*1.8)
 			running=running or Input.is_joy_button_pressed(device,JOY_BUTTON_LEFT_SHOULDER) or Input.is_joy_button_pressed(device,JOY_BUTTON_LEFT_STICK)

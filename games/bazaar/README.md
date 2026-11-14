@@ -1,4 +1,7 @@
-# Bazaar 0.0.7 — island services preview
+# Bazaar 0.0.9 — island services preview
+
+**Source preparation only:** handheld work is paused by the owner; 0.0.8 remains
+installed. [Latest movement and read-service checks](docs/response-evidence/README.md).
 
 A standalone Godot 4.7.2 prototype of TrainerOS's first official fantasy Bazaar.
 The island separates a **festival market in a park** from a **town square with
@@ -14,7 +17,8 @@ districts and climb away from a nearby visitor. Residents greet, stroll, pause
 at corners and stop for the player. [Appearances and animation checks](docs/RESIDENT_APPEARANCE.md).
 
 The existing TrainerOS avatar SDK supplies the profile character. CC0 Quaternius
-idle/walk/jog animations are retargeted in the game; the donor model stays hidden.
+idle/walk/run/sprint/crouch/jump animations are retargeted by the optional shared
+SDK helper; the donor model stays hidden.
 Version 0.0.4 corrects the SDK arms-down / donor T-pose mismatch, shoulder helpers
 and finger motion. [Deformation review and before/after](docs/ANIMATION_REPAIR.md).
 Missing host/assets use a labelled guest capsule. Revocation or disconnection
@@ -39,8 +43,10 @@ Use Godot **4.7.2 Standard**, with Compatibility rendering by default. Optional
 credential, machine path or personal avatar in the game. Pause → Use my TrainerOS
 character explicitly reconnects. Ordinary standalone walking works offline.
 
-- **Keyboard:** WASD moves, Shift runs; right-mouse drag or arrows rotates the camera.
-- **Controller:** left stick moves, LB runs, right stick looks, A inspects a nearby
+- **Keyboard:** WASD moves, Alt walks, Shift sprints, C toggles crouch, Space jumps;
+  right-mouse drag or arrows rotates the camera.
+- **Controller:** left stick moves (full run at 80% travel), LB/L3 sprints, R3
+  toggles crouch, X jumps, right stick looks, A inspects a nearby
   sign or merchant, B/Start opens/closes the menu. The controller's ordinary UI navigation
   handles menu buttons.
 - **Touch:** drag in the lower-left area to move, right side to look; tap the
@@ -59,8 +65,8 @@ fabricated player occupancy or successful trading.
 
 Multiplayer, host migration, parallel-realm selection, real shops/inventory
 transfers and catalogue-managed Crate launch/return are **not implemented**.
-The TrainerOS catalogue remains on its explicit placeholder until a real package
-and admission path is connected. This world does not unlock Bazaar spending.
+The installed shell opens the local island from Online → Bazaar → Official Bazaar.
+Network admission is still absent. This world does not unlock Bazaar spending.
 
 Separate Crates branch `codex/bazaar-world-20261114`; no merge, catalogue release
 or handheld install. [Earlier polish/camera evidence](docs/POLISH.md).

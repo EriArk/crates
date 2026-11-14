@@ -1,4 +1,9 @@
-# Bazaar 0.0.7 — rental office and service integration
+# Bazaar — rental office and service integration
+
+**14 November, latest:** 0.0.9 source handles queued refresh and stale replies,
+and reads NPC offer prices from the server. Backend reads and the verified
+official owner binding are live; handheld shells were not updated. Paid operations
+remain closed. [Current evidence](response-evidence/README.md).
 
 ## 14 November 2026 — corrected handheld entry
 
@@ -52,7 +57,8 @@ The [Backend branch](https://github.com/EriArk/OctoFox-OS/blob/codex/bazaar-cata
 prepares rental-scoped seller purchases, listing/withdrawal and atomic ownership/
 Sparks transfer with private idempotent receipts. Official ownership belongs to the
 user and does not consume his personal Bazaar; he sets weekly rent. Operator
-registration must verify the real account and has not been run publicly.
+registration verified the Lobby application owner and has now run on the existing
+server. Twelve places are mapped; weekly prices remain unset.
 
 **This build does not enable in-world payments.** The service screens explicitly
 say so and disable payment/listing actions. Trusted host confirmation and durable

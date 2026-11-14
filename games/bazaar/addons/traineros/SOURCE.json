@@ -8,11 +8,11 @@
   },
   "movement": {
     "repository": "https://github.com/EriArk/OctoFox-OS",
-    "commit": "94b57480f467731b5a045a169f3cad19a3af33e1",
+    "commit": "c45675a5b59d2e481e6b3f3883a6b5492b8088d2",
     "upstream": "sdk/godot",
     "files": {
-      "avatar_locomotion.gd": "8fca7c2a07367b223626c69e27900a263e10b06656e2b8534e894ce59dfa2bba",
-      "character_motor.gd": "daadc964fb1b75456482eb222043431ca23cdd1e4998c639c6e5719d53d0d0ee",
+      "avatar_locomotion.gd": "287324cc2400576dbf1745c56d04936fd67e46cde666835d0a9a4a4baeab0be7",
+      "character_motor.gd": "3be4f503516948f76bb746f5a83b4520cfa2c9e58d6b6cca9d2d34cc13c14d5a",
       "animations/UAL1_Standard.glb": "69591853d817488edaa8fd9bf8fc1d821eaeaf789f8627b3cd23b41c4ed67997",
       "animations/provenance.json": "d8e73d017fce072f01ccccaf719e3f1ffefc80d3cc16f7d4f4651316a83e970f",
       "animations/LICENSE.txt": "6d01f55c6e4c49a2c9963e147e561945ae2c83958c8ca667d90a6bffdbfac061"
