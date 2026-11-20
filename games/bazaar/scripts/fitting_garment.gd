@@ -29,6 +29,23 @@ func fabric(rings: Array, dye: Color, train := 0.0) -> void:
 	piece.material_override=cloth(dye)
 	add_child(piece)
 
+# Follow the front of the flared skirt so the apron drapes over the hem.
+func apron() -> void:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rings := [Vector3(.503,.13,.117),Vector3(.46,.133,.119),Vector3(.322,.164,.15)]
+	for row in 2:
+		for i in 8:
+			for corner: Vector2i in [Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(0,0),Vector2i(1,1),Vector2i(0,1)]:
+				var ring: Vector3=rings[row+corner.y]
+				var angle := lerpf(-.64,.64,(i+corner.x)/8.0)
+				surface.add_vertex(Vector3(sin(angle)*ring.y,ring.x,.008+cos(angle)*ring.z))
+	surface.generate_normals()
+	var piece := MeshInstance3D.new()
+	piece.mesh=surface.commit()
+	piece.material_override=cloth(Color("deb98a"))
+	add_child(piece)
+
 func detail(at: Vector3, dimensions: Vector3, color: Color, tilt := 0.0) -> void:
 	var item := MeshInstance3D.new()
 	var shape := BoxMesh.new()
@@ -57,7 +74,7 @@ func build(kind: String) -> void:
 			for y in [.33,.42,.51,.62]:
 				detail(Vector3(0,y,.15 if y<.6 else .122),Vector3(.019,.019,.008),GOLD,PI/4)
 		"merchant":
-			detail(Vector3(0,.434,.132),Vector3(.15,.23,.014),Color("deb98a"))
+			apron()
 			detail(Vector3(0,.417,.143),Vector3(.097,.052,.014),LEATHER)
 			for x in [-.05,.05]:
 				detail(Vector3(x,.588,.103),Vector3(.025,.13,.013),GOLD,x*5)

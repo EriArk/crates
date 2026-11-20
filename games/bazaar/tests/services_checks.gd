@@ -72,6 +72,9 @@ func run() -> void:
 	check(menu.service=="tailor" and menu.visible,"THREAD opens clothing interface")
 	var booth=scene.square.fitting_booth
 	check(booth.visitor==scene.visitor,"Clerk uses the in-world fitting booth")
+	var platform_position: Vector3=scene.visitor.anchor.global_position
+	scene.visitor.position.y+=.22
+	check(scene.visitor.anchor.global_position.is_equal_approx(platform_position),"Feet stay on the fitting platform while the exploration body settles")
 	await create_timer(1.1).timeout
 	check(booth.displayed=="traveller" and is_instance_valid(booth.garment),"First costume fitted")
 	var patterns=menu.content.get_child(1)

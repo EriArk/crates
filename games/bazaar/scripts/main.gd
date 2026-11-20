@@ -28,7 +28,6 @@ var speech := Label.new()
 var speech_position := Vector3.ZERO
 var speech_time := 0.0
 var service_camera := Camera3D.new()
-var fitting_yaw := 0.0
 var posing := false
 var hud_parts: Array = []
 var nearest: Dictionary = {}
@@ -180,7 +179,6 @@ func hide_menu() -> void:
 	visitor.anchor.show()
 	if posing:
 		square.fitting_booth.leave()
-		visitor.anchor.rotation.y=fitting_yaw
 		posing=false
 	for part in hud_parts:
 		if part!=hud_parts.back():part.show()
@@ -218,7 +216,6 @@ func frame_service(kind: String, slot: int) -> void:
 		target=visitor.global_position+Vector3.UP*.92
 		toward=Vector3(.23,0,.97).normalized()
 		if kind=="tailor":
-			fitting_yaw=visitor.anchor.rotation.y
 			posing=true
 			square.fitting_booth.enter(visitor)
 			target=square.fitting_booth.global_position+Vector3.UP*1.15

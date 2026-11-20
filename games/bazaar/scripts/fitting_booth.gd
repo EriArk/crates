@@ -4,7 +4,7 @@ extends Node3D
 const Garment = preload("res://scripts/fitting_garment.gd")
 var panels: Array[MeshInstance3D] = []
 var visitor
-var original_offset := Vector3.ZERO
+var exploration_transform := Transform3D.IDENTITY
 var displayed := ""
 var requested := ""
 var garment: Node3D
@@ -80,7 +80,8 @@ func position_panels() -> void:
 func enter(walker) -> void:
 	visitor=walker
 	visitor.fitting_pose=true
-	original_offset=visitor.anchor.position
+	exploration_transform=visitor.anchor.transform
+	visitor.anchor.top_level=true
 	visitor.anchor.global_position=global_position+Vector3.UP*.09
 	displayed=""
 	requested=""
@@ -146,7 +147,8 @@ func leave() -> void:
 	if visitor==null:return
 	clear_costume()
 	visitor.fitting_pose=false
-	visitor.anchor.position=original_offset
+	visitor.anchor.top_level=false
+	visitor.anchor.transform=exploration_transform
 	visitor.fallback.visible=not is_instance_valid(visitor.visual)
 	visitor=null
 	curtain=0.0
