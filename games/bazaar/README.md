@@ -1,10 +1,9 @@
-# Bazaar 0.0.10 — personal starting worlds
+# Bazaar 0.0.11 — park map and counter services
 
-**Installed on Flip 2 and Odin 2:** Bazaar 0.0.10 with shell Software 47.
-Both personal frames launch from Online → Bazaar through their Mika/Ren cards.
-All three worlds passed remote entry, movement and normal return. SDK gait fixes
-and the 20% outer stick zone are retained; physical controls remain owner
-acceptance. [Checks and delivery](docs/personal-worlds/README.md).
+Open **Online → Bazaar → Festival Park** on Flip 2 or Odin 2. Visit Vale in the
+Stall Office to select a numbered counter on the park map. Browse a counter in
+person or visit Wisp at THREAD to see the costume patterns.
+[Service screens and checks](docs/counter-evidence/README.md).
 
 Version 0.0.10 adds [two empty personal starting worlds](docs/personal-worlds/README.md):
 Mika’s sea island and Ren’s orbital station under glass. The central square stays

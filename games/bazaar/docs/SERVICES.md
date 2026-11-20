@@ -1,6 +1,8 @@
 # Bazaar — rental office and service integration
 
-**14 November, latest:** 0.0.9 source handles queued refresh and stale replies,
+**20 November:** Bazaar 0.0.11 opens a labelled overhead park map at Vale’s desk, a goods shelf at each counter, and a pattern book at THREAD. [Current screens and checks](counter-evidence/README.md).
+
+**14 November:** 0.0.9 source handles queued refresh and stale replies,
 and reads NPC offer prices from the server. Backend reads and the verified
 official owner binding are live; handheld shells were not updated. Paid operations
 remain closed. [Current evidence](response-evidence/README.md).

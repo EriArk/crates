@@ -1,5 +1,12 @@
 # Crates — состояние проекта
 
+## 20 November 2026 — Bazaar 0.0.11
+
+The rental clerk shows the park from above with twelve selectable counters and
+landmark labels. Stall keepers open their inventory, Wisp shows costume patterns
+alongside the visitor, and signs and passersby use a field caption. Installed on
+Flip 2 and Odin 2. [Checks and screenshots](games/bazaar/docs/counter-evidence/README.md).
+
 ## 14 November 2026 — Bazaar 0.0.9 installed on both handhelds
 
 Shared SDK gait/flight fixes and the 20% outer left-stick zone are installed on
