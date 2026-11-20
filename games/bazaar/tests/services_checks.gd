@@ -15,6 +15,8 @@ func run() -> void:
 		if arg.begins_with("--output="):output=arg.trim_prefix("--output=")
 	DirAccess.make_dir_recursive_absolute(output)
 	scene=load("res://main.tscn").instantiate();root.add_child(scene);scene.smoke_mode=true
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--descriptor="):scene.visitor.appearance(JSON.parse_string(FileAccess.get_file_as_string(arg.trim_prefix("--descriptor="))))
 	scene.visitor.set_physics_process(false);scene.square.life.stop_sound()
 	await physics_frame;await physics_frame
 	check(scene.square.shop_exits.size()==4,"Four enterable buildings including rental office")
@@ -37,6 +39,9 @@ func run() -> void:
 	await create_timer(0.2).timeout
 	check(menu.get_global_rect().end.y<=root.get_visible_rect().end.y,"Service panel fits viewport height")
 	var map=menu.content.get_child(0)
+	await process_frame
+	for marker in map.markers.values():check(menu.shelf.get_global_rect().encloses(marker.get_global_rect()),"All numbered markers fit the map without scrolling")
+	for tag in map.labels:check(menu.shelf.get_global_rect().encloses(tag.get_global_rect()),"All landmarks fit the map")
 	check(map.markers.size()==12,"All actual stalls are selectable")
 	check(map.markers[1].position.x<map.markers[7].position.x and map.markers[1].position.y<map.markers[6].position.y,"Map corresponds to west/east and north/south")
 	map.markers[3].grab_focus()

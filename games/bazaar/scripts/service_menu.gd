@@ -85,6 +85,9 @@ func _ready() -> void:
 	column.add_child(goods_summary)
 	var footer := HBoxContainer.new();column.add_child(footer)
 	var note := text("ALPHA   /   Purchases closed",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
+	hint.autowrap_mode=TextServer.AUTOWRAP_OFF
+	hint.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	hint.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
 	footer.add_child(hint)
 	button("Retry",refresh,footer).name="Retry"
 	add_child(client);client.connected.connect(func():refresh())
@@ -172,8 +175,8 @@ func render() -> void:
 	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
 	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
 	hint.text=status
-	hint.visible=not status.is_empty()
-	hint.visible=hint.visible and page!="visitor"
+	hint.tooltip_text=status
+	hint.visible=not status.is_empty() and page!="visitor"
 	find_child("Retry",true,false).visible=hint.visible and not loading
 	inspector.visible=office
 	inspector.custom_minimum_size.x=250
