@@ -1,5 +1,12 @@
 # История Crates
 
+## 20 November 2026 — Bazaar 0.0.13
+
+The Bazaar client now uses the revision 13 avatar presenter. On Odin 2 and Flip 2,
+live profile avatars tracked a market counter and the selected fitting-room pattern.
+The game checks the model digest on appearance updates. The ARM64 install keeps
+0.0.12 for rollback. [SDK integration checks](games/bazaar/tests/attention.gd).
+
 ## 20 November 2026 — Bazaar 0.0.12
 
 THREAD now has a fitting booth where the visitor can try on three outfits. The
