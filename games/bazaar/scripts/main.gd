@@ -160,6 +160,7 @@ func _ready() -> void:
 
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
 	if is_instance_valid(services) and services.visible:services.close()
+	visitor.attend(null)
 	speech.hide()
 	touch_actions.hide()
 	modal=true
@@ -175,6 +176,7 @@ func hide_menu() -> void:
 		services.close()
 		return
 	modal=false
+	visitor.attend(null)
 	visitor.camera.make_current()
 	visitor.anchor.show()
 	if posing:
@@ -198,6 +200,8 @@ func inspect_spot() -> void:
 		frame_service(nearest.service,slot)
 		services.open(nearest.service,slot)
 	else:
+		if nearest.get("greeting",false) and is_instance_valid(visitor.visual):
+			visitor.visual.react("celebrate",.42,.45)
 		speech.text=str(nearest.detail).get_slice("\n",0)
 		speech_position=nearest.position
 		speech_time=5.0
@@ -231,7 +235,13 @@ func frame_service(kind: String, slot: int) -> void:
 func _process(_delta: float) -> void:
 	if compass!=null:compass.text=["N","W","S","E"][posmod(roundi(visitor.yaw/(PI/2)),4)]
 	district_label.text=square.district(visitor.position)
-	if modal:return
+	if modal:
+		if posing:
+			var control: Control=services.attention_control()
+			if control and square.fitting_booth.curtain<.99:
+				visitor.attend(service_camera.project_position(control.get_global_rect().get_center(),1.2))
+			else:visitor.attend(null)
+		return
 	speech_time-=_delta
 	if speech_time<=0 or visitor.global_position.distance_to(speech_position)>3.4:speech.hide()
 	nearest={};var distance := 2.1
@@ -245,8 +255,13 @@ func _process(_delta: float) -> void:
 			var at: Vector3=actor.node.global_position
 			if visitor.global_position.distance_to(at)<distance:
 				distance=visitor.global_position.distance_to(at)
-				nearest={"title":"Say hello","position":at,"detail":"Beautiful day for the market!"}
+				nearest={"title":"Say hello","position":at,"attention":at+Vector3.UP*1.12,"greeting":true,"detail":"Beautiful day for the market!"}
 	prompt.visible=not nearest.is_empty()
+	if nearest.is_empty():
+		visitor.attend(null)
+	else:
+		var target: Vector3=nearest.position
+		visitor.attend(nearest.get("attention",target+Vector3.UP*1.5))
 	if prompt.visible:
 		var verb: String={"tea":"Visit Moss","curios":"Browse curios","stall":"Browse wares","office":"View rental map","tailor":"Visit fitting room"}.get(nearest.get("service",""),nearest.title)
 		prompt.text="E / A  ·  "+verb

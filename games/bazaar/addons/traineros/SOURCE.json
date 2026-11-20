@@ -1,14 +1,14 @@
 {
   "repository": "https://github.com/EriArk/OctoFox-OS",
-  "commit": "906414f243821a999abcb10a57e45415fb4e5a61",
+  "commit": "14f275ac46174b3f2674e16fbfbaafc570e5f80b",
   "license": "GPL-3.0-or-later",
   "files": {
-    "avatar_client.gd": "d5684fb44e41114cce97b85edca4a4d58c5f2d742d32eb48eff468acbc5c158f",
-    "avatar_presenter.gd": "afecb2bbc19ec1d9ea9afc11aa324b1b4f480b3deefa75a741e96e4c72279312"
+    "avatar_client.gd": "2e998219527bc7926759314eeba46c82c7d1ac05dec13d886c564a79e53eb29c",
+    "avatar_presenter.gd": "baf9e1ff41fea076337d081b8750a5fa5bca29ffb6bf519e13a37c779c53c41d"
   },
   "movement": {
     "repository": "https://github.com/EriArk/OctoFox-OS",
-    "commit": "c45675a5b59d2e481e6b3f3883a6b5492b8088d2",
+    "commit": "14f275ac46174b3f2674e16fbfbaafc570e5f80b",
     "upstream": "sdk/godot",
     "files": {
       "avatar_locomotion.gd": "287324cc2400576dbf1745c56d04936fd67e46cde666835d0a9a4a4baeab0be7",

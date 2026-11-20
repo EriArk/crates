@@ -92,7 +92,7 @@ func merchant(species: String, at: Vector3, yaw: float, title: String, detail: S
 	actor.merge({"route":[],"wait":0.0,"cooldown":float(residents.size())*1.7,"gesture":0.0,"home_yaw":yaw,"speed":0.0})
 	residents.append(actor)
 	actor.player.seek(fmod(residents.size()*0.43,actor.player.current_animation_length),true)
-	world.destinations.append({"title":"Meet "+title,"detail":detail+"\nNPC merchant · Trading is still in development. No items or Sparks change.","position":approach})
+	world.destinations.append({"title":"Meet "+title,"detail":detail+"\nNPC merchant · Trading is still in development. No items or Sparks change.","position":approach,"attention":at+Vector3.UP*1.12,"greeting":true})
 
 func pedestrian(species: String, route: Array[Vector3], start: int, speed: float) -> void:
 	var actor := figure(species,ground(route[start]),0.45 if species=="Bunny" else 0.48 if species=="Yeti" else 0.46)

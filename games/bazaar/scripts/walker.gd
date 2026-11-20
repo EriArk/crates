@@ -12,6 +12,7 @@ const Presenter = preload("res://addons/traineros/avatar_presenter.gd")
 signal identity_changed(message: String)
 var client = Client.new()
 var visual: Node3D
+var appearance_hash := ""
 var anchor := Node3D.new()
 var fallback := Node3D.new()
 var rig := Node3D.new()
@@ -54,11 +55,14 @@ func reconnect() -> void:
 	clear_identity("reconnecting");client.connect_host()
 
 func appearance(description: Dictionary) -> void:
-	if is_instance_valid(visual) and visual.appearance_revision==description.get("revision",""):return
+	if is_instance_valid(visual) and visual.profile_id==description.get("profile","") \
+			and visual.appearance_revision==description.get("revision","") \
+			and appearance_hash==description.get("sha256",""):return
 	var replacement = Presenter.from_descriptor(description)
 	clear_identity("")
 	if replacement==null:
 		identity_changed.emit("Guest · character unavailable");return
+	appearance_hash=description.sha256
 	visual=replacement;anchor.add_child(visual);fallback.hide()
 	locomotion=Locomotion.new();add_child(locomotion)
 	if not locomotion.bind(visual):locomotion.queue_free();locomotion=null
@@ -66,11 +70,24 @@ func appearance(description: Dictionary) -> void:
 	identity_changed.emit("Your TrainerOS character")
 
 func clear_identity(_reason: String) -> void:
+	appearance_hash=""
 	if is_instance_valid(locomotion):remove_child(locomotion);locomotion.queue_free()
 	locomotion=null
 	if is_instance_valid(visual):
 		visual.clear_identity();anchor.remove_child(visual);visual.queue_free()
 	visual=null;fallback.show();camera_scale=1.8;update_camera_size();identity_changed.emit("Guest · connect in Menu")
+
+# SDK attention uses the avatar's local +Z forward, including on the rotating podium.
+func attend(world_target: Variant) -> void:
+	if not is_instance_valid(visual):return
+	var aim := Vector2.ZERO
+	if world_target is Vector3:
+		var ray: Vector3=visual.to_local(world_target)-Vector3.UP*visual.eye_height
+		var horizontal := Vector2(ray.x,ray.z).length()
+		if horizontal>.001 and ray.z>0:
+			aim=Vector2(atan2(ray.x,ray.z)/.85,atan2(ray.y,horizontal)/.6)
+			aim=aim.limit_length(1.0)*smoothstep(0,.3,ray.z/horizontal)
+	visual.set_attention(aim)
 
 func set_controls(enabled: bool) -> void:
 	input_enabled=enabled;touch_move=Vector2.ZERO
@@ -85,6 +102,7 @@ func update_camera_size() -> void:
 	arm.spring_length=(2.4 if indoor else 3.0)*camera_scale
 
 func enter_space(at: Vector3, heading: float) -> void:
+	attend(null)
 	position=at;motor.reset();touch_move=Vector2.ZERO;jump_requested=false;yaw=heading
 	anchor.rotation.y=heading+PI;indoor=at.x>180;update_camera_size()
 	pitch=-0.12 if indoor else -0.18

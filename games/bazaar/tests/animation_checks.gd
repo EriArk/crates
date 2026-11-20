@@ -23,6 +23,7 @@ func run() -> void:
 	var standing_hips := 0.0
 	for state in [{"name":"Idle","speed":0.0},{"name":"Walk","speed":1.5},{"name":"Jog_Fwd","speed":4.4,"gait":"run"},{"name":"Sprint","speed":6.2,"gait":"sprint"},{"name":"Crouch_Idle","speed":0.0,"crouch":true},{"name":"Crouch_Fwd","speed":1.05,"crouch":true},{"name":"Jump","speed":0.0,"floor":false}]:
 		var min_hips := INF;var max_hips := -INF;var max_floor_error := 0.0
+		var airborne_frames := 0;var contact_frames := 0;var min_floor_error := INF
 		var max_direction_error := 0.0;var min_hand_side := 100.0;var max_helper_error := 0.0
 		# Settle transition, then sample several whole cycles at actual playback rate.
 		for i in 90:motion.advance(1.0/60,state.speed,true,state.get("crouch",false),state.get("floor",true),state.get("gait",""))
@@ -33,6 +34,9 @@ func run() -> void:
 			var low := INF
 			for foot in ["foot.L","foot.R","toes.L","toes.R"]:low=minf(low,sk.get_bone_global_pose(sk.find_bone(foot)).origin.y)
 			max_floor_error=maxf(max_floor_error,absf(low-motion.sole_height))
+			min_floor_error=minf(min_floor_error,low-motion.sole_height)
+			if low-motion.sole_height>0.03:airborne_frames+=1
+			if absf(low-motion.sole_height)<0.01:contact_frames+=1
 			for i in sk.get_bone_count():
 				check(sk.get_bone_rest(i).is_equal_approx(original[i]),"Bind transforms unchanged")
 				check(sk.get_bone_pose_scale(i).is_equal_approx(original[i].basis.get_scale()),"Body scale unchanged")
@@ -56,12 +60,16 @@ func run() -> void:
 				max_helper_error=maxf(max_helper_error,rad_to_deg(helper_delta.angle_to(Quaternion.IDENTITY.slerp(upper_delta,0.5))))
 		if state.name=="Idle":standing_hips=min_hips
 		if state.get("crouch",false):check(max_hips<standing_hips-0.05,"Crouch lowers pelvis with knees, not floating legs: "+state.name)
-		if state.get("floor",true):check(max_floor_error<0.001,"A support foot remains grounded: "+state.name)
+		if state.name in ["Jog_Fwd","Sprint"]:
+			check(airborne_frames>20 and contact_frames>20,"Running keeps both flight and stance phases: "+state.name)
+			check(min_floor_error> -0.001,"Running feet do not penetrate ground: "+state.name)
+			check(max_hips>standing_hips,"Run rises above standing hips during take-off: "+state.name)
+		elif state.get("floor",true):check(max_floor_error<0.001,"A support foot remains grounded: "+state.name)
 		check(motion.current==state.name,"Requested clip selected: "+state.name)
 		check(max_direction_error<12.0,"Arm/hand motion follows donor direction: "+state.name)
 		check(min_hand_side>0.025,"Wrists stay on their own side of torso: "+state.name)
 		check(max_helper_error<0.1,"Shoulder helper uses SDK half rotation: "+state.name)
-		results[state.name]={"max_arm_direction_error_degrees":max_direction_error,"minimum_wrist_lateral_metres":min_hand_side,"max_shoulder_helper_error_degrees":max_helper_error,"sampled_frames":360,"pelvis_height_range":[min_hips,max_hips],"max_support_foot_error":max_floor_error,"playback_rate":motion.player.speed_scale}
+		results[state.name]={"max_arm_direction_error_degrees":max_direction_error,"minimum_wrist_lateral_metres":min_hand_side,"max_shoulder_helper_error_degrees":max_helper_error,"sampled_frames":360,"flight_frames":airborne_frames,"stance_frames":contact_frames,"pelvis_height_range":[min_hips,max_hips],"max_support_foot_error":max_floor_error,"playback_rate":motion.player.speed_scale}
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	var file := FileAccess.open(output,FileAccess.WRITE)
 	if file==null:push_error("Cannot write animation evidence");quit(1);return

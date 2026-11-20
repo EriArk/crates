@@ -22,6 +22,22 @@ var _mouth_override: Dictionary = {}
 var _cpu_faces: Dictionary = {}
 var _cpu_correctives: Dictionary = {}
 
+var _attention := Vector2.ZERO
+var _gaze := Vector2.ZERO
+var _turn := Vector2.ZERO
+var _head: AttentionHead
+
+# A modifier runs after locomotion/gesture animation. Godot restores the
+# unmodified bone pose after skinning, so the turn never accumulates.
+class AttentionHead extends SkeletonModifier3D:
+	var index := -1
+	var offset := Quaternion.IDENTITY
+
+	func _process_modification() -> void:
+		if index < 0 or offset == Quaternion.IDENTITY: return
+		var rig := get_skeleton()
+		rig.set_bone_pose_rotation(index, rig.get_bone_pose_rotation(index) * offset)
+
 class CorrectiveWeights:
 	extends Node
 	var values := PackedFloat32Array()
@@ -103,6 +119,14 @@ static func from_descriptor(descriptor: Dictionary) -> TrainerAvatarPresenter:
 	var metadata: Dictionary = state.json.get("extras", {}).get("trainerFace", {})
 	presenter._prepare_cpu_correctives(metadata.get("controls",[]))
 	presenter._bind_face(metadata)
+	var rigs := scene.find_children("*", "Skeleton3D", true, false)
+	if not rigs.is_empty():
+		var skeleton := rigs[0] as Skeleton3D
+		var index: int = skeleton.find_bone("head")
+		if index >= 0:
+			presenter._head = AttentionHead.new()
+			presenter._head.index = index
+			skeleton.add_child(presenter._head)
 	return presenter
 
 func _prepare_cpu_faces(controls: Array) -> void:
@@ -136,8 +160,9 @@ func _prepare_cpu_faces(controls: Array) -> void:
 		instance.mesh=_cpu_faces[instance.get_instance_id()].mesh
 	_update_cpu_faces()
 
-func _update_cpu_faces() -> void:
+func _update_cpu_faces(dirty := {}) -> void:
 	for face in _cpu_faces.values():
+		if not dirty.is_empty() and not dirty.has(face.instance.get_instance_id()): continue
 		var mesh: ArrayMesh = face.mesh
 		mesh.clear_surfaces()
 		for surface in face.surfaces:
@@ -229,23 +254,53 @@ func _blend_face(values: Dictionary, fade: float) -> void:
 	_apply_face(1.0 if _face_duration == 0 else 0.0)
 	set_process(not _face_bindings.is_empty())
 
+# Signed local direction, +X toward model +X and +Y up. Zero releases focus.
+func set_attention(direction: Vector2) -> void:
+	if not direction.is_finite(): return
+	var target := direction.limit_length(1.0)
+	if _attention.is_equal_approx(target): return
+	_attention = target
+	set_process(true)
+
+func _advance_attention(delta: float) -> void:
+	_gaze = _gaze.lerp(_attention, 1.0 - exp(-delta / 0.075))
+	_turn = _turn.lerp(_attention, 1.0 - exp(-delta / 0.21))
+	if _gaze.distance_squared_to(_attention) < 0.000004: _gaze = _attention
+	if _turn.distance_squared_to(_attention) < 0.000004: _turn = _attention
+	if is_instance_valid(_head):
+		_head.offset = Quaternion.from_euler(Vector3(deg_to_rad(-10 * _turn.y), deg_to_rad(18 * _turn.x), 0))
+
 func _apply_face(t: float) -> void:
+	var dirty := {}
+	# The four gaze controls follow the expression controls in the pack.
 	for control in _face_bindings:
 		var weight := lerpf(float(_face_from.get(control, 0)), float(_face_to.get(control, 0)), t)
+		if control.begins_with("gaze_"):
+			var visible_iris := 1.0 - maxf(maxf(_face_values.eyes_closed, _face_values.eyes_squeezed), maxf(_face_values.eyes_hearts, _face_values.eyes_shocked))
+			match control:
+				"gaze_left": weight = maxf(0, -_gaze.x)
+				"gaze_right": weight = maxf(0, _gaze.x)
+				"gaze_up": weight = maxf(0, _gaze.y)
+				"gaze_down": weight = maxf(0, -_gaze.y)
+			weight *= visible_iris
+		if _face_values[control] == weight: continue
 		_face_values[control] = weight
 		for binding in _face_bindings[control]:
-			if is_instance_valid(binding[0]) and not _cpu_faces.has(binding[0].get_instance_id()): binding[0].set_blend_shape_value(binding[1], weight)
-	_update_cpu_faces()
+			var mesh := binding[0] as MeshInstance3D
+			if _cpu_faces.has(mesh.get_instance_id()): dirty[mesh.get_instance_id()] = true
+			else: mesh.set_blend_shape_value(binding[1], weight)
+	if not dirty.is_empty(): _update_cpu_faces(dirty)
 
 func _process(delta: float) -> void:
 	if _reaction_remaining > 0:
 		_reaction_remaining -= delta
 		if _reaction_remaining <= 0:
 			_blend_face(_base_face(), 0.2)
+	_advance_attention(delta)
 	_face_elapsed += delta
 	var t := clampf(_face_elapsed / _face_duration, 0, 1) if _face_duration > 0 else 1.0
 	_apply_face(t*t*(3-2*t))
-	if t == 1 and _reaction_remaining <= 0: set_process(false)
+	if t == 1 and _reaction_remaining <= 0 and _turn == _attention and _gaze == _attention: set_process(false)
 
 static func _prepare_vertex_colors(scene: Node3D) -> bool:
 	# glTF COLOR_0 is linear. Compatibility multiplies vertex colors in sRGB
@@ -287,6 +342,8 @@ func play_action(action: String) -> bool:
 	return true
 
 func clear_identity() -> void:
+	_head = null
+	_attention = Vector2.ZERO; _turn = Vector2.ZERO; _gaze = Vector2.ZERO
 	set_process(false)
 	facial_rig.clear(); _face_bindings.clear(); _face_values.clear()
 	_face_from.clear(); _face_to.clear(); _mouth_override.clear(); _reaction_remaining = 0

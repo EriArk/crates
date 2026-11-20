@@ -29,6 +29,7 @@ var shelf: ScrollContainer
 var inspector: ScrollContainer
 var goods_summary := VBoxContainer.new()
 var subtitle: Label
+var pointer_attention := false
 var own_outfit := false
 var focused_row := 0
 var focus_after: Control
@@ -106,6 +107,7 @@ func _process(delta: float) -> void:
 		request_view=-1;client.read("bazaar.world")
 func open(kind: String, slot := 1) -> void:
 	view_serial+=1;queued_refresh=false;loading=false
+	pointer_attention=false
 	own_outfit=false
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
 	if kind in ["tea","curios"]:page="visitor"
@@ -113,6 +115,25 @@ func open(kind: String, slot := 1) -> void:
 	if page=="visitor":return
 	if not client.active:client.connect_host()
 	else:refresh()
+func _input(event: InputEvent) -> void:
+	if not visible or service!="tailor":return
+	if event is InputEventMouseMotion and not event.relative.is_zero_approx():
+		pointer_attention=true
+	elif event is InputEventMouseButton and event.pressed:
+		pointer_attention=true
+	elif event is InputEventJoypadButton or event is InputEventKey or event is InputEventScreenTouch:
+		pointer_attention=false
+	elif event is InputEventJoypadMotion and absf(event.axis_value)>.5:
+		pointer_attention=false
+
+func attention_control() -> Control:
+	var viewport := get_viewport()
+	var control := viewport.gui_get_hovered_control() if pointer_attention else viewport.gui_get_focus_owner()
+	if not control or not is_ancestor_of(control):return null
+	if control.has_meta("pattern_tile"):control=control.get_meta("pattern_tile")
+	if control is BaseButton and control.is_visible_in_tree() and not control.disabled:return control
+	return null
+
 func close() -> void:
 	view_serial+=1;queued_refresh=false;loading=false;server_items=[];goods_confirmed=false
 	hide();destroy_preview();closed.emit()
@@ -345,6 +366,7 @@ func render_clothes() -> void:
 			if not available:caption.text+="   ·   Sample unavailable"
 		var tile := button(str(row.title),choose,card)
 		tile.set_meta("service_key","pattern-%d"%i)
+		sketch.set_meta("pattern_tile",tile)
 		tile.focus_entered.connect(choose)
 		sketch.gui_input.connect(func(event):
 			if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:tile.grab_focus();choose.call())

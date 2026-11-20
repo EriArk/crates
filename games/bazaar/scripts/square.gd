@@ -77,7 +77,7 @@ func house(at: Vector3, width: int, depth: int, floors: int, yaw: float, roof_co
 	return home
 
 func spot(title: String, detail: String, at: Vector3) -> void:
-	destinations.append({"title":title,"detail":detail,"position":at})
+	destinations.append({"title":title,"detail":detail,"position":at,"attention":at+Vector3.UP*.96})
 	var post := block(at+Vector3(0,0.48,0),Vector3(0.07,0.96,0.07),"695247",false)
 	var sign := block(at+Vector3(0,0.96,0),Vector3(1.65,0.40,0.09),"355f59",false)
 	post.name="SignPost";sign.name="SignBoard"
@@ -147,7 +147,7 @@ func park_market() -> void:
 		var side: int=layout.side;var at: Vector3=layout.position
 		var stall := model("stall-red" if slot%3==0 else "stall-green",at,Vector3(1.8,1.8,2.8),layout.model_yaw)
 		collider(stall,Vector3(0,0.48,0),Vector3(0.85,0.96,1.0))
-		destinations.append({"title":"Stall %02d"%slot,"position":layout.approach,"service":"stall","slot":slot})
+		destinations.append({"title":"Stall %02d"%slot,"position":layout.approach,"attention":layout.seller+Vector3.UP*1.12,"service":"stall","slot":slot})
 		# A fabric counter skirt and a readable front valance unify each row.
 		var front := Vector3(side*4.79,0,at.z)
 		var skirt := block(front+Vector3(0,0.52,0),Vector3(0.035,0.56,2.65),"a76e5d" if slot%3==0 else "507f73",false)
@@ -197,13 +197,13 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 		fitting_booth.position=center+Vector3(-2.6,0,1.25)
 		add_child(fitting_booth)
 		text3d("FITTING ROOM",fitting_booth.position+Vector3(0,2.47,.63),.005)
-		destinations.append({"title":"Try on outfits","position":fitting_booth.position+Vector3(0,0,.95),"service":"tailor"})
+		destinations.append({"title":"Try on outfits","position":fitting_booth.position+Vector3(0,0,.95),"attention":fitting_booth.position+Vector3.UP*1.55,"service":"tailor"})
 	var exit_position := center+Vector3(0,0,4.0)
 	text3d("TO TOWN",center+Vector3(0,1.8,4.71),0.005,self,PI)
 	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,1.3),"yaw":0.0})
 	destinations.append({"title":"Return to town","position":exit_position,"arrival":door+Vector3(0,0.15,1).rotated(Vector3.UP,yaw),"yaw":yaw+PI})
 	shop_exits.append({"title":title,"door":door,"room":center})
-	destinations.append({"title":["Moss","Wisp","Rook","Vale"][index],"position":center+Vector3(0,0,-1.65),"service":["tea","tailor","curios","office"][index]})
+	destinations.append({"title":["Moss","Wisp","Rook","Vale"][index],"position":center+Vector3(0,0,-1.65),"attention":center+Vector3(0,1.18,-3.45),"service":["tea","tailor","curios","office"][index]})
 
 func town_square() -> void:
 	path(TOWN,Vector3(26,0,27))

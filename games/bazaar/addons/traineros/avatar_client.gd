@@ -31,15 +31,15 @@ func connect_host() -> void:
 		path = base+"/traineros/platform-v1/endpoint.json"
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null or file.get_length()>65536:
-		_fail("TrainerOS is not available")
+		_fail("OctoFox OS is not available")
 		return
 	var info = JSON.parse_string(file.get_as_text())
 	if not info is Dictionary or info.get("protocol")!=1 or info.get("host")!="127.0.0.1" or not info.get("port") is float or info.port<1 or info.port>65535 or not info.get("token") is String:
-		_fail("Invalid TrainerOS endpoint")
+		_fail("Invalid OctoFox OS endpoint")
 		return
 	token=info.token
 	if tcp.connect_to_host("127.0.0.1", int(info.port))!=OK:
-		_fail("TrainerOS connection failed")
+		_fail("OctoFox OS connection failed")
 		return
 	active=true
 	connecting=true
@@ -82,44 +82,44 @@ func _process(_delta: float) -> void:
 			_request("hello", {"protocol":1,"token":token,"app":app_id,"avatarFormats":["tav1"]})
 			token=""
 		else:
-			if Time.get_ticks_msec()>deadline or tcp.get_status()==StreamPeerTCP.STATUS_ERROR: _fail("TrainerOS connection timed out")
+			if Time.get_ticks_msec()>deadline or tcp.get_status()==StreamPeerTCP.STATUS_ERROR: _fail("OctoFox OS connection timed out")
 			return
 		# Flush hello now: the next rendered frame may compile shaders for seconds.
 	if tcp.get_status()!=StreamPeerTCP.STATUS_CONNECTED:
-		_fail("TrainerOS disconnected")
+		_fail("OctoFox OS disconnected")
 		return
 	if not outgoing.is_empty():
 		var sent:=tcp.put_partial_data(outgoing)
 		if sent[0]!=OK:
-			_fail("TrainerOS send failed")
+			_fail("OctoFox OS send failed")
 			return
 		outgoing=outgoing.slice(sent[1])
 	var count:=tcp.get_available_bytes()
 	if count>0:
 		if buffer.size()+count>262144:
-			_fail("TrainerOS receive limit")
+			_fail("OctoFox OS receive limit")
 			return
 		var data:=tcp.get_data(count)
 		if data[0]!=OK:
-			_fail("TrainerOS read failed")
+			_fail("OctoFox OS read failed")
 			return
 		buffer.append_array(data[1])
 	while active:
 		var end:=buffer.find(10)
 		if end<0: break
 		if end>=65536:
-			_fail("TrainerOS frame limit")
+			_fail("OctoFox OS frame limit")
 			return
 		var packet=JSON.parse_string(buffer.slice(0,end).get_string_from_utf8())
 		buffer=buffer.slice(end+1)
 		if not packet is Dictionary:
-			_fail("Invalid TrainerOS packet")
+			_fail("Invalid OctoFox OS packet")
 			return
 		_packet(packet)
-	if buffer.size()>=65536: _fail("TrainerOS frame limit")
+	if buffer.size()>=65536: _fail("OctoFox OS frame limit")
 	for request in pending.values():
 		if Time.get_ticks_msec()>request.deadline:
-			_fail("TrainerOS response timed out")
+			_fail("OctoFox OS response timed out")
 			return
 
 func _packet(p: Dictionary) -> void:
@@ -129,7 +129,7 @@ func _packet(p: Dictionary) -> void:
 		return
 	var id: String=p.get("id","")
 	if not pending.has(id):
-		_fail("Unexpected TrainerOS response")
+		_fail("Unexpected OctoFox OS response")
 		return
 	var method: String=pending[id].method
 	pending.erase(id)
@@ -147,12 +147,12 @@ func _packet(p: Dictionary) -> void:
 		return
 	var result=p.get("result",{})
 	if not result is Dictionary:
-		_fail("Invalid TrainerOS result")
+		_fail("Invalid OctoFox OS result")
 		return
 	if method=="hello":
 		recipe_supported=result.get("capabilities",{}).get("avatar.recipe")==1
 		if result.get("capabilities",{}).get("avatar.local")!=1:
-			_fail("This TrainerOS has no avatar service")
+			_fail("This OctoFox OS has no avatar service")
 			return
 		profile_id=result.get("context",{}).get("profile","")
 		if profile_id.is_empty():

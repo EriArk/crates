@@ -38,8 +38,16 @@ func run() -> void:
 			else:break
 			peer.put_data((JSON.stringify({"id":request.id,"result":result})+"\n").to_utf8_buffer())
 		if stage==0 and is_instance_valid(visitor.visual):
-			stage=1;peer.put_data((JSON.stringify({"event":"context.revoked"})+"\n").to_utf8_buffer())
-		elif stage==1 and visitor.visual==null and visitor.fallback.visible and not visitor.client.active:
+			# Same profile and recipe revision, different resource. The old face must
+			# disappear if the new content fails SDK validation.
+			var changed := descriptor.duplicate()
+			changed.sha256="invalid-fixture"
+			stage=1;peer.put_data((JSON.stringify({"event":"avatar.changed","avatar":changed})+"\n").to_utf8_buffer())
+		elif stage==1 and visitor.visual==null and visitor.fallback.visible and visitor.client.active:
+			stage=2;peer.put_data((JSON.stringify({"event":"avatar.changed","avatar":descriptor})+"\n").to_utf8_buffer())
+		elif stage==2 and is_instance_valid(visitor.visual):
+			stage=3;peer.put_data((JSON.stringify({"event":"context.revoked"})+"\n").to_utf8_buffer())
+		elif stage==3 and visitor.visual==null and visitor.fallback.visible and not visitor.client.active:
 			passed=true;break
 	peer=null;server.stop();holder.queue_free()
 	for i in 5:await process_frame

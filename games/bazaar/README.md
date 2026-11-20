@@ -1,4 +1,9 @@
-# Bazaar 0.0.12 — THREAD fitting room
+# Bazaar 0.0.13 — SDK avatar faces and attention
+
+Bazaar loads the active host avatar on entry and when its resolved model changes.
+Revision 13 adds directional eyes and a head turn on top of locomotion. Approach
+a merchant or a sign to see the effect. At THREAD the avatar follows the active
+pattern or control and releases it when the curtain closes.
 
 Open **Online → Bazaar → Festival Park** on Flip 2 or Odin 2. Visit Vale in the
 Stall Office to select a numbered counter on the park map. Browse a counter in
