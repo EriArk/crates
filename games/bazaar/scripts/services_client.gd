@@ -7,11 +7,20 @@ signal connected
 var has_checkout := false
 var ready_for_reads := false
 
+func lab_endpoint() -> String:
+	var explicit := OS.get_environment("TRAINEROS_TEST_MARKET_ENDPOINT")
+	if not explicit.is_empty():return explicit
+	return OS.get_environment("XDG_RUNTIME_DIR").path_join("traineros-bazaar-lab/sdk/endpoint.json") if OS.has_environment("XDG_RUNTIME_DIR") else "user://market-lab/sdk/endpoint.json"
+
+func use_lab(enabled: bool) -> void:
+	_fail("Switching market")
+	endpoint_override=lab_endpoint() if enabled else ""
+	connect_host()
+
 func _init() -> void:
 	app_id="org.traineros.bazaar.services"
 	if "--test-market" in OS.get_cmdline_user_args():
-		endpoint_override=OS.get_environment("TRAINEROS_TEST_MARKET_ENDPOINT")
-		if endpoint_override.is_empty():endpoint_override="user://market-lab/sdk/endpoint.json"
+		endpoint_override=lab_endpoint()
 func disconnect_host() -> void:
 	has_checkout=false
 	ready_for_reads=false

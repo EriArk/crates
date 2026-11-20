@@ -20,6 +20,8 @@ var touch_pad = TouchPad.new()
 var services: Control
 var population: Node3D
 var identity := Label.new()
+var place_caption: Label
+var lab_button: Button
 var district_label: Label
 var prompt := Button.new()
 var panel := PanelContainer.new()
@@ -97,7 +99,8 @@ func _ready() -> void:
 	var location := VBoxContainer.new();root.add_child(location);location.position=Vector2(22,18)
 	location.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	district_label=label("Festival Park",20);location.add_child(district_label)
-	location.add_child(label("EMPTY STARTING SQUARE  /  LOCAL ALPHA" if personal else "BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab")))
+	place_caption=label("EMPTY STARTING SQUARE  /  LOCAL ALPHA" if personal else "BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab"))
+	location.add_child(place_caption)
 	compass=label("N",13);root.add_child(compass)
 	compass.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP);compass.position.y=18
 	compass.name="Compass";compass.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -186,6 +189,14 @@ func _ready() -> void:
 		services.outfit_selected.connect(square.fitting_booth.select)
 		services.turn_model.connect(func(angle: float):if posing:visitor.anchor.rotate_y(angle))
 		root.add_child(services);services.closed.connect(hide_menu)
+		lab_button=button("Enter test market",func():
+			var use_lab: bool=services.client.endpoint_override.is_empty()
+			services.client.use_lab(use_lab)
+			place_caption.text="TEST MARKET  /  TEST SPARKS" if use_lab else "BAZAAR ISLAND  /  ALPHA"
+			hide_menu())
+		menu.add_child(lab_button);menu.move_child(lab_button,menu.get_child_count()-2)
+		lab_button.hide()
+		if not services.client.endpoint_override.is_empty():place_caption.text="TEST MARKET  /  TEST SPARKS"
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
 			if method=="bazaar.world":update_counters(value.get("places",[])))
 		services.client.unavailable.connect(func(_reason: String):update_counters([]))
@@ -204,6 +215,10 @@ func update_counters(places: Array) -> void:
 		population.apply_stall_sellers(places)
 
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
+	if lab_button:
+		var in_lab: bool=not services.client.endpoint_override.is_empty()
+		lab_button.visible=in_lab or FileAccess.file_exists(services.client.lab_endpoint())
+		lab_button.text="Return to official market" if in_lab else "Enter test market"
 	if is_instance_valid(services) and services.visible:services.close()
 	visitor.attend(null)
 	audio.set_quiet(true)

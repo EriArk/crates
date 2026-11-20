@@ -223,7 +223,7 @@ func render() -> void:
 	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
 	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
 	note.text = "Review in TrainerOS" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
-	if "--test-market" in OS.get_cmdline_user_args():note.text="Test Sparks · "+note.text
+	if not client.endpoint_override.is_empty():note.text="Test Sparks · "+note.text
 	if not receipt_message.is_empty() and not loading:note.text=receipt_message
 	hint.text=status
 	hint.tooltip_text=status
@@ -377,7 +377,9 @@ func inspect_good(index: int, target: Control) -> void:
 		description.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		scroll.add_child(description)
 	target.add_child(text("%s Sparks"%row.get("price","?"),18))
-	if page=="mine":return
+	if page=="mine":
+		button("Withdraw",func():pass,target).disabled=true
+		return
 	button("Buy",func():checkout({"action":"buy","slot":selected,"listing_id":row.id,"revision":row.revision,"price":row.price}),target).disabled=not can_trade() or row.get("seller_id")==world_data.get("player_id")
 
 func render_clothes() -> void:
