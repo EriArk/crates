@@ -9,6 +9,8 @@ var jump_requested := false
 var touch_sprint := false
 var locomotion: Node
 const Presenter = preload("res://addons/traineros/avatar_presenter.gd")
+signal footfall(at: Vector3, speed: float, crouched: bool)
+var stride_progress := 0.0
 signal identity_changed(message: String)
 var client = Client.new()
 var visual: Node3D
@@ -109,6 +111,7 @@ func update_camera_size() -> void:
 
 func enter_space(at: Vector3, heading: float) -> void:
 	attend(null)
+	stride_progress=0.0
 	position=at;motor.reset();touch_move=Vector2.ZERO;jump_requested=false;yaw=heading
 	anchor.rotation.y=heading+PI;indoor=at.x>180;update_camera_size()
 	pitch=-0.12 if indoor else -0.18
@@ -153,6 +156,14 @@ func _physics_process(delta: float) -> void:
 	jump_requested=false
 	if global_position.y < fall_height or (world_radius>0 and Vector2(position.x,position.z).length()>world_radius):enter_space(spawn_point,0)
 	moving=motor.actual_speed>0.08
+	if not input_enabled or not moving or not is_on_floor():
+		stride_progress = 0.0
+	else:
+		var stride := lerpf(.64, 1.76, clampf((motor.actual_speed-1.05)/5.15, 0, 1))
+		stride_progress += motor.actual_speed * delta / stride
+		if stride_progress >= 1.0:
+			stride_progress = fmod(stride_progress, 1.0)
+			footfall.emit(global_position, motor.actual_speed, motor.crouched)
 	if moving:
 		var travel := get_real_velocity()
 		anchor.rotation.y=lerp_angle(anchor.rotation.y,atan2(travel.x,travel.z),1.0-exp(-delta*20))

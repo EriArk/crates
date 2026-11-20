@@ -45,6 +45,12 @@ func tube(s: SurfaceTool, points: Array[Vector3], radius: float) -> void:
 			var u := (side*cos(j*TAU/6)+up*sin(j*TAU/6))*radius
 			var v := (side*cos((j+1)*TAU/6)+up*sin((j+1)*TAU/6))*radius
 			tri(s,points[i]+u,points[i+1]+u,points[i+1]+v);tri(s,points[i]+u,points[i+1]+v,points[i]+v)
+func foot_surface(at: Vector3) -> String:
+	if kind == "station":return "metal"
+	var radius := Vector2(at.x, at.z).length()
+	if radius <= build_radius + .28:return "stone"
+	return "grass" if radius < 36.5 else "sand"
+
 func coast(a: float) -> float:return 50.0+1.8*sin(a*3)+0.9*cos(a*7)
 func ground_height(p: Vector2) -> float:
 	var r := p.length();var edge := coast(atan2(p.x,p.y))

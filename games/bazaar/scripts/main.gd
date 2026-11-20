@@ -3,6 +3,14 @@ extends Node3D
 const Square = preload("res://scripts/square.gd")
 const Walker = preload("res://scripts/walker.gd")
 const TouchPad = preload("res://scripts/touch_pad.gd")
+const Lines = preload("res://scripts/resident_lines.gd")
+var audio = preload("res://scripts/market_audio.gd").new()
+var dialogue = preload("res://scripts/conversation.gd").new()
+var talk: Button
+var music_toggle := CheckButton.new()
+var effects_toggle := CheckButton.new()
+var speaker: Dictionary = {}
+var visits := {}
 var square: Node3D
 var world_kind := "official"
 var personal := false
@@ -76,6 +84,10 @@ func _ready() -> void:
 	visitor.enter_space(visitor.spawn_point,0)
 	if not personal:
 		population=load("res://scripts/population.gd").new();add_child(population);population.setup(square,visitor)
+	audio.population = population
+	audio.visitor = visitor
+	add_child(audio)
+	visitor.footfall.connect(func(at: Vector3, speed: float, crouched: bool):audio.footstep(square.foot_surface(at), speed, crouched))
 	var hud := CanvasLayer.new();add_child(hud)
 	var root := Control.new();root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);root.mouse_filter=Control.MOUSE_FILTER_IGNORE;hud.add_child(root)
 	root.add_child(touch_pad);touch_pad.move_changed.connect(func(value: Vector2):visitor.touch_move=value)
@@ -108,6 +120,13 @@ func _ready() -> void:
 	dress_button(prompt);prompt.add_theme_font_size_override("font_size",17);prompt.text="Inspect";prompt.custom_minimum_size=Vector2(230,44);root.add_child(prompt)
 	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM);prompt.offset_left=-150;prompt.offset_right=150;prompt.offset_top=-76;prompt.offset_bottom=-32
 	prompt.pressed.connect(inspect_spot)
+	prompt.focus_mode = Control.FOCUS_NONE
+	talk = button("T / Y  ·  Talk", start_conversation)
+	root.add_child(talk)
+	talk.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	talk.offset_left=-86;talk.offset_right=86;talk.offset_top=-127;talk.offset_bottom=-83
+	talk.focus_mode = Control.FOCUS_NONE
+	talk.hide()
 	hud_parts=[location,compass,pause_button,hint]
 	root.add_child(speech)
 	speech.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
@@ -134,8 +153,17 @@ func _ready() -> void:
 	fov_slider.tooltip_text="Horizontal field of view at 16:9. Wider screens show more at the sides."
 	fov_slider.value_changed.connect(func(value: float):visitor.set_field_of_view(value);fov_label.text="Field of view · %d°"%value)
 	camera_row.add_child(fov_slider)
-	sound=CheckButton.new();sound.text="Fountain sound";sound.button_pressed=true;sound.custom_minimum_size.y=32
-	sound.toggled.connect(func(enabled: bool):if not personal:square.life.set_sound(enabled,modal));menu.add_child(sound);sound.visible=not personal
+	var mixer := HBoxContainer.new()
+	menu.add_child(mixer)
+	music_toggle.text = "Music"
+	effects_toggle.text = "Effects"
+	for toggle in [music_toggle, effects_toggle]:
+		toggle.button_pressed = true
+		mixer.add_child(toggle)
+	music_toggle.toggled.connect(audio.set_music)
+	effects_toggle.toggled.connect(audio.set_effects)
+	sound=CheckButton.new();sound.text="Fountain";sound.button_pressed=true;sound.custom_minimum_size.y=32
+	sound.toggled.connect(func(enabled: bool):if not personal:square.life.set_sound(enabled,modal));mixer.add_child(sound);sound.visible=not personal
 	resume=button("Continue exploring",hide_menu);menu.add_child(resume)
 	reconnect=button("Use my TrainerOS character",func():visitor.reconnect();hide_menu());menu.add_child(reconnect)
 	quit_button=button("Leave Bazaar",leave_bazaar);menu.add_child(quit_button)
@@ -144,6 +172,12 @@ func _ready() -> void:
 		if saved.load("user://bazaar-preferences.cfg")==OK:
 			fov_slider.value=clampf(float(saved.get_value("camera","fov",90.0)),75,105)
 			sound.button_pressed=bool(saved.get_value("audio","fountain",true))
+			music_toggle.button_pressed=bool(saved.get_value("audio","music",true))
+			effects_toggle.button_pressed=bool(saved.get_value("audio","effects",true))
+	audio.set_music(music_toggle.button_pressed)
+	root.add_child(dialogue)
+	dialogue.finished.connect(hide_menu)
+	dialogue.syllable.connect(audio.syllable)
 	panel.hide()
 	if not personal:
 		services=load("res://scripts/service_menu.gd").new()
@@ -161,6 +195,8 @@ func _ready() -> void:
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
 	if is_instance_valid(services) and services.visible:services.close()
 	visitor.attend(null)
+	audio.set_quiet(true)
+	talk.hide()
 	speech.hide()
 	touch_actions.hide()
 	modal=true
@@ -175,6 +211,8 @@ func hide_menu() -> void:
 	if is_instance_valid(services) and services.visible:
 		services.close()
 		return
+	dialogue.hide()
+	audio.set_quiet(false)
 	modal=false
 	visitor.attend(null)
 	visitor.camera.make_current()
@@ -187,8 +225,39 @@ func hide_menu() -> void:
 	if not personal:population.set_paused(false);square.life.set_sound(sound.button_pressed)
 	panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
+func start_conversation() -> void:
+	if modal or speaker.is_empty() or not is_instance_valid(speaker.node):return
+	var person: String = speaker.speaker
+	var visit_key: String = person + str(speaker.get("slot",""))
+	var visit: int = visits.get(visit_key,0)
+	visits[visit_key] = visit + 1
+	var tone: float = {"Yeti":.72,"Bunny":1.27,"Frog":.83,"Birb":1.35,"Dino":.91}.get(speaker.species, .94 + posmod(person.hash(), 19)*.01)
+	show_menu()
+	panel.hide()
+	for part in hud_parts:part.hide()
+	var at: Vector3 = speaker.node.global_position
+	var facing: Vector3 = visitor.global_position - at
+	speaker.node.rotation.y = atan2(facing.x,facing.z)
+	population.play(speaker,"Idle")
+	speaker.player.active = true
+	visitor.anchor.rotation.y = atan2(-facing.x,-facing.z)
+	visitor.attend(at + Vector3.UP*1.15)
+	# Look across the visitor's shoulder; keep the face above the text panel.
+	var toward := Vector3(facing.x,0,facing.z).normalized()
+	if toward.is_zero_approx():toward = Vector3.BACK
+	var side := Vector3.UP.cross(toward)
+	var aim := at + Vector3.UP*.94
+	service_camera.global_position = aim + toward*3.1 + side*.95 + Vector3.UP*.54
+	service_camera.look_at(aim + side*.12)
+	service_camera.fov = 41
+	service_camera.make_current()
+	dialogue.begin(person, Lines.pages(person,visit), tone)
+
 func inspect_spot() -> void:
-	if nearest.is_empty():return
+	if modal or nearest.is_empty():return
+	if nearest.get("greeting",false):
+		start_conversation()
+		return
 	if nearest.has("arrival"):
 		visitor.enter_space(nearest.arrival,nearest.yaw)
 		visitor.touch_move=Vector2.ZERO;touch_pad.reset();nearest={};prompt.hide()
@@ -200,8 +269,6 @@ func inspect_spot() -> void:
 		frame_service(nearest.service,slot)
 		services.open(nearest.service,slot)
 	else:
-		if nearest.get("greeting",false) and is_instance_valid(visitor.visual):
-			visitor.visual.react("celebrate",.42,.45)
 		speech.text=str(nearest.detail).get_slice("\n",0)
 		speech_position=nearest.position
 		speech_time=5.0
@@ -251,11 +318,13 @@ func _process(_delta: float) -> void:
 	prompt.visible=not nearest.is_empty()
 	if nearest.is_empty() and not personal:
 		for actor in population.residents:
-			if actor.route.is_empty():continue
+			if actor.route.is_empty() or not actor.active:continue
 			var at: Vector3=actor.node.global_position
 			if visitor.global_position.distance_to(at)<distance:
 				distance=visitor.global_position.distance_to(at)
-				nearest={"title":"Say hello","position":at,"attention":at+Vector3.UP*1.12,"greeting":true,"detail":"Beautiful day for the market!"}
+				nearest={"title":"Talk to "+str(actor.speaker),"actor":actor,"position":at,"attention":at+Vector3.UP*1.12,"greeting":true,"detail":"Beautiful day for the market!"}
+	speaker = {} if personal else population.speaker_at(nearest)
+	talk.visible = nearest.has("service") and not speaker.is_empty()
 	prompt.visible=not nearest.is_empty()
 	if nearest.is_empty():
 		visitor.attend(null)
@@ -276,16 +345,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:show_menu()
 			get_viewport().set_input_as_handled()
 		elif event.physical_keycode==KEY_E and not modal:inspect_spot()
+		elif event.physical_keycode==KEY_T and talk.visible:start_conversation()
 	if event is InputEventJoypadButton and event.pressed:
 		if event.button_index in [JOY_BUTTON_B,JOY_BUTTON_START]:
 			if modal:hide_menu()
 			else:show_menu()
 			get_viewport().set_input_as_handled()
 		elif event.button_index==JOY_BUTTON_A and not modal:inspect_spot()
+		elif event.button_index==JOY_BUTTON_Y and talk.visible:start_conversation()
 
 func leave_bazaar(code := 0) -> void:
 	if leaving:return
 	leaving=true;visitor.set_controls(false)
+	audio.stop_all()
 	if not personal:square.life.stop_sound()
 	# Let the audio mixer retire playback before engine shutdown.
 	await get_tree().create_timer(0.15).timeout
@@ -302,4 +374,6 @@ func run_smoke() -> void:
 func _exit_tree() -> void:
 	if smoke_mode or sound==null or fov_slider==null:return
 	var saved := ConfigFile.new();saved.set_value("camera","fov",fov_slider.value)
+	saved.set_value("audio","music",music_toggle.button_pressed)
+	saved.set_value("audio","effects",effects_toggle.button_pressed)
 	saved.set_value("audio","fountain",sound.button_pressed);saved.save("user://bazaar-preferences.cfg")

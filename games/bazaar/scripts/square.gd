@@ -89,7 +89,17 @@ func text3d(text: String, at: Vector3, pixel := 0.013, parent: Node3D = self, ya
 	label.position=at;label.rotation.y=yaw;parent.add_child(label)
 	return label
 
+var paved_areas: Array[Rect2] = []
+
+func foot_surface(at: Vector3) -> String:
+	var point := Vector2(at.x, at.z)
+	for area in paved_areas:
+		if area.has_point(point):return "stone"
+	return "sand" if point.length() > .94 * landscape.radius(atan2(at.x,at.z)) else "grass"
+
 func path(at: Vector3, size: Vector3) -> void:
+	var extent := Vector2(size.x, size.z)
+	paved_areas.append(Rect2(Vector2(at.x, at.z) - extent * .5, extent))
 	var node := block(at+Vector3(0,0.012,0),Vector3(size.x,0.024,size.z),"c5b79c",false)
 	(node.get_child(0) as MeshInstance3D).material_override=paving
 

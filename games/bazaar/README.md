@@ -1,4 +1,16 @@
-# Bazaar 0.0.14 — THREAD outfit sets
+# Bazaar 0.0.15 — Voices of Festival Park
+
+Walk up to a resident and press **A / E** to talk. At staffed counters **Y / T**
+starts a conversation and **A / E** opens the service. Touch uses the on-screen
+buttons. Reveal or advance with **A / E**, and leave with **B / Esc**.
+
+The original *Awning Waltz* loops while exploring. The field menu remembers
+Music, Effects and Fountain separately. Footsteps follow the actual surface and
+animal calls come from nearby residents and birds. The score, footfalls, calls
+and syllables can be regenerated with Python 3 and ffmpeg using
+`python3 tools/compose_bazaar.py`.
+
+## THREAD outfit sets
 
 Choose Traveller, Mage or Merchant at THREAD to preview a complete four-piece
 set. The four item buttons cycle the top, trousers, footwear and hat independently.

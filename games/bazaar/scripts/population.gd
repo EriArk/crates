@@ -25,6 +25,7 @@ var world: Node3D
 var observer: Node3D
 var residents: Array[Dictionary] = []
 var birds: Array[Dictionary] = []
+var counter_staff := {}
 var hired_sellers: Array[Dictionary] = []
 var ambient_paused := false
 var decisions := 0.0
@@ -88,14 +89,17 @@ func play(actor: Dictionary, clip: String, speed := 1.0) -> void:
 
 func merchant(species: String, at: Vector3, yaw: float, title: String, detail: String, approach: Vector3) -> void:
 	var actor := figure(species,at,0.49 if species=="Bunny" else 0.53 if species=="Yeti" else 0.48)
+	actor.speaker = title
+	counter_staff[approach] = actor
 	actor.node.rotation.y=yaw
 	actor.merge({"route":[],"wait":0.0,"cooldown":float(residents.size())*1.7,"gesture":0.0,"home_yaw":yaw,"speed":0.0})
 	residents.append(actor)
 	actor.player.seek(fmod(residents.size()*0.43,actor.player.current_animation_length),true)
-	world.destinations.append({"title":"Meet "+title,"detail":detail+"\nNPC merchant · Trading is still in development. No items or Sparks change.","position":approach,"attention":at+Vector3.UP*1.12,"greeting":true})
+	world.destinations.append({"title":"Meet "+title,"detail":detail+"\nNPC merchant · Trading is still in development. No items or Sparks change.","position":approach,"attention":at+Vector3.UP*1.12,"greeting":true,"actor":actor})
 
-func pedestrian(species: String, route: Array[Vector3], start: int, speed: float) -> void:
+func pedestrian(speaker: String, species: String, route: Array[Vector3], start: int, speed: float) -> void:
 	var actor := figure(species,ground(route[start]),0.45 if species=="Bunny" else 0.48 if species=="Yeti" else 0.46)
+	actor.speaker = speaker
 	actor.merge({"route":route,"next":(start+1)%route.size(),"wait":float(residents.size()%3),"cooldown":0.0,"gesture":0.0,"speed":speed})
 	var direction: Vector3=route[actor.next]-actor.node.position
 	actor.node.rotation.y=atan2(direction.x,direction.z)
@@ -117,14 +121,14 @@ func setup(owner_world: Node3D, visitor: Node3D) -> void:
 	for i in 3:
 		merchant(["Chef_Female","Kimono_Female","Wizard"][i],Vector3(210+i*20,0.055,-3.45),0,["Moss","Wisp","Rook"][i],["Moss will welcome visitors to the tea shop.","Wisp is preparing the tailor's workbench.","Rook is arranging curious finds."][i],Vector3(210+i*20,0,-1.65))
 	var park: Array[Vector3]=[Vector3(-3.6,0,19),Vector3(-3.6,0,-19),Vector3(3.6,0,-19),Vector3(3.6,0,19)]
-	for i in 4:pedestrian(["Casual_Female","Bunny","Casual_Male","Yeti"][i],park,i,0.68)
+	for i in 4:pedestrian(["Nell","Clover","Finn","Lumi"][i],["Casual_Female","Bunny","Casual_Male","Yeti"][i],park,i,0.68)
 	var town: Array[Vector3]=[Vector3(42,0,-27),Vector3(51,0,-27),Vector3(51,0,-13),Vector3(42,0,-13)]
-	for i in 2:pedestrian(["OldClassy_Male","Witch"][i],town,i*2,0.62)
+	for i in 2:pedestrian(["Ada","Elm"][i],["OldClassy_Male","Witch"][i],town,i*2,0.62)
 	# Three further animal folk use spare stalls and the clear garden center.
 	merchant("Dino",ground(world.stall_layout(3).seller),PI/2,"Kip","Kip is preparing a travelling trader's stall.",world.stall_layout(3).approach)
 	merchant("Birb",ground(world.stall_layout(7).seller),-PI/2,"Sora","Sora is looking after the northern festival stalls.",world.stall_layout(7).approach)
 	var garden: Array[Vector3]=[Vector3(-41,0,-29),Vector3(-37,0,-29),Vector3(-37,0,-21),Vector3(-41,0,-21)]
-	pedestrian("Frog",garden,2,0.60)
+	pedestrian("Ripple","Frog",garden,2,0.60)
 	for i in 6:
 		var center: Vector3=[Vector3(-10,0,0),Vector3(11,0,12),Vector3(0,0,-9),Vector3(-39,0,-25),Vector3(0,0,56),Vector3(46,0,-20)][i]
 		var bird := figure("Pigeon",center,0.21+(i%2)*0.025)
@@ -152,10 +156,20 @@ func apply_stall_sellers(places: Array) -> void:
 		for ambient in residents:
 			if ambient.route.is_empty() and ambient.node.position.distance_to(at)<0.5:ambient.covered_by_seller=true
 		var actor := figure(species,at,0.49 if species=="Bunny" else 0.53 if species=="Yeti" else 0.48,slot%5)
+		actor.slot = slot
+		actor.speaker = "Stall keeper"
 		actor.node.rotation.y=layout.yaw
 		actor.merge({"route":[],"wait":0.0,"cooldown":1.0,"gesture":0.0,"home_yaw":layout.yaw,"speed":0.0})
 		hired_sellers.append(actor)
 	update_activity()
+
+func speaker_at(spot: Dictionary) -> Dictionary:
+	if spot.has("slot"):
+		for hired in hired_sellers:
+			if hired.slot == spot.slot:return hired
+	var actor: Dictionary = spot.get("actor",counter_staff.get(spot.get("position",Vector3.INF),{}))
+	if actor.get("covered_by_seller",false):return {}
+	return actor
 
 func update_activity() -> void:
 	for actor in residents+birds+hired_sellers:
