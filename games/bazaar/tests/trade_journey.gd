@@ -87,5 +87,7 @@ func run() -> void:
 	else:
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and menu.server_items.is_empty() and not menu.loading,"empty shelf after reopening"):return
+		if not press("Profile inventory"):return
+		if not await until(func():return FileAccess.file_exists(directory+"/received-item.png") and not menu.loading,"received item in the native profile inventory"):return
 	print("BAZAAR_TRADE_PASS ", phase)
 	await world.leave_bazaar()

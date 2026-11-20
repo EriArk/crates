@@ -189,6 +189,8 @@ func received(method: String, value: Dictionary) -> void:
 	# exact open/switch generation, not just the same page name after reopening.
 	if method=="bazaar.checkout":
 		loading=false
+		if value.get("viewed",false):
+			receipt_message="";refresh();return
 		receipt_message={"rent":"Stall and keeper are ready","list":"Item listed","buy":"Item delivered to your profile"}.get(value.get("action",""),"Purchase resolved")
 		request_view=view_serial;request_page=page;request_slot=selected
 		client.read("bazaar.world")
@@ -325,6 +327,8 @@ func render_goods() -> void:
 	var mine := page=="mine"
 	content.add_child(text("Your listings" if mine else "On the counter",20,Color("ffcf83")))
 	var counter := place()
+	if page=="goods" and client.has_checkout:
+		button("Profile inventory",func():checkout({"action":"inventory"}),content).disabled=loading
 	if page=="goods" and can_trade() and counter.get("tenant_id")!=null and counter.get("tenant_id")==world_data.get("player_id") and counter.get("species")!=null:
 		var pricing := HBoxContainer.new()
 		content.add_child(pricing)
