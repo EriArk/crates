@@ -1,5 +1,14 @@
 # Crates — состояние проекта
 
+## 20 November 2026 — Bazaar 0.0.14
+
+THREAD has three four-piece outfit sets with independently selectable tops,
+trousers, shoes and hats. The fitting and SDK checks ran with live profile avatars
+on both handhelds. Four angles per set covered 24 device frames. The final
+turntables showed the refitted boots and the Odin lighting correction.
+All three world entry points started on each device. Forced headless shutdown
+on Odin still reports the previously observed outstanding resource.
+
 ## 20 November 2026 — Bazaar 0.0.13
 
 The Bazaar client now uses the revision 13 avatar presenter. On Odin 2 and Flip 2,
