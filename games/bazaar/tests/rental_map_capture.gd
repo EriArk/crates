@@ -17,4 +17,6 @@ func capture() -> void:
 	await process_frame
 	await RenderingServer.frame_post_draw
 	var result := root.get_texture().get_image().save_png(OS.get_cmdline_user_args()[0])
+	square.life.stop_sound()
+	await create_timer(0.15).timeout
 	quit(0 if result == OK else 1)

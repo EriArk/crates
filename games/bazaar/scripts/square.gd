@@ -11,6 +11,10 @@ var display_rows := {}
 var destinations: Array[Dictionary] = []
 var models: Dictionary = {}
 var prop_roots: Array[Node3D] = []
+var block_mesh := BoxMesh.new()
+var block_finishes: Dictionary = {}
+var lantern_mesh := SphereMesh.new()
+var lantern_paper: Dictionary = {}
 var nature_meshes: Dictionary = {}
 var landscape = preload("res://scripts/landscape.gd").new()
 var shop_exits: Array[Dictionary] = []
@@ -29,8 +33,10 @@ func material(color: String) -> StandardMaterial3D:
 
 func block(at: Vector3, size: Vector3, color: String, solid := true) -> Node3D:
 	var root := Node3D.new();add_child(root);root.position=at
-	var mesh := MeshInstance3D.new();var cube := BoxMesh.new();cube.size=size
-	mesh.mesh=cube;mesh.material_override=material(color);root.add_child(mesh)
+	var mesh := MeshInstance3D.new()
+	if not block_finishes.has(color):block_finishes[color]=material(color)
+	mesh.mesh=block_mesh;mesh.scale=size;mesh.material_override=block_finishes[color]
+	root.add_child(mesh);prop_roots.append(root)
 	if solid: collider(root,Vector3.ZERO,size)
 	return root
 
@@ -39,22 +45,26 @@ func collider(parent: Node3D, at: Vector3, size: Vector3) -> void:
 	var shape := CollisionShape3D.new();var box := BoxShape3D.new();box.size=size
 	shape.shape=box;body.add_child(shape)
 
-func model(asset: String, at: Vector3, scale_value := Vector3.ONE, yaw := 0.0, parent: Node3D = self) -> Node3D:
+func model(asset: String, at: Vector3, scale_value := Vector3.ONE, yaw := 0.0, parent: Node3D = self, leaf_dye := "639873") -> Node3D:
 	if not models.has(asset):models[asset]=load("res://assets/"+(asset if asset.begins_with("nature/") else "town/"+asset)+".glb")
 	var node: Node3D=models[asset].instantiate();parent.add_child(node)
 	node.position=at;node.scale=scale_value;node.rotation.y=yaw;prop_roots.append(node)
 	for part in node.find_children("*","MeshInstance3D",true,false):
 		if asset.begins_with("nature/"):
-			var id: int=part.mesh.get_instance_id()
+			var id := "%d/%s"%[part.mesh.get_instance_id(),leaf_dye]
 			if not nature_meshes.has(id):
 				var copy: ArrayMesh=part.mesh.duplicate()
+				var crown_surface := -1
 				for i in copy.get_surface_count():
 					var original=copy.surface_get_material(i)
 					if original is StandardMaterial3D:
 						var mat: StandardMaterial3D=original.duplicate();mat.roughness=0.95;mat.metallic=0
-						var palette := {"leafsGreen":"609c70","grass":"78aa76","woodBark":"b58a60"}
+						var palette := {"leafsGreen":leaf_dye,"grass":"72976e","woodBark":"ac8365"}
+						if original.resource_name=="leafsGreen" and asset.begins_with("nature/tree_"):crown_surface=i
 						if palette.has(original.resource_name):mat.albedo_color=Color(palette[original.resource_name])
 						copy.surface_set_material(i,mat)
+				if crown_surface>=0:
+					preload("res://scripts/tree_crown.gd").apply(copy,crown_surface,Color(leaf_dye),asset.ends_with("detailed"))
 				nature_meshes[id]=copy
 			part.mesh=nature_meshes[id]
 		part.visibility_range_end=85.0
@@ -75,7 +85,14 @@ func house(at: Vector3, width: int, depth: int, floors: int, yaw: float, roof_co
 			model("wall-window-glass" if floor_index==0 else "wall-wood-window-round",Vector3(width*0.5-0.5,floor_index,pz),Vector3.ONE,0,home)
 			model("wall" if floor_index==0 else "wall-wood",Vector3(-width*0.5+0.5,floor_index,pz),Vector3.ONE,PI,home)
 	# One complete roof profile, with matching end faces and overhang.
-	model("roof-gable",Vector3(0,floors,0),Vector3(width,2.0,depth),0,home)
+	var roof := model("roof-gable",Vector3(0,floors,0),Vector3(width,2.0,depth),0,home)
+	for part in roof.find_children("*","MeshInstance3D",true,false):
+		var base: StandardMaterial3D=part.mesh.surface_get_material(0)
+		var tiles:=ShaderMaterial.new()
+		tiles.shader=preload("res://shaders/roof_tiles.gdshader")
+		tiles.set_shader_parameter("atlas",base.albedo_texture)
+		tiles.set_shader_parameter("glaze",Color(roof_color))
+		part.material_override=tiles
 	model("chimney",Vector3(width*0.27,floors+0.5,-depth*0.15),Vector3(0.7,1.1,0.7),0,home)
 	# Color strips echo the original teal/coral catalogue palette.
 	var sign := MeshInstance3D.new();var sign_mesh := BoxMesh.new();sign_mesh.size=Vector3(0.8,0.22,0.06)
@@ -112,27 +129,47 @@ func path(at: Vector3, size: Vector3) -> void:
 func flowerbed(at: Vector3, size := Vector2(4,2)) -> void:
 	block(at+Vector3(0,0.13,0),Vector3(size.x,0.26,size.y),"b4ad91")
 	block(at+Vector3(0,0.27,0),Vector3(size.x-0.18,0.04,size.y-0.18),"574c3b",false)
-	for i in 18:
-		var x := (float(i%9)/8-0.5)*(size.x-0.5)
-		model("nature/flower_"+["purpleA","yellowA","redA"][i%3],at+Vector3(x,0.29,(-0.25 if i<9 else 0.25)*size.y),Vector3.ONE*2.3)
+	# Loose drifts of one species grow through low mounds of foliage.
+	var rng:=RandomNumberGenerator.new()
+	rng.seed=int(at.x*137+at.z*619)
+	for i in 5:
+		var x: float=(i/4.0-0.5)*(size.x-0.92)
+		model("nature/plant_bushLarge",at+Vector3(x,0.26,0),Vector3(1.12,0.67,1.05),i*1.91)
+	for i in 27:
+		var x:=rng.randf_range(-0.45,0.45)*size.x
+		var z:=rng.randf_range(-0.39,0.39)*size.y
+		var variety: String="purpleA" if x < -size.x*0.12 else "yellowA" if z>size.y*0.16 else "redA"
+		model("nature/flower_"+variety,at+Vector3(x,0.29,z),Vector3.ONE*rng.randf_range(1.75,2.75),rng.randf()*TAU)
 
-func tree(at: Vector3, size := 2.6) -> void:
+func tree(at: Vector3, size := 2.6, leaf_dye := "639873") -> void:
 	at.y=landscape.surface_height(at)+0.05*size*2.4
-	var node := model("nature/tree_oak" if int(at.x+at.z)%2==0 else "nature/tree_detailed",at,Vector3.ONE*size*2.4)
+	var angle:=fposmod(at.x*0.72+at.z*0.36,TAU)
+	var asset := "nature/tree_detailed" if sin(angle)>0.0 else "nature/tree_oak"
+	var node:=model(asset,at,Vector3(1.07,0.96,1.07)*size*2.4,angle,self,leaf_dye)
 	collider(node,Vector3(0,0.7,0),Vector3(0.3,1.4,0.3))
 
 func lantern(at: Vector3, color: String, parent: Node3D = self) -> void:
-	var mesh := MeshInstance3D.new();var globe := SphereMesh.new();globe.radius=0.22;globe.height=0.6;globe.radial_segments=10;globe.rings=5
-	mesh.mesh=globe;var mat := material(color);mat.emission_enabled=true;mat.emission=Color(color);mat.emission_energy_multiplier=0.35
-	mesh.material_override=mat;parent.add_child(mesh);mesh.position=at
+	if not lantern_paper.has(color):
+		var mat:=ShaderMaterial.new();mat.shader=preload("res://shaders/paper_lantern.gdshader")
+		mat.set_shader_parameter("paper",Color(color));lantern_paper[color]=mat
+	var root:=Node3D.new();parent.add_child(root);root.position=at
+	var lamp:=MeshInstance3D.new()
+	lamp.mesh=lantern_mesh;lamp.material_override=lantern_paper[color]
+	root.add_child(lamp);prop_roots.append(root)
 
 func festival_line(z: float) -> void:
 	for side in [-1,1]:block(Vector3(side*6.8,1.8,z),Vector3(0.13,3.6,0.13),"715444")
 	# Strung paper lanterns with a low central sag, well above a visitor's head.
+	var last:=Vector3(-6.8,3.55,z)
 	for i in 11:
-		var x := -6.8+i*1.36;var y := 3.15+0.4*pow(x/6.8,2)
-		block(Vector3(x,y,z),Vector3(1.40,0.025,0.025),"645845",false)
-		lantern(Vector3(x,y-0.36,z),"f1c88b" if i%2==0 else "d67e64")
+		var x := -6.8+i*1.36
+		var hook:=Vector3(x,3.15+0.4*pow(x/6.8,2),z)
+		if i>0:
+			var chord:=hook-last
+			var cord:=block((last+hook)*0.5,Vector3(chord.length(),0.022,0.022),"645845",false)
+			cord.rotation.z=atan2(chord.y,chord.x)
+		lantern(hook-Vector3.UP*0.29,"f1c88b" if i%2==0 else "d67e64")
+		last=hook
 
 func terrain() -> void:
 	add_child(landscape);landscape.build(self)
@@ -171,13 +208,15 @@ func park_market() -> void:
 		var front := Vector3(side*4.79,0,at.z)
 		var skirt := block(front+Vector3(0,0.52,0),Vector3(0.035,0.56,2.65),"a76e5d" if slot%3==0 else "507f73",false)
 		var banner := block(front+Vector3(0,1.81,0),Vector3(0.035,0.26,2.65),"a76e5d" if slot%3==0 else "507f73",false)
+		dressing.print_skirt(skirt,slot)
 		skirt.name="CounterSkirt";banner.name="StallValance"
 		counter_names[slot]=text3d("%02d  ·  MARKET"%slot,front+Vector3(-side*0.03,1.81,0),0.004,self,layout.yaw)
 		counter_names[slot].layers=1 << (COUNTER_SIGN_LAYER-1)
 		lantern(front+Vector3(0,2.22,1.06),"f1cc8d")
 	for side in [-1,1]:
 		for z in [-22.0,-10.0,10.0,22.0]:
-			tree(Vector3(side*16,0,z),3.2)
+			var blossom: bool=side*z<0 and absf(z)==10
+			tree(Vector3(side*16,0,z),3.2,"e2aaa0" if blossom else "71966f")
 			flowerbed(Vector3(side*12,0,z),Vector2(3,2))
 		for z in [-17.0,-5.0,5.0,17.0]:
 			model("nature/plant_bushLarge",Vector3(side*13.6,0,z),Vector3.ONE*2.0)
@@ -190,7 +229,7 @@ func park_market() -> void:
 	spot("Island paths","East: Stall Office and shops. West: gardens. South: harbor.",Vector3(3.8,0,5.8))
 
 func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
-	var home := house(at,4,3,2,yaw,"50897a")
+	var home := house(at,4,3,2,yaw,["468377","ad6152","586887","b38658"][index])
 	var board := block(Vector3.ZERO,Vector3(3.1,0.45,0.12),"355449",false)
 	board.reparent(home,false);board.position=Vector3(0.4,1.8,1.58)
 	var door := at+Vector3(0.85,0,3.1).rotated(Vector3.UP,yaw)
@@ -244,7 +283,7 @@ func gardens_and_harbor() -> void:
 	for side in [-1,1]:
 		for z in [-7,7]:flowerbed(GARDEN+Vector3(side*6,0,z),Vector2(5,2.5))
 		model("stall-bench",GARDEN+Vector3(side*6,0,0),Vector3.ONE*1.8,side*PI/2)
-		for z in [-12,0,12]:tree(GARDEN+Vector3(side*13,0,z),3.0)
+		for z in [-12,0,12]:tree(GARDEN+Vector3(side*13,0,z),3.0,"d3a2a2" if z==0 else "669779")
 	spot("Garden court","A quieter meeting district. Benches and gardens are open; social activities are still being built.",GARDEN+Vector3(0,0,6))
 	path(HARBOR,Vector3(24,0,15))
 	for side in [-1,1]:
@@ -267,30 +306,20 @@ func district(at: Vector3) -> String:
 	return "Island Walk"
 
 func _ready() -> void:
+	lantern_mesh.radius=0.22;lantern_mesh.height=0.60;lantern_mesh.radial_segments=12;lantern_mesh.rings=6
 	var env := WorldEnvironment.new();env.environment=Environment.new();add_child(env)
-	var sky := Sky.new();var atmosphere := ProceduralSkyMaterial.new()
-	atmosphere.sky_top_color=Color("72bed8");atmosphere.sky_horizon_color=Color("c5e7e5")
-	atmosphere.ground_bottom_color=Color("4b9db1");atmosphere.ground_horizon_color=Color("c5e7e5")
+	var sky := Sky.new();var atmosphere := ShaderMaterial.new()
+	atmosphere.shader=preload("res://shaders/coastal_sky.gdshader")
+	atmosphere.set_shader_parameter("coast",preload("res://assets/sky/archipelago.jpg"))
 	sky.sky_material=atmosphere;env.environment.sky=sky;env.environment.background_mode=Environment.BG_SKY
 	env.environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
-	env.environment.ambient_light_color=Color("b7d5e8");env.environment.ambient_light_energy=0.32
+	env.environment.ambient_light_color=Color("d1dce7");env.environment.ambient_light_energy=0.52
 	env.environment.fog_enabled=true;env.environment.fog_mode=Environment.FOG_MODE_DEPTH
 	env.environment.fog_depth_begin=65;env.environment.fog_depth_end=230
 	env.environment.fog_density=0.35;env.environment.fog_light_color=Color("b8dbdc");env.environment.fog_sky_affect=0.0
-	var sun := DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-35,0);sun.light_color=Color("fff0d0")
-	sun.light_energy=0.55;sun.shadow_enabled=true;sun.directional_shadow_max_distance=70;add_child(sun)
-	var shader := Shader.new();shader.code="""shader_type spatial;
-	varying vec3 position_world;
-	void vertex(){position_world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;}
-	void fragment(){vec2 p=position_world.xz*1.35;p.x+=mod(floor(p.y),2.0)*0.5;
-	vec2 uv=fract(p);float edge=min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y));
-	float footprint=max(length(dFdx(p)),length(dFdy(p)));
-	float line=1.0-smoothstep(0.012,0.027+footprint*0.55,edge);
-	line*=1.0-smoothstep(0.12,0.6,footprint);
-	float shade=fract(sin(dot(floor(p),vec2(12.9898,78.233)))*43758.5453);
-	vec3 stone=vec3(0.52,0.47,0.36)*(0.96+shade*0.08);
-	ALBEDO=mix(stone,vec3(0.34,0.34,0.27),line*0.55);ROUGHNESS=0.95;}"""
-	paving=ShaderMaterial.new();paving.shader=shader
+	var sun := DirectionalLight3D.new();sun.rotation_degrees=Vector3(-38,-54,0);sun.light_color=Color("ffe2b7")
+	sun.light_energy=0.72;sun.shadow_enabled=true;sun.directional_shadow_max_distance=70;add_child(sun)
+	paving=ShaderMaterial.new();paving.shader=preload("res://shaders/festival_paving.gdshader")
 	add_child(dressing);dressing.setup(self)
 	terrain();park_market();dressing.park()
 	path(Vector3(25,0,0),Vector3(30,0,6));path(Vector3(38,0,-9),Vector3(6,0,22))

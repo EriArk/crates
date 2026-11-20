@@ -85,7 +85,7 @@ func build(owner_world: Node3D) -> void:
 	var ocean := MeshInstance3D.new();var plane := PlaneMesh.new();plane.size=Vector2(2000,2000)
 	ocean.mesh=plane;ocean.position.y=-3.2;ocean.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var sea := ShaderMaterial.new();sea.shader=SEA;ocean.material_override=sea;add_child(ocean)
-	meadow();clouds()
+	meadow()
 
 func grass_mesh() -> ArrayMesh:
 	var surface := SurfaceTool.new();surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -129,16 +129,3 @@ func meadow() -> void:
 		var node := MultiMeshInstance3D.new();node.multimesh=batch;node.material_override=mat;node.position=origin
 		node.name="Meadow_%s_%s"%[cell.x,cell.y];node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		node.visibility_range_end=42;node.extra_cull_margin=0.3;add_child(node);grass_batches+=1
-
-func clouds() -> void:
-	# Fixed cheap silhouettes; no volumetric simulation or per-frame cloud bake.
-	var mat := StandardMaterial3D.new();mat.albedo_color=Color("f3f1df");mat.roughness=1
-	var mesh := SphereMesh.new();mesh.radius=1;mesh.height=2;mesh.radial_segments=12;mesh.rings=6
-	var batch := MultiMesh.new();batch.transform_format=MultiMesh.TRANSFORM_3D;batch.mesh=mesh;batch.instance_count=48
-	for i in 12:
-		var a := i*TAU/12;var center := Vector3(sin(a)*175,38+(i%3)*9,cos(a)*175)
-		for j in 4:
-			var size := Vector3(10+j%2*3,4+j%2*2,7)
-			batch.set_instance_transform(i*4+j,Transform3D(Basis.IDENTITY.scaled(size),center+Vector3(j*8,1.5*(j%2),0)))
-	var node := MultiMeshInstance3D.new();node.multimesh=batch;node.material_override=mat
-	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(node)

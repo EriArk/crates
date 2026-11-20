@@ -34,12 +34,47 @@ func crate(at: Vector3) -> void:
 	for y in [0.07,0.36]:piece("box",at+Vector3(0,y,0.265),Vector3(0.7,0.065,0.04),"c29a63")
 	for x in [-0.27,0.27]:piece("box",at+Vector3(x,0.22,0.27),Vector3(0.055,0.44,0.05),"c29a63")
 
+const DYES := ["276668","b4513f","324c70"]
+var cloth_materials: Dictionary = {}
+
+func cloth(dye: String, tall: bool) -> ShaderMaterial:
+	var key:=dye+str(tall)
+	if not cloth_materials.has(key):
+		var mat:=ShaderMaterial.new()
+		mat.shader=preload("res://shaders/festival_cloth.gdshader")
+		mat.set_shader_parameter("dye",Color(dye))
+		mat.set_shader_parameter("banner",tall)
+		cloth_materials[key]=mat
+	return cloth_materials[key]
+
+func print_skirt(skirt: Node3D, slot: int) -> void:
+	skirt.get_child(0).material_override=cloth(DYES[(slot-1)%3],false)
+
+func standard(at: Vector3, yaw: float, dye: String) -> void:
+	piece("round",at+Vector3.UP*1.85,Vector3(0.11,3.7,0.11),"755244")
+	var side:=Vector3.RIGHT.rotated(Vector3.UP,yaw)
+	piece("box",at+side*0.50+Vector3.UP*3.56,Vector3(1.14,0.08,0.09),"af8359",yaw)
+	var fabric:=QuadMesh.new()
+	fabric.size=Vector2(0.90,2.38)
+	fabric.subdivide_width=4
+	fabric.subdivide_depth=6
+	var flag:=MeshInstance3D.new()
+	flag.mesh=fabric
+	flag.material_override=cloth(dye,true)
+	flag.rotation.y=yaw
+	flag.position=at+side*0.50+Vector3.UP*2.33
+	flag.visibility_range_end=75
+	flag.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(flag)
+
 func park() -> void:
 	# A real entrance marker with open space below it, outside the stall rows.
 	for side in [-1,1]:
 		world.block(Vector3(side*4.8,2,23),Vector3(0.24,4,0.24),"775c42")
 		piece("box",Vector3(side*4.8,0.2,23),Vector3(0.55,0.4,0.55),"c5b998")
 		world.lantern(Vector3(side*3.9,3.5,23),"edc68a")
+		for z in [-16.2,16.2]:
+			standard(Vector3(side*5.35,0,z),0.16*side,DYES[0] if side<0 else DYES[1])
 		for z in [-15.0,15.0]:
 			world.model("hedge",Vector3(side*17,0,z),Vector3(2.8,1.3,1.6))
 		# Gravel edge bands keep the promenade readable without blocking movement.

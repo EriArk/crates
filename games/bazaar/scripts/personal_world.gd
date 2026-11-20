@@ -68,7 +68,7 @@ func island() -> void:
 			var r := island_point(a,(j+1)/40.0);var t := island_point(b,(j+1)/40.0)
 			for v in [p,q,t,p,t,r]:
 				var sand := smoothstep(33,40,Vector2(v.x,v.z).length())
-				s.set_color(Color("78a47a").lerp(Color("b6a47f"),sand));s.add_vertex(v)
+				s.set_color(Color("78a47a").lerp(Color("d9bd90"),sand));s.add_vertex(v)
 	var turf := ShaderMaterial.new();turf.shader=load("res://shaders/meadow.gdshader");turf.set_shader_parameter("meadow_dark",Vector3(0.20,0.38,0.22));turf.set_shader_parameter("meadow_light",Vector3(0.30,0.48,0.27))
 	terrain=finish(s,turf,true);terrain.name="IslandGround"
 	var plaza := CylinderMesh.new();plaza.top_radius=build_radius;plaza.bottom_radius=build_radius;plaza.height=0.08;plaza.radial_segments=128
@@ -90,16 +90,42 @@ func island() -> void:
 	for i in 16:
 		var a := i*2.39996;var r := 40.0+float(i%3)*1.7;var p:=Vector3(sin(a)*r,0,cos(a)*r);p.y=ground_height(Vector2(p.x,p.z))+0.15
 		var node := geometry(rock,material("aaa996"),p);node.scale=Vector3(1.6+(i%3)*0.5,0.55+(i%2)*0.4,1.2);node.rotation.y=a
+	shore_rocks()
 	grass()
-	var cloud_mesh := SphereMesh.new();cloud_mesh.radial_segments=12;cloud_mesh.rings=6
-	for i in 7:
-		var a := i*2.39996;var center:=Vector3(sin(a)*180,48+(i%3)*9,cos(a)*180)
-		for j in 4:
-			var node:=geometry(cloud_mesh,material("e6efeb"),center+Vector3((j-1.5)*10,sin(j*PI/3)*3,0))
-			node.scale=Vector3(15,6.5+(j%2)*3,11);node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+func shore_rocks() -> void:
+	# A single opaque mesh holds the weathered stacks beyond the walkable sand.
+	var stone:=surface()
+	var rng:=RandomNumberGenerator.new()
+	rng.seed=4682
+	for group in [Vector3(37,4.6,64),Vector3(-43,6,-56),Vector3(68,3,-16),Vector3(-79,3.8,29)]:
+		for index in 4:
+			var size_factor:=1.0/(1.0+index*0.60)
+			var at:=Vector3(group.x+index*3.4,-0.9,group.z+sin(index*2.3)*3.1)
+			var height: float=group.y*size_factor
+			var previous:=PackedVector3Array()
+			for level in 4:
+				var rim:=PackedVector3Array()
+				var width: float=[1.24,1.0,0.91,0.55][level]*size_factor
+				for i in 7:
+					var a:=i*TAU/7
+					var jitter:=rng.randf_range(0.89,1.11)
+					rim.append(at+Vector3(cos(a)*3.0*width*jitter+level*0.19,height*level/3.0+0.15*sin(a+index),sin(a)*2.3*width*jitter))
+				if level>0:
+					for i in 7:
+						var j: int=(i+1)%7
+						stone.set_color(Color(["566c70","91918a","c3b8a0"][level-1]).darkened(0.04*(i%3)))
+						tri(stone,previous[i],previous[j],rim[i]);tri(stone,previous[j],rim[j],rim[i])
+				previous=rim
+			stone.set_color(Color("c4c19e"))
+			for i in range(1,6):tri(stone,previous[0],previous[i],previous[i+1])
+	var rock:=StandardMaterial3D.new()
+	rock.vertex_color_use_as_albedo=true
+	rock.roughness=0.97
+	finish(stone,rock)
 
 func palm(trunks: SurfaceTool,leaves: SurfaceTool,at: Vector3,h: float,a: float) -> void:
-	var lean := Vector3(sin(a),0,cos(a))*0.8
+	var lean := Vector3(sin(a),0,cos(a))*(1.35+0.65*sin(a*3.0))
 	var points: Array[Vector3]=[]
 	for i in 9:points.append(at+Vector3.UP*h*i/8+lean*pow(i/8.0,2))
 	tube(trunks,points,0.17)
@@ -111,7 +137,12 @@ func palm(trunks: SurfaceTool,leaves: SurfaceTool,at: Vector3,h: float,a: float)
 			var p := top+direction*t*3.4+Vector3.UP*(sin(t*PI)*0.8-t*t*0.8)
 			var q := top+direction*u*3.4+Vector3.UP*(sin(u*PI)*0.8-u*u*0.8)
 			var w := sin(t*PI)*0.45;var v := sin(u*PI)*0.45
-			tri(leaves,p-side*w,q-side*v,q+side*v);tri(leaves,p-side*w,q+side*v,p+side*w)
+			var ridge_p := p+Vector3.UP*w*0.6
+			var ridge_q := q+Vector3.UP*v*0.6
+			for flank in [-1.0,1.0]:
+				var fold: Vector3=side*flank
+				tri(leaves,ridge_p,p+fold*w,q+fold*v)
+				tri(leaves,ridge_p,q+fold*v,ridge_q)
 func grass() -> void:
 	var helper=load("res://scripts/landscape.gd").new();var mesh: ArrayMesh=helper.grass_mesh();helper.free()
 	var mat := ShaderMaterial.new();mat.shader=load("res://shaders/meadow.gdshader");mat.set_shader_parameter("grass",true);mat.set_shader_parameter("meadow_dark",Vector3(0.20,0.38,0.22));mat.set_shader_parameter("meadow_light",Vector3(0.30,0.48,0.27))
@@ -175,23 +206,50 @@ func station() -> void:
 	var boundary:=finish(wall,material("344b63"),true);boundary.hide()
 	var planet:=SphereMesh.new();planet.radius=83;planet.height=166;planet.radial_segments=64;planet.rings=32
 	var pm:=ShaderMaterial.new();pm.shader=load("res://shaders/planet.gdshader")
-	geometry(planet,pm,Vector3(-124,78,-235)).cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var giant:=geometry(planet,pm,Vector3(-124,78,-235))
+	giant.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	planet_rings(giant)
 	# Station rim and lower mechanical rings remain visible in an exterior overview.
 	for y in [-1.7,-2.7]:
 		var points: Array[Vector3]=[]
 		for i in 129:points.append(Vector3(sin(i*TAU/128)*32.7,y,cos(i*TAU/128)*32.7))
 		var strut:=surface();tube(strut,points,0.26);finish(strut,material("344b63"))
+func planet_rings(giant: MeshInstance3D) -> void:
+	var bands := surface()
+	# Opaque vertex-coloured annuli with actual gaps. The planet occludes their far side.
+	for band in [[101.0,104.0,"7a7183"],[107.0,116.0,"dfba96"],[118.5,127.0,"b49ba1"],[131.0,132.0,"b9bec7"]]:
+		for i in 96:
+			var a:=TAU*i/96.0
+			var b:=TAU*(i+1)/96.0
+			var v:=Vector3(cos(a),0,sin(a))
+			var w:=Vector3(cos(b),0,sin(b))
+			for point in [v*band[0],v*band[1],w*band[1],v*band[0],w*band[1],w*band[0]]:
+				bands.set_color(Color(band[2]).darkened(0.44+0.15*sin(a)))
+				bands.add_vertex(point)
+	var dust:=StandardMaterial3D.new()
+	dust.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	dust.vertex_color_use_as_albedo=true
+	dust.cull_mode=BaseMaterial3D.CULL_DISABLED
+	var belt:=finish(bands,dust)
+	belt.position=giant.position
+	belt.rotation_degrees=Vector3(17,0,-19)
+	belt.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 func _ready() -> void:
 	var world:=WorldEnvironment.new();world.environment=Environment.new();add_child(world)
 	var env:=world.environment;var sky:=Sky.new();env.sky=sky;env.background_mode=Environment.BG_SKY
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-42,-28,0);sun.shadow_enabled=true;sun.directional_shadow_max_distance=65;add_child(sun)
 	if kind=="island":
-		var atmosphere:=ProceduralSkyMaterial.new();atmosphere.sky_top_color=Color("519fcb");atmosphere.sky_horizon_color=Color("c7e8e6");atmosphere.ground_horizon_color=Color("c7e8e6");atmosphere.ground_bottom_color=Color("c7e8e6");sky.sky_material=atmosphere
+		var atmosphere:=ShaderMaterial.new()
+		atmosphere.shader=preload("res://shaders/coastal_sky.gdshader")
+		atmosphere.set_shader_parameter("coast",preload("res://assets/sky/archipelago.jpg"))
+		atmosphere.set_shader_parameter("bearing",0.23)
+		sky.sky_material=atmosphere
 		env.ambient_light_color=Color("c5e2e7");env.ambient_light_energy=0.32;sun.light_color=Color("fff1cf");sun.light_energy=0.55
 		env.fog_enabled=true;env.fog_mode=Environment.FOG_MODE_DEPTH;env.fog_depth_begin=100;env.fog_depth_end=450;env.fog_density=0.25;env.fog_light_color=Color("c7e8e6");env.fog_sky_affect=0
 		island()
 	else:
-		var cosmos:=ShaderMaterial.new();cosmos.shader=load("res://shaders/cosmos.gdshader");sky.sky_material=cosmos
+		var cosmos:=ShaderMaterial.new();cosmos.shader=load("res://shaders/cosmos.gdshader");cosmos.set_shader_parameter("dust",preload("res://assets/sky/star-cloud.jpg"));sky.sky_material=cosmos
 		env.ambient_light_color=Color("9cb2dd");env.ambient_light_energy=0.65;sun.light_color=Color("e8dbff");sun.light_energy=0.8
 		station()

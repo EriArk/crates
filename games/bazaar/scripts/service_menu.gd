@@ -386,9 +386,9 @@ func inspect_good(index: int, offers: Control) -> void:
 	clear(detail)
 	var offer: Dictionary=server_items[index]
 	var info: Dictionary=offer.get("presentation",{})
-	var mount := PanelContainer.new()
+	var mount := preload("res://scripts/item_mount.gd").new()
 	var backing := StyleBoxFlat.new()
-	backing.bg_color=Color("324547")
+	backing.bg_color=Color("293e40")
 	backing.border_color=Color("ab936b")
 	backing.border_width_bottom=2
 	backing.set_content_margin_all(6)
