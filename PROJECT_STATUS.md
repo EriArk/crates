@@ -1,5 +1,16 @@
 # Crates — состояние проекта
 
+## 20 November 2026 — Bazaar 0.0.16
+
+Odin 2 and Flip 2 both run the ARM64 export from da5e201, with 0.0.15 retained.
+Festival Park and both personal worlds started on each device. At counter 02,
+Mika rented with Frog and listed Oran Berry. Ren bought it for 65 test Sparks.
+After a lost purchase reply and restart, Ren received the original receipt and
+saw Oran Berry in profile inventory. The balances were 935 for Ren and 815 for
+Mika. Mika restocked the same counter with Pecha Berry for manual play.
+[Counter on Odin 2](docs/evidence/bazaar-trade-0.0.16/ready-counter.jpg) ·
+[Ren’s inventory](docs/evidence/bazaar-trade-0.0.16/received-item.jpg).
+
 ## 20 November 2026 — Bazaar 0.0.15
 
 Odin 2 and Flip 2 run the same verified ARM64 build from b04e0f7. All three

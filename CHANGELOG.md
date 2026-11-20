@@ -1,5 +1,11 @@
 # История Crates
 
+## 20 November 2026 — Bazaar 0.0.16
+
+Player counters display the tenant, up to three goods and their prices. From the
+rental office a player can rent with a keeper, stock the counter from profile
+inventory and inspect the receipt for a purchase in TrainerOS.
+
 ## 20 November 2026 — Bazaar 0.0.15
 
 Festival Park has a looping original waltz, four surface-specific footfalls and

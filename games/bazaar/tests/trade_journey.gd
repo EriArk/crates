@@ -39,7 +39,7 @@ func capture(name: String) -> void:
 	root.get_texture().get_image().save_png(directory+"/"+name+".png")
 
 func run() -> void:
-	if not "--test-market" in OS.get_cmdline_user_args() or phase not in ["list","buy","resolve","return"]:
+	if not "--test-market" in OS.get_cmdline_user_args() or phase not in ["list","buy","resolve","return","stock","display"]:
 		quit(2);return
 	world=load("res://main.tscn").instantiate();root.add_child(world)
 	world.smoke_mode=true;menu=world.services
@@ -59,6 +59,7 @@ func run() -> void:
 		if not await until(func():return menu.receipt_message=="Cancelled" and not menu.loading,"cancelled host review"):return
 		if not press("Rent with Frog · 250"):return
 		if not await until(func():return menu.place().get("species")=="Frog" and not menu.loading,"staffed rental"):return
+	if phase in ["list","stock"]:
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and not menu.loading,"own counter"):return
 		var price: SpinBox=menu.find_children("*","SpinBox",true,false).front()
@@ -72,15 +73,17 @@ func run() -> void:
 		menu.select_place(2)
 		if not press("Resolve last checkout"):return
 		if not await until(func():return not menu.world_data.get("checkout_pending",true) and not menu.loading,"original receipt"):return
-	elif phase=="buy":
+	elif phase in ["buy","display"]:
 		if not await until(func():return world.square.display_rows.has(2) and world.square.display_rows[2].items.size()==1,"visible seller and showcase"):return
 		var shelf: Dictionary=world.square.display_rows[2]
-		if shelf.tenant!="Mika" or shelf.items[0].title!="Oran Berry" or shelf.items[0].price!=65:
+		if shelf.tenant!="Mika" or shelf.items[0].title!=("Pecha Berry" if phase=="display" else "Oran Berry") or shelf.items[0].price!=65:
 			push_error("Wrong public merchandise");quit(1);return
 		var camera=world.service_camera
 		camera.global_position=layout.approach+Vector3(2.4,1.5,.7)
 		camera.look_at(layout.seller+Vector3.UP*1.22);camera.fov=42;camera.make_current()
-		await capture("mika-counter")
+		await capture("ready-counter" if phase=="display" else "mika-counter")
+		if phase=="display":
+			print("BAZAAR_TRADE_PASS display");await world.leave_bazaar();return
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and menu.server_items.size()==1 and not menu.loading,"buyer's goods view"):return
 		if not press("Buy"):return

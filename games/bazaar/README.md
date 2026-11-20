@@ -99,15 +99,13 @@ character explicitly reconnects. Ordinary standalone walking works offline.
 
 ## Implemented and still pending
 
-This is an actual local walkthrough with collision, district navigation, shop
-entry/return, pause, animated water and locomotion. Shop displays remain scenery;
-the residents are local NPCs, not connected visitors. There is no saleable stock,
-fabricated player occupancy or successful trading.
+Festival Park includes district navigation, local residents, a rental office,
+shop entrances, the fitting room and player counters. Two handhelds can trade
+profile items through their separate test hosts and a shared test Backend.
+The installed shell opens the island from Online → Bazaar → Official Bazaar.
 
-Multiplayer, host migration, parallel-realm selection, real shops/inventory
-transfers and catalogue-managed Crate launch/return are **not implemented**.
-The installed shell opens the local island from Online → Bazaar → Official Bazaar.
-Network admission is still absent. This world does not unlock Bazaar spending.
+Live spending is closed. Multiplayer admission, host migration, parallel realms
+and transfers from game saves are still pending.
 
 Separate Crates branch `codex/bazaar-world-20261114`; no merge or public catalogue
 release. The previous private 0.0.9 delivery is recorded separately. [Earlier polish/camera evidence](docs/POLISH.md).
