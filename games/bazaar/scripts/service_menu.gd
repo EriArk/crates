@@ -2,7 +2,7 @@
 extends PanelContainer
 ## In-world service surfaces. Availability comes from the host, never local saves.
 signal closed
-signal outfit_selected(key: String)
+signal outfit_selected(look: Dictionary)
 signal turn_model(radians: float)
 const ITEM_ICONS := {
 	"inventory":preload("res://assets/market/inventory.png"),
@@ -30,6 +30,8 @@ var inspector: ScrollContainer
 var goods_summary := VBoxContainer.new()
 var subtitle: Label
 var pointer_attention := false
+const Garment = preload("res://scripts/fitting_garment.gd")
+var fitting_look := {}
 var own_outfit := false
 var focused_row := 0
 var focus_after: Control
@@ -109,6 +111,7 @@ func open(kind: String, slot := 1) -> void:
 	view_serial+=1;queued_refresh=false;loading=false
 	pointer_attention=false
 	own_outfit=false
+	fitting_look={}
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
 	if kind in ["tea","curios"]:page="visitor"
 	focused_row=0;status="";selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render()
@@ -339,53 +342,86 @@ func inspect_good(index: int, target: Control) -> void:
 	button("Withdraw" if page=="mine" else "Buy",func():pass,target).disabled=true
 
 func render_clothes() -> void:
-	content.add_child(text("Try on an outfit",21,Color("ffcf83")))
+	content.add_child(text("Outfit sets",21,Color("ffcf83")))
 	var patterns: Array=server_items if not server_items.is_empty() else [{"id":"costume.traveller","title":"Traveller","price":50},{"id":"costume.mage","title":"Mage","price":50},{"id":"costume.merchant","title":"Merchant","price":50}]
 	var grid := GridContainer.new()
 	grid.columns=3
 	content.add_child(grid)
 	var caption := text("",16)
 	content.add_child(caption)
-	focused_row=clampi(focused_row,0,patterns.size()-1)
+	var controls := HBoxContainer.new()
+	content.add_child(controls)
+	var pieces := GridContainer.new()
+	pieces.columns=2
+	content.add_child(pieces)
+	var refresh_labels := func():
+		for index in pieces.get_child_count():
+			var slot: String=Garment.SLOTS[index]
+			var style: String=fitting_look.get(slot,"")
+			var part_button := pieces.get_child(index) as Button
+			part_button.visible=not style.is_empty()
+			if part_button.visible:part_button.text="%s  ›"%Garment.NAMES[style][index]
+	var available_styles: Array[String]=[]
+	for row in patterns:
+		var style:=str(row.get("id","")).trim_prefix("costume.")
+		if style in Garment.STYLES:available_styles.append(style)
+	for slot: String in Garment.SLOTS:
+		var cycle := func():
+			if fitting_look.is_empty() or available_styles.is_empty():return
+			var index := available_styles.find(fitting_look[slot])
+			fitting_look[slot]=available_styles[(index+1)%available_styles.size()]
+			outfit_selected.emit(fitting_look)
+			caption.text="Custom fitting"
+			refresh_labels.call()
+		var part := button("",cycle,pieces)
+		part.tooltip_text="Change "+slot.to_lower()
+		part.set_meta("service_key","piece-"+slot)
+	var first_render := fitting_look.is_empty() and not own_outfit
 	for i in patterns.size():
 		var row: Dictionary=patterns[i]
+		var key:=str(row.get("id","")).trim_prefix("costume.")
 		var card := VBoxContainer.new()
 		grid.add_child(card)
 		var sketch = preload("res://scripts/catalogue_art.gd").new()
-		sketch.design=str(row.title)
+		sketch.design=key
 		sketch.custom_minimum_size=Vector2(78,100)
 		sketch.mouse_filter=Control.MOUSE_FILTER_STOP
 		card.add_child(sketch)
+		var price := "%s set  ·  %s Sparks%s"%[row.title,str(int(row.price)) if row.has("price") else "?"," planned" if server_items.is_empty() else ""]
 		var choose := func():
 			focused_row=i
 			own_outfit=false
-			var key:=str(row.get("id","")).trim_prefix("costume.")
-			var available:=key in ["traveller","mage","merchant"]
-			outfit_selected.emit(key if available else "")
-			caption.text="%s   ·   %s Sparks%s"%[row.title,row.get("price","?")," planned" if server_items.is_empty() else ""]
-			if not available:caption.text+="   ·   Sample unavailable"
+			fitting_look=Garment.full_set(key)
+			outfit_selected.emit(fitting_look)
+			caption.text=price if not fitting_look.is_empty() else "Sample unavailable"
+			refresh_labels.call()
 		var tile := button(str(row.title),choose,card)
-		tile.set_meta("service_key","pattern-%d"%i)
+		tile.set_meta("service_key","pattern-"+key)
 		sketch.set_meta("pattern_tile",tile)
 		tile.focus_entered.connect(choose)
 		sketch.gui_input.connect(func(event):
 			if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:tile.grab_focus();choose.call())
-		if i==focused_row and not own_outfit:
+		if first_render and i==0:
 			focus_after=tile
 			choose.call()
-	var controls := HBoxContainer.new()
-	content.add_child(controls)
+		elif fitting_look==Garment.full_set(key) and not fitting_look.is_empty():
+			caption.text=price
+			focus_after=tile
+	if caption.text.is_empty():caption.text="Custom fitting"
 	button("↶  Turn",func():turn_model.emit(PI/4),controls).set_meta("service_key","turn-left")
 	button("Turn  ↷",func():turn_model.emit(-PI/4),controls).set_meta("service_key","turn-right")
 	var compare := func():
 		own_outfit=true
-		outfit_selected.emit("")
+		fitting_look={}
+		outfit_selected.emit(fitting_look)
 		caption.text="Your current outfit"
+		refresh_labels.call()
 	var own_button := button("Own outfit",compare,controls)
 	own_button.set_meta("service_key","own-outfit")
 	if own_outfit:
 		focus_after=own_button
 		compare.call()
+	refresh_labels.call()
 
 func destroy_preview() -> void:
 	if is_instance_valid(preview_population):preview_population.queue_free()

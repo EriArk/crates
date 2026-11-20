@@ -2,11 +2,13 @@
 extends Node3D
 
 const Garment = preload("res://scripts/fitting_garment.gd")
+var fill := DirectionalLight3D.new()
 var panels: Array[MeshInstance3D] = []
 var visitor
 var exploration_transform := Transform3D.IDENTITY
-var displayed := ""
-var requested := ""
+var displayed := {}
+var requested := {}
+var hidden_clothes: Array[MeshInstance3D]=[]
 var garment: Node3D
 var mannequin: Node3D
 var curtain := 0.0
@@ -44,12 +46,13 @@ func _ready() -> void:
 		panel.material_override.vertex_color_use_as_albedo=true
 		panel.material_override.vertex_color_is_srgb=true
 		panels.append(panel)
-	var lamp := OmniLight3D.new()
-	lamp.position=Vector3(-.6,2.35,1.9)
-	lamp.light_color=Color("ffdfbd")
-	lamp.light_energy=1.15
-	lamp.omni_range=4.4
-	add_child(lamp)
+	# Local point lights produce black tiles on the Odin Compatibility renderer.
+	# This soft, shadowless key is active only for the fitting camera.
+	fill.rotation_degrees=Vector3(-24,-18,0)
+	fill.light_color=Color("ffe5c9")
+	fill.light_energy=.66
+	fill.hide()
+	add_child(fill)
 	position_panels()
 	set_process(false)
 
@@ -79,17 +82,18 @@ func position_panels() -> void:
 
 func enter(walker) -> void:
 	visitor=walker
+	fill.show()
 	visitor.fitting_pose=true
 	exploration_transform=visitor.anchor.transform
 	visitor.anchor.top_level=true
 	visitor.anchor.global_position=global_position+Vector3.UP*.09
-	displayed=""
-	requested=""
+	displayed={}
+	requested={}
 	subject_id=-1
 	set_process(true)
 
-func select(outfit: String) -> void:
-	requested=outfit
+func select(outfit: Dictionary) -> void:
+	requested=outfit.duplicate()
 
 func _process(delta: float) -> void:
 	if visitor==null:return
@@ -114,6 +118,10 @@ func _process(delta: float) -> void:
 		position_panels()
 
 func clear_costume() -> void:
+	if is_instance_valid(garment):garment.release()
+	for part in hidden_clothes:
+		if is_instance_valid(part):part.show()
+	hidden_clothes.clear()
 	for part in [garment,mannequin]:
 		if is_instance_valid(part):
 			part.hide()
@@ -128,7 +136,6 @@ func change_outfit(current_id: int) -> void:
 	displayed=requested
 	subject_id=current_id
 	var base: Node3D=visitor.visual if current_id else visitor.anchor
-	var eye: float=visitor.visual.eye_height if current_id else .8
 	if not current_id:
 		visitor.fallback.hide()
 		mannequin=Node3D.new()
@@ -140,12 +147,22 @@ func change_outfit(current_id: int) -> void:
 	if displayed.is_empty():return
 	garment=Garment.new()
 	base.add_child(garment)
-	garment.scale=Vector3.ONE*clampf(eye/.8,.75,1.25)
-	garment.build(displayed)
+	var skeleton: Skeleton3D
+	if current_id:
+		# Resolved packs use the selected item IDs for clothing nodes; the base
+		# tank and sandals have legacy mesh names. Keep facial meshes and hair.
+		var rigs := base.find_children("*","Skeleton3D",true,false)
+		if not rigs.is_empty():skeleton=rigs[0]
+		for part: MeshInstance3D in base.find_children("*","MeshInstance3D",true,false):
+			if part.visible and (str(part.name) in visitor.worn_items or str(part.name) in ["shirt","shoes","racing-gloves","rose-racing-gloves"]):
+				hidden_clothes.append(part)
+				part.hide()
+	garment.build(displayed,skeleton)
 
 func leave() -> void:
 	if visitor==null:return
 	clear_costume()
+	fill.hide()
 	visitor.fitting_pose=false
 	visitor.anchor.top_level=false
 	visitor.anchor.transform=exploration_transform

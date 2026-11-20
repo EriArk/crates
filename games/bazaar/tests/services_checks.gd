@@ -76,21 +76,28 @@ func run() -> void:
 	scene.visitor.position.y+=.22
 	check(scene.visitor.anchor.global_position.is_equal_approx(platform_position),"Feet stay on the fitting platform while the exploration body settles")
 	await create_timer(1.1).timeout
-	check(booth.displayed=="traveller" and is_instance_valid(booth.garment),"First costume fitted")
+	check(booth.displayed==booth.Garment.full_set("traveller") and is_instance_valid(booth.garment),"First costume fitted")
 	var patterns=menu.content.get_child(1)
 	patterns.get_child(1).get_child(1).grab_focus()
 	patterns.get_child(2).get_child(1).grab_focus()
 	for frame in 150:
 		await process_frame
-		if booth.displayed=="merchant":break
-	check(booth.displayed=="merchant" and is_equal_approx(booth.curtain,1.0),"Latest outfit installed behind closed curtains")
+		if booth.displayed==booth.Garment.full_set("merchant"):break
+	check(booth.displayed==booth.Garment.full_set("merchant") and is_equal_approx(booth.curtain,1.0),"Latest outfit installed behind closed curtains")
 	await capture("fitting-closed")
 	for index in 3:
 		var choice: String=["traveller","mage","merchant"][index]
 		patterns.get_child(index).get_child(1).grab_focus()
 		await create_timer(1.25).timeout
-		check(booth.displayed==choice and booth.curtain<.05 and is_instance_valid(booth.garment),"Revealed "+choice)
+		check(booth.displayed==booth.Garment.full_set(choice) and booth.curtain<.05 and is_instance_valid(booth.garment),"Revealed "+choice)
 		await capture("fitting-"+choice)
+	var boots_button=menu.content.get_child(4).get_child(2)
+	boots_button.grab_focus()
+	boots_button.pressed.emit()
+	await create_timer(1.1).timeout
+	check(booth.displayed.Boots=="traveller" and booth.displayed.Top=="merchant","Boots change independently behind the curtain")
+	menu.render()
+	check(menu.fitting_look==booth.displayed,"Refresh preserves mixed pieces")
 	var facing: float=scene.visitor.anchor.rotation.y
 	var controls=menu.content.get_child(3)
 	controls.get_child(0).pressed.emit()
@@ -100,7 +107,7 @@ func run() -> void:
 	menu.render()
 	await create_timer(1.1).timeout
 	check(not is_instance_valid(booth.garment),"Original outfit comparison")
-	booth.select("mage")
+	booth.select(booth.Garment.full_set("mage"))
 	booth._process(.1)
 	check(booth.curtain>0 and booth.curtain<1 and not is_instance_valid(booth.garment),"Old appearance stays in place until the curtain closes")
 	scene._unhandled_input(back)

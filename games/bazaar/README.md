@@ -1,4 +1,8 @@
-# Bazaar 0.0.13 — SDK avatar faces and attention
+# Bazaar 0.0.14 — THREAD outfit sets
+
+Choose Traveller, Mage or Merchant at THREAD to preview a complete four-piece
+set. The four item buttons cycle the top, trousers, footwear and hat independently.
+Own outfit restores the clothes from the active SDK profile.
 
 Bazaar loads the active host avatar on entry and when its resolved model changes.
 Revision 13 adds directional eyes and a head turn on top of locomotion. Approach

@@ -13,6 +13,7 @@ signal identity_changed(message: String)
 var client = Client.new()
 var visual: Node3D
 var appearance_hash := ""
+var worn_items: Array[String]=[]
 var anchor := Node3D.new()
 var fallback := Node3D.new()
 var rig := Node3D.new()
@@ -63,6 +64,10 @@ func appearance(description: Dictionary) -> void:
 	if replacement==null:
 		identity_changed.emit("Guest · character unavailable");return
 	appearance_hash=description.sha256
+	var appearance: Dictionary=description.get("appearance",description.get("recipe",{}).get("appearance",{}))
+	for slot in ["top","bottom","socks","shoes","gloves","headwear"]:
+		var item: String=appearance.get(slot,"")
+		if not item.is_empty() and item!="none":worn_items.append(item)
 	visual=replacement;anchor.add_child(visual);fallback.hide()
 	locomotion=Locomotion.new();add_child(locomotion)
 	if not locomotion.bind(visual):locomotion.queue_free();locomotion=null
@@ -71,6 +76,7 @@ func appearance(description: Dictionary) -> void:
 
 func clear_identity(_reason: String) -> void:
 	appearance_hash=""
+	worn_items.clear()
 	if is_instance_valid(locomotion):remove_child(locomotion);locomotion.queue_free()
 	locomotion=null
 	if is_instance_valid(visual):
