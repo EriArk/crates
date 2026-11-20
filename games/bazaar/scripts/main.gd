@@ -149,6 +149,8 @@ func _ready() -> void:
 	if not personal:
 		services=load("res://scripts/service_menu.gd").new()
 		services.square=square
+		services.outfit_selected.connect(square.fitting_booth.select)
+		services.turn_model.connect(func(angle: float):if posing:visitor.anchor.rotate_y(angle))
 		root.add_child(services);services.closed.connect(hide_menu)
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
 			if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
@@ -158,7 +160,7 @@ func _ready() -> void:
 	if smoke_mode:call_deferred("run_smoke")
 
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
-	if is_instance_valid(services) and services.visible:services.hide();services.destroy_preview()
+	if is_instance_valid(services) and services.visible:services.close()
 	speech.hide()
 	touch_actions.hide()
 	modal=true
@@ -177,6 +179,7 @@ func hide_menu() -> void:
 	visitor.camera.make_current()
 	visitor.anchor.show()
 	if posing:
+		square.fitting_booth.leave()
 		visitor.anchor.rotation.y=fitting_yaw
 		posing=false
 	for part in hud_parts:
@@ -217,6 +220,8 @@ func frame_service(kind: String, slot: int) -> void:
 		if kind=="tailor":
 			fitting_yaw=visitor.anchor.rotation.y
 			posing=true
+			square.fitting_booth.enter(visitor)
+			target=square.fitting_booth.global_position+Vector3.UP*1.15
 			visitor.anchor.rotation.y=atan2(toward.x,toward.z)
 		else:target=Vector3(visitor.position.x,1.0,-3.45)
 	var right := Vector3.UP.cross(toward).normalized()

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
 ## Authored local world. No directory, economy, owners or visitor counts here.
+var fitting_booth: Node3D
 var destinations: Array[Dictionary] = []
 var models: Dictionary = {}
 var prop_roots: Array[Node3D] = []
@@ -184,13 +185,19 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	for x in [-5,5]:block(center+Vector3(x,2,0),Vector3(0.25,4,10),"e6d4ae")
 	for z in [-5,5]:block(center+Vector3(0,2,z),Vector3(10,4,0.25),"c7b18d")
 	text3d(title,center+Vector3(0,2.7,-4.7),0.013)
-	text3d("RENTALS · NPC SELLERS" if index==3 else "CLOTHING · IN DEVELOPMENT" if index==1 else "INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.25,-4.7),0.006)
+	text3d("RENTALS · NPC SELLERS" if index==3 else "CLOTHING  /  FITTING ROOM" if index==1 else "INTERIOR PREVIEW · NO PURCHASES",center+Vector3(0,2.25,-4.7),0.006)
 	block(center+Vector3(0,0.38,-2.5),Vector3(6,0.76,0.9),"896343")
 	for side in [-1,1]:
 		lantern(center+Vector3(side*3.8,2.8,-3.9),"edc178")
 		for shelf in [0.9,1.6]:
 			block(center+Vector3(side*3.8,shelf,-3.8),Vector3(1.4,0.12,1),"866341",false)
 	dressing.room(center,index)
+	if index==1:
+		fitting_booth=preload("res://scripts/fitting_booth.gd").new()
+		fitting_booth.position=center+Vector3(-2.6,0,1.25)
+		add_child(fitting_booth)
+		text3d("FITTING ROOM",fitting_booth.position+Vector3(0,2.47,.63),.005)
+		destinations.append({"title":"Try on outfits","position":fitting_booth.position+Vector3(0,0,.95),"service":"tailor"})
 	var exit_position := center+Vector3(0,0,4.0)
 	text3d("TO TOWN",center+Vector3(0,1.8,4.71),0.005,self,PI)
 	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,1.3),"yaw":0.0})

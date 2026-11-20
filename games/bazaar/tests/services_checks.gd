@@ -70,7 +70,42 @@ func run() -> void:
 	check(not menu.visible and not scene.modal and not scene.population.ambient_paused,"Controller Back restores exploration")
 	scene.visitor.position=Vector3(230,0,-1.65);scene._process(0);scene.inspect_spot()
 	check(menu.service=="tailor" and menu.visible,"THREAD opens clothing interface")
-	await capture("thread-clothing");scene.hide_menu()
+	var booth=scene.square.fitting_booth
+	check(booth.visitor==scene.visitor,"Clerk uses the in-world fitting booth")
+	await create_timer(1.1).timeout
+	check(booth.displayed=="traveller" and is_instance_valid(booth.garment),"First costume fitted")
+	var patterns=menu.content.get_child(1)
+	patterns.get_child(1).get_child(1).grab_focus()
+	patterns.get_child(2).get_child(1).grab_focus()
+	for frame in 150:
+		await process_frame
+		if booth.displayed=="merchant":break
+	check(booth.displayed=="merchant" and is_equal_approx(booth.curtain,1.0),"Latest outfit installed behind closed curtains")
+	await capture("fitting-closed")
+	for index in 3:
+		var choice: String=["traveller","mage","merchant"][index]
+		patterns.get_child(index).get_child(1).grab_focus()
+		await create_timer(1.25).timeout
+		check(booth.displayed==choice and booth.curtain<.05 and is_instance_valid(booth.garment),"Revealed "+choice)
+		await capture("fitting-"+choice)
+	var facing: float=scene.visitor.anchor.rotation.y
+	var controls=menu.content.get_child(3)
+	controls.get_child(0).pressed.emit()
+	check(not is_equal_approx(facing,scene.visitor.anchor.rotation.y),"Rotation control turns model")
+	controls.get_child(2).grab_focus()
+	controls.get_child(2).pressed.emit()
+	menu.render()
+	await create_timer(1.1).timeout
+	check(not is_instance_valid(booth.garment),"Original outfit comparison")
+	booth.select("mage")
+	booth._process(.1)
+	check(booth.curtain>0 and booth.curtain<1 and not is_instance_valid(booth.garment),"Old appearance stays in place until the curtain closes")
+	scene._unhandled_input(back)
+	check(booth.visitor==null and not scene.visitor.fitting_pose and scene.visitor.anchor.position.is_zero_approx(),"Leaving midway restores exploration")
+	scene.visitor.position=booth.global_position+Vector3(0,0,.95)
+	scene._process(0);scene.inspect_spot()
+	check(booth.visitor==scene.visitor,"Walk-up booth opens the same fitting room")
+	scene.hide_menu()
 	scene.visitor.position=scene.square.stall_layout(2).approach;scene._process(0);scene.inspect_spot()
 	check(menu.service=="stall" and menu.selected==2,"Stall interaction opens its own goods")
 	check(not menu.goods_confirmed,"Unavailable goods are not a confirmed empty shop")

@@ -2,6 +2,8 @@
 extends PanelContainer
 ## In-world service surfaces. Availability comes from the host, never local saves.
 signal closed
+signal outfit_selected(key: String)
+signal turn_model(radians: float)
 const ITEM_ICONS := {
 	"inventory":preload("res://assets/market/inventory.png"),
 	"star":preload("res://assets/market/star.png"),
@@ -27,6 +29,7 @@ var shelf: ScrollContainer
 var inspector: ScrollContainer
 var goods_summary := VBoxContainer.new()
 var subtitle: Label
+var own_outfit := false
 var focused_row := 0
 var focus_after: Control
 var title: Label
@@ -103,6 +106,7 @@ func _process(delta: float) -> void:
 		request_view=-1;client.read("bazaar.world")
 func open(kind: String, slot := 1) -> void:
 	view_serial+=1;queued_refresh=false;loading=false
+	own_outfit=false
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
 	if kind in ["tea","curios"]:page="visitor"
 	focused_row=0;status="";selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render()
@@ -314,9 +318,10 @@ func inspect_good(index: int, target: Control) -> void:
 	button("Withdraw" if page=="mine" else "Buy",func():pass,target).disabled=true
 
 func render_clothes() -> void:
-	content.add_child(text("Tailor’s pattern book",21,Color("ffcf83")))
-	var patterns: Array=server_items if not server_items.is_empty() else [{"title":"Traveller","price":50},{"title":"Mage","price":50},{"title":"Merchant","price":50}]
-	var grid := HBoxContainer.new()
+	content.add_child(text("Try on an outfit",21,Color("ffcf83")))
+	var patterns: Array=server_items if not server_items.is_empty() else [{"id":"costume.traveller","title":"Traveller","price":50},{"id":"costume.mage","title":"Mage","price":50},{"id":"costume.merchant","title":"Merchant","price":50}]
+	var grid := GridContainer.new()
+	grid.columns=3
 	content.add_child(grid)
 	var caption := text("",16)
 	content.add_child(caption)
@@ -332,13 +337,33 @@ func render_clothes() -> void:
 		card.add_child(sketch)
 		var choose := func():
 			focused_row=i
-			caption.text="%s   ·   %s Sparks%s\nPattern preview • garment in development"%[row.title,row.get("price","?")," planned" if server_items.is_empty() else ""]
+			own_outfit=false
+			var key:=str(row.get("id","")).trim_prefix("costume.")
+			var available:=key in ["traveller","mage","merchant"]
+			outfit_selected.emit(key if available else "")
+			caption.text="%s   ·   %s Sparks%s"%[row.title,row.get("price","?")," planned" if server_items.is_empty() else ""]
+			if not available:caption.text+="   ·   Sample unavailable"
 		var tile := button(str(row.title),choose,card)
 		tile.set_meta("service_key","pattern-%d"%i)
 		tile.focus_entered.connect(choose)
 		sketch.gui_input.connect(func(event):
 			if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:tile.grab_focus();choose.call())
-		if i==focused_row:focus_after=tile;choose.call()
+		if i==focused_row and not own_outfit:
+			focus_after=tile
+			choose.call()
+	var controls := HBoxContainer.new()
+	content.add_child(controls)
+	button("↶  Turn",func():turn_model.emit(PI/4),controls).set_meta("service_key","turn-left")
+	button("Turn  ↷",func():turn_model.emit(-PI/4),controls).set_meta("service_key","turn-right")
+	var compare := func():
+		own_outfit=true
+		outfit_selected.emit("")
+		caption.text="Your current outfit"
+	var own_button := button("Own outfit",compare,controls)
+	own_button.set_meta("service_key","own-outfit")
+	if own_outfit:
+		focus_after=own_button
+		compare.call()
 
 func destroy_preview() -> void:
 	if is_instance_valid(preview_population):preview_population.queue_free()

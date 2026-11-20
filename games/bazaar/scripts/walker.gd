@@ -18,6 +18,7 @@ var rig := Node3D.new()
 var arm := SpringArm3D.new()
 var camera := Camera3D.new()
 var input_enabled := true
+var fitting_pose := false
 var touch_move := Vector2.ZERO
 var yaw := 0.0
 var pitch := -0.18
@@ -133,7 +134,7 @@ func _physics_process(delta: float) -> void:
 		anchor.rotation.y=lerp_angle(anchor.rotation.y,atan2(travel.x,travel.z),1.0-exp(-delta*20))
 		travel_time+=delta*motor.actual_speed
 	fallback.position.y=absf(sin(travel_time*5))*0.025 if moving else 0.0
-	if is_instance_valid(locomotion):
+	if not fitting_pose and is_instance_valid(locomotion):
 		locomotion.advance(delta,motor.actual_speed,input_enabled,motor.crouched,is_on_floor(),motor.gait)
 	update_camera_size()
 
@@ -143,7 +144,8 @@ func _physics_process(delta: float) -> void:
 	rig.global_position=Vector3(global_position.x,lerpf(rig.global_position.y,target_y,1-exp(-delta*16)),global_position.z)
 	rig.rotation.y=lerp_angle(rig.rotation.y,yaw,1-exp(-delta*20))
 	arm.rotation.x=lerp_angle(arm.rotation.x,pitch,1-exp(-delta*20))
-	anchor.visible=arm.get_hit_length()>0.35*camera_scale
+	if input_enabled:
+		anchor.visible=arm.get_hit_length()>0.35*camera_scale
 
 func _exit_tree() -> void:
 	if is_instance_valid(rig):rig.queue_free()

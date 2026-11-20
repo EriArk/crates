@@ -1,8 +1,11 @@
-# Bazaar 0.0.11 — park map and counter services
+# Bazaar 0.0.12 — THREAD fitting room
 
 Open **Online → Bazaar → Festival Park** on Flip 2 or Odin 2. Visit Vale in the
 Stall Office to select a numbered counter on the park map. Browse a counter in
-person or visit Wisp at THREAD to see the costume patterns.
+person or visit Wisp at THREAD. Choose a pattern to see the outfit on your avatar;
+the booth curtain closes while it changes. Turn the model to inspect the details,
+select **Own outfit** to compare, or press **B** to return to the shop. Guests
+preview on a wooden dress form. Trying on clothes is free.
 [Service screens and checks](docs/counter-evidence/README.md).
 
 Version 0.0.10 adds [two empty personal starting worlds](docs/personal-worlds/README.md):
