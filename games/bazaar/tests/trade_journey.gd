@@ -39,7 +39,7 @@ func capture(name: String) -> void:
 	root.get_texture().get_image().save_png(directory+"/"+name+".png")
 
 func run() -> void:
-	if not "--test-market" in OS.get_cmdline_user_args() or phase not in ["list","buy","resolve","return","stock","display"]:
+	if not "--test-market" in OS.get_cmdline_user_args() or phase not in ["list","buy","resolve","return","stock","display","browse"]:
 		quit(2);return
 	world=load("res://main.tscn").instantiate();root.add_child(world)
 	world.smoke_mode=true;menu=world.services
@@ -62,8 +62,6 @@ func run() -> void:
 	if phase in ["list","stock"]:
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and not menu.loading,"own counter"):return
-		var price: SpinBox=menu.find_children("*","SpinBox",true,false).front()
-		price.value=65
 		if not press("List profile item"):return
 		if not await until(func():return menu.server_items.size()==1 and menu.goods_confirmed and not menu.loading,"listed item"):return
 		await capture("listed")
@@ -73,10 +71,10 @@ func run() -> void:
 		menu.select_place(2)
 		if not press("Resolve last checkout"):return
 		if not await until(func():return not menu.world_data.get("checkout_pending",true) and not menu.loading,"original receipt"):return
-	elif phase in ["buy","display"]:
+	elif phase in ["buy","display","browse"]:
 		if not await until(func():return world.square.display_rows.has(2) and world.square.display_rows[2].items.size()==1,"visible seller and showcase"):return
 		var shelf: Dictionary=world.square.display_rows[2]
-		if shelf.tenant!="Mika" or shelf.items[0].title!=("Pecha Berry" if phase=="display" else "Oran Berry") or shelf.items[0].price!=65:
+		if shelf.tenant!="Mika" or shelf.items[0].title!=("Pecha Berry" if phase in ["browse","display"] else "Oran Berry") or shelf.items[0].price!=65:
 			push_error("Wrong public merchandise");quit(1);return
 		var camera=world.service_camera
 		camera.global_position=layout.approach+Vector3(2.4,1.5,.7)
@@ -86,8 +84,19 @@ func run() -> void:
 			print("BAZAAR_TRADE_PASS display");await world.leave_bazaar();return
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and menu.server_items.size()==1 and not menu.loading,"buyer's goods view"):return
-		if not press("Buy"):return
-		if not await until(func():return menu.receipt_message.begins_with("Purchase pending") and not menu.loading,"committed purchase with lost reply"):return
+		if phase=="browse":
+			var item=get_root().gui_get_focus_owner()
+			if not item or not str(item.get_meta("service_key","")).begins_with("listing-"):
+				push_error("The shop must open focused on an item");quit(1);return
+			await capture("counter-stock")
+			var accept := InputEventAction.new()
+			accept.action="ui_accept"
+			accept.pressed=true;root.push_input(accept,true)
+			accept=accept.duplicate();accept.pressed=false;root.push_input(accept,true)
+			if not await until(func():return menu.receipt_message=="Cancelled" and not menu.loading,"one press opened a cancellable offer"):return
+		else:
+			if not press("Buy"):return
+			if not await until(func():return menu.receipt_message.begins_with("Purchase pending") and not menu.loading,"committed purchase with lost reply"):return
 	else:
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and menu.server_items.is_empty() and not menu.loading,"empty shelf after reopening"):return

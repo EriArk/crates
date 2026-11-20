@@ -4,7 +4,7 @@ extends PanelContainer
 signal closed
 signal outfit_selected(look: Dictionary)
 signal turn_model(radians: float)
-const ITEM_ICONS = preload("res://scripts/market_goods.gd").ITEM_ICONS
+const Goods = preload("res://scripts/market_goods.gd")
 const Population = preload("res://scripts/population.gd")
 const SELLERS := ["Casual_Female","Casual_Male","Chef_Female","Kimono_Female","OldClassy_Male","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
 const NAMES := ["Traveller","Wayfarer","Chef","Tailor","Gentleman","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
@@ -17,13 +17,13 @@ var page := "places"
 var selected := 1
 var seller := 0
 var note: Label
-var sale_price := 25
+const INITIAL_ASK := 25
 var receipt_message := ""
 var status := "Connect to TrainerOS to check rentals and trading."
 var square
 var shelf: ScrollContainer
 var inspector: ScrollContainer
-var goods_summary := VBoxContainer.new()
+var stock_actions := HBoxContainer.new()
 var subtitle: Label
 var pointer_attention := false
 const Garment = preload("res://scripts/fitting_garment.gd")
@@ -84,7 +84,7 @@ func _ready() -> void:
 	content=VBoxContainer.new();content.size_flags_vertical=Control.SIZE_EXPAND_FILL;content.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(content)
 	var detail_scroll := ScrollContainer.new();inspector=detail_scroll;detail_scroll.custom_minimum_size.x=240;detail_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;body.add_child(detail_scroll)
 	detail=VBoxContainer.new();detail.size_flags_horizontal=Control.SIZE_EXPAND_FILL;detail_scroll.add_child(detail)
-	column.add_child(goods_summary)
+	column.add_child(stock_actions)
 	var footer := HBoxContainer.new();column.add_child(footer)
 	note = text("ALPHA   /   Purchases closed",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
 	hint.autowrap_mode=TextServer.AUTOWRAP_OFF
@@ -218,22 +218,27 @@ func render() -> void:
 	var previous := get_viewport().gui_get_focus_owner()
 	var focus_key: String = previous.get_meta("service_key","") if previous and is_ancestor_of(previous) else ""
 	destroy_preview()
-	for section in [tabs,content,detail,goods_summary]:clear(section)
+	for section in [tabs,content,detail,stock_actions]:clear(section)
 	var office := service=="office"
-	anchor_left=0.0 if office else .46
+	offset_top=38 if service=="stall" else 18
+	offset_bottom=-26 if service=="stall" else -18
+	anchor_left=0.0 if office else .31 if service=="stall" else .46
 	offset_left=18 if office else 0
 	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
 	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
-	note.text = "Review in TrainerOS" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
-	if not client.endpoint_override.is_empty():note.text="Test Sparks · "+note.text
+	if service=="stall":
+		var tenant=place().get("tenant_name")
+		title.text=("%s’s wares" % tenant) if tenant else "Market wares"
+	note.text = "" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
+	if not client.endpoint_override.is_empty():note.text=("Test Sparks" if note.text.is_empty() else "Test Sparks · "+note.text)
 	if not receipt_message.is_empty() and not loading:note.text=receipt_message
 	hint.text=status
 	hint.tooltip_text=status
 	hint.visible=not status.is_empty() and page!="visitor"
 	find_child("Retry",true,false).visible=hint.visible and not loading
-	inspector.visible=office
-	inspector.custom_minimum_size.x=250
-	goods_summary.visible=page=="goods" and not server_items.is_empty()
+	inspector.visible=office or page=="goods" and not server_items.is_empty()
+	inspector.custom_minimum_size.x=207 if page=="goods" else 250
+	stock_actions.visible=page=="goods" and client.has_checkout
 	tabs.visible=office
 	focus_after=null
 	if office:
@@ -327,66 +332,85 @@ func select_seller(index: int) -> void:
 
 func render_goods() -> void:
 	var mine := page=="mine"
-	content.add_child(text("Your listings" if mine else "On the counter",20,Color("ffcf83")))
 	var counter := place()
+	var tenant: bool = counter.get("tenant_id")!=null and counter.get("tenant_id")==world_data.get("player_id")
+	content.add_child(text("YOUR LISTINGS" if mine else "ON THE COUNTER",14,Color("eac581")))
+	var offers := VBoxContainer.new()
+	offers.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	content.add_child(offers)
 	if page=="goods" and client.has_checkout:
-		button("Profile inventory",func():checkout({"action":"inventory"}),content).disabled=loading
-	if page=="goods" and can_trade() and counter.get("tenant_id")!=null and counter.get("tenant_id")==world_data.get("player_id") and counter.get("species")!=null:
-		var pricing := HBoxContainer.new()
-		content.add_child(pricing)
-		var amount := SpinBox.new()
-		amount.min_value=1;amount.max_value=2147483647;amount.value=sale_price
-		amount.custom_minimum_size.x=145;amount.suffix=" Sparks";amount.value_changed.connect(func(value: float):sale_price=int(value))
-		pricing.add_child(amount)
-		button("List profile item",func():checkout({"action":"list","slot":selected,"price":sale_price}),pricing)
+		if can_trade() and tenant and counter.get("species")!=null:
+			var list_action := button("List profile item",func():checkout({"action":"list","slot":selected,"price":INITIAL_ASK}),stock_actions)
+			list_action.set_meta("service_key","list")
+			if server_items.is_empty():focus_after=list_action
+		var bag := button("Profile inventory",func():checkout({"action":"inventory"}),stock_actions)
+		bag.set_meta("service_key","inventory")
+		bag.disabled=loading
+		if not focus_after and server_items.is_empty() and not loading:focus_after=bag
 	if server_items.is_empty():
-		content.add_child(text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22))
-		if goods_confirmed:content.add_child(text("Nothing on this counter today.",15))
+		var empty := text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22)
+		empty.name="ShelfStatus"
+		offers.add_child(empty)
 		return
-	var grid := GridContainer.new()
-	grid.columns=2
-	content.add_child(grid)
-	var description := detail if mine else goods_summary
-	var item_detail := VBoxContainer.new()
-	description.add_child(item_detail)
 	focused_row=clampi(focused_row,0,server_items.size()-1)
 	for i in server_items.size():
-		var row: Dictionary=server_items[i]
-		var tile := button(str(row.get("presentation",{}).get("title","Item"))+"\n%s Sparks"%(str(int(row.price)) if row.has("price") else "?"),func():inspect_good(i,item_detail),grid)
-		tile.icon=ITEM_ICONS.get(row.get("presentation",{}).get("icon","inventory"),ITEM_ICONS.inventory)
-		tile.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-		tile.custom_minimum_size=Vector2(132,62)
-		tile.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-		tile.set_meta("service_key","listing-%s"%row.get("id",i))
-		tile.focus_entered.connect(inspect_good.bind(i,item_detail))
+		var offer: Dictionary=server_items[i]
+		var info: Dictionary=offer.get("presentation",{})
+		var tile := preload("res://scripts/counter_row.gd").new()
+		tile.item_title=str(info.get("title","Item"))
+		tile.game=str(info.get("game",""))
+		tile.face=Goods.illustration(info)
+		tile.price="✦ %d"%int(offer.price) if offer.has("price") else "—"
+		tile.tooltip_text=tile.item_title
+		tile.accessibility_name=tile.item_title+" · "+tile.price+" Sparks"
+		tile.set_meta("service_key","listing-%s"%offer.get("id",i))
+		offers.add_child(tile)
+		tile.focus_entered.connect(inspect_good.bind(i,offers))
+		tile.pressed.connect(func():
+			inspect_good(i,offers)
+			if may_buy(offer):buy_good(offer))
 		if i==focused_row:focus_after=tile
-	inspect_good(focused_row,item_detail)
+	inspect_good(focused_row,offers)
 	if not next_page.is_empty():
 		button("More wares  ›",func():refresh(next_page),content).disabled=loading
 
-func inspect_good(index: int, target: Control) -> void:
+func may_buy(offer: Dictionary) -> bool:
+	return page=="goods" and can_trade() and offer.has("revision") and offer.has("price") and offer.get("seller_id")!=world_data.get("player_id")
+
+func buy_good(offer: Dictionary) -> void:
+	checkout({"action":"buy","slot":selected,"listing_id":offer.id,"revision":offer.revision,"price":offer.price})
+
+func inspect_good(index: int, offers: Control) -> void:
 	focused_row=index
-	clear(target)
-	var row: Dictionary=server_items[index]
-	var info: Dictionary=row.get("presentation",{})
-	target.add_child(text(str(info.get("title","Item")),22,Color("ffcf83")))
-	target.add_child(text(str(info.get("game","")),15))
-	var facts := PackedStringArray()
-	for fact in info.get("facts",[]):facts.append("%s %s"%[fact.label,fact.value])
-	if not facts.is_empty():
-		var scroll := ScrollContainer.new()
-		scroll.custom_minimum_size.y=46
-		scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.focus_mode=Control.FOCUS_ALL
-		target.add_child(scroll)
-		var description:=text("   ·   ".join(facts),14)
-		description.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-		scroll.add_child(description)
-	target.add_child(text("%s Sparks"%(str(int(row.price)) if row.has("price") else "?"),18))
-	if page=="mine":
-		button("Withdraw",func():pass,target).disabled=true
-		return
-	button("Buy",func():checkout({"action":"buy","slot":selected,"listing_id":row.id,"revision":row.revision,"price":row.price}),target).disabled=not can_trade() or row.get("seller_id")==world_data.get("player_id")
+	for tile in offers.get_children():tile.inspected=tile.get_index()==index
+	clear(detail)
+	var offer: Dictionary=server_items[index]
+	var info: Dictionary=offer.get("presentation",{})
+	var mount := PanelContainer.new()
+	var backing := StyleBoxFlat.new()
+	backing.bg_color=Color("324547")
+	backing.border_color=Color("ab936b")
+	backing.border_width_bottom=2
+	backing.set_content_margin_all(6)
+	mount.add_theme_stylebox_override("panel",backing)
+	detail.add_child(mount)
+	var face := TextureRect.new()
+	face.texture=Goods.illustration(info)
+	face.custom_minimum_size=Vector2(0,126)
+	face.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+	face.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	mount.add_child(face)
+	detail.add_child(text(str(info.get("title","Item")),23,Color("fff1d6")))
+	if not str(info.get("game","")).is_empty():detail.add_child(text(info.game,15,Color("b5cfcc")))
+	for fact in info.get("facts",[]):
+		detail.add_child(text("%s  ·  %s"%[fact.label,fact.value],15))
+	detail.add_child(HSeparator.new())
+	if offer.has("price"):detail.add_child(text("✦ %d Sparks"%int(offer.price),20,Color("ffd589")))
+	if may_buy(offer):
+		if receipt_message.is_empty():note.text="A  ·  Review purchase" + ("     /     Test Sparks" if not client.endpoint_override.is_empty() else "")
+		button("Buy",func():buy_good(offer),detail)
+	elif page=="mine" or offer.get("seller_id")!=null and offer.get("seller_id")==world_data.get("player_id"):
+		detail.add_child(text("Your listing",15))
 
 func render_clothes() -> void:
 	content.add_child(text("Outfit sets",21,Color("ffcf83")))

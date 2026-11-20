@@ -1,11 +1,11 @@
-# Bazaar 0.0.16 — Player counters
+# Bazaar 0.0.17 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
-full price in TrainerOS. Walk to your rented counter, set a price, and select
-**List profile item** to choose an item in your private inventory. Another player
-can see up to three goods on the counter before opening it. **Buy** opens a host
-review. **Profile inventory** shows the delivered item. If a reply is lost,
+full price in TrainerOS. At your counter select **List profile item**, pick the item in your bag,
+then adjust the asking price with left/right or enter it directly. Another player
+can see up to three goods on the counter before opening it. Move up/down to inspect the shelf. Press **A** on a row or tap it to
+review the item and the price together. **Profile inventory** shows the delivered item. If a reply is lost,
 choose **Resolve last checkout** at Vale's desk, also after restarting the game
 or host. Ordinary visits and the personal-world previews use the normal profile.
 

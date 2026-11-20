@@ -1,5 +1,9 @@
 # История Crates
 
+## 20 November 2026 — Festival market interface
+
+Festival Park now opens a focused shelf with the seller in view. Moving between wares updates the illustrated item details. Activating the row opens purchase review. Stocking starts in the profile bag and finishes with the asking price.
+
 ## 20 November 2026 — Bazaar 0.0.16
 
 Player counters display the tenant, up to three goods and their prices. From the

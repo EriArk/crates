@@ -347,8 +347,7 @@ func update_showcases(places: Array) -> void:
 		for i in count:
 			var item: Dictionary=items[i]
 			var icon := Sprite3D.new()
-			var textures = preload("res://scripts/market_goods.gd").ITEM_ICONS
-			icon.texture=textures.get(item.get("icon","inventory"),textures.inventory)
+			icon.texture=preload("res://scripts/market_goods.gd").illustration(item)
 			var offsets: Array = [.85] if count==1 else [-.85,.85] if count==2 else [-.95,-.25,.85]
 			var x := float(offsets[i])
 			var board := MeshInstance3D.new()

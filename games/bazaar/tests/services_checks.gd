@@ -121,13 +121,14 @@ func run() -> void:
 	check(menu.service=="stall" and menu.selected==2,"Stall interaction opens its own goods")
 	check(not menu.goods_confirmed,"Unavailable goods are not a confirmed empty shop")
 	await capture("stall-goods")
-	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[{"id":"gem","price":8,"presentation":{"title":"Sun Stone","game":"Emerald"}},{"id":"leaf","price":12,"presentation":{"title":"Leaf","game":"Emerald"}}],"next":null})
+	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[{"id":"gem","price":8,"presentation":{"title":"Oran Berry","game":"Pokémon Emerald","icon":"star"}},{"id":"leaf","price":12,"presentation":{"title":"Pecha Berry","game":"Pokémon Emerald","icon":"star"}}],"next":null})
 	var tiles=menu.content.get_child(1)
+	check(tiles.get_child(0).face != tiles.get_child(1).face,"Adapter catalogue gives each berry its own art")
 	tiles.get_child(1).grab_focus()
 	check(menu.focused_row==1,"Moving focus inspects the next item")
 	await capture("stall-stock")
 	menu.received("bazaar.listings",{"items":[],"next":null})
-	check(menu.goods_confirmed and menu.content.get_child(1).text=="No items listed.","Confirmed empty storefront is distinct from disconnected")
+	check(menu.goods_confirmed and menu.content.find_child("ShelfStatus",true,false).text=="No items listed.","Confirmed empty storefront is distinct from disconnected")
 	# A reply from a closed/reopened page cannot populate the next visit.
 	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected
 	menu.close();menu.view_serial+=1;menu.show();menu.server_items=[];menu.goods_confirmed=false

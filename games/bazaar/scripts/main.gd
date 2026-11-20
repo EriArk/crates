@@ -327,7 +327,7 @@ func frame_service(kind: String, slot: int) -> void:
 			visitor.anchor.rotation.y=atan2(toward.x,toward.z)
 		else:target=Vector3(visitor.position.x,1.0,-3.45)
 	var right := Vector3.UP.cross(toward).normalized()
-	var offset := right * 1.12
+	var offset := right * (1.46 if kind=="stall" else 1.12)
 	service_camera.global_position=target+toward*3.25+Vector3.UP*.38+offset
 	service_camera.look_at(target+offset)
 	service_camera.fov=42
