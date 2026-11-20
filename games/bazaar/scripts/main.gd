@@ -9,6 +9,7 @@ var dialogue = preload("res://scripts/conversation.gd").new()
 var talk: Button
 var music_toggle := CheckButton.new()
 var effects_toggle := CheckButton.new()
+var shown_sellers := {}
 var speaker: Dictionary = {}
 var visits := {}
 var square: Node3D
@@ -186,11 +187,21 @@ func _ready() -> void:
 		services.turn_model.connect(func(angle: float):if posing:visitor.anchor.rotate_y(angle))
 		root.add_child(services);services.closed.connect(hide_menu)
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
-			if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
-		services.client.unavailable.connect(func(_reason: String):population.apply_stall_sellers([]))
+			if method=="bazaar.world":update_counters(value.get("places",[])))
+		services.client.unavailable.connect(func(_reason: String):update_counters([]))
 		services.client.read_failed.connect(func(method: String, _reason: String):
-			if method=="bazaar.world":population.apply_stall_sellers([]))
+			if method=="bazaar.world":update_counters([]))
 	if smoke_mode:call_deferred("run_smoke")
+
+func update_counters(places: Array) -> void:
+	square.update_showcases(places)
+	var sellers := {}
+	for row in places:
+		if row.get("rental_id")!=null and row.get("species")!=null:
+			sellers[int(row.slot)]=[row.rental_id,row.species]
+	if sellers!=shown_sellers or population.hired_sellers.size()!=sellers.size():
+		shown_sellers=sellers
+		population.apply_stall_sellers(places)
 
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
 	if is_instance_valid(services) and services.visible:services.close()

@@ -4,14 +4,7 @@ extends PanelContainer
 signal closed
 signal outfit_selected(look: Dictionary)
 signal turn_model(radians: float)
-const ITEM_ICONS := {
-	"inventory":preload("res://assets/market/inventory.png"),
-	"star":preload("res://assets/market/star.png"),
-	"shield":preload("res://assets/market/shield.png"),
-	"shop":preload("res://assets/market/shop.png"),
-	"gamepad":preload("res://assets/market/gamepad.png"),
-	"map":preload("res://assets/market/map.png")
-}
+const ITEM_ICONS = preload("res://scripts/market_goods.gd").ITEM_ICONS
 const Population = preload("res://scripts/population.gd")
 const SELLERS := ["Casual_Female","Casual_Male","Chef_Female","Kimono_Female","OldClassy_Male","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
 const NAMES := ["Traveller","Wayfarer","Chef","Tailor","Gentleman","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
@@ -23,6 +16,9 @@ var service := "office"
 var page := "places"
 var selected := 1
 var seller := 0
+var note: Label
+var sale_price := 25
+var receipt_message := ""
 var status := "Connect to TrainerOS to check rentals and trading."
 var square
 var shelf: ScrollContainer
@@ -90,26 +86,31 @@ func _ready() -> void:
 	detail=VBoxContainer.new();detail.size_flags_horizontal=Control.SIZE_EXPAND_FILL;detail_scroll.add_child(detail)
 	column.add_child(goods_summary)
 	var footer := HBoxContainer.new();column.add_child(footer)
-	var note := text("ALPHA   /   Purchases closed",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
+	note = text("ALPHA   /   Purchases closed",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
 	hint.autowrap_mode=TextServer.AUTOWRAP_OFF
 	hint.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	hint.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
 	footer.add_child(hint)
 	button("Retry",refresh,footer).name="Retry"
-	add_child(client);client.connected.connect(func():refresh())
+	add_child(client);client.connected.connect(on_connected)
 	client.unavailable.connect(func(reason: String):world_data={};server_items=[];goods_confirmed=false;next_page="";seller_offers=[];queued_refresh=false;loading=false;status="Service offline";if_visible_render())
 	client.read_failed.connect(failed);client.snapshot.connect(received)
-	hide()
+	hide();client.connect_host()
+func on_connected() -> void:
+	if visible:refresh()
+	else:client.read("bazaar.world")
+
 func _process(delta: float) -> void:
 	# Refresh leased appearances while exploring; NPC visuals are never lease authority.
 	refresh_clock+=delta
-	if refresh_clock<30.0:return
+	if refresh_clock<8.0:return
 	refresh_clock=0.0
-	if not visible and not world_data.is_empty() and client.ready_for_reads and client.pending.is_empty():
+	if not visible and client.ready_for_reads and client.pending.is_empty():
 		request_view=-1;client.read("bazaar.world")
 func open(kind: String, slot := 1) -> void:
 	view_serial+=1;queued_refresh=false;loading=false
 	pointer_attention=false
+	receipt_message=""
 	own_outfit=false
 	fitting_look={}
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
@@ -162,7 +163,20 @@ func refresh(after := "") -> void:
 func finish_queued() -> bool:
 	if not queued_refresh or not visible:return false
 	queued_refresh=false;refresh();return true
+func checkout(args: Dictionary) -> void:
+	if loading or not client.checkout(args):return
+	receipt_message = "";status="Review in TrainerOS…";loading=true
+	render()
+
+func can_trade() -> bool:
+	return client.has_checkout and world_data.get("payments_available",false) and not loading
+
 func failed(method: String, reason: String) -> void:
+	if method=="bazaar.checkout":
+		loading=false
+		receipt_message={"review_cancelled":"Cancelled","checkout_busy":"Another checkout is open","checkout_pending":"Purchase pending · resolve at the office","insufficient_sparks":"Not enough Sparks","place_changed":"Rental terms changed","listing_changed":"This item is no longer offered at that price"}.get(reason,reason.replace("_"," ").capitalize())
+		if visible:refresh()
+		return
 	if method=="bazaar.world":world_data={}
 	if method=="bazaar.sellers":seller_offers=[]
 	if finish_queued():return
@@ -173,6 +187,12 @@ func failed(method: String, reason: String) -> void:
 func received(method: String, value: Dictionary) -> void:
 	# World and offers belong to this connection; per-page replies also need the
 	# exact open/switch generation, not just the same page name after reopening.
+	if method=="bazaar.checkout":
+		loading=false
+		receipt_message={"rent":"Stall and keeper are ready","list":"Item listed","buy":"Item delivered to your profile"}.get(value.get("action",""),"Purchase resolved")
+		request_view=view_serial;request_page=page;request_slot=selected
+		client.read("bazaar.world")
+		return
 	if method=="bazaar.world":world_data=value
 	if method=="bazaar.sellers":seller_offers=value.get("items",[])
 	if finish_queued():return
@@ -202,6 +222,9 @@ func render() -> void:
 	offset_left=18 if office else 0
 	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
 	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
+	note.text = "Review in TrainerOS" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
+	if "--test-market" in OS.get_cmdline_user_args():note.text="Test Sparks · "+note.text
+	if not receipt_message.is_empty() and not loading:note.text=receipt_message
 	hint.text=status
 	hint.tooltip_text=status
 	hint.visible=not status.is_empty() and page!="visitor"
@@ -265,7 +288,8 @@ func select_place(slot: int) -> void:
 	if row.get("expires_at")!=null:detail.add_child(text("Until "+str(row.expires_at),14))
 	detail.add_child(text("%s Sparks per seller, per rental"%world_data.seller_price if world_data.has("seller_price") else "Seller fee unconfirmed",15))
 	button("Choose seller  ›",func():switch("sellers"),detail)
-	button("Rent for 7 days",func():pass,detail).disabled=true
+	if world_data.get("checkout_pending",false):
+		button("Resolve last checkout",func():checkout({"action":"resolve"}),detail).disabled=not client.has_checkout or loading
 
 func render_sellers() -> void:
 	content.add_child(text("Choose a keeper for stall %02d"%selected,20))
@@ -290,11 +314,25 @@ func select_seller(index: int) -> void:
 	for row in seller_offers:
 		if row.get("id")==SELLERS[seller]:price="%s Sparks"%row.price;break
 	detail.add_child(text(price+"  /  one rental",16))
-	button("Hire seller",func():pass,detail).disabled=true
+	var row := place()
+	var weekly = row.get("weekly_price")
+	var fee = world_data.get("seller_price")
+	var offered := not price.begins_with("Price unavailable") and weekly != null and fee != null
+	var caption := "Rent with keeper" if not offered else "Rent with keeper · %d Sparks"%(int(weekly)+int(fee))
+	button(caption,func():checkout({"action":"rent","slot":selected,"revision":row.revision,"price":weekly,"species":SELLERS[seller],"seller_price":fee}),detail).disabled=not can_trade() or not offered or row.get("tenant_id")!=null or world_data.get("owner_id")==world_data.get("player_id")
 
 func render_goods() -> void:
 	var mine := page=="mine"
 	content.add_child(text("Your listings" if mine else "On the counter",20,Color("ffcf83")))
+	var counter := place()
+	if page=="goods" and can_trade() and counter.get("tenant_id")!=null and counter.get("tenant_id")==world_data.get("player_id") and counter.get("species")!=null:
+		var pricing := HBoxContainer.new()
+		content.add_child(pricing)
+		var amount := SpinBox.new()
+		amount.min_value=1;amount.max_value=2147483647;amount.value=sale_price
+		amount.suffix=" Sparks";amount.value_changed.connect(func(value: float):sale_price=int(value))
+		pricing.add_child(amount)
+		button("List profile item",func():checkout({"action":"list","slot":selected,"price":sale_price}),pricing)
 	if server_items.is_empty():
 		content.add_child(text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22))
 		if goods_confirmed:content.add_child(text("Nothing on this counter today.",15))
@@ -339,7 +377,8 @@ func inspect_good(index: int, target: Control) -> void:
 		description.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		scroll.add_child(description)
 	target.add_child(text("%s Sparks"%row.get("price","?"),18))
-	button("Withdraw" if page=="mine" else "Buy",func():pass,target).disabled=true
+	if page=="mine":return
+	button("Buy",func():checkout({"action":"buy","slot":selected,"listing_id":row.id,"revision":row.revision,"price":row.price}),target).disabled=not can_trade() or row.get("seller_id")==world_data.get("player_id")
 
 func render_clothes() -> void:
 	content.add_child(text("Outfit sets",21,Color("ffcf83")))

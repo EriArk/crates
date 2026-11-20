@@ -2,6 +2,11 @@
 extends Node3D
 ## Authored local world. No directory, economy, owners or visitor counts here.
 var fitting_booth: Node3D
+var counter_names := {}
+var stands := {}
+var price_board := BoxMesh.new()
+var price_wood := StandardMaterial3D.new()
+var display_rows := {}
 var destinations: Array[Dictionary] = []
 var models: Dictionary = {}
 var prop_roots: Array[Node3D] = []
@@ -148,6 +153,9 @@ func stall_layout(slot: int) -> Dictionary:
 		"seller":Vector3(side*6.15,0,z),"approach":Vector3(side*4.15,0,z),"yaw":-side*PI/2,"model_yaw":0.0 if side<0 else PI}
 
 func park_market() -> void:
+	price_board.size=Vector3(.65,.54,.045)
+	price_wood.albedo_color=Color("3c514a")
+	price_wood.roughness=.9
 	path(Vector3.ZERO,Vector3(14,0,44));path(Vector3(0,0,0),Vector3(28,0,17))
 	fountain()
 	# Closely spaced stalls face the promenade, with an open fountain court
@@ -163,7 +171,7 @@ func park_market() -> void:
 		var skirt := block(front+Vector3(0,0.52,0),Vector3(0.035,0.56,2.65),"a76e5d" if slot%3==0 else "507f73",false)
 		var banner := block(front+Vector3(0,1.81,0),Vector3(0.035,0.26,2.65),"a76e5d" if slot%3==0 else "507f73",false)
 		skirt.name="CounterSkirt";banner.name="StallValance"
-		text3d("%02d  ·  MARKET"%slot,front+Vector3(-side*0.03,1.81,0),0.004,self,layout.yaw)
+		counter_names[slot]=text3d("%02d  ·  MARKET"%slot,front+Vector3(-side*0.03,1.81,0),0.004,self,layout.yaw)
 		lantern(front+Vector3(0,2.22,1.06),"f1cc8d")
 	for side in [-1,1]:
 		for z in [-22.0,-10.0,10.0,22.0]:
@@ -176,7 +184,7 @@ func park_market() -> void:
 			model("stall-bench",Vector3(side*11,0,z),Vector3.ONE*1.7,side*PI/2)
 			model("lantern",Vector3(side*12,0,z+2),Vector3.ONE*1.8)
 	for z in [-17.0,17.0]:festival_line(z)
-	spot("Festival stalls","An open-air market in the park. Trading comes later; no items or Sparks change.",Vector3(-3.8,0,-4.8))
+	spot("Festival stalls","Visit Vale in town to rent a stall and choose a keeper.",Vector3(-3.8,0,-4.8))
 	spot("Island paths","East: Stall Office and shops. West: gardens. South: harbor.",Vector3(3.8,0,5.8))
 
 func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
@@ -312,3 +320,43 @@ func batch_static_props() -> void:
 		var batch := MultiMesh.new();batch.transform_format=MultiMesh.TRANSFORM_3D;batch.mesh=group.mesh;batch.instance_count=group.transforms.size()
 		for i in group.transforms.size():batch.set_instance_transform(i,node.global_transform.affine_inverse()*group.transforms[i])
 		node.multimesh=batch
+
+func update_showcases(places: Array) -> void:
+	var next := {}
+	for row in places:
+		var slot := int(row.get("slot",0))
+		if not counter_names.has(slot) or row.get("tenant_id")==null:continue
+		next[slot]={"tenant":str(row.get("tenant_name") if row.get("tenant_name") else "Market keeper"),"items":row.get("showcase",[])}
+	for slot in counter_names:
+		if next.get(slot)==display_rows.get(slot):continue
+		if stands.has(slot):
+			stands[slot].queue_free()
+			stands.erase(slot)
+		var label: Label3D=counter_names[slot]
+		label.text="%02d  ·  %s"%[slot,next[slot].tenant if next.has(slot) else "MARKET"]
+		var width := ThemeDB.fallback_font.get_string_size(label.text,HORIZONTAL_ALIGNMENT_LEFT,-1,label.font_size).x
+		label.pixel_size=minf(.004,2.5/maxf(1,width))
+		if not next.has(slot):continue
+		var layout := stall_layout(slot)
+		var display := Node3D.new()
+		add_child(display);stands[slot]=display
+		display.position=Vector3(layout.side*4.98,1.05,layout.position.z)
+		display.rotation.y=layout.yaw
+		var items: Array=next[slot].items
+		var count := mini(3,items.size())
+		for i in count:
+			var item: Dictionary=items[i]
+			var icon := Sprite3D.new()
+			var textures = preload("res://scripts/market_goods.gd").ITEM_ICONS
+			icon.texture=textures.get(item.get("icon","inventory"),textures.inventory)
+			var x := (i-(count-1)*.5)*.72
+			var board := MeshInstance3D.new()
+			board.mesh=price_board;board.material_override=price_wood;board.position=Vector3(x,.16,0)
+			display.add_child(board)
+			icon.pixel_size=.24/maxf(1,icon.texture.get_width());icon.position=Vector3(x,.28,.028)
+			display.add_child(icon)
+			var title := str(item.get("title","Item")).substr(0,20)
+			var nameplate := text3d(title,Vector3(x,.075,.03),.0022,display)
+			nameplate.pixel_size=minf(.0022,.61/maxf(1,ThemeDB.fallback_font.get_string_size(title,HORIZONTAL_ALIGNMENT_LEFT,-1,nameplate.font_size).x))
+			text3d(str(item.get("price",""))+" ✦",Vector3(x,-.025,.03),.0019,display)
+	display_rows=next

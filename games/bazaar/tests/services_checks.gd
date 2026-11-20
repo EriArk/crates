@@ -59,7 +59,8 @@ func run() -> void:
 	menu.world_data={"player_id":"fixture","places":[{"slot":4,"id":"fixture-place","weekly_price":350,"tenant_id":null}]}
 	menu.selected=4;menu.page="places";menu.render()
 	check("350" in menu.detail.get_child(2).text,"Server weekly price is shown")
-	check(menu.detail.get_child(-1).disabled,"Unconnected financial bridge never offers a fake checkout")
+	menu.switch("sellers")
+	check(menu.detail.get_child(-1).disabled,"Unconnected financial bridge disables staffed checkout")
 	scene.population.apply_stall_sellers([{ "slot":2,"species":"Frog","rental_id":"fixture"}])
 	check(scene.population.hired_sellers.size()==1 and scene.population.residents[0].get("covered_by_seller",false),"Authoritative seller replaces ambient appearance without duplicate NPC")
 	menu.client._fail("Connection lost")
@@ -155,4 +156,4 @@ func run() -> void:
 	check(scene.visitor.position.x<100,"Office exit returns to town")
 	var result := {"pass":failures.is_empty(),"failures":failures,"seller_previews":12,"stalls":12,"rooms":4}
 	var file := FileAccess.open(output+"/services.json",FileAccess.WRITE);file.store_string(JSON.stringify(result,"  "))
-	print(JSON.stringify(result));scene.queue_free();await process_frame;await process_frame;quit(0 if failures.is_empty() else 1)
+	print(JSON.stringify(result));scene.audio.stop_all();await create_timer(.2).timeout;scene.queue_free();await process_frame;await process_frame;quit(0 if failures.is_empty() else 1)
