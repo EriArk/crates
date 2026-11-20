@@ -320,8 +320,10 @@ func select_seller(index: int) -> void:
 	var weekly = row.get("weekly_price")
 	var fee = world_data.get("seller_price")
 	var offered := not price.begins_with("Price unavailable") and weekly != null and fee != null
-	var caption := "Rent with keeper" if not offered else "Rent with keeper · %d Sparks"%(int(weekly)+int(fee))
-	button(caption,func():checkout({"action":"rent","slot":selected,"revision":row.revision,"price":weekly,"species":SELLERS[seller],"seller_price":fee}),detail).disabled=not can_trade() or not offered or row.get("tenant_id")!=null or world_data.get("owner_id")==world_data.get("player_id")
+	var keeper: String=SELLERS[index]
+	var caption := "Rent with "+str(NAMES[index])
+	if offered:caption+=" · %d Sparks"%(int(weekly)+int(fee))
+	button(caption,func():checkout({"action":"rent","slot":selected,"revision":row.revision,"price":weekly,"species":keeper,"seller_price":fee}),detail).disabled=not can_trade() or not offered or row.get("tenant_id")!=null or world_data.get("owner_id")==world_data.get("player_id")
 
 func render_goods() -> void:
 	var mine := page=="mine"

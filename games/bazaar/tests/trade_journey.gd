@@ -20,6 +20,7 @@ func until(predicate: Callable, reason: String) -> bool:
 func press(prefix: String) -> bool:
 	for b in menu.find_children("*","Button",true,false):
 		if b.is_visible_in_tree() and not b.disabled and b.text.begins_with(prefix):
+			b.grab_focus()
 			b.pressed.emit()
 			return true
 	push_error("Missing enabled action: "+prefix)
@@ -52,11 +53,11 @@ func run() -> void:
 		menu.select_place(2)
 		if not press("Choose seller"):return
 		if not await until(func():return menu.page=="sellers" and not menu.seller_offers.is_empty() and not menu.loading,"keeper catalogue"):return
-		menu.select_seller(menu.SELLERS.find("Frog"))
+		menu.content.get_child(1).get_child(menu.SELLERS.find("Frog")).grab_focus()
 		await capture("office")
-		if not press("Rent with keeper · 250"):return
+		if not press("Rent with Frog · 250"):return
 		if not await until(func():return menu.receipt_message=="Cancelled" and not menu.loading,"cancelled host review"):return
-		if not press("Rent with keeper · 250"):return
+		if not press("Rent with Frog · 250"):return
 		if not await until(func():return menu.place().get("species")=="Frog" and not menu.loading,"staffed rental"):return
 		approach(layout.approach)
 		if not await until(func():return menu.goods_confirmed and not menu.loading,"own counter"):return
