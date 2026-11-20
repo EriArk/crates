@@ -1,5 +1,11 @@
 # История Crates
 
+## 20 November 2026 — Bazaar 0.0.12
+
+THREAD now has a fitting booth where the visitor can try on three outfits. The
+curtain covers each change. Both handhelds are running the new build.
+[Fitting room controls and verification](games/bazaar/docs/SERVICES.md#thread-fitting-room).
+
 ## 20 November 2026 — Bazaar 0.0.11
 
 The rental clerk shows the park from above with twelve selectable counters and

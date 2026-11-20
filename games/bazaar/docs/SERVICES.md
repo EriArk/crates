@@ -1,5 +1,21 @@
 # Bazaar — rental office and service integration
 
+## THREAD fitting room
+
+In 0.0.12, talk to Wisp or approach the curtain in THREAD. Highlight a pattern
+to see Traveller, Mage or Merchant on your current TrainerOS avatar. Offline
+guests see a wooden dress form. The curtain closes fully before the garment
+changes, including when you move quickly between patterns. Turn the model,
+compare your own outfit, or press Back at any time to return to the shop.
+The fitting is free and local.
+
+The service suite covered controller focus, garment changes, rotation, original
+outfit comparison, the podium and leaving mid-change. OpenGL captures used an
+SDK avatar. The official walkthrough passed. Flip 2 and Odin 2 started all
+three worlds with the ARM64 export from game revision `7c91b97`. On Odin 2,
+forcing headless shutdown still reports an outstanding fountain audio stream.
+The physical controls in the fitting room await hands-on testing.
+
 **20 November:** Bazaar 0.0.11 opens a labelled overhead park map at Vale’s desk, a goods shelf at each counter, and a pattern book at THREAD. [Current screens and checks](counter-evidence/README.md).
 
 **14 November:** 0.0.9 source handles queued refresh and stale replies,
