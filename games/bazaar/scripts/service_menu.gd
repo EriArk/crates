@@ -2,6 +2,14 @@
 extends PanelContainer
 ## In-world service surfaces. Availability comes from the host, never local saves.
 signal closed
+const ITEM_ICONS := {
+	"inventory":preload("res://assets/market/inventory.png"),
+	"star":preload("res://assets/market/star.png"),
+	"shield":preload("res://assets/market/shield.png"),
+	"shop":preload("res://assets/market/shop.png"),
+	"gamepad":preload("res://assets/market/gamepad.png"),
+	"map":preload("res://assets/market/map.png")
+}
 const Population = preload("res://scripts/population.gd")
 const SELLERS := ["Casual_Female","Casual_Male","Chef_Female","Kimono_Female","OldClassy_Male","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
 const NAMES := ["Traveller","Wayfarer","Chef","Tailor","Gentleman","Wizard","Witch","Bunny","Yeti","Dino","Frog","Birb"]
@@ -14,6 +22,13 @@ var page := "places"
 var selected := 1
 var seller := 0
 var status := "Connect to TrainerOS to check rentals and trading."
+var square
+var shelf: ScrollContainer
+var inspector: ScrollContainer
+var goods_summary := VBoxContainer.new()
+var subtitle: Label
+var focused_row := 0
+var focus_after: Control
 var title: Label
 var hint: Label
 var body: HBoxContainer
@@ -42,8 +57,8 @@ func button(value: String, action: Callable, target: Node) -> Button:
 	var b := Button.new();b.text=value;b.custom_minimum_size=Vector2(0,40);b.pressed.connect(action)
 	b.add_theme_font_size_override("font_size",16)
 	for state in ["normal","hover","pressed","focus","disabled"]:
-		var box := StyleBoxFlat.new();box.bg_color=Color("2c5657") if state=="normal" else Color("3c6c69")
-		box.set_corner_radius_all(8);box.content_margin_left=10;box.content_margin_right=10
+		var box := StyleBoxFlat.new();box.bg_color=Color("384642") if state=="normal" else Color("866447")
+		box.set_corner_radius_all(3);box.content_margin_left=10;box.content_margin_right=10
 		if state=="focus":box.bg_color=Color.TRANSPARENT;box.border_color=Color("ffda89");box.set_border_width_all(3)
 		if state=="disabled":box.bg_color=Color("35494a")
 		b.add_theme_stylebox_override(state,box)
@@ -53,24 +68,27 @@ func clear(node: Node) -> void:
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	offset_left=18;offset_right=-18;offset_top=18;offset_bottom=-18
-	var box := StyleBoxFlat.new();box.bg_color=Color("143a40");box.border_color=Color("c6a56a");box.set_border_width_all(2);box.set_corner_radius_all(14)
+	var box := StyleBoxFlat.new();box.bg_color=Color("17272aef");box.border_color=Color("c6a56a");box.set_border_width_all(2);box.set_corner_radius_all(3)
 	box.content_margin_left=18;box.content_margin_right=18;box.content_margin_top=14;box.content_margin_bottom=14;add_theme_stylebox_override("panel",box)
 	var column := VBoxContainer.new();column.add_theme_constant_override("separation",10);add_child(column)
+	subtitle=text("",13,Color("f9bd68"));column.add_child(subtitle)
 	var header := HBoxContainer.new();column.add_child(header)
 	title=text("STALL OFFICE",26,Color("ffda89"));title.size_flags_horizontal=Control.SIZE_EXPAND_FILL;header.add_child(title)
 	close_button=button("Back · B",close,header)
-	hint=text(status,14,Color("cad9d2"));column.add_child(hint)
+	hint=text(status,14,Color("cad9d2"))
 	tabs=HBoxContainer.new();column.add_child(tabs)
 	body=HBoxContainer.new();body.add_theme_constant_override("separation",18);body.size_flags_vertical=Control.SIZE_EXPAND_FILL;column.add_child(body)
-	var scroll := ScrollContainer.new();scroll.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;body.add_child(scroll)
-	content=VBoxContainer.new();content.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(content)
-	var detail_scroll := ScrollContainer.new();detail_scroll.custom_minimum_size.x=275;detail_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;body.add_child(detail_scroll)
+	var scroll := ScrollContainer.new();shelf=scroll;scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;scroll.follow_focus=true;scroll.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;body.add_child(scroll)
+	content=VBoxContainer.new();content.size_flags_vertical=Control.SIZE_EXPAND_FILL;content.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(content)
+	var detail_scroll := ScrollContainer.new();inspector=detail_scroll;detail_scroll.custom_minimum_size.x=240;detail_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;body.add_child(detail_scroll)
 	detail=VBoxContainer.new();detail.size_flags_horizontal=Control.SIZE_EXPAND_FILL;detail_scroll.add_child(detail)
+	column.add_child(goods_summary)
 	var footer := HBoxContainer.new();column.add_child(footer)
-	var note := text("SERVICES IN DEVELOPMENT · No Sparks are spent in this build",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
-	button("Refresh",refresh,footer)
+	var note := text("ALPHA   /   Purchases closed",13,Color("ffda89"));note.size_flags_horizontal=Control.SIZE_EXPAND_FILL;footer.add_child(note)
+	footer.add_child(hint)
+	button("Retry",refresh,footer).name="Retry"
 	add_child(client);client.connected.connect(func():refresh())
-	client.unavailable.connect(func(reason: String):world_data={};server_items=[];goods_confirmed=false;next_page="";seller_offers=[];queued_refresh=false;loading=false;status=reason;if_visible_render())
+	client.unavailable.connect(func(reason: String):world_data={};server_items=[];goods_confirmed=false;next_page="";seller_offers=[];queued_refresh=false;loading=false;status="Service offline";if_visible_render())
 	client.read_failed.connect(failed);client.snapshot.connect(received)
 	hide()
 func _process(delta: float) -> void:
@@ -83,7 +101,9 @@ func _process(delta: float) -> void:
 func open(kind: String, slot := 1) -> void:
 	view_serial+=1;queued_refresh=false;loading=false
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
-	selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render();close_button.grab_focus()
+	if kind in ["tea","curios"]:page="visitor"
+	focused_row=0;status="";selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render()
+	if page=="visitor":return
 	if not client.active:client.connect_host()
 	else:refresh()
 func close() -> void:
@@ -92,7 +112,7 @@ func close() -> void:
 func if_visible_render() -> void:
 	if visible:render()
 func refresh(after := "") -> void:
-	if not visible:return
+	if not visible or page=="visitor":return
 	if not client.active:client.connect_host();return
 	if not client.ready_for_reads:return
 	if not client.pending.is_empty():
@@ -127,11 +147,11 @@ func received(method: String, value: Dictionary) -> void:
 	if finish_queued():return
 	if not visible or request_view!=view_serial:return
 	loading=false
-	if method=="bazaar.world":status="Server directory refreshed. Payments are not enabled in this world build."
-	elif method=="bazaar.sellers":status="Server seller offers refreshed. Hiring is not enabled in this build."
+	if method=="bazaar.world":status=""
+	elif method=="bazaar.sellers":status=""
 	elif request_page==page and request_slot==selected:
 		goods_confirmed=method in ["bazaar.listings","bazaar.own_listings"];server_items=value.get("items",[])
-		next_page=str(value.get("next") if value.get("next")!=null else "");status="Server inventory refreshed."
+		next_page=str(value.get("next") if value.get("next")!=null else "");status=""
 	if_visible_render()
 	if method=="bazaar.world" and page=="goods" and place().has("id"):refresh()
 func place() -> Dictionary:
@@ -140,98 +160,189 @@ func place() -> Dictionary:
 	return {}
 func switch(next_page: String) -> void:
 	view_serial+=1;loading=false
-	page=next_page;server_items=[];goods_confirmed=false;self.next_page="";render();refresh()
+	page=next_page;focused_row=0;server_items=[];goods_confirmed=false;self.next_page="";render();refresh()
 func render() -> void:
-	destroy_preview();clear(tabs);clear(content);clear(detail)
-	title.text={"office":"STALL OFFICE","stall":"FESTIVAL STALL %02d"%selected,"tailor":"THREAD · AVATAR CLOTHING"}.get(service,"BAZAAR")
+	var previous := get_viewport().gui_get_focus_owner()
+	var focus_key: String = previous.get_meta("service_key","") if previous and is_ancestor_of(previous) else ""
+	destroy_preview()
+	for section in [tabs,content,detail,goods_summary]:clear(section)
+	var office := service=="office"
+	anchor_left=0.0 if office else .46
+	offset_left=18 if office else 0
+	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
+	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
 	hint.text=status
-	if service=="office":
-		for entry in [["places","Rent a stall"],["sellers","NPC sellers"],["mine","My goods"]]:
-			var key: String=entry[0];var b := button(entry[1],func():switch(key),tabs);b.toggle_mode=true;b.button_pressed=page==key
-	if page=="places":render_places()
-	elif page=="sellers":render_sellers()
-	elif page=="clothes":render_clothes()
-	else:render_goods()
-func render_places() -> void:
-	content.add_child(text("FESTIVAL PARK",17,Color("ffda89")))
-	content.add_child(text("Two festival rows · Select a numbered place",14))
-	var grid := GridContainer.new();grid.columns=3;grid.add_theme_constant_override("h_separation",8);grid.add_theme_constant_override("v_separation",6);content.add_child(grid)
-	for n in range(1,13):
-		var row := {}
-		for r in world_data.get("places",[]):
-			if int(r.get("slot",0))==n:row=r;break
-		var condition := "Not connected"
-		if not row.is_empty():condition="Occupied" if row.get("tenant_id")!=null else "Price not set" if row.get("weekly_price")==null else "%s Sparks / week"%row.weekly_price
-		var b := button("%02d   %s\n%s"%[n,"WEST" if n<=6 else "EAST",condition],func():selected=n;render();focus_stall(n),grid)
-		b.custom_minimum_size=Vector2(165,55);b.size_flags_horizontal=Control.SIZE_EXPAND_FILL;b.toggle_mode=true;b.button_pressed=selected==n
-	var row := place()
-	detail.add_child(text("STALL %02d"%selected,24,Color("ffda89")))
-	detail.add_child(text("7 days from payment\nNo automatic renewal",17))
-	detail.add_child(text("Weekly rent\n"+(str(row.weekly_price)+" Sparks" if row.get("weekly_price")!=null else "Set by the Bazaar owner"),17))
-	detail.add_child(text("NPC seller · "+(str(world_data.seller_price)+" Sparks" if world_data.has("seller_price") else "Price unavailable")+"\nPaid for each rental separately",17))
-	if row.get("expires_at")!=null:detail.add_child(text("Occupied until\n"+str(row.expires_at),14))
-	button("Choose a seller",func():switch("sellers"),detail)
-	var rent := button("Rent for 7 days",func():pass,detail);rent.disabled=true
-	detail.add_child(text("Rentals are not available yet.",14,Color("cad9d2")))
-func focus_stall(n: int) -> void:
-	var grid: GridContainer=content.get_child(2)
-	grid.get_child(n-1).grab_focus()
-func render_sellers() -> void:
-	content.add_child(text("YOUR STALL'S SELLER",17,Color("ffda89")))
-	content.add_child(text("Choose a seller for one rental. Hiring remains closed.",14))
-	var grid := GridContainer.new();grid.columns=3;grid.add_theme_constant_override("h_separation",8);grid.add_theme_constant_override("v_separation",6);content.add_child(grid)
-	for i in SELLERS.size():
-		var b := button(NAMES[i],func():seller=i;render();content.get_child(2).get_child(i).grab_focus(),grid)
-		b.custom_minimum_size=Vector2(165,55);b.size_flags_horizontal=Control.SIZE_EXPAND_FILL;b.toggle_mode=true;b.button_pressed=seller==i
-	detail.add_child(text(NAMES[seller].to_upper(),24,Color("ffda89")))
-	make_preview(SELLERS[seller])
-	var offer: Dictionary={}
-	for row in seller_offers:
-		if row.get("id")==SELLERS[seller]:offer=row;break
-	detail.add_child(text(str(offer.price)+" Sparks · Until rental ends" if not offer.is_empty() else "Price unavailable · Local model preview",15))
-	var hire := button("Hire this seller",func():pass,detail);hire.disabled=true
-	detail.add_child(text("Preview only. Hiring is not available yet.",14,Color("cad9d2")))
-func render_goods() -> void:
-	content.add_child(text("MY LISTINGS" if page=="mine" else "GOODS FOR SALE",20,Color("ffda89")))
-	if server_items.is_empty():
-		content.add_child(text("Checking goods…" if loading else "No items listed." if goods_confirmed else "Goods are unavailable.",20))
-		content.add_child(text("Players sell items from their profile inventory." if goods_confirmed else "Connect to TrainerOS to view the goods.",16))
-	else:
-		for row in server_items:
-			var b := button(str(row.get("presentation",{}).get("title","Item"))+" · "+str(row.get("price","?"))+" Sparks",func():show_item(row),content)
-			b.custom_minimum_size.y=52
-		if not next_page.is_empty():button("Next page",func():refresh(next_page),content).disabled=loading
-	detail.add_child(text("PROFILE INVENTORY",20,Color("ffda89")))
-	detail.add_child(text("Rent a place at the Stall Office, hire an NPC and list your stored game loot. Unsold goods stay yours after the lease expires.",17))
-	var add := button("List an inventory item",func():pass,detail);add.disabled=true
-	detail.add_child(text("Trading will open once item transfers are ready.",14,Color("cad9d2")))
-func show_item(row: Dictionary) -> void:
-	clear(detail)
-	var info: Dictionary=row.get("presentation",{})
-	detail.add_child(text(str(info.get("title","Item")),24,Color("ffda89")))
-	detail.add_child(text(str(info.get("game","")),16))
-	for fact in info.get("facts",[]):detail.add_child(text(str(fact.label)+": "+str(fact.value),15))
-	detail.add_child(text(str(row.get("price","?"))+" Sparks",22))
-	var buy := button("Withdraw listing" if page=="mine" else "Buy item",func():pass,detail);buy.disabled=true
-	detail.add_child(text("Trading is not available yet. No Sparks are spent.",14))
-func render_clothes() -> void:
-	content.add_child(text("CLOTHING FOR YOUR TRAINER",24,Color("ffda89")))
-	content.add_child(text("New fantasy outfits for your TrainerOS avatar.",18))
-	content.add_child(text("COSTUMES ARE IN DEVELOPMENT",22,Color("ffda89")))
-	var cards: Array=server_items if not server_items.is_empty() else [{"title":"Traveller","price":50},{"title":"Mage","price":50},{"title":"Merchant","price":50}]
-	for row in cards:
-		var card := button(str(row.title)+" · "+str(row.price)+" Sparks"+(" (planned)" if server_items.is_empty() else ""),func():pass,content)
-		card.disabled=true;card.custom_minimum_size.y=48
+	hint.visible=not status.is_empty()
+	hint.visible=hint.visible and page!="visitor"
+	find_child("Retry",true,false).visible=hint.visible and not loading
+	inspector.visible=office
+	inspector.custom_minimum_size.x=250
+	goods_summary.visible=page=="goods" and not server_items.is_empty()
+	tabs.visible=office
+	focus_after=null
+	if office:
+		for entry in [["places","Park map"],["sellers","Sellers"],["mine","My goods"]]:
+			var key: String=entry[0]
+			var tab := button(entry[1],func():switch(key),tabs)
+			tab.set_meta("service_key",key)
+			tab.toggle_mode=true
+			tab.button_pressed=page==key
+	match page:
+		"places":render_places()
+		"sellers":render_sellers()
+		"clothes":render_clothes()
+		"visitor":content.add_child(text("The tea house is opening soon." if service=="tea" else "The curios collection is coming soon.",20))
+		_:render_goods()
+	for node in find_children("*","Button",true,false):
+		if not focus_key.is_empty() and node.get_meta("service_key","")==focus_key:
+			focus_after=node
+			break
+	if focus_after:focus_after.grab_focus()
+	else:close_button.grab_focus()
 
-	content.add_child(text("There are no purchasable costumes in this build. The existing free avatar editor stays free.",17))
-	detail.add_child(text("FITTING ROOM",22,Color("ffda89")))
-	detail.add_child(text("New costumes are being made. You will be able to try them on before buying them here.",17))
+func render_places() -> void:
+	var map = preload("res://scripts/rental_map.gd").new()
+	map.clip_contents=true
+	content.add_child(map)
+	var markers := {}
+	for slot in range(1,13):
+		var marker := button("%02d"%slot,func():select_place(slot),map)
+		marker.custom_minimum_size=Vector2(48,0)
+		marker.add_theme_constant_override("h_separation",0)
+		marker.add_theme_font_size_override("font_size",14)
+		marker.toggle_mode=true
+		marker.set_meta("service_key","slot-%d"%slot)
+		marker.focus_entered.connect(select_place.bind(slot))
+		markers[slot]=marker
+		if slot==selected:focus_after=marker
+	map.configure(square,markers)
+	select_place(selected)
+
+func select_place(slot: int) -> void:
+	selected=slot
+	for child in content.get_child(0).markers.values():
+		child.set_pressed_no_signal(int(child.text)==slot)
+	clear(detail)
+	var row := place()
+	detail.add_child(text("STALL   %02d"%selected,25,Color("ffcf83")))
+	detail.add_child(text("West row" if selected<=6 else "East row",16))
+	var terms := "Weekly rent unconfirmed"
+	if row.get("weekly_price")!=null:terms="%s Sparks / 7 days"%row.weekly_price
+	detail.add_child(text(terms,19))
+	if not row.is_empty():
+		detail.add_child(text("Occupied" if row.get("tenant_id")!=null else "Available" if row.get("weekly_price")!=null else "Rent not set",15))
+	if row.get("expires_at")!=null:detail.add_child(text("Until "+str(row.expires_at),14))
+	detail.add_child(text("%s Sparks per seller, per rental"%world_data.seller_price if world_data.has("seller_price") else "Seller fee unconfirmed",15))
+	button("Choose seller  ›",func():switch("sellers"),detail)
+	button("Rent for 7 days",func():pass,detail).disabled=true
+
+func render_sellers() -> void:
+	content.add_child(text("Choose a keeper for stall %02d"%selected,20))
+	var grid := GridContainer.new()
+	grid.columns=3
+	content.add_child(grid)
+	for i in SELLERS.size():
+		var tile := button(NAMES[i],func():select_seller(i),grid)
+		tile.set_meta("service_key","keeper-%d"%i)
+		tile.focus_entered.connect(select_seller.bind(i))
+		if i==seller:focus_after=tile
+	select_seller(seller)
+
+func select_seller(index: int) -> void:
+	if index==seller and is_instance_valid(preview_actor):return
+	seller=index
+	destroy_preview()
+	clear(detail)
+	detail.add_child(text(NAMES[seller],23,Color("ffcf83")))
+	make_preview(SELLERS[seller])
+	var price := "Price unavailable"
+	for row in seller_offers:
+		if row.get("id")==SELLERS[seller]:price="%s Sparks"%row.price;break
+	detail.add_child(text(price+"  /  one rental",16))
+	button("Hire seller",func():pass,detail).disabled=true
+
+func render_goods() -> void:
+	var mine := page=="mine"
+	content.add_child(text("Your listings" if mine else "On the counter",20,Color("ffcf83")))
+	if server_items.is_empty():
+		content.add_child(text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22))
+		if goods_confirmed:content.add_child(text("Nothing on this counter today.",15))
+		return
+	var grid := GridContainer.new()
+	grid.columns=2
+	content.add_child(grid)
+	var description := detail if mine else goods_summary
+	var item_detail := VBoxContainer.new()
+	description.add_child(item_detail)
+	focused_row=clampi(focused_row,0,server_items.size()-1)
+	for i in server_items.size():
+		var row: Dictionary=server_items[i]
+		var tile := button(str(row.get("presentation",{}).get("title","Item"))+"\n%s Sparks"%row.get("price","?"),func():inspect_good(i,item_detail),grid)
+		tile.icon=ITEM_ICONS.get(row.get("presentation",{}).get("icon","inventory"),ITEM_ICONS.inventory)
+		tile.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+		tile.custom_minimum_size=Vector2(132,62)
+		tile.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+		tile.set_meta("service_key","listing-%s"%row.get("id",i))
+		tile.focus_entered.connect(inspect_good.bind(i,item_detail))
+		if i==focused_row:focus_after=tile
+	inspect_good(focused_row,item_detail)
+	if not next_page.is_empty():
+		button("More wares  ›",func():refresh(next_page),content).disabled=loading
+
+func inspect_good(index: int, target: Control) -> void:
+	focused_row=index
+	clear(target)
+	var row: Dictionary=server_items[index]
+	var info: Dictionary=row.get("presentation",{})
+	target.add_child(text(str(info.get("title","Item")),22,Color("ffcf83")))
+	target.add_child(text(str(info.get("game","")),15))
+	var facts := PackedStringArray()
+	for fact in info.get("facts",[]):facts.append("%s %s"%[fact.label,fact.value])
+	if not facts.is_empty():
+		var scroll := ScrollContainer.new()
+		scroll.custom_minimum_size.y=46
+		scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.focus_mode=Control.FOCUS_ALL
+		target.add_child(scroll)
+		var description:=text("   ·   ".join(facts),14)
+		description.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+		scroll.add_child(description)
+	target.add_child(text("%s Sparks"%row.get("price","?"),18))
+	button("Withdraw" if page=="mine" else "Buy",func():pass,target).disabled=true
+
+func render_clothes() -> void:
+	content.add_child(text("Tailor’s pattern book",21,Color("ffcf83")))
+	var patterns: Array=server_items if not server_items.is_empty() else [{"title":"Traveller","price":50},{"title":"Mage","price":50},{"title":"Merchant","price":50}]
+	var grid := HBoxContainer.new()
+	content.add_child(grid)
+	var caption := text("",16)
+	content.add_child(caption)
+	focused_row=clampi(focused_row,0,patterns.size()-1)
+	for i in patterns.size():
+		var row: Dictionary=patterns[i]
+		var card := VBoxContainer.new()
+		grid.add_child(card)
+		var sketch = preload("res://scripts/catalogue_art.gd").new()
+		sketch.design=str(row.title)
+		sketch.custom_minimum_size=Vector2(78,100)
+		sketch.mouse_filter=Control.MOUSE_FILTER_STOP
+		card.add_child(sketch)
+		var choose := func():
+			focused_row=i
+			caption.text="%s   ·   %s Sparks%s\nPattern preview • garment in development"%[row.title,row.get("price","?")," planned" if server_items.is_empty() else ""]
+		var tile := button(str(row.title),choose,card)
+		tile.set_meta("service_key","pattern-%d"%i)
+		tile.focus_entered.connect(choose)
+		sketch.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:tile.grab_focus();choose.call())
+		if i==focused_row:focus_after=tile;choose.call()
+
 func destroy_preview() -> void:
 	if is_instance_valid(preview_population):preview_population.queue_free()
 	preview_population=null;preview_actor=null;preview=null
 func make_preview(species: String) -> void:
-	var container := SubViewportContainer.new();container.custom_minimum_size=Vector2(275,205);container.stretch=true;container.mouse_filter=Control.MOUSE_FILTER_IGNORE;detail.add_child(container)
-	preview=SubViewport.new();preview.size=Vector2i(275,205);preview.own_world_3d=true;preview.transparent_bg=true;container.add_child(preview)
+	var container := SubViewportContainer.new();container.custom_minimum_size=Vector2(220,170);container.stretch=true;container.mouse_filter=Control.MOUSE_FILTER_IGNORE;detail.add_child(container)
+	preview=SubViewport.new();preview.size=Vector2i(220,170);preview.own_world_3d=true;preview.transparent_bg=true;container.add_child(preview)
 	preview_population=Population.new();preview.add_child(preview_population);preview_population.set_process(false)
 	var actor: Dictionary=preview_population.figure(species,Vector3.ZERO,0.48,seller%5);preview_actor=actor.node
 	var light := DirectionalLight3D.new();light.rotation_degrees=Vector3(-35,-30,0);light.light_energy=1.5;preview.add_child(light)

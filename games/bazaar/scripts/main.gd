@@ -24,6 +24,13 @@ var reconnect: Button
 var quit_button: Button
 var compass: Label
 var touch_actions: HBoxContainer
+var speech := Label.new()
+var speech_position := Vector3.ZERO
+var speech_time := 0.0
+var service_camera := Camera3D.new()
+var fitting_yaw := 0.0
+var posing := false
+var hud_parts: Array = []
 var nearest: Dictionary = {}
 var modal := false
 var smoke_mode := false
@@ -102,13 +109,25 @@ func _ready() -> void:
 	dress_button(prompt);prompt.add_theme_font_size_override("font_size",17);prompt.text="Inspect";prompt.custom_minimum_size=Vector2(230,44);root.add_child(prompt)
 	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM);prompt.offset_left=-150;prompt.offset_right=150;prompt.offset_top=-76;prompt.offset_bottom=-32
 	prompt.pressed.connect(inspect_spot)
-	root.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER);panel.offset_left=-215;panel.offset_right=215;panel.offset_top=-202;panel.offset_bottom=202
-	var style := StyleBoxFlat.new();style.bg_color=Color("183e42");style.border_color=Color("bba374");style.set_border_width_all(2);style.set_corner_radius_all(14)
+	hud_parts=[location,compass,pause_button,hint]
+	root.add_child(speech)
+	speech.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	speech.offset_left=-243;speech.offset_right=243;speech.offset_top=-134;speech.offset_bottom=-82
+	speech.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	speech.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
+	speech.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	speech.add_theme_stylebox_override("normal",backdrop())
+	speech.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	speech.hide()
+	add_child(service_camera)
+	root.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT);panel.offset_left=18;panel.offset_right=448;panel.offset_top=-211;panel.offset_bottom=211
+	var style := StyleBoxFlat.new();style.bg_color=Color("17272af5");style.border_color=Color("bba374");style.set_border_width_all(2);style.set_corner_radius_all(3)
 	style.content_margin_left=24;style.content_margin_right=24;style.content_margin_top=20;style.content_margin_bottom=20;panel.add_theme_stylebox_override("panel",style)
 	var menu := VBoxContainer.new();menu.add_theme_constant_override("separation",8);panel.add_child(menu)
+	menu.add_child(label("FIELD MENU",12,Color("ffcf83")))
 	menu_title.add_theme_font_size_override("font_size",25);menu.add_child(menu_title)
 	identity.add_theme_font_size_override("font_size",12);menu.add_child(identity)
-	menu_body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;menu_body.custom_minimum_size=Vector2(382,58);menu.add_child(menu_body)
+	menu_body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;menu_body.custom_minimum_size=Vector2(382,20);menu.add_child(menu_body)
 	var camera_row := HBoxContainer.new();camera_row.add_theme_constant_override("separation",12);menu.add_child(camera_row)
 	fov_label=label("Field of view · 90°",14);fov_label.custom_minimum_size.x=146;camera_row.add_child(fov_label)
 	fov_slider=HSlider.new();fov_slider.min_value=75;fov_slider.max_value=105;fov_slider.step=1;fov_slider.value=90
@@ -129,6 +148,7 @@ func _ready() -> void:
 	panel.hide()
 	if not personal:
 		services=load("res://scripts/service_menu.gd").new()
+		services.square=square
 		root.add_child(services);services.closed.connect(hide_menu)
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
 			if method=="bazaar.world":population.apply_stall_sellers(value.get("places",[])))
@@ -137,18 +157,30 @@ func _ready() -> void:
 			if method=="bazaar.world":population.apply_stall_sellers([]))
 	if smoke_mode:call_deferred("run_smoke")
 
-func show_menu(title := "Bazaar Island", detail := "Explore the park market, town shops, gardens and harbor. Alt / light LS: walk · Shift / LB: sprint · C / R3: crouch · Space / X: jump. Trading is in development.") -> void:
+func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
 	if is_instance_valid(services) and services.visible:services.hide();services.destroy_preview()
+	speech.hide()
 	touch_actions.hide()
 	modal=true
 	if not personal:population.set_paused(true);square.life.set_sound(sound.button_pressed,true)
 	visitor.set_controls(false);touch_pad.enabled=false;touch_pad.reset();prompt.hide()
-	if personal and title=="Bazaar Island":title=square.title();detail=square.description()
+	if title=="Bazaar Island":
+		title=square.title() if personal else square.district(visitor.position)
+		detail=square.description() if personal else "Official island"
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
 func hide_menu() -> void:
-	if is_instance_valid(services) and services.visible:services.hide();services.destroy_preview()
+	if is_instance_valid(services) and services.visible:
+		services.close()
+		return
 	modal=false
+	visitor.camera.make_current()
+	visitor.anchor.show()
+	if posing:
+		visitor.anchor.rotation.y=fitting_yaw
+		posing=false
+	for part in hud_parts:
+		if part!=hud_parts.back():part.show()
 	if not personal:population.set_paused(false);square.life.set_sound(sound.button_pressed)
 	panel.hide();visitor.set_controls(true);touch_pad.enabled=true;resume.release_focus()
 
@@ -158,19 +190,64 @@ func inspect_spot() -> void:
 		visitor.enter_space(nearest.arrival,nearest.yaw)
 		visitor.touch_move=Vector2.ZERO;touch_pad.reset();nearest={};prompt.hide()
 	elif nearest.has("service"):
-		show_menu();panel.hide();services.open(nearest.service,int(nearest.get("slot",1)))
-	else:show_menu(nearest.title,nearest.detail)
+		show_menu()
+		panel.hide()
+		for part in hud_parts:part.hide()
+		var slot := int(nearest.get("slot",1))
+		frame_service(nearest.service,slot)
+		services.open(nearest.service,slot)
+	else:
+		speech.text=str(nearest.detail).get_slice("\n",0)
+		speech_position=nearest.position
+		speech_time=5.0
+		speech.show()
+
+func frame_service(kind: String, slot: int) -> void:
+	if kind=="office":return
+	visitor.anchor.visible=kind=="tailor"
+	var target: Vector3
+	var toward: Vector3
+	if kind=="stall":
+		var layout: Dictionary=square.stall_layout(slot)
+		target=layout.seller+Vector3.UP*.98
+		toward=(layout.approach-layout.seller).normalized()
+	else:
+		target=visitor.global_position+Vector3.UP*.92
+		toward=Vector3(.23,0,.97).normalized()
+		if kind=="tailor":
+			fitting_yaw=visitor.anchor.rotation.y
+			posing=true
+			visitor.anchor.rotation.y=atan2(toward.x,toward.z)
+		else:target=Vector3(visitor.position.x,1.0,-3.45)
+	var right := Vector3.UP.cross(toward).normalized()
+	var offset := right * 1.12
+	service_camera.global_position=target+toward*3.25+Vector3.UP*.38+offset
+	service_camera.look_at(target+offset)
+	service_camera.fov=42
+	service_camera.make_current()
 
 func _process(_delta: float) -> void:
 	if compass!=null:compass.text=["N","W","S","E"][posmod(roundi(visitor.yaw/(PI/2)),4)]
 	district_label.text=square.district(visitor.position)
 	if modal:return
+	speech_time-=_delta
+	if speech_time<=0 or visitor.global_position.distance_to(speech_position)>3.4:speech.hide()
 	nearest={};var distance := 2.1
 	for spot in square.destinations:
 		var candidate: float=visitor.global_position.distance_to(spot.position)
 		if candidate<distance:distance=candidate;nearest=spot
 	prompt.visible=not nearest.is_empty()
-	if prompt.visible:prompt.text="E / A  ·  "+str(nearest.title)
+	if nearest.is_empty() and not personal:
+		for actor in population.residents:
+			if actor.route.is_empty():continue
+			var at: Vector3=actor.node.global_position
+			if visitor.global_position.distance_to(at)<distance:
+				distance=visitor.global_position.distance_to(at)
+				nearest={"title":"Say hello","position":at,"detail":"Beautiful day for the market!"}
+	prompt.visible=not nearest.is_empty()
+	if prompt.visible:
+		var verb: String={"tea":"Visit Moss","curios":"Browse curios","stall":"Browse wares","office":"View rental map","tailor":"Visit fitting room"}.get(nearest.get("service",""),nearest.title)
+		prompt.text="E / A  ·  "+verb
 
 func _unhandled_input(event: InputEvent) -> void:
 	if touch_actions!=null:

@@ -196,7 +196,7 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	destinations.append({"title":"Enter "+title,"position":door,"arrival":center+Vector3(0,0.15,1.3),"yaw":0.0})
 	destinations.append({"title":"Return to town","position":exit_position,"arrival":door+Vector3(0,0.15,1).rotated(Vector3.UP,yaw),"yaw":yaw+PI})
 	shop_exits.append({"title":title,"door":door,"room":center})
-	if index in [1,3]:destinations.append({"title":"Talk to the clerk" if index==3 else "Browse clothing","position":center+Vector3(0,0,-1.65),"service":"office" if index==3 else "tailor"})
+	destinations.append({"title":["Moss","Wisp","Rook","Vale"][index],"position":center+Vector3(0,0,-1.65),"service":["tea","tailor","curios","office"][index]})
 
 func town_square() -> void:
 	path(TOWN,Vector3(26,0,27))

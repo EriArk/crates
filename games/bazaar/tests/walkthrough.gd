@@ -79,8 +79,8 @@ func run(world: Node3D) -> void:
 	world.hide_menu()
 	world.visitor.position=Vector3(-3.8,0.1,-4.8);world.visitor.velocity=Vector3.ZERO;await frames(12)
 	check(not world.nearest.is_empty(),"Nearby sign can be inspected")
-	world.inspect_spot();check(world.modal and world.menu_body.text.contains("no items or Sparks"),"Stall describes development without spending")
-	check(Rect2(Vector2.ZERO,get_viewport().get_visible_rect().size).encloses(world.panel.get_global_rect()),"Inspection panel fits viewport")
+	world.inspect_spot();check(not world.modal and world.speech.visible and world.visitor.input_enabled,"Stall describes development without spending")
+	check(Rect2(Vector2.ZERO,get_viewport().get_visible_rect().size).encloses(world.speech.get_global_rect()),"Field caption fits viewport")
 	await capture("stall-info")
 	world.hide_menu();world.visitor.position=Vector3(-1.0,0.1,7.5);world.visitor.yaw=-0.15
 	world.visitor.pitch=-0.55;world.visitor.arm.spring_length=6.2;await frames(12)

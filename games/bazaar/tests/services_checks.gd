@@ -36,20 +36,25 @@ func run() -> void:
 	check(menu.visible and scene.modal and scene.population.ambient_paused,"Service opens and pauses world input")
 	await create_timer(0.2).timeout
 	check(menu.get_global_rect().end.y<=root.get_visible_rect().end.y,"Service panel fits viewport height")
+	var map=menu.content.get_child(0)
+	check(map.markers.size()==12,"All actual stalls are selectable")
+	check(map.markers[1].position.x<map.markers[7].position.x and map.markers[1].position.y<map.markers[6].position.y,"Map corresponds to west/east and north/south")
+	map.markers[3].grab_focus()
+	check(menu.selected==3 and menu.detail.get_child(0).text.contains("03"),"D-pad focus updates rental terms directly")
 	await capture("office-places")
 	menu.switch("sellers");await create_timer(0.3).timeout
 	check(menu.preview_actor!=null,"Seller preview uses actual native model")
 	await capture("office-sellers")
 	for i in menu.SELLERS.size():
-		menu.seller=i;menu.render();await process_frame
+		menu.content.get_child(1).get_child(i).grab_focus();await process_frame
 		check(menu.preview_actor!=null,"Preview "+menu.SELLERS[i])
-	menu.seller=10;menu.render();await create_timer(0.2).timeout
+	menu.content.get_child(1).get_child(10).grab_focus();await create_timer(0.2).timeout
 	await capture("office-frog")
 	# Isolated data exercises projection only; no HTTP payment or player possession.
 	menu.world_data={"player_id":"fixture","places":[{"slot":4,"id":"fixture-place","weekly_price":350,"tenant_id":null}]}
 	menu.selected=4;menu.page="places";menu.render()
 	check("350" in menu.detail.get_child(2).text,"Server weekly price is shown")
-	check(menu.detail.get_child(5).disabled,"Unconnected financial bridge never offers a fake checkout")
+	check(menu.detail.get_child(-1).disabled,"Unconnected financial bridge never offers a fake checkout")
 	scene.population.apply_stall_sellers([{ "slot":2,"species":"Frog","rental_id":"fixture"}])
 	check(scene.population.hired_sellers.size()==1 and scene.population.residents[0].get("covered_by_seller",false),"Authoritative seller replaces ambient appearance without duplicate NPC")
 	menu.client._fail("Connection lost")
@@ -65,7 +70,12 @@ func run() -> void:
 	check(menu.service=="stall" and menu.selected==2,"Stall interaction opens its own goods")
 	check(not menu.goods_confirmed,"Unavailable goods are not a confirmed empty shop")
 	await capture("stall-goods")
-	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[],"next":null})
+	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected;menu.received("bazaar.listings",{"items":[{"id":"gem","price":8,"presentation":{"title":"Sun Stone","game":"Emerald"}},{"id":"leaf","price":12,"presentation":{"title":"Leaf","game":"Emerald"}}],"next":null})
+	var tiles=menu.content.get_child(1)
+	tiles.get_child(1).grab_focus()
+	check(menu.focused_row==1,"Moving focus inspects the next item")
+	await capture("stall-stock")
+	menu.received("bazaar.listings",{"items":[],"next":null})
 	check(menu.goods_confirmed and menu.content.get_child(1).text=="No items listed.","Confirmed empty storefront is distinct from disconnected")
 	# A reply from a closed/reopened page cannot populate the next visit.
 	menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected
@@ -83,7 +93,7 @@ func run() -> void:
 	check(not menu.queued_refresh and menu.client.pending.values()[0].method=="bazaar.sellers","Completion fetches authoritative seller offers")
 	menu.client.pending.clear();menu.client.outgoing.clear()
 	menu.received("bazaar.sellers",{"items":[{"id":"Frog","price":275,"revision":2}]})
-	menu.seller=10;menu.render()
+	menu.content.get_child(1).get_child(10).grab_focus()
 	check("275 Sparks" in menu.detail.get_child(2).text,"Seller price uses server offer rather than local 100")
 	menu.failed("bazaar.sellers","backend_unavailable")
 	check(menu.seller_offers.is_empty() and "Price unavailable" in menu.detail.get_child(2).text,"Failed seller refresh clears stale price")
