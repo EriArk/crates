@@ -349,7 +349,8 @@ func update_showcases(places: Array) -> void:
 			var icon := Sprite3D.new()
 			var textures = preload("res://scripts/market_goods.gd").ITEM_ICONS
 			icon.texture=textures.get(item.get("icon","inventory"),textures.inventory)
-			var x := (i-(count-1)*.5)*.72
+			var offsets: Array = [.85] if count==1 else [-.85,.85] if count==2 else [-.95,-.25,.85]
+			var x := float(offsets[i])
 			var board := MeshInstance3D.new()
 			board.mesh=price_board;board.material_override=price_wood;board.position=Vector3(x,.16,0)
 			display.add_child(board)
@@ -358,5 +359,5 @@ func update_showcases(places: Array) -> void:
 			var title := str(item.get("title","Item")).substr(0,20)
 			var nameplate := text3d(title,Vector3(x,.075,.03),.0022,display)
 			nameplate.pixel_size=minf(.0022,.61/maxf(1,ThemeDB.fallback_font.get_string_size(title,HORIZONTAL_ALIGNMENT_LEFT,-1,nameplate.font_size).x))
-			text3d(str(item.get("price",""))+" ✦",Vector3(x,-.025,.03),.0019,display)
+			text3d(str(int(item.price))+" ✦",Vector3(x,-.025,.03),.0019,display)
 	display_rows=next

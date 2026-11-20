@@ -1,4 +1,15 @@
-# Bazaar 0.0.15 — Voices of Festival Park
+# Bazaar 0.0.16 — Player counters
+
+On a device with a running lab host, open the field menu and choose **Enter test
+market**. Vale's park map shows the weekly rent. Choose a keeper and review the
+full price in TrainerOS. Walk to your rented counter, set a price, and select
+**List profile item** to choose an item in your private inventory. Another player
+can see up to three goods on the counter before opening it. **Buy** opens a host
+review. **Profile inventory** shows the delivered item. If a reply is lost,
+choose **Resolve last checkout** at Vale's desk, also after restarting the game
+or host. Ordinary visits and the personal-world previews use the normal profile.
+
+## Voices of Festival Park
 
 Walk up to a resident and press **A / E** to talk. At staffed counters **Y / T**
 starts a conversation and **A / E** opens the service. Touch uses the on-screen
@@ -53,13 +64,13 @@ Version 0.0.4 corrects the SDK arms-down / donor T-pose mismatch, shoulder helpe
 and finger motion. [Deformation review and before/after](docs/ANIMATION_REPAIR.md).
 Missing host/assets use a labelled guest capsule. Revocation or disconnection
 removes profile identity and its retargeter. No personal model is bundled.
-No trading, multiplayer, purchases or Sparks spending are enabled.
+The public economy stays closed. Staffed rentals and profile loot trading are playable with the isolated test wallets.
 
 [Rental office, NPC selection and trading preparation](docs/SERVICES.md): walk to
 the office for twelve numbered places and native seller previews. NPCs cost 100
 Sparks per rental; three planned new costumes are 50 each in alpha. The service
-interfaces read the Backend through TrainerOS, but payment buttons remain disabled
-until trusted checkout and actual item/costume delivery exist.
+interfaces use TrainerOS to read the Backend and review supported checkouts.
+The tailor continues to offer free previews.
 
 ## Run from source
 

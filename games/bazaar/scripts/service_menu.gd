@@ -283,12 +283,12 @@ func select_place(slot: int) -> void:
 	detail.add_child(text("STALL   %02d"%selected,25,Color("ffcf83")))
 	detail.add_child(text("West row" if selected<=6 else "East row",16))
 	var terms := "Weekly rent unconfirmed"
-	if row.get("weekly_price")!=null:terms="%s Sparks / 7 days"%row.weekly_price
+	if row.get("weekly_price")!=null:terms="%d Sparks / 7 days"%int(row.weekly_price)
 	detail.add_child(text(terms,19))
 	if not row.is_empty():
 		detail.add_child(text("Occupied" if row.get("tenant_id")!=null else "Available" if row.get("weekly_price")!=null else "Rent not set",15))
 	if row.get("expires_at")!=null:detail.add_child(text("Until "+str(row.expires_at),14))
-	detail.add_child(text("%s Sparks per seller, per rental"%world_data.seller_price if world_data.has("seller_price") else "Seller fee unconfirmed",15))
+	detail.add_child(text("%d Sparks per seller, per rental"%int(world_data.seller_price) if world_data.has("seller_price") else "Seller fee unconfirmed",15))
 	button("Choose seller  ›",func():switch("sellers"),detail)
 	if world_data.get("checkout_pending",false):
 		button("Resolve last checkout",func():checkout({"action":"resolve"}),detail).disabled=not client.has_checkout or loading
@@ -314,7 +314,7 @@ func select_seller(index: int) -> void:
 	make_preview(SELLERS[seller])
 	var price := "Price unavailable"
 	for row in seller_offers:
-		if row.get("id")==SELLERS[seller]:price="%s Sparks"%row.price;break
+		if row.get("id")==SELLERS[seller]:price="%d Sparks"%int(row.price);break
 	detail.add_child(text(price+"  /  one rental",16))
 	var row := place()
 	var weekly = row.get("weekly_price")
@@ -336,7 +336,7 @@ func render_goods() -> void:
 		content.add_child(pricing)
 		var amount := SpinBox.new()
 		amount.min_value=1;amount.max_value=2147483647;amount.value=sale_price
-		amount.suffix=" Sparks";amount.value_changed.connect(func(value: float):sale_price=int(value))
+		amount.custom_minimum_size.x=145;amount.suffix=" Sparks";amount.value_changed.connect(func(value: float):sale_price=int(value))
 		pricing.add_child(amount)
 		button("List profile item",func():checkout({"action":"list","slot":selected,"price":sale_price}),pricing)
 	if server_items.is_empty():
@@ -352,7 +352,7 @@ func render_goods() -> void:
 	focused_row=clampi(focused_row,0,server_items.size()-1)
 	for i in server_items.size():
 		var row: Dictionary=server_items[i]
-		var tile := button(str(row.get("presentation",{}).get("title","Item"))+"\n%s Sparks"%row.get("price","?"),func():inspect_good(i,item_detail),grid)
+		var tile := button(str(row.get("presentation",{}).get("title","Item"))+"\n%s Sparks"%(str(int(row.price)) if row.has("price") else "?"),func():inspect_good(i,item_detail),grid)
 		tile.icon=ITEM_ICONS.get(row.get("presentation",{}).get("icon","inventory"),ITEM_ICONS.inventory)
 		tile.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 		tile.custom_minimum_size=Vector2(132,62)
@@ -382,7 +382,7 @@ func inspect_good(index: int, target: Control) -> void:
 		var description:=text("   ·   ".join(facts),14)
 		description.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		scroll.add_child(description)
-	target.add_child(text("%s Sparks"%row.get("price","?"),18))
+	target.add_child(text("%s Sparks"%(str(int(row.price)) if row.has("price") else "?"),18))
 	if page=="mine":
 		button("Withdraw",func():pass,target).disabled=true
 		return
