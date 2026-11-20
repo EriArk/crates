@@ -76,7 +76,8 @@ func run() -> void:
 		var shelf: Dictionary=world.square.display_rows[2]
 		if shelf.tenant!="Mika" or shelf.items[0].title!=("Pecha Berry" if phase in ["browse","display"] else "Oran Berry") or shelf.items[0].price!=65:
 			push_error("Wrong public merchandise");quit(1);return
-		var camera=world.service_camera
+		var camera := Camera3D.new()
+		world.add_child(camera)
 		camera.global_position=layout.approach+Vector3(2.4,1.5,.7)
 		camera.look_at(layout.seller+Vector3.UP*1.22);camera.fov=42;camera.make_current()
 		await capture("ready-counter" if phase=="display" else "mika-counter")

@@ -1,5 +1,11 @@
 # Crates — состояние проекта
 
+## 20 November 2026 — Bazaar 0.0.18
+
+The counter camera keeps the merchant visible during browsing. Odin 2 opened Mika’s
+Pecha Berry offer in one accept action from the default stock selection and returned
+on cancel. Flip 2 passed the field-menu entry check. [Screenshots and design references](docs/evidence/bazaar-market-0.0.18/README.md).
+
 ## 20 November 2026 — Bazaar 0.0.16
 
 Odin 2 and Flip 2 both run the ARM64 export from da5e201, with 0.0.15 retained.
