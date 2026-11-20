@@ -246,7 +246,7 @@ func start_conversation() -> void:
 	var toward := Vector3(facing.x,0,facing.z).normalized()
 	if toward.is_zero_approx():toward = Vector3.BACK
 	var side := Vector3.UP.cross(toward)
-	var across := not speaker.route.is_empty()
+	var across: bool = not speaker.route.is_empty()
 	var aim := at + Vector3.UP*.94 + toward * minf(facing.length()*.35,.5)
 	var offset := side*3.25 + toward*.95 if across else toward*2.9 + side*1.7
 	var eye := aim + Vector3.UP*.6
