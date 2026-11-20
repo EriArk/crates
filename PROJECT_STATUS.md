@@ -1,5 +1,13 @@
 # Crates — состояние проекта
 
+## 21 November 2026 — Bazaar 0.0.19
+
+Odin 2 and Flip 2 run the same verified 0.0.19 ARM64 export from 1e1a4b6.
+Both devices retain 0.0.18. Fixed-camera captures compare Festival Park, the
+beach and the orbital station with the previous build. The fountain view on
+Odin issued 857 draw calls, down from 905. The station view moved from 62
+to 63. [Before and after](docs/evidence/bazaar-art-0.0.19/before-after.jpg).
+
 ## 20 November 2026 — Bazaar 0.0.18
 
 The counter camera keeps the merchant visible during browsing. Odin 2 opened Mika’s

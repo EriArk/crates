@@ -1,5 +1,14 @@
 # История Crates
 
+## 21 November 2026 — Bazaar 0.0.19
+
+Festival Park has patterned stall canopies, hanging paper lanterns, flowering
+trees and a tiled fountain surround. Distinct roof colours mark the shops.
+The rental office map shows the new park, and the counter frames the selected
+item on an illustrated mount. The beach world gained coastal reefs, shallow-water
+highlights and a distant archipelago. The station looks out at a ringed planet
+and a painted nebula through the dome.
+
 ## 20 November 2026 — Festival market interface
 
 Festival Park now opens a focused shelf with the seller in view. Moving between wares updates the illustrated item details. Activating the row opens purchase review. Stocking starts in the profile bag and finishes with the asking price.

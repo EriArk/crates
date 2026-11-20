@@ -35,4 +35,4 @@ func run() -> void:
 		check(height>1.35 and height<1.7,"Resident remains below visitor: "+actor.species)
 	print(JSON.stringify({"success":failures.is_empty(),"failures":failures,"slots":12,"resident_heights":19}))
 	query=null;capsule=null;physics=null
-	scene.square.life.stop_sound();await create_timer(0.15).timeout;scene.queue_free();await process_frame;await process_frame;quit(0 if failures.is_empty() else 1)
+	await scene.leave_bazaar(0 if failures.is_empty() else 1)
