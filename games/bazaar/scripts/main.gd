@@ -141,6 +141,7 @@ func _ready() -> void:
 	speech.add_theme_stylebox_override("normal",backdrop())
 	speech.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	speech.hide()
+	service_camera.set_cull_mask_value(Square.COUNTER_SIGN_LAYER,false)
 	add_child(service_camera)
 	root.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT);panel.offset_left=18;panel.offset_right=448;panel.offset_top=-211;panel.offset_bottom=211
 	var style := StyleBoxFlat.new();style.bg_color=Color("17272af5");style.border_color=Color("bba374");style.set_border_width_all(2);style.set_corner_radius_all(3)

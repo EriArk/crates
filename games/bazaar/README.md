@@ -1,4 +1,4 @@
-# Bazaar 0.0.17 — Festival market
+# Bazaar 0.0.18 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the

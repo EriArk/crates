@@ -3,6 +3,7 @@ extends Node3D
 ## Authored local world. No directory, economy, owners or visitor counts here.
 var fitting_booth: Node3D
 var counter_names := {}
+const COUNTER_SIGN_LAYER := 2
 var stands := {}
 var price_board := BoxMesh.new()
 var price_wood := StandardMaterial3D.new()
@@ -172,6 +173,7 @@ func park_market() -> void:
 		var banner := block(front+Vector3(0,1.81,0),Vector3(0.035,0.26,2.65),"a76e5d" if slot%3==0 else "507f73",false)
 		skirt.name="CounterSkirt";banner.name="StallValance"
 		counter_names[slot]=text3d("%02d  ·  MARKET"%slot,front+Vector3(-side*0.03,1.81,0),0.004,self,layout.yaw)
+		counter_names[slot].layers=1 << (COUNTER_SIGN_LAYER-1)
 		lantern(front+Vector3(0,2.22,1.06),"f1cc8d")
 	for side in [-1,1]:
 		for z in [-22.0,-10.0,10.0,22.0]:
@@ -359,4 +361,6 @@ func update_showcases(places: Array) -> void:
 			var nameplate := text3d(title,Vector3(x,.075,.03),.0022,display)
 			nameplate.pixel_size=minf(.0022,.61/maxf(1,ThemeDB.fallback_font.get_string_size(title,HORIZONTAL_ALIGNMENT_LEFT,-1,nameplate.font_size).x))
 			text3d(str(int(item.price))+" ✦",Vector3(x,-.025,.03),.0019,display)
+		for sign_part in display.get_children():
+			sign_part.layers=1 << (COUNTER_SIGN_LAYER-1)
 	display_rows=next
