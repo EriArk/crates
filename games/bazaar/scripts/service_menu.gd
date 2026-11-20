@@ -342,11 +342,11 @@ func render_goods() -> void:
 		if can_trade() and tenant and counter.get("species")!=null:
 			var list_action := button("List profile item",func():checkout({"action":"list","slot":selected,"price":INITIAL_ASK}),stock_actions)
 			list_action.set_meta("service_key","list")
-			if server_items.is_empty():focus_after=list_action
+			if goods_confirmed and server_items.is_empty():focus_after=list_action
 		var bag := button("Profile inventory",func():checkout({"action":"inventory"}),stock_actions)
 		bag.set_meta("service_key","inventory")
 		bag.disabled=loading
-		if not focus_after and server_items.is_empty() and not loading:focus_after=bag
+		if goods_confirmed and not focus_after and server_items.is_empty() and not loading:focus_after=bag
 	if server_items.is_empty():
 		var empty := text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22)
 		empty.name="ShelfStatus"
