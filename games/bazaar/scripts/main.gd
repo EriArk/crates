@@ -242,13 +242,21 @@ func start_conversation() -> void:
 	speaker.player.active = true
 	visitor.anchor.rotation.y = atan2(-facing.x,-facing.z)
 	visitor.attend(at + Vector3.UP*1.15)
-	# Look across the visitor's shoulder; keep the face above the text panel.
+	# Frame close pedestrians in profile; the counter already separates shopkeepers.
 	var toward := Vector3(facing.x,0,facing.z).normalized()
 	if toward.is_zero_approx():toward = Vector3.BACK
 	var side := Vector3.UP.cross(toward)
-	var aim := at + Vector3.UP*.94
-	service_camera.global_position = aim + toward*3.1 + side*.95 + Vector3.UP*.54
-	service_camera.look_at(aim + side*.12)
+	var across := not speaker.route.is_empty()
+	var aim := at + Vector3.UP*.94 + toward * minf(facing.length()*.35,.5)
+	var offset := side*3.25 + toward*.95 if across else toward*2.9 + side*1.7
+	var eye := aim + Vector3.UP*.6
+	var query := PhysicsRayQueryParameters3D.create(eye, eye+offset)
+	query.exclude = [visitor.get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():offset = offset.normalized()*maxf(.25,eye.distance_to(hit.position)-.15)
+	service_camera.global_position = eye + offset
+	service_camera.look_at(aim)
+	if facing.length() < .7:visitor.anchor.hide()
 	service_camera.fov = 41
 	service_camera.make_current()
 	dialogue.begin(person, Lines.pages(person,visit), tone)
