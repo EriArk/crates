@@ -1,5 +1,14 @@
 # Crates — состояние проекта
 
+## 20 November 2026 — Bazaar 0.0.15
+
+Odin 2 and Flip 2 run the same verified ARM64 build from b04e0f7. All three
+worlds started on both handhelds. The on-device graphical check captured the
+music bus and exercised footsteps, airborne silence, animal emitters, dialogue
+paging and the separate shop action. Device frames covered the garden on both
+handhelds and the market counter and tailor on Odin. Both retain version 0.0.14.
+[Game regression check](games/bazaar/tests/market_sound.gd).
+
 ## 20 November 2026 — Bazaar 0.0.14
 
 THREAD has three four-piece outfit sets with independently selectable tops,

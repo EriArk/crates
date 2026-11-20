@@ -1,5 +1,12 @@
 # История Crates
 
+## 20 November 2026 — Bazaar 0.0.15
+
+Festival Park has a looping original waltz, four surface-specific footfalls and
+positional calls from six animal species. Nineteen residents each have two
+conversations with voiced syllables and a touch or controller-operated text panel.
+At a staffed counter, A still opens the service and Y talks to the seller.
+
 ## 20 November 2026 — Bazaar 0.0.14
 
 THREAD has three four-piece outfit sets with independently selectable tops,
