@@ -1,0 +1,54 @@
+{
+  "Bunny.glb": {
+    "source_data_unchanged": true,
+    "sha256": "3108b1b080894ced53dd269b4970faafa34821b70646c9033ba1b79d0778d746"
+  },
+  "Yeti.glb": {
+    "source_data_unchanged": true,
+    "sha256": "45344017507b7b9e49662114f46a2f0f00431e7abf18c168455356bdcf541df8"
+  },
+  "Pigeon.glb": {
+    "source_data_unchanged": true,
+    "sha256": "fd9ba4011647da3d123c472931ae002d0160da8a1d1ff7b64becbf6ed8991a01"
+  },
+  "Dino.glb": {
+    "source_data_unchanged": true,
+    "sha256": "af39167b46476ae5b708914dccbe44dbd662430dcf323329c807d3c447e723b5"
+  },
+  "Frog.glb": {
+    "source_data_unchanged": true,
+    "sha256": "4b8848449ce565207380c1a99e11949b9c649ce3fa67f4b9d4ba282fdce08301"
+  },
+  "Birb.glb": {
+    "source_data_unchanged": true,
+    "sha256": "81c283c10d71b3252c31e378b8bca3450bcfb7980fac9fe599827edceb14412d"
+  },
+  "Casual_Female.glb": {
+    "source_data_unchanged": true,
+    "sha256": "1a909850aee6c0ac91a0efa0e2d6bda749d2ad6c00f33b9c842413a29623f9b6"
+  },
+  "Casual_Male.glb": {
+    "source_data_unchanged": true,
+    "sha256": "34b06e07f9ec3f26171848c84d7b28cc32796714372f07fa49c319477099fc5a"
+  },
+  "Chef_Female.glb": {
+    "source_data_unchanged": true,
+    "sha256": "fa5ed720d8b024ad461baa5a29e079511f12e7987f6e76c5e1c90b2e647859a1"
+  },
+  "Kimono_Female.glb": {
+    "source_data_unchanged": true,
+    "sha256": "f1fbfb3c98ba9cc6eb015b72e9f7c87d9868a562edd5dd9cecd1a58411767fef"
+  },
+  "OldClassy_Male.glb": {
+    "source_data_unchanged": true,
+    "sha256": "da22b0aa834495b6f20608fafa0fb83a7bc0f25a08e95417b4c53882dfa35721"
+  },
+  "Wizard.glb": {
+    "source_data_unchanged": true,
+    "sha256": "c6d87493b57eeb5eccb8bd8d0c64eff040eef89e2435b048d2fadd0fa51a1d99"
+  },
+  "Witch.glb": {
+    "source_data_unchanged": true,
+    "sha256": "52763831ec34b27e83c7cb0046d32379dd537f2e28c790fbaec8f82cf6c76769"
+  }
+}

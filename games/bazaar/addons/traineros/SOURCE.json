@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/EriArk/OctoFox-OS",
+  "commit": "14f275ac46174b3f2674e16fbfbaafc570e5f80b",
+  "license": "GPL-3.0-or-later",
+  "files": {
+    "avatar_client.gd": "2e998219527bc7926759314eeba46c82c7d1ac05dec13d886c564a79e53eb29c",
+    "avatar_presenter.gd": "baf9e1ff41fea076337d081b8750a5fa5bca29ffb6bf519e13a37c779c53c41d"
+  },
+  "movement": {
+    "repository": "https://github.com/EriArk/OctoFox-OS",
+    "commit": "14f275ac46174b3f2674e16fbfbaafc570e5f80b",
+    "upstream": "sdk/godot",
+    "files": {
+      "avatar_locomotion.gd": "287324cc2400576dbf1745c56d04936fd67e46cde666835d0a9a4a4baeab0be7",
+      "character_motor.gd": "3be4f503516948f76bb746f5a83b4520cfa2c9e58d6b6cca9d2d34cc13c14d5a",
+      "animations/UAL1_Standard.glb": "69591853d817488edaa8fd9bf8fc1d821eaeaf789f8627b3cd23b41c4ed67997",
+      "animations/provenance.json": "d8e73d017fce072f01ccccaf719e3f1ffefc80d3cc16f7d4f4651316a83e970f",
+      "animations/LICENSE.txt": "6d01f55c6e4c49a2c9963e147e561945ae2c83958c8ca667d90a6bffdbfac061"
+    }
+  }
+}

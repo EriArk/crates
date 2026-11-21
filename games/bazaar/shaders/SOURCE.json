@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/EriArk/crates",
+  "source_commit": "8cd38a757e82072329a6c25dc64b85377b3895a3",
+  "source_directory": "games/pocket-golf/shaders",
+  "license": "GPL-3.0-or-later",
+  "original_sha256": {
+    "meadow.gdshader": "b6f63dbea250e11db3dbcd68ac0b7631d064d01d33fd98b2e843af30065d4a27",
+    "sea.gdshader": "a4f33f2385f4d212ffe63b93e0930c9549696ac12ec8b3db181c4f97c7a4ed0b"
+  },
+  "changes": "Sea shoreline and horizon adapted to Bazaar island; meadow unchanged."
+}

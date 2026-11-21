@@ -1,0 +1,50 @@
+{
+  "author": "Quaternius",
+  "pack": "Ultimate Animated Character Pack (November 2019)",
+  "source": "https://quaternius.com/packs/ultimatedanimatedcharacter.html",
+  "original_folder": "https://drive.google.com/drive/folders/1sNi1AfenfPRrvRt5yfaj5QMMd6KKcUJ5",
+  "download": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatedanimatedcharacter/data.zip",
+  "download_note": "Public CC0 mirror used because the author-linked Drive download reported quota exceeded.",
+  "downloaded": "2026-11-14",
+  "license": "CC0-1.0",
+  "license_note": "Supplied source license and original author page both specify CC0.",
+  "archive_sha256": "262d0cbbc3db3a9a0330f508656da7f6521930ebb154582696b44f31b6541dc1",
+  "conversion": "Embedded base64 buffer repackaged as GLB without changing meshes, skins, materials or animations.",
+  "files": {
+    "Casual_Female.glb": {
+      "original_path": "Source/glTF/Casual_Female.gltf",
+      "original_sha256": "87327963ab0f37d004c7340d130808727f3d67b724c3d41aad01fd63c7d6fc8a",
+      "sha256": "1a909850aee6c0ac91a0efa0e2d6bda749d2ad6c00f33b9c842413a29623f9b6"
+    },
+    "Casual_Male.glb": {
+      "original_path": "Source/glTF/Casual_Male.gltf",
+      "original_sha256": "db66b2424af60d7799760795ca63c8a5be1c8af64e9f134217f0a3ff9e405379",
+      "sha256": "34b06e07f9ec3f26171848c84d7b28cc32796714372f07fa49c319477099fc5a"
+    },
+    "Chef_Female.glb": {
+      "original_path": "Source/glTF/Chef_Female.gltf",
+      "original_sha256": "3e1959fe0432026b521ff04ff83df4e4487790948cbb182b0a92b08998d9beda",
+      "sha256": "fa5ed720d8b024ad461baa5a29e079511f12e7987f6e76c5e1c90b2e647859a1"
+    },
+    "Kimono_Female.glb": {
+      "original_path": "Source/glTF/Kimono_Female.gltf",
+      "original_sha256": "8d3e909be3b854b1715855aed3c371a102788811a5c2673a0aee39fdb0a32df3",
+      "sha256": "f1fbfb3c98ba9cc6eb015b72e9f7c87d9868a562edd5dd9cecd1a58411767fef"
+    },
+    "OldClassy_Male.glb": {
+      "original_path": "Source/glTF/OldClassy_Male.gltf",
+      "original_sha256": "9ac226f58ee2f80acb2cd4c66f15cfb210937ee1744b9465425f796aa900d9b8",
+      "sha256": "da22b0aa834495b6f20608fafa0fb83a7bc0f25a08e95417b4c53882dfa35721"
+    },
+    "Wizard.glb": {
+      "original_path": "Source/glTF/Wizard.gltf",
+      "original_sha256": "baa9cd2d9f1ab3452d6e47d6efc5d4c6c8381fe16a44fc710df46bf16bc7fce8",
+      "sha256": "c6d87493b57eeb5eccb8bd8d0c64eff040eef89e2435b048d2fadd0fa51a1d99"
+    },
+    "Witch.glb": {
+      "original_path": "Source/glTF/Witch.gltf",
+      "original_sha256": "32d5c49fa0a3d4215116fd9eb7d672cd34367a19b6abb88f1a63aba7de882511",
+      "sha256": "52763831ec34b27e83c7cb0046d32379dd537f2e28c790fbaec8f82cf6c76769"
+    }
+  }
+}

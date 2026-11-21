@@ -1,0 +1,11 @@
+Source runtime check using the pinned editor, isolated XDG_DATA_HOME.
+Harness output label corrected from Exported to Source.
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Source main scene and ordinary Leave Bazaar path: PASS
+WRITE_EXIT_CODE=0
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Source local preferences restored: PASS
+Source main scene and ordinary Leave Bazaar path: PASS
+READ_EXIT_CODE=0

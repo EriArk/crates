@@ -1,0 +1,270 @@
+{
+  "animation_samples": {
+    "Birb": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle",
+        "Wave",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.630599737167358,
+      "max_radius_native_units": 3.45426821708679,
+      "sampled_vertices": 81,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Wave",
+        "frame": 27,
+        "from": "(1.720272, 2.368331, 0.671306)",
+        "to": "(1.511622, 2.879728, 0.367013)"
+      }
+    },
+    "Bunny": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle",
+        "Wave",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.598567426204681,
+      "max_radius_native_units": 3.39176964759827,
+      "sampled_vertices": 82,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Wave",
+        "frame": 27,
+        "from": "(1.63018, 2.111144, 0.706671)",
+        "to": "(1.482203, 2.64581, 0.48191)"
+      }
+    },
+    "Casual_Female": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.098864272236824,
+      "max_radius_native_units": 3.18461751937866,
+      "sampled_vertices": 502,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Walk",
+        "frame": 1,
+        "from": "(0.624004, 0.600112, 0.098289)",
+        "to": "(0.633788, 0.60756, 0.196385)"
+      }
+    },
+    "Casual_Male": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0988643690943718,
+      "max_radius_native_units": 3.23639249801636,
+      "sampled_vertices": 502,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Walk",
+        "frame": 1,
+        "from": "(0.624003, 0.600113, 0.098289)",
+        "to": "(0.633787, 0.60756, 0.196385)"
+      }
+    },
+    "Chef_Female": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0913311690092087,
+      "max_radius_native_units": 3.14637446403503,
+      "sampled_vertices": 501,
+      "scale_changes": {
+        "LowerLeg.L": {
+          "clip": "Idle",
+          "frame": 179,
+          "pose": "(1.0, 1.000006, 0.999996)",
+          "rest": "(1.0, 1.000023, 0.999984)"
+        },
+        "LowerLeg.R": {
+          "clip": "Idle",
+          "frame": 179,
+          "pose": "(1.0, 1.000006, 0.999996)",
+          "rest": "(1.0, 1.000022, 0.999984)"
+        },
+        "UpperLeg.L": {
+          "clip": "Idle",
+          "frame": 179,
+          "pose": "(0.999998, 0.999996, 0.99995)",
+          "rest": "(0.999998, 0.99998, 0.999966)"
+        },
+        "UpperLeg.R": {
+          "clip": "Idle",
+          "frame": 179,
+          "pose": "(0.999998, 0.999997, 0.999951)",
+          "rest": "(0.999998, 0.999981, 0.999967)"
+        }
+      },
+      "worst": {
+        "clip": "Idle",
+        "frame": 9,
+        "from": "(-0.579795, 0.594731, 0.383245)",
+        "to": "(-0.593652, 0.578251, 0.294488)"
+      }
+    },
+    "Dino": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle",
+        "Wave",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.635476231575012,
+      "max_radius_native_units": 3.5451500415802,
+      "sampled_vertices": 82,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Wave",
+        "frame": 27,
+        "from": "(1.905118, 2.281508, 0.634744)",
+        "to": "(1.710229, 2.825053, 0.3694)"
+      }
+    },
+    "Frog": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle",
+        "Wave",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.627367198467255,
+      "max_radius_native_units": 3.52877926826477,
+      "sampled_vertices": 82,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Wave",
+        "frame": 27,
+        "from": "(1.863562, 2.286385, 0.628154)",
+        "to": "(1.669184, 2.819443, 0.360467)"
+      }
+    },
+    "Kimono_Female": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0988645926117897,
+      "max_radius_native_units": 3.16033959388733,
+      "sampled_vertices": 409,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Walk",
+        "frame": 1,
+        "from": "(0.624003, 0.600112, 0.098289)",
+        "to": "(0.633788, 0.607559, 0.196386)"
+      }
+    },
+    "OldClassy_Male": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0961595997214317,
+      "max_radius_native_units": 3.74559354782104,
+      "sampled_vertices": 774,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Idle",
+        "frame": 9,
+        "from": "(0.450477, 0.519562, 0.048287)",
+        "to": "(0.500108, 0.540141, 0.128037)"
+      }
+    },
+    "Pigeon": {
+      "clips": [
+        "Flying_Idle",
+        "Fast_Flying",
+        "Flying_Idle"
+      ],
+      "max_frame_step_native_units": 0.49831023812294,
+      "max_radius_native_units": 3.60163116455078,
+      "sampled_vertices": 83,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Fast_Flying",
+        "frame": 41,
+        "from": "(2.253269, 1.719015, -0.471105)",
+        "to": "(2.285367, 2.122138, -0.762266)"
+      }
+    },
+    "Witch": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0969869121909142,
+      "max_radius_native_units": 4.27538824081421,
+      "sampled_vertices": 633,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Idle",
+        "frame": 9,
+        "from": "(0.458473, 0.514283, 0.088618)",
+        "to": "(0.508465, 0.537126, 0.168526)"
+      }
+    },
+    "Wizard": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.0969869121909142,
+      "max_radius_native_units": 4.08012008666992,
+      "sampled_vertices": 633,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Idle",
+        "frame": 9,
+        "from": "(0.458473, 0.514283, 0.088618)",
+        "to": "(0.508465, 0.537126, 0.168526)"
+      }
+    },
+    "Yeti": {
+      "clips": [
+        "Idle",
+        "Walk",
+        "Idle",
+        "Wave",
+        "Idle"
+      ],
+      "max_frame_step_native_units": 0.630757629871368,
+      "max_radius_native_units": 3.53837776184082,
+      "sampled_vertices": 82,
+      "scale_changes": {},
+      "worst": {
+        "clip": "Wave",
+        "frame": 27,
+        "from": "(1.925695, 2.23751, 0.618414)",
+        "to": "(1.738416, 2.786485, 0.370606)"
+      }
+    }
+  },
+  "failures": [
+    "No abrupt vertex jumps at 60 Hz including transitions: Dino",
+    "No abrupt vertex jumps at 60 Hz including transitions: Frog",
+    "No abrupt vertex jumps at 60 Hz including transitions: Birb",
+    "No bone rescaling: Chef_Female",
+    "No abrupt vertex jumps at 60 Hz including transitions: Bunny",
+    "No abrupt vertex jumps at 60 Hz including transitions: Yeti"
+  ],
+  "pass": false,
+  "skin_variants_checked": 35
+}

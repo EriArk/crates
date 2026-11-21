@@ -680,6 +680,188 @@ Tilt-shift усилен отдельным проходом перед HUD; св
 графики владельцем или замер портативок. Сетевые 16 игроков, полный кубок,
 награды и доставка ещё впереди.
 [Состояние и следующий порядок](games/competitive-minigames/micro-rally/README.md).
+## 21 November 2026 — Bazaar 0.0.25
+
+Odin 2 exercised both paid mini-games on a separate test wallet. Five shots produced three distinct hits and a Honey Bear. Three throws produced five points. Godot scene checks cover the pin edge, a missed throw restored after leaving, and the cork lead at both rack speeds. The installed island and park both exited cleanly through the flight loading screen. In a separate two-machine run over the ordinary records transport, Mika hosted on Linux and Ren visited on Odin 2. Both received the other player’s position. Ren took over when Mika left and the island remained Mika’s. [Toy Gallery](docs/evidence/bazaar-festival-0.0.25/gallery.jpg) · [Wanage](docs/evidence/bazaar-festival-0.0.25/wanage.jpg).
+
+## 21 November 2026 — Bazaar 0.0.19
+
+Odin 2 and Flip 2 run the same verified 0.0.19 ARM64 export from 1e1a4b6.
+Both devices retain 0.0.18. Fixed-camera captures compare Festival Park, the
+beach and the orbital station with the previous build. The fountain view on
+Odin issued 857 draw calls, down from 905. The station view moved from 62
+to 63. [Before and after](docs/evidence/bazaar-art-0.0.19/before-after.jpg).
+
+## 20 November 2026 — Bazaar 0.0.18
+
+The counter camera keeps the merchant visible during browsing. Odin 2 opened Mika’s
+Pecha Berry offer in one accept action from the default stock selection and returned
+on cancel. Flip 2 passed the field-menu entry check. [Screenshots and design references](docs/evidence/bazaar-market-0.0.18/README.md).
+
+## 20 November 2026 — Bazaar 0.0.16
+
+Odin 2 and Flip 2 both run the ARM64 export from da5e201, with 0.0.15 retained.
+Festival Park and both personal worlds started on each device. At counter 02,
+Mika rented with Frog and listed Oran Berry. Ren bought it for 65 test Sparks.
+After a lost purchase reply and restart, Ren received the original receipt and
+saw Oran Berry in profile inventory. The balances were 935 for Ren and 815 for
+Mika. Mika restocked the same counter with Pecha Berry for manual play.
+[Counter on Odin 2](docs/evidence/bazaar-trade-0.0.16/ready-counter.jpg) ·
+[Ren’s inventory](docs/evidence/bazaar-trade-0.0.16/received-item.jpg).
+
+## 20 November 2026 — Bazaar 0.0.15
+
+Odin 2 and Flip 2 run the same verified ARM64 build from b04e0f7. All three
+worlds started on both handhelds. The on-device graphical check captured the
+music bus and exercised footsteps, airborne silence, animal emitters, dialogue
+paging and the separate shop action. Device frames covered the garden on both
+handhelds and the market counter and tailor on Odin. Both retain version 0.0.14.
+[Game regression check](games/bazaar/tests/market_sound.gd).
+
+## 20 November 2026 — Bazaar 0.0.14
+
+THREAD has three four-piece outfit sets with independently selectable tops,
+trousers, shoes and hats. The fitting and SDK checks ran with live profile avatars
+on both handhelds. Four angles per set covered 24 device frames. The final
+turntables showed the refitted boots and the Odin lighting correction.
+All three world entry points started on each device. Forced headless shutdown
+on Odin still reports the previously observed outstanding resource.
+
+## 20 November 2026 — Bazaar 0.0.13
+
+The Bazaar client now uses the revision 13 avatar presenter. On Odin 2 and Flip 2,
+live profile avatars tracked a market counter and the selected fitting-room pattern.
+The game checks the model digest on appearance updates. The ARM64 install keeps
+0.0.12 for rollback. [SDK integration checks](games/bazaar/tests/attention.gd).
+
+## 20 November 2026 — Bazaar 0.0.12
+
+THREAD now has a fitting booth where the visitor can try on three outfits. The
+curtain covers each change. Both handhelds are running the new build.
+[Fitting room controls and verification](games/bazaar/docs/SERVICES.md#thread-fitting-room).
+
+## 20 November 2026 — Bazaar 0.0.11
+
+The rental clerk shows the park from above with twelve selectable counters and
+landmark labels. Stall keepers open their inventory, Wisp shows costume patterns
+alongside the visitor, and signs and passersby use a field caption. Installed on
+Flip 2 and Odin 2. [Checks and screenshots](games/bazaar/docs/counter-evidence/README.md).
+
+## 14 November 2026 — Bazaar 0.0.9 installed on both handhelds
+
+Shared SDK gait/flight fixes and the 20% outer left-stick zone are installed on
+Flip 2 and Odin 2. Remote walk/run/sprint/crouch/jump, normal entry/return and
+error-free logs passed; physical stick/touch feel remains owner acceptance.
+Shell Software 45 and its live process were preserved. Preferences/database
+checks passed, staging was cleaned and game 0.0.8 is retained for rollback.
+[Delivery evidence](games/bazaar/docs/response-evidence/README.md#delivered-on-flip-2-and-odin-2).
+No merge, public release or spending activation.
+
+## 14 November 2026 — Bazaar 0.0.9 prepared, devices paused
+
+Shared SDK movement now reaches full speed at 80% left-stick travel, without
+multiplying partial input twice. Walking follows resolved speed; running retains
+its flight phase instead of being pulled down to the floor. Service tabs queue
+refreshes correctly, reject stale replies and show server seller prices.
+Motor, seven-state pose, service and full world checks passed; OpenGL comparison
+was reviewed. [Evidence and remaining work](games/bazaar/docs/response-evidence/README.md).
+Source only: no merge, release or handheld contact. 0.0.8 remains installed.
+
+## 14 November 2026 — Bazaar 0.0.8 delivered
+
+Installed on Flip 2 and Odin 2 with shell Software 45. Shared SDK locomotion,
+corrected visitor/NPC proportions, compact HUD and twelve festival stalls now
+face the promenade. Prop and seller axes are handled separately. Source/native
+checks and remote-device running/crouch/jump/menu/return passed. Existing slot
+IDs, personal settings and spending gates are unchanged; 0.0.7 rollback remains.
+Physical input and sustained performance remain acceptance work.
+[Movement and delivery evidence](games/bazaar/docs/movement-evidence/README.md).
+
+## 14 November 2026 — corrected handheld entry
+
+Use **Online → Bazaar → Official Bazaar** on both handhelds. Shell sequence 43
+opens the existing island 0.0.7 and returns to its catalogue card; the Apps-only
+route below is superseded. Commerce remains closed. [Evidence](https://github.com/EriArk/OctoFox-OS/blob/codex/bazaar-catalogue-20261110/docs/evidence/2026-11-14-bazaar-entry/README.md).
+
+
+## 14 November 2026 — Bazaar 0.0.7 handheld installation
+
+Installed the ARM64 walkthrough on Flip 2 and Odin 2, with owner authorization:
+**Apps → Bazaar (Alpha 0.0.7)**. Real-device launch, own SDK avatar, island rendering,
+remote movement/menu and return to Apps were observed. Existing shells remain
+unchanged; they lack `bazaar.read`, so commerce stays unavailable. Physical input,
+audio and sustained performance remain owner acceptance. No merge or public release.
+[Delivery record](https://github.com/EriArk/OctoFox-OS/blob/codex/bazaar-catalogue-20261110/docs/evidence/2026-11-14-bazaar-handheld/README.md).
+
+
+## 14 November 2026 — Bazaar 0.0.7 service preview
+
+Added the walk-in Stall Office, twelve-place picker, twelve native NPC previews,
+stall goods and THREAD clothing surfaces. Read-only TrainerOS SDK integration
+shows server directory/listings and applies leased NPC appearances without changing
+avatar rigs. Rent belongs to the real venue owner; NPC hire is 100 per rental;
+three new planned costumes are 50 each in alpha. [Implementation and remaining
+scope](games/bazaar/docs/SERVICES.md). Payments, custody, costume delivery and managed
+world entry remain unfinished; no merge, catalogue release or device install.
+
+
+## 14 November 2026 — Bazaar 0.0.6 resident variety and animation review
+
+Added Dino, Frog and Birb from the same CC0 pack; eighteen local NPCs now include
+eleven humans and seven animal folk. Human skin/face material overrides provide
+five skin tones without changing clothes, hair or rigs. Native Wave had a sharp
+arm rise; playback is slowed to 0.65× with the full greeting duration preserved.
+[Evidence and limits](games/bazaar/docs/RESIDENT_APPEARANCE.md): thirteen model
+animation checks, 35 color combinations, route/world/OpenGL and exported Linux
+exit. No merge, device install or enabled trading; hardware FPS remains unverified.
+
+## 14 November 2026 — Bazaar 0.0.5 residents and birds
+
+Added a mixed local population: eleven humans and four animal folk, with nine
+merchant roles and six walking residents, plus six animated birds. Merchants
+acknowledge nearby visitors, pedestrians pause/yield, birds climb away; bounded
+distance activity and menu pause keep the scope small. Native Quaternius rigs and
+CC0 notices are preserved. [Implementation and evidence](games/bazaar/docs/POPULATION.md).
+Population/world/OpenGL checks and exported Linux menu exit passed; Windows and
+ARM64 are export-only. Separate branch, no merge/install or enabled trading.
+
+## 14 November 2026 — Bazaar 0.0.4 animation deformation repair
+
+Corrected the arms-down SDK / T-pose donor mismatch that folded arms through the
+body, restored half-angle shoulder helpers and mapped fingers. Shared SDK, body
+assets, bind pose and skin weights stay unchanged. [Before/after and regression](games/bazaar/docs/ANIMATION_REPAIR.md).
+Earlier “animation plays” checks were insufficient; explicit anatomy checks now
+reject the previous implementation. Separate local branch, no merge or deployment.
+
+## 14 November 2026 — Bazaar 0.0.3 polish and third-person camera
+
+Closer terrain-following camera, wall retraction, shorter indoor boom and local
+75–105° FOV control (horizontal reference at 16:9; default 90°). Added park gate,
+clear signs/numbered stalls, distinct shop dressing, filtered paving, readable HUD
+and optional original fountain sound. [Implementation/evidence](games/bazaar/docs/POLISH.md).
+Separate local prototype; no catalogue launch, network/trading, merge or handheld
+installation. Hardware performance and physical controls remain unverified.
+
+## 14 November 2026 — Bazaar island, park market and town shops
+
+Replaced the enclosed square with a larger connected island. The festival stalls
+sit in a park; houses and three enterable shop previews occupy a separate square.
+Added flowers, trees, lantern strings, fountain jets and animated water. Free CC0
+Quaternius locomotion is retargeted onto the SDK character. [Scope/evidence](games/bazaar/docs/ISLAND.md).
+Added walkable hills, chunked opaque grass, clouds and depth haze using Pocket
+Golf’s meadow/sea work. Local prototype: catalogue launch, multiplayer and commerce remain open.
+Headless and OpenGL walkthroughs plus SDK socket revocation passed; exported
+Linux x86_64 boots. Windows/ARM64 are exports only. Separate branch, no merge,
+public release or handheld installation.
+
+## 14 November 2026 — first Bazaar square (separate branch)
+
+[The first official Bazaar](games/bazaar/) is now a standalone local Godot world:
+a walkable fantasy square using CC0 town assets and the shared TrainerOS avatar.
+Keyboard/controller/touch paths, camera collision, pause and explanatory signs
+are prepared. This is source/export preparation, not public multiplayer or trade.
+Catalogue launch/admission, parallel realms and real commerce remain open.
+No merge, catalogue publication or handheld install. [Evidence](games/bazaar/docs/FIRST_SQUARE.md).
 
 ## Pocket Golf: аналоговое наведение и подготовка соперника — 24 октября 2026
 

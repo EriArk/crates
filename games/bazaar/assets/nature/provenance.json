@@ -1,0 +1,16 @@
+{
+  "author": "Kenney",
+  "source": "https://kenney.nl/assets/nature-kit",
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-14",
+  "archive_sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+  "files": {
+    "flower_redA.glb": "171930b7789ddbf735af3745576b5393750beb9133b9ff4a444bb6bb2986c020",
+    "flower_yellowA.glb": "8a3b08cd2ca411c21f9c581d5bda651d78b13c50cba45ad8fa0389398ead6d1d",
+    "flower_purpleA.glb": "f6fc34c96a03420a74fe36d4c2d0ec88f15204fcad99cd1416c3c4ecb22e48c4",
+    "grass_large.glb": "af49a595624abca7249824eeefb944d4baf974abeeb5b16110d175da3563d6cd",
+    "tree_oak.glb": "d7fd8773674928c50c11b66d12c636d49bdcc15a8b1c7fbb98e6f63a3439a3f3",
+    "tree_detailed.glb": "c041daf2f0fb1d49e4325227cbcd58667adbe51e9b55e8c1f0a94b74cc521b3b",
+    "plant_bushLarge.glb": "10e1d9fbf29d96d1d1a56fb2ce25ae66537505101759229afe01ae22c6c45e02"
+  }
+}

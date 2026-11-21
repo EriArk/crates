@@ -1,0 +1,14 @@
+{
+  "cleaned": true,
+  "freeBeforeBytes": 8147779584,
+  "freeAfterBytes": 8147775488,
+  "removed": [
+    "traineros-bazaar-personal-staging",
+    "traineros-bazaar-personal-cache",
+    "game 0.0.8",
+    "Software 45 binary"
+  ],
+  "rollbackSoftware": 46,
+  "rollbackGame": "0.0.9",
+  "personalBackupsPreserved": true
+}

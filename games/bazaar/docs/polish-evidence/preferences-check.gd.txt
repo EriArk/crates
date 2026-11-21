@@ -1,0 +1,13 @@
+extends SceneTree
+func _initialize():call_deferred("run")
+func run():
+ var world=load("res://main.tscn").instantiate();root.add_child(world)
+ await create_timer(0.3).timeout
+ if "--pref-read" in OS.get_cmdline_user_args():
+  if world.fov_slider.value!=83 or world.sound.button_pressed:
+   push_error("Local preferences did not survive restart");await world.leave_bazaar(1);return
+  print("Source local preferences restored: PASS")
+ else:
+  world.fov_slider.value=83;world.sound.button_pressed=false
+ print("Source main scene and ordinary Leave Bazaar path: PASS")
+ world.quit_button.pressed.emit()

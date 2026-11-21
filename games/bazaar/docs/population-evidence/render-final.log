@@ -1,0 +1,62 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 4.6 (Core Profile) Mesa 26.2.5 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 22.1.8, 256 bits)
+WARNING: Started the engine as `root`/superuser. This is a security risk, and subsystems like audio may not work correctly.
+Set the environment variable `GODOT_SILENCE_ROOT_WARNING` to 1 to silence this warning.
+     at: setup2 (main/main.cpp:3581)
+
+CAPTURE park
+CAPTURE merchant-bunny
+CAPTURE merchant-yeti
+CAPTURE tea-merchant
+CAPTURE town-walkers
+CAPTURE birds
+CAPTURE motion-000
+CAPTURE motion-001
+CAPTURE motion-002
+CAPTURE motion-003
+CAPTURE motion-004
+CAPTURE motion-005
+CAPTURE motion-006
+CAPTURE motion-007
+CAPTURE motion-008
+CAPTURE motion-009
+CAPTURE motion-010
+CAPTURE motion-011
+CAPTURE motion-012
+CAPTURE motion-013
+CAPTURE motion-014
+CAPTURE motion-015
+CAPTURE motion-016
+CAPTURE motion-017
+CAPTURE motion-018
+CAPTURE motion-019
+CAPTURE motion-020
+CAPTURE motion-021
+CAPTURE motion-022
+CAPTURE motion-023
+CAPTURE motion-024
+CAPTURE motion-025
+CAPTURE motion-026
+CAPTURE motion-027
+CAPTURE motion-028
+CAPTURE motion-029
+CAPTURE motion-030
+CAPTURE motion-031
+CAPTURE motion-032
+CAPTURE motion-033
+CAPTURE motion-034
+CAPTURE motion-035
+CAPTURE motion-036
+CAPTURE motion-037
+CAPTURE motion-038
+CAPTURE motion-039
+CAPTURE motion-040
+CAPTURE motion-041
+CAPTURE motion-042
+CAPTURE motion-043
+CAPTURE motion-044
+CAPTURE motion-045
+CAPTURE motion-046
+CAPTURE motion-047

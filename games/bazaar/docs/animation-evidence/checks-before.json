@@ -1,0 +1,35 @@
+{
+  "clips": {
+    "Idle": {
+      "max_arm_direction_error_degrees": 76.2713291029417,
+      "max_shoulder_helper_error_degrees": 35.1309482223664,
+      "minimum_wrist_lateral_metres": -0.0914335176348686,
+      "sampled_frames": 360
+    },
+    "Jog_Fwd": {
+      "max_arm_direction_error_degrees": 77.5204340983536,
+      "max_shoulder_helper_error_degrees": 26.702240362024,
+      "minimum_wrist_lateral_metres": -0.0499654859304428,
+      "sampled_frames": 360
+    },
+    "Walk": {
+      "max_arm_direction_error_degrees": 77.0990524076989,
+      "max_shoulder_helper_error_degrees": 37.753570108922,
+      "minimum_wrist_lateral_metres": -0.094546414911747,
+      "sampled_frames": 360
+    }
+  },
+  "failures": [
+    "Arm/hand motion follows donor direction: Idle",
+    "Wrists stay on their own side of torso: Idle",
+    "Shoulder helper uses SDK half rotation: Idle",
+    "Arm/hand motion follows donor direction: Walk",
+    "Wrists stay on their own side of torso: Walk",
+    "Shoulder helper uses SDK half rotation: Walk",
+    "Arm/hand motion follows donor direction: Jog_Fwd",
+    "Wrists stay on their own side of torso: Jog_Fwd",
+    "Shoulder helper uses SDK half rotation: Jog_Fwd"
+  ],
+  "legacy": true,
+  "success": false
+}

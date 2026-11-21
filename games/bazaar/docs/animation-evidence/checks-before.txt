@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ANIMATION CHECKS: FAIL { "Idle": { "max_arm_direction_error_degrees": 76.2713291029417, "minimum_wrist_lateral_metres": -0.09143351763487, "max_shoulder_helper_error_degrees": 35.1309482223664, "sampled_frames": 360 }, "Walk": { "max_arm_direction_error_degrees": 77.0990524076989, "minimum_wrist_lateral_metres": -0.09454641491175, "max_shoulder_helper_error_degrees": 37.753570108922, "sampled_frames": 360 }, "Jog_Fwd": { "max_arm_direction_error_degrees": 77.5204340983536, "minimum_wrist_lateral_metres": -0.04996548593044, "max_shoulder_helper_error_degrees": 26.702240362024, "sampled_frames": 360 } }
+FAILED: Arm/hand motion follows donor direction: Idle
+FAILED: Wrists stay on their own side of torso: Idle
+FAILED: Shoulder helper uses SDK half rotation: Idle
+FAILED: Arm/hand motion follows donor direction: Walk
+FAILED: Wrists stay on their own side of torso: Walk
+FAILED: Shoulder helper uses SDK half rotation: Walk
+FAILED: Arm/hand motion follows donor direction: Jog_Fwd
+FAILED: Wrists stay on their own side of torso: Jog_Fwd
+FAILED: Shoulder helper uses SDK half rotation: Jog_Fwd

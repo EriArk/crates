@@ -1,0 +1,3 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ANIMATION CHECKS: PASS { "Idle": { "max_arm_direction_error_degrees": 0.41125830976818, "minimum_wrist_lateral_metres": 0.14138850569725, "max_shoulder_helper_error_degrees": 0.07912936904061, "sampled_frames": 360 }, "Walk": { "max_arm_direction_error_degrees": 2.70351395133022, "minimum_wrist_lateral_metres": 0.14386755228043, "max_shoulder_helper_error_degrees": 0.07912936904061, "sampled_frames": 360 }, "Jog_Fwd": { "max_arm_direction_error_degrees": 7.80957255642182, "minimum_wrist_lateral_metres": 0.17879576981068, "max_shoulder_helper_error_degrees": 0.07912936904061, "sampled_frames": 360 } }

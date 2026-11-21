@@ -1,0 +1,38 @@
+{
+  "sequence": 47,
+  "bazaarGame": "0.0.10",
+  "binarySha256": "0143b1a74d2976624dcf6d99c5058220f4231cff7719eb01813670cf7d42a7d8",
+  "gameBinarySha256": "8a6f81f127d26c46d8f774284ce9bf6829a719e7877388169bd5a2e54b6b99a4",
+  "databaseQuickCheck": true,
+  "preservedCounts": [
+    "trainer_profile",
+    "trainer_owners",
+    "adventures"
+  ],
+  "gameSettingsUnchanged": true,
+  "worldChecks": {
+    "island": {
+      "normalEntryAndReturnObserved": true,
+      "runtimeErrors": false,
+      "noLiveGameProcess": true,
+      "input": "remote keyboard and pointer",
+      "physicalInputAcceptance": false
+    },
+    "station": {
+      "normalEntryAndReturnObserved": true,
+      "runtimeErrors": false,
+      "noLiveGameProcess": true,
+      "input": "remote keyboard and pointer",
+      "physicalInputAcceptance": false
+    },
+    "official": {
+      "normalEntryAndReturnObserved": true,
+      "runtimeErrors": false,
+      "noLiveGameProcess": true,
+      "input": "remote keyboard and pointer",
+      "physicalInputAcceptance": false
+    }
+  },
+  "freeBytes": 8147853312,
+  "rollbackVerified": true
+}

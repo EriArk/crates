@@ -1,0 +1,28 @@
+{
+  "version": "0.0.9",
+  "source": "d8e371668799f887d02b14c85645c56b90b6e55a",
+  "binarySha256": "92068b52924a2068ab0b273ee226b4f703040c08442628303d5f2f0304236429",
+  "rollbackVerified": "0.0.8",
+  "shellUnchanged": true,
+  "settingsUnchanged": true,
+  "databaseQuickCheck": true,
+  "preservedTables": [
+    "trainer_profile",
+    "trainer_owners",
+    "adventures"
+  ],
+  "normalLeaveObserved": true,
+  "noLiveGameProcess": true,
+  "runtimeErrors": false,
+  "remoteInput": [
+    "walk",
+    "run",
+    "sprint",
+    "crouch",
+    "jump",
+    "menu",
+    "leave"
+  ],
+  "physicalInputAcceptance": false,
+  "freeBytes": 23662497792
+}
