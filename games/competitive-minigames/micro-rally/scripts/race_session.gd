@@ -1,0 +1,262 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+extends Node
+const Client = preload("res://addons/traineros/group_client.gd")
+const Wire = preload("race_wire.gd")
+var bridge = Client.new()
+var game: Node3D
+var bot_settings = preload("bot_settings.gd").preset()
+var event_track=Wire.TRACK
+var online = false
+var host = false
+var starting = false
+var round_id = 0
+var members: Array = []
+var ready_members: Array = []
+var votes: Array = []
+var inputs: Dictionary = {}
+var seen: Dictionary = {}
+var input_sequences: Dictionary = {}
+var sequence = 0
+var last_snapshot = -1
+var clock = 0.0
+var deadline = 0
+var phase = "idle"
+var targets: Array = []
+var received_at = 0
+var beams: Array = []
+var info = ""
+var overlay = false
+var voted = false
+var platform_enabled = true # Disabled only by the isolated rendered soak harness.
+
+func _ready() -> void:
+	process_mode=Node.PROCESS_MODE_ALWAYS; add_child(bridge)
+	bridge.session_ready.connect(_session); bridge.member_record.connect(_receive)
+	bridge.closed.connect(_closed)
+	bridge.status.connect(func(text): info=text)
+
+func connect_platform() -> void:
+	if not platform_enabled: return
+	if DisplayServer.get_name()!="headless": await RenderingServer.frame_post_draw
+	bridge.connect_host()
+
+func _session(is_host: bool) -> void:
+	if online or game.state!="menu": bridge.close_channel(); return
+	online=true; host=is_host; members.clear(); inputs.clear(); seen.clear(); input_sequences.clear()
+	for member in bridge.session.members: members.append(member.id)
+	game.player_index=members.find(bridge.session.self)
+	for member in bridge.channels: seen[member]=Time.get_ticks_msec()
+	round_id=0; phase="waiting"; game.state="network_wait"; game.hud.panel.hide()
+	game.hud.message="Waiting for the host to choose an event…"; deadline=Time.get_ticks_msec()+120000
+	if host:
+		bot_settings=game.cup.store.bot_settings("quick"); game.hud.menu("network_setup")
+
+func select_event(mode: String) -> void:
+	if not online or not host or phase!="waiting" or mode not in ["race","arena","royale"]: return
+	event_track=game.Tracks.ROYALE if mode=="royale" else game.Tracks.ARENA if mode=="arena" else Wire.TRACK
+	_prepare()
+
+func _prepare() -> void:
+	round_id+=1; ready_members=[bridge.session.self]; votes.clear(); voted=false
+	phase="preparing"; deadline=Time.get_ticks_msec()+15000
+	game.bot_count=15; starting=true; game.start_race(); starting=false
+	game.state="network_wait"; game.hud.message="Waiting for everyone to get ready…"
+	if not bridge.send({"type":"prepare","round":round_id,"track":event_track,"mode":game.event_mode(),"rules":1,"conditions":game.conditions.descriptor(),"bots":bot_settings,"laps":4}): abort("Could not prepare the race.")
+
+func _begin() -> void:
+	phase="playing"; game.state="countdown"; game.countdown=3; game.hud.message=""
+	sequence=0; last_snapshot=-1; clock=0; inputs.clear(); input_sequences.clear(); targets.clear()
+	for member in seen: seen[member]=Time.get_ticks_msec()
+	if host and not bridge.send({"type":"begin","round":round_id}): abort("Could not start the race.")
+
+func _receive(member: String, data: Dictionary) -> void:
+	if not online or not bridge.channels.has(member): return
+	seen[member]=Time.get_ticks_msec()
+	var kind = data.get("type")
+	if data.get("namespace")=="traineros.avatar.v1": return
+	if kind=="prepare" and not host and member==bridge.session.hostMember:
+		if data.get("round")!=round_id+1 or phase not in ["waiting","results"] or (phase=="results" and not voted) or data.get("track") not in [Wire.TRACK,game.Tracks.ARENA,game.Tracks.ROYALE] or data.get("laps")!=4 or data.get("rules",1)!=1 or data.get("mode","race")!=("royale" if data.get("track")==game.Tracks.ROYALE else "arena" if data.get("track")==game.Tracks.ARENA else "race") or not data.get("conditions") is Dictionary:
+			abort("Incompatible race conditions."); return
+		var conditions = game.Conditions.new()
+		if not conditions.configure(data.conditions): abort("Invalid race conditions."); return
+		var incoming_bots=data.get("bots",game.BotSettings.preset())
+		if not game.BotSettings.valid(incoming_bots): abort("Invalid opponent settings."); return
+		bot_settings=game.BotSettings.normalized(incoming_bots); event_track=data.track
+		round_id+=1; game.conditions=conditions; game.bot_count=15; starting=true; game.start_race(); starting=false
+		for car in game.cars: car.replica=true; car.freeze=true; car.collision_layer=0; car.collision_mask=0
+		game.state="network_wait"; phase="preparing"; voted=false; overlay=false; deadline=Time.get_ticks_msec()+15000
+		if not bridge.send({"type":"ready","round":round_id}): abort("Could not confirm readiness.")
+		return
+	if Wire.integer(data.get("round"),0,round_id-1): return # In-flight old inputs cannot enter a rematch.
+	if data.get("round")!=round_id: abort("Outdated race message."); return
+	if kind=="ready" and host and phase=="preparing" and not ready_members.has(member):
+		ready_members.append(member)
+		if ready_members.size()==members.size(): _begin()
+		return
+	if kind=="begin" and not host and phase=="preparing": _begin(); return
+	if kind=="input" and host and phase in ["playing","results"]:
+		if not Wire.integer(data.get("seq"),0,2147483647) or data.seq<=input_sequences.get(member,-1) or not Wire.valid_input(data.get("values")):
+			abort("Invalid control command."); return
+		input_sequences[member]=data.seq
+		if phase=="playing": inputs[member]={"values":data.values,"at":Time.get_ticks_msec()}
+		return
+	if kind=="recover" and host and phase=="playing": game._recover(game.cars[members.find(member)]); return
+	if kind=="state" and not host and phase in ["playing","results"]:
+		if (game.is_arena() and not game.arena.valid_state(data.get("arena"))) or not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
+			abort("Could not sync the race."); return
+		if game.is_royale() and not game.royale.valid_state(data.get("royale"),data.arena): abort("Invalid survival state."); return
+		if not game.is_arena():
+			if not game.arena.valid_state(data.get("combat"),false) or not Wire.integer(data.get("broken"),0,(1<<game.track.props.size())-1):
+				abort("Invalid roadside state."); return
+			game.track.apply_broken_mask(int(data.broken))
+			game.arena.apply_combat(data.combat)
+		if game.is_arena(): game.arena.apply_snapshot(data.arena)
+		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
+		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
+		if game.is_royale(): game.royale.apply_snapshot(data.royale)
+		for i in game.pickups.size():
+			var pickup: Dictionary=game.pickups[i]
+			if pickup.cooldown<=0 and data.pickups[i]>0: game.effects.ring(pickup.node.position,game.Supplies.tint(pickup.kind))
+			pickup.cooldown=data.pickups[i]/1000.0; pickup.node.visible=pickup.cooldown<=0
+		for beam in data.get("beams",[]):
+			var origin:=Vector3(beam[1],beam[2],beam[3])/100
+			var end:=Vector3(beam[4],beam[5],beam[6])/100
+			game.effects.combat_event(int(beam[7]),origin,end)
+			var cue: String=["shot","shot","pulse","wreck"][int(beam[7])]
+			game.sound.play_event(cue,origin.distance_to(game.player().position))
+		if data.phase=="results" and phase!="results":
+			apply_targets(1.0,true); phase="results"; game.finish_race()
+		elif phase!="results": game.state=data.phase
+		return
+	if kind=="vote" and host and phase in ["playing","results"]:
+		if game.state!="results" or votes.has(member): abort("Invalid rematch request."); return
+		votes.append(member); _rematch_if_ready(); return
+	if kind=="ping": return
+	abort("Unknown race message.")
+
+func apply_remote(car: Node3D) -> void:
+	var member: String=members[car.index]; var command: Dictionary=inputs.get(member,{})
+	if command.is_empty() or Time.get_ticks_msec()-command.at>350: game.controls.neutral(car)
+	else: Wire.apply_input(car,command.values)
+
+func tick_client(delta: float) -> void:
+	apply_targets(delta)
+	game.arena.display_client(delta)
+	if phase=="playing":
+		if game.state=="race" and not overlay and game.player().health>0:
+			if game.demo_auto:
+				game.player().bot_drive(game.cars,delta); game.player().bot.combat(game.player(),game.cars,delta)
+			else: game.controls.read(game.player(),game.camera)
+		else: game.controls.neutral(game.player())
+	if game.state=="race":
+		game.elapsed+=delta; game._update_conditions(game.elapsed)
+		if game.player().finish_time>=0: game.hud.message="Finished! Waiting for the other drivers…"
+	elif game.state=="countdown": game.countdown=maxf(0,game.countdown-delta)
+
+func apply_targets(delta: float, snap: bool = false) -> void:
+	if targets.size()!=game.cars.size(): return
+	var age: float=minf(0.1,(Time.get_ticks_msec()-received_at)/1000.0)
+	for i in targets.size():
+		var s: Array=targets[i]; var car: Node3D=game.cars[i]
+		var position = Vector3(s[0],s[1],s[2])/100.0; var velocity = Vector3(s[4],s[5],s[6])/100.0
+		var target = position+velocity*age if s[14]<0 else position
+		var reset_changed: bool=car.reset_serial!=int(s[24])
+		var immediate: bool=snap or reset_changed or car.position.distance_to(target)>6
+		car.position=target if immediate else car.position.lerp(target,1-exp(-delta*24))
+		var q=Quaternion(s[16]/10000.0,s[17]/10000.0,s[18]/10000.0,s[19]/10000.0).normalized()
+		car.basis=Basis(q if immediate else car.basis.get_rotation_quaternion().slerp(q,1-exp(-delta*24)))
+		car.angular_velocity=Vector3(s[20],s[21],s[22])/100.0
+		car.reset_serial=int(s[24]); car.missing_wheels=int(s[23]); car.physics.steer=s[25]/1000.0
+		car.transmission.gear=int(s[39]); car.transmission.rpm=float(s[40]); car.transmission.shift_left=s[41]/1000.0; car.transmission.reverse=s[42]==1
+		if not car.local_player: car.manual_gears=s[43]==1
+		if immediate: car.reset_physics_interpolation()
+		for n in 4:
+			var w: Dictionary=car.physics.wheels[n]
+			w.length=s[26+n]/1000.0; w.spin=wrapf(s[30+n]/1000.0+s[34+n]/100.0*age,-PI,PI); w.omega=s[34+n]/100.0
+			w.contact=(int(s[38])&(1<<n))!=0; w.missing=(int(s[23])&(1<<n))!=0
+			w.long_slip=s[44+n*3]/100.0; w.slip=s[45+n*3]/100.0; w.surface=int(s[46+n*3])
+			w.slip_ratio=w.long_slip/maxf(2,absf(velocity.dot(-car.basis.z)))
+			w.normal=car.basis.y; w.point=car.to_global(w.anchor-Vector3.UP*(w.length+w.radius))
+		car.last_forward=-car.basis.z
+		if not game.is_arena():
+			car.checkpoint=posmod(int(s[13]),game.track.COUNT)
+			car.offroad=not game.track.on_road(car.position,game.track.nearest(car.position,car.checkpoint),0.5)
+		car.linear_velocity=velocity
+		# Local aim reacts immediately; everyone else displays the authoritative turret.
+		if i!=game.player_index:
+			var pitch=s[58]/1000.0; car.aim=Vector3(sin(s[7]/1000.0)*cos(pitch),sin(pitch),cos(s[7]/1000.0)*cos(pitch)); car.aim_3d=s[59]==1
+		if car.death_serial<int(s[57]) and not snap: game.wreck_effect(position)
+		car.lives=int(s[56]); car.death_serial=int(s[57])
+		if car.local_player:
+			if s[8]<car.health: game.hud.portrait.set_mood("hurt")
+			elif s[14]>=0 and car.finish_time<0: game.hud.portrait.set_mood("victory")
+			if not game.is_arena() and int(s[60])>car.pickup_serial:
+				game.hud.announce_pickup(int(s[61])); game.sound.play_event("pickup")
+			elif game.is_arena() and (car.weapon_heat-s[11]>35 or ((int(s[12])&2)!=0 and not car.shield_item)): game.sound.play_event("pickup")
+		car.pickup_serial=int(s[60]); car.last_award=int(s[61])
+		car.health=s[8]; car.shield=s[9]; car.boost=s[10]; car.weapon_heat=s[11]; car.overheated=(int(s[12])&32)!=0
+		car.immune=1 if (int(s[12])&1)!=0 else 0; car.shield_item=(int(s[12])&2)!=0
+		car.ghost_time=1 if (int(s[12])&8)!=0 else 0
+		car.boosting=(int(s[12])&4)!=0; car.grounded=(int(s[12])&16)!=0
+		car.passed=s[13]; car.laps=0 if game.is_arena() else int(s[13])/game.track.COUNT; car.finish_time=s[14]/1000.0 if s[14]>=0 else -1
+		car.disabled_time=s[15]/1000.0; car.collision_layer=0 if car.health<=0 else 4 if car.ghost_time>0 else 2; car.update_visuals()
+
+func _process(delta: float) -> void:
+	if not online: return
+	var now = Time.get_ticks_msec()
+	if phase in ["waiting","preparing"]:
+		if now>deadline: abort("A driver could not prepare the track in time.")
+		return
+	for member in seen:
+		if now-seen[member]>8000: abort("Connection to a driver lost."); return
+	clock+=delta
+	if clock<(1.0/15.0 if host else 1.0/20.0): return
+	clock=0; sequence+=1
+	if host:
+		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
+		if game.is_arena(): packet.arena=game.arena.snapshot()
+		else:
+			packet.broken=game.track.broken_mask
+			packet.combat=game.arena.combat_snapshot()
+		if game.is_royale(): packet.royale=game.royale.snapshot()
+		for member in bridge.channels:
+			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
+		beams.clear()
+	else:
+		var packet = {"type":"input","round":round_id,"seq":sequence,"values":Wire.input(game.player())} if phase=="playing" else {"type":"ping","round":round_id}
+		if not bridge.send_latest(bridge.session.hostMember,"input",packet): abort("Could not send controls.")
+
+func shot(car: Node3D, from: Vector3, to: Vector3, event: int) -> void:
+	if not online or not host: return
+	if beams.size()>=12:
+		if event<game.effects.Shot.PULSE: return
+		var replaceable:=beams.find_custom(func(row): return row[7]<game.effects.Shot.PULSE)
+		if replaceable<0: return
+		beams.remove_at(replaceable)
+	beams.append([car.index,roundi(from.x*100),roundi(from.y*100),roundi(from.z*100),roundi(to.x*100),roundi(to.y*100),roundi(to.z*100),event])
+
+func rematch() -> void:
+	if not online or game.state!="results" or voted: return
+	voted=true; game.hud.message="Rematch: waiting for the other drivers…"
+	game.hud.menu("results")
+	if host: votes.append(bridge.session.self); _rematch_if_ready()
+	elif not bridge.send({"type":"vote","round":round_id}): abort("Could not request a rematch.")
+
+func _rematch_if_ready() -> void:
+	if votes.size()==members.size(): _prepare()
+
+func recover() -> void:
+	if host: game._recover(game.player())
+	elif not bridge.send({"type":"recover","round":round_id}): abort("Could not recover the car.")
+
+func leave() -> void:
+	online=false; phase="idle"; overlay=false; bridge.close_channel(); clear()
+
+func clear() -> void:
+	inputs.clear(); seen.clear(); ready_members.clear(); votes.clear(); targets.clear(); beams.clear(); voted=false
+
+func abort(reason: String) -> void:
+	info=reason; leave(); game.network_ended(reason)
+
+func _closed() -> void:
+	if online: online=false; phase="idle"; overlay=false; clear(); game.network_ended("Race interrupted. Return to the lobby to start again.")

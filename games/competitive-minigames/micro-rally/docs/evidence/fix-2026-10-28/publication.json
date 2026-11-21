@@ -1,0 +1,20 @@
+{
+  "version": "0.1.1",
+  "catalogue_revision": 38,
+  "anonymous_signed_catalogue_verified": true,
+  "source_revision": "7a77bbd36f015912cfff13a616d655d8f6a21803",
+  "packages": [
+    {
+      "architecture": "aarch64",
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.1/micro-rally-0.1.1-aarch64.tar.gz",
+      "sha256": "95825ebb26edd53c8600282152d34d3c091882041883ec2710ac57ac3f8bbf7a",
+      "size": 31797937
+    },
+    {
+      "architecture": "x86_64",
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.1/micro-rally-0.1.1-x86_64.tar.gz",
+      "sha256": "e95d7cac575037385992a1853ef70a2764a876dd8e25f4251096a4213969d4ca",
+      "size": 32584109
+    }
+  ]
+}

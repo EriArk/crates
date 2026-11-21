@@ -1,0 +1,10 @@
+{
+  "snapshot": "b78d1c62928f473a",
+  "exports": {
+    "micro-rally.arm64": "9d95f2d49a08c80b710edf29b578338d0ddc731d8611cf6c67ba406ce145e4eb",
+    "micro-rally.exe": "30b0f13419e951831cd40a964f8eae8cd576f28b8c47f103ee79ed15f5613a1d",
+    "micro-rally.x86_64": "4a3d5bdab4c397acb4d58854dfb011dabe39887acb836ef7d9ce5fa24abde864"
+  },
+  "published": false,
+  "installed_on_handhelds": false
+}

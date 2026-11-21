@@ -1,0 +1,11 @@
+{
+  "osm_ways": 53,
+  "osm_closed": true,
+  "route_points": 4096,
+  "named_sections": 42,
+  "plan_scale": 1.0036567116358934,
+  "max_distance_to_scaled_osm_polyline_m": 0.6756553450247996,
+  "p95_distance_to_scaled_osm_polyline_m": 0.30389940128155624,
+  "osm_digest_matches": true,
+  "limitation": "Distance is to the scaled source polyline, not to a surveyed road edge; elevation and structures are not validated by this check."
+}

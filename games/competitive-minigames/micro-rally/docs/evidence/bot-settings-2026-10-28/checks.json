@@ -1,0 +1,62 @@
+{
+  "bot": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "bot.log"
+  },
+  "cup_journey": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "cup_journey.log"
+  },
+  "cup_race": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "cup_race.log"
+  },
+  "cup": {
+    "result": "passed",
+    "snapshot": "1b30f91b65f2ef65",
+    "log": "cup.log"
+  },
+  "difficulty_behavior": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "difficulty_behavior.log"
+  },
+  "difficulty_race": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "difficulty_race.log"
+  },
+  "difficulty": {
+    "result": "passed",
+    "snapshot": "424369acdfd729a7",
+    "log": "difficulty.log"
+  },
+  "network": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "network.log"
+  },
+  "quarry_race": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "quarry_race.log"
+  },
+  "quarry": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "quarry.log"
+  },
+  "timeline": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "timeline.log"
+  },
+  "weather": {
+    "result": "passed",
+    "snapshot": "855bbec67b787a12",
+    "log": "weather.log"
+  }
+}

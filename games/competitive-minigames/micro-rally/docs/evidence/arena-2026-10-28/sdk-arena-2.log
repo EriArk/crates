@@ -1,0 +1,850 @@
+********* Start testing of HostIntegration *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 14.2.0), debian 13
+PASS   : HostIntegration::initTestCase()
+QINFO  : HostIntegration::groupRace(2) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(2) Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QINFO  : HostIntegration::groupRace(2)
+
+QINFO  : HostIntegration::groupRace(2)
+
+QINFO  : HostIntegration::groupRace(2) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(2) SDK Connecting to TrainerOS…
+
+QINFO  : HostIntegration::groupRace(2) SDK Connected to TrainerOS.
+
+QINFO  : HostIntegration::groupRace(2) RALLY attached
+
+QINFO  : HostIntegration::groupRace(2) SDK Connected to TrainerOS.
+RALLY attached
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+
+QINFO  : HostIntegration::groupRace(2)      GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+     at: looking_at (core/math/basis.cpp:1045)
+     GDScript backtrace (most recent call first):
+         [0] update_headlights (res://scripts/weather.gd:97)
+         [1] _process (res://scripts/main.gd:386)
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=rematch round=2 progress=4800
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=rematch round=2 progress=4800
+
+QINFO  : HostIntegration::groupRace(2) SDK Trainer changed or TrainerOS closed. Return to Lobby for a fresh game.
+
+QINFO  : HostIntegration::groupRace(2) RALLY session ended: Race interrupted. Return to the lobby to start again. / Trainer changed or TrainerOS closed. Return to Lobby for a fresh game.
+
+QINFO  : HostIntegration::groupRace(2) SDK A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(2) RALLY session ended: Race interrupted. Return to the lobby to start again. / A player left. Return to Lobby for a fresh round.
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=revoked round=2 progress=4800
+
+QINFO  : HostIntegration::groupRace(2) RALLY stage=revoked round=2 progress=4800
+
+QINFO  : HostIntegration::groupRace(2) RALLY SDK/TLS PASS players= 2 same result, rematch, profile revocation, retained lobby; terminal fixture= false
+QINFO  : HostIntegration::groupRace(2)
+QINFO  : HostIntegration::groupRace(2)
+PASS   : HostIntegration::groupRace(2)
+PASS   : HostIntegration::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 496704ms
+********* Finished testing of HostIntegration *********

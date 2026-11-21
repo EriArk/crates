@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ROYALE SOAK t=0.0 alive=16
+ROYALE SOAK t=57.0 alive=16
+ROYALE SOAK t=117.0 alive=10
+ROYALE SOAK t=177.0 alive=7
+ROYALE SOAK t=237.0 alive=7
+ROYALE SOAK t=297.0 alive=5
+ROYALE SOAK t=357.0 alive=5
+ROYALE SOAK t=417.0 alive=4
+ROYALE SOAK t=477.0 alive=3
+ROYALE SOAK t=537.0 alive=2
+ROYALE BATTLE {"alive":1,"distance":{"0":2428.54491974633,"1":479.147388654703,"2":550.475365817285,"3":411.14261570829,"4":431.617826989939,"5":1242.59495403632,"6":1666.26016993831,"7":3486.41800512688,"8":692.530878233287,"9":538.088683033362,"10":820.127343971049,"11":1507.39012403965,"12":472.288478396833,"13":627.061096562655,"14":3330.89161274695,"15":2395.86796151802},"elapsed":559.483333333153,"eliminations":[{"last_attacker":13,"position":"(-33.04127, 0.634168, 111.6739)","slot":3,"time":60.1},{"last_attacker":2,"position":"(-15.12574, 1.85974, 127.7427)","slot":12,"time":63.4},{"last_attacker":13,"position":"(-19.75545, 1.035187, 123.323)","slot":2,"time":82.1},{"last_attacker":7,"position":"(-233.8633, 12.55669, 17.05506)","slot":1,"time":82.5},{"last_attacker":8,"position":"(7.147816, 1.578051, 38.76292)","slot":4,"time":88.8},{"last_attacker":12,"position":"(-17.68742, 1.398087, 125.9265)","slot":8,"time":107.5},{"last_attacker":11,"position":"(64.79234, 10.60677, -18.92714)","slot":10,"time":120.5},{"last_attacker":12,"position":"(-15.94896, 1.710633, 127.2116)","slot":13,"time":120.7},{"last_attacker":11,"position":"(49.66553, 9.397992, -6.478268)","slot":9,"time":122.9},{"last_attacker":-1,"position":"(-36.29381, 0.554394, 117.786)","slot":11,"time":251.8},{"last_attacker":6,"position":"(2.184171, 11.1437, -14.92282)","slot":5,"time":253.5},{"last_attacker":7,"position":"(26.80321, 10.39527, -15.49553)","slot":6,"time":409.8},{"last_attacker":0,"position":"(-1.422341, 24.91291, -121.3627)","slot":7,"time":475.0},{"last_attacker":0,"position":"(25.92661, 16.10494, -82.34987)","slot":15,"time":490.1},{"last_attacker":0,"position":"(30.30333, 35.32011, -214.2151)","slot":14,"time":559.5}],"failures":0,"falls":0,"kills":[3,0,1,0,0,0,1,2,1,0,0,2,2,2,0,0],"places":[1,13,14,16,12,6,5,4,11,8,10,7,15,9,2,3],"reborn":0,"recoveries":[0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1]}

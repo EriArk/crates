@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+LAUNCH soft={ "slip": 0.00000001055671, "speed": 3.24728727340698, "distance": 3.13897323608398 } hard={ "slip": 3.45361719401609, "speed": 7.31002759933472, "distance": 6.71734380722046 } asphalt={ "slip": 0.65142376436661, "speed": 12.2852249145508, "distance": 10.3149881362915 }
+BRAKE asphalt/concrete/gravel/mud/grass=[4.39812040328979, 4.74135065078735, 4.86000776290894, 5.04515027999878, 7.69210577011108] wet_asphalt=5.57766819000244
+OFFROAD_FLAG speeds=[16.8498344421387, 16.8498344421387] CORNER lateral_forces=[813.329513549805, 709.298828125]
+TIRE TEST failures=0

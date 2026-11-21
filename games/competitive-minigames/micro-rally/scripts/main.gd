@@ -1,0 +1,521 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+extends Node3D
+var transit_locked := false
+const Supplies=preload("race_supplies.gd")
+const RoadsideProp = preload("roadside_prop.gd")
+const Track = preload("track.gd")
+const Tracks = preload("track_registry.gd")
+const Arena=preload("arena.gd")
+var arena=Arena.new()
+var royale=preload("royale.gd").new()
+var current_track = Tracks.VALLEY
+var quick_track = Tracks.VALLEY
+var quick_race_track = Tracks.VALLEY
+const Car = preload("car.gd")
+const Effects = preload("effects.gd")
+const Controls = preload("controls.gd")
+const Hud = preload("hud.gd")
+const Art = preload("art.gd")
+const Audio = preload("audio.gd")
+const Feedback = preload("race_feedback.gd")
+var feedback = Feedback.new()
+const Conditions = preload("stage_conditions.gd")
+const Weather = preload("weather.gd")
+const RaceSession = preload("race_session.gd")
+const CupFlow = preload("cup_flow.gd")
+var net = RaceSession.new()
+var cup = CupFlow.new()
+var player_index = 0
+var conditions = Conditions.new()
+var weather: Node3D
+var track: Node3D
+var cars: Array[Node3D] = []
+var effects: Node3D
+var camera: Camera3D
+var race_camera=preload("race_camera.gd").new()
+var tilt_shift: ShaderMaterial
+var optics: ColorRect
+var hud: Control
+var sound: Node
+var controls = Controls.new()
+var haptics = preload("haptics.gd").new()
+var pickups: Array = []
+var state = "menu"
+var elapsed = 0.0
+var countdown = 3.0
+var laps = 4
+const BotSettings = preload("bot_settings.gd")
+var race_bots = BotSettings.preset()
+var bot_count = 15
+var effect_clock = 0.0
+var show_metrics = false
+var demo_auto = false
+var capture_path = ""
+var capture_model_id = ""
+var capture_time = 0.0
+var capture_after = 10.0
+var arena_overview = false
+var screenshot_done = false
+var capture_results = false
+var performance_frames: Array[float] = []
+var current_wetness = 0.0
+var finish_deadline = INF
+var race_limit_seconds = 600.0 # Dirty Valley only; future cup stages own their limit.
+
+func _ready() -> void:
+	process_mode=Node.PROCESS_MODE_ALWAYS
+	Engine.max_fps=60
+	arena.game=self; royale.game=self; arena.load_settings()
+	net.game=self; add_child(net)
+	cup.game=self; add_child(cup)
+	add_child(haptics)
+	bot_count=cup.store.quick_bot_count()
+	race_camera.mode=cup.store.camera_mode()
+	get_viewport().size_changed.connect(_resolution)
+	_resolution()
+	var selected_conditions = conditions.descriptor()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--time="): selected_conditions.time=arg.trim_prefix("--time=")
+		elif arg.begins_with("--weather="): selected_conditions.weather=arg.trim_prefix("--weather=")
+		elif arg=="--nightfall": selected_conditions.timeline=[{"at":120.0,"time":"sunset","weather":"overcast"},{"at":300.0,"time":"night","weather":"rain"}]
+	if not conditions.configure(selected_conditions): push_warning("Invalid stage conditions: using clear daytime")
+	weather=Weather.new(); add_child(weather); weather.apply(conditions)
+	track=Tracks.create(current_track); add_child(track); track.build()
+	track.set_wetness(conditions.wetness())
+	effects=Effects.new(); effects.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(effects)
+	sound=Audio.new(); add_child(sound)
+	camera=Camera3D.new(); camera.fov=48; camera.near=0.15; camera.far=160; add_child(camera)
+	var optics_layer = CanvasLayer.new(); optics_layer.layer=0; add_child(optics_layer)
+	optics = ColorRect.new(); optics.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	optics.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tilt_shift=ShaderMaterial.new(); tilt_shift.shader=preload("res://shaders/tilt_shift.gdshader")
+	optics.material=tilt_shift; optics_layer.add_child(optics)
+	_spawn_cars(); _spawn_pickups()
+	var layer = CanvasLayer.new(); add_child(layer); hud=Hud.new(); hud.game=self; layer.add_child(hud)
+	for arg in OS.get_cmdline_user_args():
+		if arg=="--autodrive": demo_auto=true
+		elif arg=="--arena-overview": arena_overview=true
+		elif arg.begins_with("--track=") and Tracks.has_track(arg.trim_prefix("--track=")):
+			quick_track=arg.trim_prefix("--track="); load_track(quick_track); _spawn_cars(); _spawn_pickups()
+		elif arg=="--metrics": show_metrics=true
+		elif arg.begins_with("--capture="): capture_path=arg.trim_prefix("--capture=")
+		elif arg.begins_with("--capture-after="): capture_after=clampf(float(arg.trim_prefix("--capture-after=")),1,600)
+		elif arg=="--capture-results": capture_results=true
+		elif arg=="--tilt-off": race_camera.tilt_disabled=true
+		elif arg.begins_with("--camera-mode="): race_camera.select(clampi(int(arg.trim_prefix("--camera-mode=")),0,4))
+		elif arg.begins_with("--capture-car=") and arg.trim_prefix("--capture-car=") in cup.Rules.MODELS: capture_model_id=arg.trim_prefix("--capture-car=")
+		elif arg.begins_with("--bots="): bot_count=clampi(int(arg.trim_prefix("--bots=")),0,15); _spawn_cars()
+	if demo_auto: start_race()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--capture-at=") and not capture_path.is_empty() and not is_arena():
+			var at=posmod(int(arg.trim_prefix("--capture-at=")),track.COUNT)
+			state="race"; set_physics_process(false)
+			for car in cars:
+				car.checkpoint=posmod(at-car.index*2,track.COUNT); car.passed=car.checkpoint; car.laps=0
+				car.freeze=true; car.transform=track.road_pose(car.checkpoint,(car.index%3-1)*2.5)
+				car.reset_pending=false; car.ghost_time=0; car.immune=0; car.aim=-car.basis.z
+				car.update_visuals()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--county-view=") and is_royale() and not capture_path.is_empty():
+			var view=arg.trim_prefix("--county-view="); var pos=Vector3(-238,12,8)
+			if view=="ridge": pos=Vector3(-382,0,-133); pos.y=track.height_at(pos)
+			elif view=="workshops": pos=Vector3(217,0,140); pos.y=track.height_at(pos)
+			elif view=="bridge": pos=(track.bridges[1].a+track.bridges[1].b)/2
+			elif view=="underpass":
+				var lower=track.roads.filter(func(r):return r.kind=="lower")[0].points
+				for p in lower:
+					if track.bridge_at(p)==1: pos=p; break
+			elif view in ["storm","storm-deep"]:
+				elapsed=510; royale.update_zone(elapsed)
+				var best=INF
+				for id in track.graph.get_point_ids():
+					var candidate: Vector3=track.graph.get_point_position(id)
+					var score=absf(royale.outside(candidate)-(30 if view=="storm-deep" else 3))
+					if score<best: best=score; pos=candidate
+			state="race"; set_physics_process(false)
+			for car in cars:
+				car.freeze=true; car.reset_pending=false; car.ghost_time=0; car.immune=0
+			player().position=pos+Vector3.UP*0.9; player().update_visuals()
+	if arena_overview:
+		for node in track.find_children("*","GeometryInstance3D",true,false): node.visibility_range_end=0
+	_camera(1,true)
+	if "--physics-benchmark" in OS.get_cmdline_user_args():
+		net.platform_enabled=false
+		var benchmark=preload("physics_benchmark.gd").new(); benchmark.game=self; add_child(benchmark)
+	else: net.call_deferred("connect_platform")
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--screen=") and arg.trim_prefix("--screen=") in ["cup","cups","modes","settings","garage","main","audio","quick","bots","controls","camera","bindings","credits","cup_replace"]: hud.menu(arg.trim_prefix("--screen="))
+
+func is_arena() -> bool: return current_track in [Tracks.ARENA,Tracks.ROYALE]
+func is_royale() -> bool: return current_track==Tracks.ROYALE
+func event_mode() -> String: return "royale" if is_royale() else "arena" if is_arena() else "race"
+func view_car() -> Node3D: return royale.focus() if is_royale() or player().lives<=0 else player()
+
+func select_mode(mode: String) -> void:
+	cup.running=false
+	if quick_track not in [Tracks.ARENA,Tracks.ROYALE]: quick_race_track=quick_track
+	quick_track=Tracks.ROYALE if mode=="royale" else Tracks.ARENA if mode=="arena" else quick_race_track
+	load_track(quick_track); _spawn_cars(); _spawn_pickups(); arena.reset(); _camera(1,true); hud.menu("quick")
+
+func player() -> Node3D: return cars[player_index]
+
+func _resolution() -> void:
+	# UI retains display resolution. Only the 3D viewport has a 720p pixel budget.
+	var viewport = get_viewport(); var pixels = DisplayServer.window_get_size()
+	viewport.scaling_3d_scale=clampf(720.0/maxf(720,pixels.y),0.35,1.0)
+
+func set_conditions(data: Dictionary) -> bool:
+	if state!="menu" or not conditions.configure(data): return false
+	weather.apply(conditions); _update_conditions(0)
+	return true
+
+func _update_conditions(seconds: float) -> void:
+	current_wetness=conditions.wetness(seconds)
+	track.set_wetness(current_wetness); weather.set_sample(conditions.sample(seconds))
+	for car in cars: car.surface_grip=1.0-current_wetness*0.2
+
+func cycle_time() -> void:
+	var data = conditions.descriptor()
+	data.time=Conditions.TIMES[(Conditions.TIMES.find(data.time)+1)%Conditions.TIMES.size()]
+	if data.timeline.size()==2 and data.timeline[-1].time=="night" and data.timeline[-1].weather=="rain":
+		data.timeline[0].time="night" if data.time=="night" else "sunset"
+	elif data.timeline.size()==1 and data.timeline[0].weather=="clear": data.timeline[0].time=data.time
+	if set_conditions(data): hud.menu("conditions")
+
+func cycle_weather() -> void:
+	var data = conditions.descriptor()
+	data.weather=Conditions.WEATHERS[(Conditions.WEATHERS.find(data.weather)+1)%Conditions.WEATHERS.size()]
+	if set_conditions(data): hud.menu("conditions")
+
+func cycle_scenario() -> void:
+	if set_conditions(conditions.next_scenario()): hud.menu("conditions")
+
+func _spawn_cars() -> void:
+	for car in cars: remove_child(car); car.queue_free()
+	cars.clear()
+	for i in bot_count+1:
+		var car = Car.new(); car.index=i; car.local_player=i==player_index; car.human=net.online and i<net.members.size(); car.track=track; car.surface_grip=conditions.grip()
+		car.model_id=["hatchback-sports","suv","sedan-sports","race"][i%4]
+		if not net.online:
+			if cup.running: car.model_id=cup.Rules.model(cup.store.data.active.roster[i])
+			elif i==0: car.model_id=cup.Rules.model(cup.store.data.selected)
+		if i==player_index and not capture_path.is_empty() and not capture_model_id.is_empty(): car.model_id=capture_model_id
+		car.manual_gears=car.local_player and not demo_auto and cup.store.manual_gears()
+		if is_arena():
+			car.bot=preload("arena_bot.gd").new(); car.arena_mode=true; car.damaged.connect(arena.damaged)
+		car.bot.configure(race_bots)
+		car.process_mode=Node.PROCESS_MODE_PAUSABLE; add_child(car); cars.append(car)
+		if car.local_player and not net.online:
+			for paint in car.paint_materials: paint.set_shader_parameter("paint",cup.store.color())
+		if is_arena():
+			car.transform=track.spawn_pose(i); car.aim=-car.basis.z; car.freeze=state!="menu"
+			continue
+		var at = posmod(-4-(i/3)*3,track.COUNT); var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
+		car.checkpoint=at; car.passed=-posmod(-at,track.COUNT)
+		car.transform=track.road_pose(at,(float(i%3)-1)*2.8); car.aim=track.tangents[at]
+		car.freeze=state!="menu"
+
+	arena.reset()
+
+func _spawn_pickups() -> void:
+	for item in pickups: item.node.queue_free()
+	pickups.clear()
+	for i in track.pickup_spots.size():
+		var spot: Vector3=track.pickup_spots[i]
+		if is_arena():
+			_add_pickup(track.pickup_kind(i) if is_royale() else track.PICKUP_TYPES[i],spot)
+		else:
+			var at: int=track.nearest(spot)
+			var lane: float=maxf(2.35,track.half_width(at)*0.53)*(1 if i%2==0 else -1)
+			_add_pickup(Supplies.ROUTE[i%Supplies.ROUTE.size()],track.road_pose(at,lane,1.25).origin)
+			_add_pickup("mystery",track.road_pose(at,-lane,1.25).origin)
+
+func _add_pickup(kind: String, pos: Vector3) -> void:
+	var node:=Supplies.badge(kind)
+	node.position=pos
+	add_child(node)
+	pickups.append({"node":node,"kind":kind,"cooldown":0.0})
+
+func load_track(id: String) -> bool:
+	if not Tracks.has_track(id): return false
+	race_limit_seconds=Tracks.TRACKS[id].limit
+	if current_track==id: return true
+	# Stage changes are synchronous between races. Detach old physics immediately;
+	# start_race replaces cars/pickups before the next simulation step.
+	var previous=track
+	track=Tracks.create(id); add_child(track); track.build(); current_track=id
+	remove_child(previous); previous.queue_free()
+	track.set_wetness(conditions.wetness())
+	return true
+
+func track_title() -> String: return Tracks.TRACKS[current_track].title
+func cycle_track() -> void:
+	var ids=Tracks.TRACKS.keys().filter(func(id): return id not in [Tracks.ARENA,Tracks.ROYALE]); quick_track=ids[(ids.find(quick_track)+1)%ids.size()]
+	load_track(quick_track); effects.clear(); feedback.reset(); _spawn_cars(); _spawn_pickups(); _camera(1,true); hud.menu("quick")
+
+func start_race() -> void:
+	if net.online and not net.starting: net.rematch(); return
+	if net.online: cup.running=false
+	if not cup.running:
+		load_track(net.event_track if net.online else quick_track); laps=int(Tracks.TRACKS[current_track].get("quick_laps",4))
+	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
+	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
+	finish_deadline=INF
+	if not is_arena(): track.reset_props(not net.online or net.host)
+	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
+	controls.neutral_required=true
+	_spawn_cars(); _spawn_pickups(); arena.reset(); hud.panel.hide(); hud.message=""; hud.pickup_until=0; _camera(1,true)
+	weather.apply(conditions); _update_conditions(0)
+
+func car_title() -> String: return cup.Rules.title(cup.store.data.selected)
+func cycle_car() -> void:
+	var available=cup.Rules.CARS.filter(cup.store.owned)
+	cup.store.select_car(available[(available.find(cup.store.data.selected)+1)%available.size()]); _spawn_cars(); hud.menu("quick")
+func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("quick")
+func quit_game() -> void: haptics.stop(); get_tree().paused=false; get_tree().quit()
+
+func return_menu() -> void:
+	if not cup.pending_result.is_empty(): hud.menu("results"); return
+	if net.online: net.leave()
+	cup.running=false; laps=4; bot_count=cup.store.quick_bot_count()
+	player_index=0
+	load_track(quick_track)
+	if not is_arena(): track.reset_props(false)
+	arena.reset()
+	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
+	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
+	weather.apply(conditions); _update_conditions(0)
+
+func resume_race() -> void:
+	if net.online:
+		net.overlay=false; hud.panel.hide(); controls.neutral_required=true; return
+	get_tree().paused=false; state="race"; hud.panel.hide(); controls.neutral_required=true
+
+func recover_player() -> void:
+	if net.online: net.recover()
+	else: _recover(player())
+
+func network_ended(reason: String) -> void:
+	return_menu(); hud.message=reason; hud.menu("disconnected")
+
+func network_pause() -> void:
+	net.overlay=not net.overlay; controls.neutral(player()); controls.neutral_required=true
+	if net.overlay: hud.menu("net_pause")
+	else: hud.panel.hide()
+
+func _recover(car: Node3D) -> bool:
+	if is_arena(): return arena.recover(car)
+	if car.finish_time>=0 or car.lives<=0 or car.reset_pending or car.recovery_lock>0: return false
+	for back in [0,2,4,6]:
+		var at: int=posmod(car.checkpoint-back,track.COUNT)
+		var side = Vector3(-track.tangents[at].z,0,track.tangents[at].x)
+		for lane in [0.0,-3.1,3.1]:
+			var recovery_pose: Transform3D=track.road_pose(at,lane)
+			var pos: Vector3=recovery_pose.origin
+			var occupied = false
+			for other in cars:
+				if other==car or other.finish_time>=0 or other.health<=0: continue
+				var other_pos: Vector3=other.reset_pose.origin if other.reset_pending else other.position
+				if other_pos.distance_to(pos)<4.2: occupied=true; break
+			if occupied: continue
+			var basis = recovery_pose.basis
+			car.recovery_count+=1
+			if car.position.y< -5: car.fall_count+=1
+			car.checkpoint=at; car.passed-=back; car.laps=car.passed/track.COUNT
+			if car.health<=0: car.health=100; car.disabled_time=0; car.freeze=false; car.cool_weapon()
+			car.reset_at(Transform3D(basis,pos))
+			return true
+	car.recovery_lock=0.25
+	return false
+
+func _input(event: InputEvent) -> void:
+	if state in ["race","countdown"] and not net.overlay and race_camera.pressed(event,cup.store.camera_button()):
+		cycle_camera(); get_viewport().set_input_as_handled(); return
+	if (is_royale() or player().lives<=0) and state=="race" and player().health<=0 and not net.overlay:
+		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+			royale.cycle_spectator(-1 if event.is_action_pressed("ui_left") else 1); get_viewport().set_input_as_handled(); return
+	if event.is_action_pressed("ui_cancel"):
+		if (state=="pause" or net.overlay) and hud.menu_mode not in ["pause","net_pause"]: hud.back(); get_viewport().set_input_as_handled(); return
+		if net.online and net.overlay: resume_race(); return
+		if state=="menu":
+			hud.back(); get_viewport().set_input_as_handled(); return
+		elif state=="pause": resume_race(); return
+	if event is InputEventMouseMotion: controls.mouse_aim=true
+	var pause_pressed = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode==KEY_ESCAPE) or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_START)
+	if pause_pressed:
+		if net.online and state in ["race","countdown"]: network_pause(); return
+		if state=="race": state="pause"; controls.neutral(player()); get_tree().paused=true; hud.menu("pause")
+		elif state=="pause": resume_race()
+		elif state=="menu": hud.menu("main")
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode==KEY_R and state=="race": recover_player()
+		elif event.physical_keycode==KEY_F3: show_metrics=not show_metrics
+
+func _notification(what: int) -> void:
+	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and state=="race" and not demo_auto:
+		if net.online:
+			if not net.overlay: network_pause()
+			return
+		controls.neutral(player()); state="pause"; get_tree().paused=true; hud.menu("pause")
+
+func _physics_process(delta: float) -> void:
+	if transit_locked and not net.online:return
+	if net.online and not net.host: net.tick_client(delta); return
+	if state=="countdown":
+		countdown-=delta
+		if countdown<=0:
+			state="race"
+			for car in cars: car.freeze=false
+		return
+	if state not in ["race","menu"]: return
+	if is_arena(): arena.tick(delta); return
+	if state=="race": elapsed+=delta
+	_update_conditions(elapsed if state=="race" else 0.0)
+	effect_clock+=delta
+	for car in cars:
+		if car.finish_time>=0 or car.lives<=0: continue
+		if car.health<=0:
+			car.register_wreck(); car.disabled_time=maxf(0,car.disabled_time-delta)
+			car.recovery_lock=maxf(0,car.recovery_lock-delta)
+			if car.disabled_time<=0: _recover(car)
+			continue
+		if net.online and car.human and not car.local_player: net.apply_remote(car)
+		elif car.local_player and net.online and net.overlay: controls.neutral(car)
+		elif car.local_player and state=="race" and not demo_auto: controls.read(car,camera)
+		else:
+			car.bot_drive(cars,delta); car.bot.combat(car,cars,delta)
+		car.tick(delta)
+		if car.overturned_time>2.0 or car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
+		if car.firing and state=="race": arena.shoot(car)
+		if car.laps>=laps and car.finish_time<0 and state=="race":
+			car.finish_time=elapsed; controls.neutral(car); car.freeze=true; car.collision_layer=0; car.collision_mask=1
+			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
+			if car.local_player:
+				hud.portrait.set_mood("victory")
+				if not net.online:
+					finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
+					if not cup.running: _save_best()
+	if state=="race":
+		arena.update_rockets(delta)
+		if cars.all(func(c): return c.finish_time>=0 or c.lives<=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
+			finish_race(); return
+		if player().finish_time>=0: hud.message="Finished! Other drivers have %d s left" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
+	if state!="race": return
+	for pickup in pickups:
+		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
+		if pickup.cooldown>0: continue
+		for car in cars:
+			if car.finish_time>=0 or car.health<=0: continue
+			if car.position.distance_squared_to(pickup.node.position)<4.84 and Supplies.collect(car,pickup.kind):
+				car.bot.pickups_collected+=1
+				pickup.cooldown=8; pickup.node.hide()
+				effects.ring(pickup.node.position,Supplies.tint(pickup.kind))
+				if car.local_player: hud.announce_pickup(car.last_award); sound.play_event("pickup")
+				break
+	if effect_clock>0.09: effect_clock=0
+
+func finish_race() -> void:
+	state="results"; get_tree().paused=not net.online; hud.message=""
+	if net.online: net.phase="results"; net.overlay=false
+	for car in cars:
+		car.did_not_finish=not is_arena() and car.finish_time<0; controls.neutral(car); car.freeze=true
+	if cup.running: cup.finish()
+	hud.menu("results")
+
+func _shoot(car: Node3D) -> void:
+	if not car.begin_shot(): return
+	car.bot.shots+=1
+	var direction=arena.Aim.resolve(car,cars,car.assist_level if car.human or car.local_player and not demo_auto else 0) if is_arena() or car.aim_3d else car.aim
+	var from: Vector3=car.muzzle_origin()
+	var to: Vector3=from+direction*34
+	var query = PhysicsRayQueryParameters3D.create(from,to,3|RoadsideProp.LAYER,[car.get_rid()])
+	query.collide_with_areas=true
+	var hit = get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		to=hit.position
+		if hit.collider is RoadsideProp: hit.collider.strike()
+		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
+			hit.collider.take_damage(Car.BULLET_DAMAGE,direction*35,hit.position,car.index)
+			if hit.collider.local_player: hud.portrait.set_mood("hurt")
+	var event: int=effects.Shot.HIT if not hit.is_empty() else effects.Shot.TRACER
+	effects.combat_event(event,from,to); net.shot(car,from,to,event)
+	sound.play_event("shot",car.position.distance_to(player().position))
+
+func _process(delta: float) -> void:
+	if cars.is_empty(): return
+	if is_royale(): track.roof_cutaway=race_camera.mode<=race_camera.Mode.WIDE
+	track.update_view(view_car().position)
+	_camera(delta)
+	if is_royale(): royale.visual_update(delta)
+	weather.update(delta,player().position,state in ["menu","race","countdown"])
+	weather.update_headlights(cars,delta,player_index)
+	sound.update(self,delta); feedback.update(self,delta); haptics.update(self,delta)
+	capture_time+=delta
+	if state=="race" and not capture_path.is_empty(): performance_frames.append(delta)
+	if not capture_path.is_empty() and (state=="results" if capture_results else capture_time>capture_after) and not screenshot_done:
+		screenshot_done=true
+		await RenderingServer.frame_post_draw
+		var error = get_viewport().get_texture().get_image().save_png(capture_path)
+		print("CAPTURE ",error," ",capture_path)
+		print("METRICS ",JSON.stringify({"frames":performance_frames.size(),"cars":cars.size(),"fps":Engine.get_frames_per_second(),"renderer":RenderingServer.get_current_rendering_method(),"scale":get_viewport().scaling_3d_scale,"player_position":str(player().position),"passed":player().passed}))
+		get_tree().quit()
+
+func _camera(delta: float, snap: bool = false) -> void:
+	var overhead: bool=(arena_overview and is_arena()) or race_camera.mode<=race_camera.Mode.WIDE
+	if camera.get_cull_mask_value(Supplies.OVERHEAD_MARKER_LAYER)!=overhead:
+		camera.set_cull_mask_value(Supplies.OVERHEAD_MARKER_LAYER,overhead)
+	if arena_overview and is_arena():
+		camera.position=Vector3(0,850,650) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=1800 if is_royale() else 700
+		tilt_shift.set_shader_parameter("strength",0.0)
+		return
+	race_camera.update(camera,view_car(),tilt_shift,delta,snap)
+	optics.visible=not race_camera.tilt_disabled and race_camera.mode<=race_camera.Mode.WIDE
+
+func cycle_camera(step: int=1) -> void:
+	race_camera.select(race_camera.mode+step)
+	if not cup.store.set_camera_option("camera_mode",race_camera.mode):
+		hud.camera_notice="View changed · could not save preference"
+	else: hud.camera_notice=""
+	_camera(0,true)
+
+func standings() -> Array:
+	if is_arena(): return arena.rules.ranked().map(func(row): return cars[int(row.slot)])
+	var result = cars.duplicate()
+	result.sort_custom(func(a,b):
+		if a.finish_time>=0 and b.finish_time>=0: return a.finish_time<b.finish_time
+		if a.finish_time>=0: return true
+		if b.finish_time>=0: return false
+		return a.passed>b.passed)
+	return result
+
+func record_section() -> String:
+	return "records/"+conditions.record_key()+"/"+BotSettings.key(race_bots)+"/count/"+str(bot_count)
+
+func _save_best() -> void:
+	# Separate track records; preserve the original Valley file and legacy result.
+	var path="user://valley.cfg" if current_track==Tracks.VALLEY else "user://"+current_track+".cfg"
+	var file = ConfigFile.new(); file.load(path)
+	var section = record_section()
+	var previous = float(file.get_value(section,"best_seconds",INF))
+	if elapsed<previous: file.set_value(section,"best_seconds",elapsed)
+	file.set_value(section,"completed_runs",int(file.get_value(section,"completed_runs",0))+1)
+	file.set_value(section,"conditions",conditions.descriptor())
+	file.set_value(section,"bots",race_bots)
+	file.set_value(section,"bot_count",bot_count)
+	if file.save(path+".pending")==OK:
+		DirAccess.rename_absolute(path+".pending",path)
+
+func wreck_effect(pos: Vector3) -> void:
+	var distance=minf(pos.distance_to(view_car().position),pos.distance_to(player().position))
+	if distance<80: effects.wreck(pos)
+	sound.play_event("wreck",distance)
+
+func transit_session() -> Node:
+	return net
+
+func transit_avatar_ready() -> bool:
+	return hud.portrait.startup_resolved
+
+func set_transit_controls(locked: bool) -> void:
+	transit_locked=locked
+	controls.neutral_required=true

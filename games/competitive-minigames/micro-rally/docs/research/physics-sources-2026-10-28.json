@@ -1,0 +1,181 @@
+{
+  "date": "2026-10-28",
+  "kind": "source-reading-not-runtime-validation",
+  "local_baseline": "3b9a76ba50e458a4a07f829823aafffc252d2af1",
+  "scope": "Micro Rally suspension, tire contact, track construction, rollover and wheel damage research",
+  "note": "Pinned upstream revisions and blob identities. No third-party source imported. Some files were read as targeted ranges. Licenses and assets require file-specific handling when reused.",
+  "repositories": [
+    {
+      "repository": "stuntrally/stuntrally3",
+      "revision": "fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8",
+      "files": [
+        {
+          "path": "src/vdrift/carsuspension.cpp",
+          "url": "https://github.com/stuntrally/stuntrally3/blob/fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8/src/vdrift/carsuspension.cpp",
+          "blob_sha": "2dc882d68a756709707bea8de129a93c1a8d29ba"
+        },
+        {
+          "path": "src/vdrift/tracksurface.h",
+          "url": "https://github.com/stuntrally/stuntrally3/blob/fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8/src/vdrift/tracksurface.h",
+          "blob_sha": "560752e0f4e3b5965ce6f30f1a3910f49b5f0887"
+        },
+        {
+          "path": "docs/Editor.md",
+          "url": "https://github.com/stuntrally/stuntrally3/blob/fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8/docs/Editor.md",
+          "blob_sha": "8c320e4d4bb7af3d34f5aef2184cba4641293869"
+        },
+        {
+          "path": "src/road/Road_Prepass.cpp",
+          "url": "https://github.com/stuntrally/stuntrally3/blob/fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8/src/road/Road_Prepass.cpp",
+          "blob_sha": "f9c45afb7802fb670abb564d4daa0a5b6bc3c4e7"
+        },
+        {
+          "path": "src/road/Road_Mesh.cpp",
+          "url": "https://github.com/stuntrally/stuntrally3/blob/fe3ecd73fff671c3d75ecaeadccea5c5e6afe0d8/src/road/Road_Mesh.cpp",
+          "blob_sha": "8d7391cb431a0d2b0574d9950f940a5a5aad28db"
+        }
+      ]
+    },
+    {
+      "repository": "VDrift/vdrift",
+      "revision": "f835edaef1abe586b8d5bebeaa8c41f85e6dbea4",
+      "files": [
+        {
+          "path": "src/physics/wheelconstraint.h",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/src/physics/wheelconstraint.h",
+          "blob_sha": "37bc5f7b71574e46f44c79a5abc5525c300ab3f6"
+        },
+        {
+          "path": "src/physics/cardynamics.cpp",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/src/physics/cardynamics.cpp",
+          "blob_sha": "ef86ef743d636faecc989b745106f7aae597fb1f"
+        },
+        {
+          "path": "src/physics/fracturebody.cpp",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/src/physics/fracturebody.cpp",
+          "blob_sha": "c4c16f4d195dfd2b6d8a96cd19e1dcc76b66fe54"
+        },
+        {
+          "path": "src/bezier.cpp",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/src/bezier.cpp",
+          "blob_sha": "9597083fcef7308d74b7b606f002793db499b66d"
+        },
+        {
+          "path": "docs/Creating_tracks.md",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/docs/Creating_tracks.md",
+          "blob_sha": "bea02dd380041fe34897e4ed829e6451f46ccce2"
+        },
+        {
+          "path": "docs/Numerical_integration.md",
+          "url": "https://github.com/VDrift/vdrift/blob/f835edaef1abe586b8d5bebeaa8c41f85e6dbea4/docs/Numerical_integration.md",
+          "blob_sha": "2514954df3bbb6010663c9b5d5482598e7f87d16"
+        }
+      ]
+    },
+    {
+      "repository": "jrouwe/JoltPhysics",
+      "revision": "5d5275c38074c44b14f38b85bc9c73573078c808",
+      "files": [
+        {
+          "path": "Jolt/Physics/Vehicle/VehicleCollisionTester.h",
+          "url": "https://github.com/jrouwe/JoltPhysics/blob/5d5275c38074c44b14f38b85bc9c73573078c808/Jolt/Physics/Vehicle/VehicleCollisionTester.h",
+          "blob_sha": "60cabb00d1e42e4cef8f962f484d9842546aeb39"
+        },
+        {
+          "path": "Samples/Tests/Vehicle/VehicleConstraintTest.cpp",
+          "url": "https://github.com/jrouwe/JoltPhysics/blob/5d5275c38074c44b14f38b85bc9c73573078c808/Samples/Tests/Vehicle/VehicleConstraintTest.cpp",
+          "blob_sha": "e60733501ff581199ab36d4e635da0b1b56c816c"
+        },
+        {
+          "path": "Jolt/Physics/Vehicle/WheeledVehicleController.cpp",
+          "url": "https://github.com/jrouwe/JoltPhysics/blob/5d5275c38074c44b14f38b85bc9c73573078c808/Jolt/Physics/Vehicle/WheeledVehicleController.cpp",
+          "blob_sha": "8f9448ede11da751afc3535d079a010cf15bc263"
+        },
+        {
+          "path": "Jolt/Physics/Vehicle/WheeledVehicleController.h",
+          "url": "https://github.com/jrouwe/JoltPhysics/blob/5d5275c38074c44b14f38b85bc9c73573078c808/Jolt/Physics/Vehicle/WheeledVehicleController.h",
+          "blob_sha": "7178151f3c0961777b6fd2271d6e1e86c97004b3"
+        }
+      ]
+    },
+    {
+      "repository": "Dechode/Godot-Advanced-Vehicle",
+      "revision": "e055cc37f374add4bcec4d8395888fa2f8ecc5a4",
+      "files": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/Dechode/Godot-Advanced-Vehicle/blob/e055cc37f374add4bcec4d8395888fa2f8ecc5a4/README.md",
+          "blob_sha": "bce1d878ca4d640a32f0b79e2ba42cc66b578add"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/Dechode/Godot-Advanced-Vehicle/blob/e055cc37f374add4bcec4d8395888fa2f8ecc5a4/LICENSE",
+          "blob_sha": "e93609259a8a36369724220bdaa28c30ca6180fc"
+        },
+        {
+          "path": "scenes/vehicle/wheel_suspension.gd",
+          "url": "https://github.com/Dechode/Godot-Advanced-Vehicle/blob/e055cc37f374add4bcec4d8395888fa2f8ecc5a4/scenes/vehicle/wheel_suspension.gd",
+          "blob_sha": "293d9590c11aca090722fbddb88d894b7141de8d"
+        },
+        {
+          "path": "scenes/vehicle/tire_models/brush_tire_model.gd",
+          "url": "https://github.com/Dechode/Godot-Advanced-Vehicle/blob/e055cc37f374add4bcec4d8395888fa2f8ecc5a4/scenes/vehicle/tire_models/brush_tire_model.gd",
+          "blob_sha": "0e00542dac0a360b4968e59270ff1114a2369208"
+        }
+      ]
+    },
+    {
+      "repository": "TheDuckCow/godot-road-generator",
+      "revision": "7cbefde04e57a84499c5d8ba636c9cb4fd7d22c0",
+      "files": [
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/TheDuckCow/godot-road-generator/blob/7cbefde04e57a84499c5d8ba636c9cb4fd7d22c0/LICENSE",
+          "blob_sha": "0e562ac83a3611d4bcd702a9a496bef6aa5ced6c"
+        },
+        {
+          "path": "addons/road-generator/nodes/road_segment.gd",
+          "url": "https://github.com/TheDuckCow/godot-road-generator/blob/7cbefde04e57a84499c5d8ba636c9cb4fd7d22c0/addons/road-generator/nodes/road_segment.gd",
+          "blob_sha": "0923fe07984ea91407a6b6b4adfe88dfe082656d"
+        },
+        {
+          "path": "addons/road-generator/connectors/terrain3d_road_connector.gd",
+          "url": "https://github.com/TheDuckCow/godot-road-generator/blob/7cbefde04e57a84499c5d8ba636c9cb4fd7d22c0/addons/road-generator/connectors/terrain3d_road_connector.gd",
+          "blob_sha": "4df4003b9fc50ecc53f93db9f431782f982907fc"
+        }
+      ]
+    },
+    {
+      "repository": "RigsOfRods/rigs-of-rods",
+      "revision": "9e21d4b0c52cbd11c45d2744b275af311a13a2de",
+      "files": [
+        {
+          "path": "COPYING",
+          "url": "https://github.com/RigsOfRods/rigs-of-rods/blob/9e21d4b0c52cbd11c45d2744b275af311a13a2de/COPYING",
+          "blob_sha": "ea09e3734b6a49a0c0c4f123d0451db78522408c"
+        },
+        {
+          "path": "source/main/physics/ActorForcesEuler.cpp",
+          "url": "https://github.com/RigsOfRods/rigs-of-rods/blob/9e21d4b0c52cbd11c45d2744b275af311a13a2de/source/main/physics/ActorForcesEuler.cpp",
+          "blob_sha": "c45ffe8e195d51aa4cb511734df0316f2d3c65a2"
+        }
+      ]
+    },
+    {
+      "repository": "supertuxkart/stk-code",
+      "revision": "e3af6a6253cb836a859dc7ed28a7408f0a15167b",
+      "files": [
+        {
+          "path": "src/physics/btKart.cpp",
+          "url": "https://github.com/supertuxkart/stk-code/blob/e3af6a6253cb836a859dc7ed28a7408f0a15167b/src/physics/btKart.cpp",
+          "blob_sha": "1f98071d682a23113bfaa2eb83d9e59455637b1e"
+        },
+        {
+          "path": "src/karts/skidding.cpp",
+          "url": "https://github.com/supertuxkart/stk-code/blob/e3af6a6253cb836a859dc7ed28a7408f0a15167b/src/karts/skidding.cpp",
+          "blob_sha": "514e6d22e134c6014eb1640ffdf16aad6e22da87"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "weapon": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "weapon.log"
+  },
+  "surface": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "surface.log"
+  },
+  "drive": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "drive.log"
+  },
+  "journey": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "journey.log"
+  },
+  "weather": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "weather.log"
+  },
+  "timeline": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "timeline.log"
+  },
+  "bot": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "bot.log"
+  },
+  "recovery": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "recovery.log"
+  },
+  "race": {
+    "status": "passed",
+    "run": "rally-physics-contact4-20261028",
+    "snapshot": "86d8107dfec16dad",
+    "log": "race.log"
+  },
+  "network": {
+    "status": "passed",
+    "run": "rally-physics-release-20261028",
+    "snapshot": "219cc30bb5539d5e",
+    "log": "network.log"
+  },
+  "cup": {
+    "status": "passed",
+    "run": "rally-physics-final-20261028",
+    "log": "cup.log"
+  },
+  "cup_journey": {
+    "status": "passed",
+    "run": "rally-physics-delivery-20261028",
+    "log": "cup_journey.log"
+  },
+  "cup_race": {
+    "status": "passed",
+    "run": "rally-physics-contact4-20261028",
+    "snapshot": "86d8107dfec16dad",
+    "log": "cup_race.log"
+  },
+  "audio_feedback": {
+    "status": "passed",
+    "run": "rally-physics-release-20261028",
+    "snapshot": "219cc30bb5539d5e",
+    "log": "audio_feedback.log"
+  },
+  "audio_mix": {
+    "status": "passed",
+    "run": "rally-physics-delivery-20261028",
+    "log": "audio_mix.log"
+  },
+  "physics": {
+    "status": "passed",
+    "run": "rally-physics-release-20261028",
+    "snapshot": "219cc30bb5539d5e",
+    "log": "physics.log"
+  }
+}

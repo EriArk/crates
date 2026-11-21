@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 4.5 (Core Profile) Mesa 25.0.7-2+deb13u1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 19.1.7, 256 bits)
+
+CAPTURE 0 /work/exports/c1a13897eab8334e/capture-dirty-valley.4-gl_compatibility-at30-camera4-hatchback-sports.png
+METRICS {"cars":16,"fps":1.0,"frames":15,"passed":30,"player_position":"(-40.76196, 2.710834, 34.18155)","renderer":"gl_compatibility","scale":1.0}
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)

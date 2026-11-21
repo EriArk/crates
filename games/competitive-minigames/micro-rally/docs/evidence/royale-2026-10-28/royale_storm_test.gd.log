@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+STORM {"alive":16,"phase":0,"time":0.0}
+STORM {"alive":16,"phase":0,"time":57.0}
+STORM {"alive":16,"phase":1,"time":117.0}
+STORM {"alive":16,"phase":1,"time":177.0}
+STORM {"alive":16,"phase":2,"time":237.0}
+STORM {"alive":16,"phase":3,"time":297.0}
+STORM {"alive":16,"phase":3,"time":357.0}
+STORM {"alive":16,"phase":4,"time":417.0}
+STORM {"alive":16,"phase":5,"time":477.0}
+STORM {"alive":16,"phase":5,"time":537.0}
+STORM {"alive":16,"phase":7,"time":597.0}
+STORM {"alive":12,"phase":8,"time":657.0}
+ROYALE STORM {"alive":0,"elapsed":661.58333333306,"failures":0,"falls":0,"phase":8,"places":[3,15,13,5,2,10,2,12,6,9,8,4,7,16,14,11]}

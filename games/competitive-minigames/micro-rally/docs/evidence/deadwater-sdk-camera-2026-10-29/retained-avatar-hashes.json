@@ -1,0 +1,14 @@
+{
+  "from_snapshot": "41e99c92f4e34e12",
+  "to_snapshot": "9d843b9607213bf3",
+  "unchanged": {
+    "addons/traineros/avatar-sdk.json": "801d6125fc10583f7436b5d98c747481636200b87e5bacdb708e4790146d42b3",
+    "addons/traineros/avatar_client.gd": "5dd50648c18d9ba5641dd3b322ac89f053c89475234581cc62846765826c05dc",
+    "addons/traineros/avatar_exchange.gd": "a69fcf73b5b7fe1fec26511b90d68b1a19c6c358bdf07d1f9425c7ac70405e02",
+    "addons/traineros/avatar_portrait.gd": "fa0df49b9462e0afeb088ea8ee85fd3ea7b7f6e696a234cd793f5b026609a7d1",
+    "addons/traineros/avatar_presenter.gd": "61cf372b2af9373eb3060d18b57cb08935f4cb2ed35612d54cb8fa35a5f1e777",
+    "scripts/driver_feedback.gd": "8eea4eb540f1dca7a19f58e96275492fa8870ac31b3cf1429fca09f2ac1cdd70",
+    "scripts/driver_rig.gd": "2dfbbe73376e13810152364c6e4a21abb4fe43d54d43b926d7aff61c42fdc4a3",
+    "tests/avatar_driver_test.gd": "0571d5e6819be345d9e467a49549db1bdfe41ff52c09ac0f45ad83dcf9348ce0"
+  }
+}

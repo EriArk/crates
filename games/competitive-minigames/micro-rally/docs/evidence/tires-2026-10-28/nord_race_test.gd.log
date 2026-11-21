@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+NORD PROGRESS 0 position=4092 / 4096
+NORD PROGRESS 296.983333333392 position=856 / 4096
+NORD PROGRESS 596.983333333119 position=1681 / 4096
+NORD PROGRESS 896.983333332846 position=2511 / 4096
+NORD PROGRESS 1196.98333333257 position=3327 / 4096
+NORD PROGRESS 1496.9833333323 position=0 / 4096
+NORD RACE {"cars":[{"finish":1453.08333333234,"progress":4096,"recoveries":14,"slot":0},{"finish":1446.13333333235,"progress":4096,"recoveries":13,"slot":1},{"finish":1404.51666666572,"progress":4096,"recoveries":0,"slot":2},{"finish":1442.76666666568,"progress":4096,"recoveries":17,"slot":3},{"finish":1449.78333333234,"progress":4096,"recoveries":13,"slot":4},{"finish":1414.06666666571,"progress":4096,"recoveries":3,"slot":5},{"finish":-1.0,"progress":807,"recoveries":17,"slot":6},{"finish":1444.93333333235,"progress":4096,"recoveries":16,"slot":7},{"finish":1474.81666666565,"progress":4096,"recoveries":23,"slot":8},{"finish":1451.79999999901,"progress":4096,"recoveries":16,"slot":9},{"finish":1434.59999999902,"progress":4096,"recoveries":7,"slot":10},{"finish":1472.79999999899,"progress":4096,"recoveries":12,"slot":11},{"finish":1426.39999999903,"progress":4096,"recoveries":11,"slot":12},{"finish":1456.71666666567,"progress":4096,"recoveries":18,"slot":13},{"finish":1425.4666666657,"progress":4096,"recoveries":6,"slot":14},{"finish":1454.18333333234,"progress":4096,"recoveries":17,"slot":15}],"elapsed":1633.09999999884,"falls":0,"finishers":15,"length":20881.7868556976,"max_scenery":9,"pass":true,"player_finish":1453.08333333234,"recoveries":203,"wins":0}

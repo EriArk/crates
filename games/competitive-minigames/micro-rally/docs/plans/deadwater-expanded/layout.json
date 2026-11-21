@@ -1,0 +1,487 @@
+{
+  "status": "design-only; not loaded by the game",
+  "bounds_metres": [
+    900,
+    700
+  ],
+  "coordinates": "x east, z south, y height; artistic heights, not surveyed terrain",
+  "nodes": {
+    "W": [
+      45,
+      345,
+      12
+    ],
+    "A": [
+      175,
+      365,
+      12
+    ],
+    "B": [
+      305,
+      390,
+      12
+    ],
+    "C": [
+      435,
+      365,
+      12
+    ],
+    "D": [
+      570,
+      345,
+      12
+    ],
+    "E": [
+      710,
+      380,
+      12
+    ],
+    "F": [
+      850,
+      390,
+      12
+    ],
+    "H0": [
+      60,
+      280,
+      16
+    ],
+    "H1": [
+      175,
+      295,
+      16
+    ],
+    "H2": [
+      305,
+      315,
+      16
+    ],
+    "H3": [
+      435,
+      295,
+      17
+    ],
+    "H4": [
+      570,
+      275,
+      20
+    ],
+    "H5": [
+      710,
+      305,
+      17
+    ],
+    "H6": [
+      840,
+      320,
+      15
+    ],
+    "N0": [
+      65,
+      175,
+      28
+    ],
+    "N1": [
+      200,
+      150,
+      40
+    ],
+    "N2": [
+      335,
+      195,
+      29
+    ],
+    "N3": [
+      470,
+      155,
+      33
+    ],
+    "N4": [
+      610,
+      140,
+      36
+    ],
+    "N5": [
+      770,
+      175,
+      35
+    ],
+    "N6": [
+      855,
+      235,
+      24
+    ],
+    "N7": [
+      825,
+      90,
+      40
+    ],
+    "S0": [
+      65,
+      500,
+      12
+    ],
+    "S1": [
+      230,
+      590,
+      12
+    ],
+    "S2": [
+      390,
+      560,
+      12
+    ],
+    "S3": [
+      540,
+      475,
+      12
+    ],
+    "S4": [
+      700,
+      490,
+      12
+    ],
+    "S5": [
+      850,
+      480,
+      12
+    ],
+    "Q0": [
+      100,
+      640,
+      25
+    ],
+    "Q1": [
+      315,
+      660,
+      24
+    ],
+    "Q2": [
+      500,
+      625,
+      27
+    ],
+    "Q3": [
+      665,
+      620,
+      27
+    ],
+    "Q4": [
+      825,
+      625,
+      25
+    ]
+  },
+  "roads": [
+    {
+      "name": "Miner Street",
+      "kind": "main",
+      "nodes": [
+        "W",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ]
+    },
+    {
+      "name": "High Street",
+      "kind": "residential",
+      "nodes": [
+        "H0",
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5",
+        "H6"
+      ]
+    },
+    {
+      "name": "West avenue",
+      "kind": "residential",
+      "nodes": [
+        "W",
+        "H0",
+        "N0"
+      ]
+    },
+    {
+      "name": "Market avenue",
+      "kind": "residential",
+      "nodes": [
+        "A",
+        "H1"
+      ]
+    },
+    {
+      "name": "School avenue",
+      "kind": "residential",
+      "nodes": [
+        "B",
+        "H2",
+        "N2"
+      ]
+    },
+    {
+      "name": "Virginia approach",
+      "kind": "residential",
+      "nodes": [
+        "C",
+        "H3",
+        "N3"
+      ]
+    },
+    {
+      "name": "Mill approach",
+      "kind": "residential",
+      "nodes": [
+        "D",
+        "H4",
+        "N4"
+      ]
+    },
+    {
+      "name": "East avenue",
+      "kind": "residential",
+      "nodes": [
+        "E",
+        "H5"
+      ]
+    },
+    {
+      "name": "Hydro approach",
+      "kind": "residential",
+      "nodes": [
+        "F",
+        "H6",
+        "N6"
+      ]
+    },
+    {
+      "name": "Forest contour road",
+      "kind": "dirt",
+      "nodes": [
+        "N0",
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ]
+    },
+    {
+      "name": "Reservoir loop",
+      "kind": "residential",
+      "nodes": [
+        "N5",
+        "N7",
+        "N6"
+      ]
+    },
+    {
+      "name": "Riverside service road",
+      "kind": "residential",
+      "nodes": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ]
+    },
+    {
+      "name": "West bridge",
+      "kind": "bridge",
+      "nodes": [
+        "A",
+        "S1"
+      ]
+    },
+    {
+      "name": "Market bridge",
+      "kind": "bridge",
+      "nodes": [
+        "B",
+        "S2"
+      ]
+    },
+    {
+      "name": "Mill bridge",
+      "kind": "bridge",
+      "nodes": [
+        "D",
+        "S3"
+      ]
+    },
+    {
+      "name": "Hydro bridge",
+      "kind": "bridge",
+      "nodes": [
+        "F",
+        "S5"
+      ]
+    },
+    {
+      "name": "Quarry bypass",
+      "kind": "dirt",
+      "nodes": [
+        "S0",
+        "Q0",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+        "S5"
+      ]
+    },
+    {
+      "name": "Quarry access",
+      "kind": "dirt",
+      "nodes": [
+        "S2",
+        "Q1"
+      ]
+    },
+    {
+      "name": "Workshop access",
+      "kind": "residential",
+      "nodes": [
+        "S3",
+        "Q2"
+      ]
+    },
+    {
+      "name": "East yard access",
+      "kind": "residential",
+      "nodes": [
+        "S4",
+        "Q3"
+      ]
+    }
+  ],
+  "river": [
+    [
+      0,
+      425
+    ],
+    [
+      150,
+      450
+    ],
+    [
+      260,
+      540
+    ],
+    [
+      370,
+      510
+    ],
+    [
+      460,
+      410
+    ],
+    [
+      570,
+      390
+    ],
+    [
+      720,
+      425
+    ],
+    [
+      900,
+      410
+    ]
+  ],
+  "spawns": [
+    "W",
+    "H1",
+    "B",
+    "H3",
+    "D",
+    "H5",
+    "F",
+    "N0",
+    "N2",
+    "N4",
+    "N6",
+    "S0",
+    "Q1",
+    "S3",
+    "Q3",
+    "S5"
+  ],
+  "final_candidates": [
+    "H2",
+    "N4",
+    "S3",
+    "Q1"
+  ],
+  "widths_metres": {
+    "main": 16,
+    "residential": 11,
+    "dirt": 9,
+    "bridge": 14
+  },
+  "districts": [
+    {
+      "name": "PINE RIDGE",
+      "center": [
+        210,
+        105
+      ],
+      "type": "forest cottages",
+      "height": "28-40 m"
+    },
+    {
+      "name": "OLD TOWN",
+      "center": [
+        220,
+        245
+      ],
+      "type": "brick shops + rear alleys",
+      "height": "12-17 m"
+    },
+    {
+      "name": "ARGO HEIGHTS",
+      "center": [
+        625,
+        205
+      ],
+      "type": "terraced mill + hillside homes",
+      "height": "20-40 m"
+    },
+    {
+      "name": "HYDRO WORKS",
+      "center": [
+        785,
+        70
+      ],
+      "type": "fictional reservoir + dam",
+      "height": "24-40 m"
+    },
+    {
+      "name": "REDSTONE PIT",
+      "center": [
+        220,
+        615
+      ],
+      "type": "quarry + loading yards",
+      "height": "12-27 m"
+    },
+    {
+      "name": "EAST WORKSHOPS",
+      "center": [
+        655,
+        555
+      ],
+      "type": "garages + warehouses",
+      "height": "12-27 m"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "revision": 37,
+  "project": {
+    "creator": "AbyssTail",
+    "description": "Альфа-версия Micro Rally. Грязевая долина, физические машины, до 15 ботов или 2–16 игроков через лобби TrainerOS. Независимый прицел правым стиком, подбор оружия и щитов, гаражный рок и мягкий tilt-shift. Кубок — основной режим: первый этап доступен, Карьер, Лесной перевал и длинный финал пока закрыты. Сетевой режим пока поддерживает отдельные заезды, а не весь кубок. Управление, звук и производительность на портативках ещё проходят игровую проверку. Машины не распадаются на части; персонаж и одежда принадлежат общему SDK TrainerOS.",
+    "hero": "asset:3ff1f7d3ef02d99740c308c105f76b982ce72297299782c3b8400ea5eb535d1e",
+    "id": "micro-rally",
+    "kind": "game",
+    "license": "GPL-3.0-or-later",
+    "releases": [],
+    "sample": false,
+    "screenshots": [
+      "asset:3ff1f7d3ef02d99740c308c105f76b982ce72297299782c3b8400ea5eb535d1e"
+    ],
+    "summary": "Боевые гонки на мини-машинах: грязь, заносы, ускорение, оружие и щиты. До 16 участников.",
+    "title": "Micro Rally (альфа)"
+  },
+  "records": [
+    {
+      "architecture": "aarch64",
+      "channel": "Experimental",
+      "compatibility": "untested",
+      "compatibilityNote": "Alpha: handheld controls, audio and sustained performance await player feedback.",
+      "entry": "bin/micro-rally",
+      "icon": "icon.svg",
+      "id": "micro-rally",
+      "kind": "game",
+      "license": "GPL-3.0-or-later",
+      "notes": "Dirty Valley, 16 cars, solo cup stage and 2-16 player SDK races. Three later cup tracks are locked. Flip2 uses OpenGL.",
+      "repository": "https://github.com/EriArk/crates.git",
+      "revision": "a2e6b5fa377cc1abdb05a8821762c7e1e321dc45",
+      "sha256": "1b6e31ed4a14570ba14d95fe19503faa3ee5a5cb1f698daababf9ccd7ce0f96f",
+      "size": 31795876,
+      "title": "Micro Rally (альфа)",
+      "unpackedSize": 72637108,
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.0/micro-rally-0.1.0-aarch64.tar.gz",
+      "version": "0.1.0"
+    },
+    {
+      "architecture": "x86_64",
+      "channel": "Experimental",
+      "compatibility": "untested",
+      "compatibilityNote": "Alpha: handheld controls, audio and sustained performance await player feedback.",
+      "entry": "bin/micro-rally",
+      "icon": "icon.svg",
+      "id": "micro-rally",
+      "kind": "game",
+      "license": "GPL-3.0-or-later",
+      "notes": "Dirty Valley, 16 cars, solo cup stage and 2-16 player SDK races. Three later cup tracks are locked. Flip2 uses OpenGL.",
+      "repository": "https://github.com/EriArk/crates.git",
+      "revision": "a2e6b5fa377cc1abdb05a8821762c7e1e321dc45",
+      "sha256": "7f30bd44f2d2fdf7a0ca72f1861b5606b5e891e7a9d2b2ea885e7099ccdead98",
+      "size": 32581810,
+      "title": "Micro Rally (альфа)",
+      "unpackedSize": 79077092,
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.0/micro-rally-0.1.0-x86_64.tar.gz",
+      "version": "0.1.0"
+    }
+  ],
+  "signature_verified": true,
+  "memberships": [
+    "arcade",
+    "whats-new"
+  ]
+}

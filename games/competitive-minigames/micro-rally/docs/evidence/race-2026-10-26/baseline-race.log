@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RACE clear seconds=0.0 progress=[-4, -4, -4, -7, -7, -7, -10, -10, -10, -13, -13, -13, -16, -16, -16, -19]
+RACE clear seconds=57.0 progress=[313, 437, 410, 482, 380, 362, 347, 318, 500, 425, 361, 379, 490, 466, 370, 341]
+RACE clear seconds=117.0 progress=[830, 944, 914, 1002, 834, 841, 893, 841, 952, 941, 828, 853, 1009, 971, 816, 832]
+RACE clear seconds=177.0 progress=[1270, 1283, 1284, 1287, 1283, 1281, 1280, 1283, 1281, 1282, 1240, 1286, 1284, 1284, 1156, 1273]
+RACE RESULT {"cars":[{"finish":185.116666666706,"id":0,"passed":1280,"recoveries":null},{"finish":156.900000000017,"id":1,"passed":1283,"recoveries":null},{"finish":167.166666666692,"id":2,"passed":1284,"recoveries":null},{"finish":148.466666666677,"id":3,"passed":1287,"recoveries":null},{"finish":168.53333333336,"id":4,"passed":1283,"recoveries":null},{"finish":173.10000000003,"id":5,"passed":1281,"recoveries":null},{"finish":173.35000000003,"id":6,"passed":1280,"recoveries":null},{"finish":169.13333333336,"id":7,"passed":1283,"recoveries":null},{"finish":158.900000000019,"id":8,"passed":1281,"recoveries":null},{"finish":161.966666666688,"id":9,"passed":1282,"recoveries":null},{"finish":-1.0,"id":10,"passed":1274,"recoveries":null},{"finish":166.083333333358,"id":11,"passed":1286,"recoveries":null},{"finish":144.33333333334,"id":12,"passed":1284,"recoveries":null},{"finish":150.333333333345,"id":13,"passed":1284,"recoveries":null},{"finish":-1.0,"id":14,"passed":1172,"recoveries":null},{"finish":177.550000000033,"id":15,"passed":1282,"recoveries":null}],"elapsed":185.116666666706,"falls":0,"finishers":14,"weather":"clear"}
+RACE rain seconds=0.0 progress=[-4, -4, -4, -7, -7, -7, -10, -10, -10, -13, -13, -13, -16, -16, -16, -19]
+RACE rain seconds=57.0 progress=[497, 514, 303, 440, 474, 395, 342, 511, 367, 382, 312, 432, 379, 196, 359, 388]
+RACE rain seconds=117.0 progress=[954, 1021, 732, 956, 964, 833, 831, 933, 886, 832, 745, 835, 872, 687, 801, 772]
+RACE RESULT {"cars":[{"finish":155.716666666683,"id":0,"passed":1280,"recoveries":null},{"finish":147.65000000001,"id":1,"passed":1285,"recoveries":null},{"finish":-1.0,"id":2,"passed":1000,"recoveries":null},{"finish":152.600000000014,"id":3,"passed":1288,"recoveries":null},{"finish":-1.0,"id":4,"passed":1154,"recoveries":null},{"finish":-1.0,"id":5,"passed":1136,"recoveries":null},{"finish":-1.0,"id":6,"passed":1075,"recoveries":null},{"finish":-1.0,"id":7,"passed":1268,"recoveries":null},{"finish":-1.0,"id":8,"passed":1238,"recoveries":null},{"finish":-1.0,"id":9,"passed":1152,"recoveries":null},{"finish":-1.0,"id":10,"passed":966,"recoveries":null},{"finish":-1.0,"id":11,"passed":1138,"recoveries":null},{"finish":-1.0,"id":12,"passed":1220,"recoveries":null},{"finish":-1.0,"id":13,"passed":989,"recoveries":null},{"finish":-1.0,"id":14,"passed":976,"recoveries":null},{"finish":-1.0,"id":15,"passed":1015,"recoveries":null}],"elapsed":155.716666666683,"falls":0,"finishers":3,"weather":"rain"}
+RACE TEST failures=1
+ERROR: At least 14/16 finish full rain race
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/race_test.gd:5)
+       [1] run (res://tests/race_test.gd:25)
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

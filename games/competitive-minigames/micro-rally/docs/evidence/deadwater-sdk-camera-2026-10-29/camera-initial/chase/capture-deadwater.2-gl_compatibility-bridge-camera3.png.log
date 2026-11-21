@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 4.5 (Core Profile) Mesa 25.0.7-2+deb13u1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 19.1.7, 256 bits)
+
+CAPTURE 0 /work/exports/a74e7b6787eae45e/capture-deadwater.2-gl_compatibility-bridge-camera3.png
+METRICS {"cars":16,"fps":4.0,"frames":15,"passed":0,"player_position":"(-85.677, 12.9, 158.646)","renderer":"gl_compatibility","scale":1.0}
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)

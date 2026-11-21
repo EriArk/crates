@@ -1,0 +1,30 @@
+{
+  "version": "0.1.3",
+  "source_revision": "789488be50ebc930f168ae44edc76c8e4ad4798c",
+  "source_snapshot": "973cfbac4f4a44a8",
+  "previous_revision": 39,
+  "update_response": "delta",
+  "update_matches_fresh": true,
+  "public_source_bytes_verified": true,
+  "source_archive_sha256": "f86e86d21aa8b1b680129492b8fddc8c04ad4953efc940e63d477d4987c7ddec",
+  "catalogue_revision": 40,
+  "public_catalogue_revision": 40,
+  "signature_verified": true,
+  "previous_packages_preserved": true,
+  "public_downloads": [
+    {
+      "architecture": "aarch64",
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.3/micro-rally-0.1.3-aarch64.tar.gz",
+      "size": 32876410,
+      "sha256": "401a20b4ca12742dacbfb7505a34f8062bf51fdd4bf600d83d55be5695c3e0c6"
+    },
+    {
+      "architecture": "x86_64",
+      "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.3/micro-rally-0.1.3-x86_64.tar.gz",
+      "size": 33663366,
+      "sha256": "c54dcc3325a5f5ec94c69418c135c3624b8eca6797267aa26daefe40ee136830"
+    }
+  ],
+  "device_installation": false,
+  "release": "https://github.com/EriArk/crates/releases/tag/micro-rally-v0.1.3"
+}

@@ -1,0 +1,97 @@
+{
+  "audio_feedback": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "audio_feedback.log"
+  },
+  "audio_mix": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "audio_mix.log"
+  },
+  "bot": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "bot.log"
+  },
+  "cup_journey": {
+    "result": "passed",
+    "snapshot": "07289e9b2a56d9e4",
+    "log": "cup_journey.log"
+  },
+  "cup_race": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "cup_race.log"
+  },
+  "cup": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "cup.log"
+  },
+  "drive": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "drive.log"
+  },
+  "journey": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "journey.log"
+  },
+  "network": {
+    "result": "passed",
+    "snapshot": "07289e9b2a56d9e4",
+    "log": "network.log"
+  },
+  "physics": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "physics.log"
+  },
+  "quarry_race": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "quarry_race.log"
+  },
+  "quarry": {
+    "result": "passed",
+    "snapshot": "d73525301a51682d",
+    "log": "quarry.log"
+  },
+  "race": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "race.log"
+  },
+  "recovery": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "recovery.log"
+  },
+  "surface": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "surface.log"
+  },
+  "timeline": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "timeline.log"
+  },
+  "weapon": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "weapon.log"
+  },
+  "weather": {
+    "result": "passed",
+    "snapshot": "5eda3293d3ed6389",
+    "log": "weather.log"
+  },
+  "scenery": {
+    "result": "passed",
+    "snapshot": "d9c70635db291a43",
+    "log": "scenery.log"
+  }
+}

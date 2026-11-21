@@ -1,0 +1,8 @@
+{
+  "snapshot": "a945c4ac914dea9b",
+  "players": 2,
+  "mode": "royale",
+  "aggregate_cpus": 6,
+  "memory_gib": 6,
+  "network": "isolated localhost TLS; fixture signaling"
+}

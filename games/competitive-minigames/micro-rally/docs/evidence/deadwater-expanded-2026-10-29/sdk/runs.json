@@ -1,0 +1,27 @@
+{
+  "snapshot": "df1ee868052120b8",
+  "mode": "royale",
+  "memory_gib": 6,
+  "headless_max_fps": 60,
+  "network": "isolated localhost TLS, provider signaling fixture",
+  "runs": [
+    {
+      "players": 2,
+      "aggregate_cpus": 4,
+      "result": "pass",
+      "log": "2-fourcpu.log"
+    },
+    {
+      "players": 16,
+      "aggregate_cpus": 4,
+      "result": "timeout",
+      "log": "16-fourcpu-failed.log"
+    },
+    {
+      "players": 16,
+      "aggregate_cpus": 6,
+      "result": "pass",
+      "log": "16-sixcpu.log"
+    }
+  ]
+}

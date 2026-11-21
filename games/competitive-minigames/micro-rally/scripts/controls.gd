@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+extends RefCounted
+var device = -1
+var mouse_aim = false
+var neutral_required = true
+var shift_up_held = false
+var shift_down_held = false
+var weapon_held=false
+var reticle=Vector2(0.5,0.48)
+var low_view=false
+var aim_reset=-1
+
+func _init() -> void:
+	# Do not depend on engine/editor defaults for controller menu navigation.
+	var bindings = {"ui_accept":JOY_BUTTON_A,"ui_cancel":JOY_BUTTON_B,"ui_up":JOY_BUTTON_DPAD_UP,"ui_down":JOY_BUTTON_DPAD_DOWN,"ui_left":JOY_BUTTON_DPAD_LEFT,"ui_right":JOY_BUTTON_DPAD_RIGHT}
+	for action in bindings:
+		var event = InputEventJoypadButton.new(); event.device=-1; event.button_index=bindings[action]
+		if not InputMap.action_has_event(action,event): InputMap.action_add_event(action,event)
+	for item in [["ui_left",JOY_AXIS_LEFT_X,-1.0],["ui_right",JOY_AXIS_LEFT_X,1.0],["ui_up",JOY_AXIS_LEFT_Y,-1.0],["ui_down",JOY_AXIS_LEFT_Y,1.0]]:
+		var event = InputEventJoypadMotion.new(); event.device=-1; event.axis=item[1]; event.axis_value=item[2]
+		if not InputMap.action_has_event(item[0],event): InputMap.action_add_event(item[0],event)
+
+func detect() -> void:
+	var devices = Input.get_connected_joypads()
+	var next = -1 if devices.is_empty() else devices[0]
+	if next!=device: neutral_required=true
+	device=next
+
+func read(car: Node3D, camera: Camera3D) -> void:
+	detect()
+	var steer = Vector2.ZERO; var aiming = Vector2.ZERO
+	var shielding = false
+	if device>=0:
+		steer=Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),0)
+		aiming=Vector2(Input.get_joy_axis(device,JOY_AXIS_RIGHT_X),Input.get_joy_axis(device,JOY_AXIS_RIGHT_Y))
+		car.throttle=maxf(0,Input.get_joy_axis(device,JOY_AXIS_TRIGGER_RIGHT)); car.brake=maxf(0,Input.get_joy_axis(device,JOY_AXIS_TRIGGER_LEFT))
+		car.boosting=Input.is_joy_button_pressed(device,JOY_BUTTON_LEFT_SHOULDER)
+		car.firing=Input.is_joy_button_pressed(device,JOY_BUTTON_RIGHT_SHOULDER)
+		car.handbrake=Input.is_joy_button_pressed(device,JOY_BUTTON_A)
+		shielding=Input.is_joy_button_pressed(device,JOY_BUTTON_X)
+	else:
+		steer=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),0)
+		car.throttle=1.0 if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W) else 0.0
+		car.brake=1.0 if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S) else 0.0
+		car.boosting=Input.is_physical_key_pressed(KEY_SHIFT); car.handbrake=Input.is_physical_key_pressed(KEY_SPACE)
+		car.firing=Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and camera.get_viewport().gui_get_hovered_control()==null
+		shielding=Input.is_physical_key_pressed(KEY_E)
+	var shift_up=Input.is_joy_button_pressed(device,JOY_BUTTON_Y) if device>=0 else Input.is_physical_key_pressed(KEY_C)
+	var shift_down=Input.is_joy_button_pressed(device,JOY_BUTTON_B) if device>=0 else Input.is_physical_key_pressed(KEY_Z)
+	var weapon_button=(Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_LEFT) or Input.is_joy_button_pressed(device,JOY_BUTTON_DPAD_RIGHT)) if device>=0 else Input.is_physical_key_pressed(KEY_Q)
+	if neutral_required:
+		var released = steer.length()<0.18 and aiming.length()<0.22 and car.throttle<0.08 and car.brake<0.08 and not car.firing and not car.boosting and not car.handbrake and not shielding and not shift_up and not shift_down and not weapon_button
+		shift_up_held=shift_up; shift_down_held=shift_down; weapon_held=weapon_button
+		neutral(car)
+		if released: neutral_required=false
+		return
+	if weapon_button and not weapon_held: car.weapon_selected=not car.weapon_selected and car.ammo>0
+	weapon_held=weapon_button
+	car.assist_level=car.get_parent().arena.assist_level if device>=0 else 0
+	shift_buttons(car,shift_up,shift_down)
+	if shielding: car.activate_shield()
+	car.shield_pressed=shielding
+	car.steer_input=steering_axis(steer.x)
+	car.desired=Vector3.ZERO
+	var low=camera.fov>50
+	if low!=low_view or aim_reset!=car.reset_serial:
+		reticle=Vector2(0.5,0.48); low_view=low; aim_reset=car.reset_serial
+		if not low:
+			car.aim=Vector3(car.aim.x,0,car.aim.z).normalized()
+			if car.aim.length_squared()<0.01: car.aim=-car.basis.z
+	car.aim_3d=low
+	if low:
+		if device>=0:
+			move_reticle(aiming,car.get_physics_process_delta_time())
+		elif mouse_aim:
+			reticle=camera.get_viewport().get_mouse_position()/camera.get_viewport().get_visible_rect().size
+			reticle=reticle.clamp(Vector2(0.15,0.18),Vector2(0.85,0.75))
+		var point=aim_point(camera,car,reticle)
+		car.aim=(point-car.muzzle_origin()).normalized()
+	elif aiming.length()>0.22: car.aim=aim_direction(aiming,camera.global_basis)
+	elif device<0 and mouse_aim:
+		var pos=camera.get_viewport().get_mouse_position()
+		var origin=camera.project_ray_origin(pos); var direction=camera.project_ray_normal(pos)
+		var distance=(car.position.y-origin.y)/direction.y if absf(direction.y)>0.01 else -1.0
+		var target=origin+direction*(distance if distance>0 and distance<80 else 40.0)
+		var flat=Vector3(target.x-car.position.x,0,target.z-car.position.z)
+		if flat.length_squared()>0.01: car.aim=flat.normalized()
+
+func move_reticle(stick: Vector2,delta: float) -> void:
+	if stick.length()<=0.18: return
+	var rate=stick.normalized()*pow(clampf((stick.length()-0.18)/0.82,0,1),1.4)
+	reticle=(reticle+rate*delta*0.55).clamp(Vector2(0.15,0.18),Vector2(0.85,0.75))
+
+static func aim_point(camera: Camera3D,car: Node3D,screen: Vector2) -> Vector3:
+	var pixel=screen*camera.get_viewport().get_visible_rect().size
+	var origin=camera.project_ray_origin(pixel); var direction=camera.project_ray_normal(pixel)
+	var hit=car.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(origin,origin+direction*100,3,[car.get_rid()]))
+	return hit.position if not hit.is_empty() else origin+direction*100
+
+func neutral(car: Node3D) -> void:
+	car.shield_pressed=false; car.steer_input=0; car.shift_direction=0; car.transmission.pending=0
+	car.throttle=0; car.brake=0; car.boosting=false; car.firing=false; car.handbrake=false; car.desired=Vector3.ZERO
+
+
+func shift_buttons(car: Node3D, up: bool, down: bool) -> void:
+	if up and not shift_up_held and not down: car.request_shift(1)
+	elif down and not shift_down_held and not up: car.request_shift(-1)
+	shift_up_held=up; shift_down_held=down
+
+static func steering_axis(value: float) -> float:
+	return signf(value)*clampf((absf(value)-0.18)/0.82,0,1)
+
+static func aim_direction(stick: Vector2,view_basis: Basis) -> Vector3:
+	var right=Vector3(view_basis.x.x,0,view_basis.x.z).normalized()
+	var back=Vector3(view_basis.z.x,0,view_basis.z.z).normalized()
+	return (right*stick.x+back*stick.y).normalized()

@@ -1,0 +1,20 @@
+{
+  "id": "micro-rally",
+  "title": "Micro Rally (альфа)",
+  "kind": "game",
+  "version": "0.1.2",
+  "architecture": "x86_64",
+  "entry": "bin/micro-rally",
+  "icon": "icon.svg",
+  "license": "GPL-3.0-or-later",
+  "repository": "https://github.com/EriArk/crates.git",
+  "revision": "0d43b99b7917bf6de1fa2a30a41b9ef5432307bb",
+  "size": 32601204,
+  "unpackedSize": 79098297,
+  "sha256": "5f923aff0c5e31d151f5620abb8e62a5ad62e9a311f62094e3303afde9020f05",
+  "channel": "Experimental",
+  "compatibility": "untested",
+  "compatibilityNote": "Alpha: handheld controls, audio and sustained performance await player feedback.",
+  "notes": "Independent suspension and tire contact, jumps/rollovers, detachable wheel, conventional left/right steering. Unlimited heat-limited base gun. Network protocol 3 requires matching updates. Three later cup tracks remain locked. Flip2 uses OpenGL.",
+  "url": "https://github.com/EriArk/crates/releases/download/micro-rally-v0.1.2/micro-rally-0.1.2-x86_64.tar.gz"
+}
