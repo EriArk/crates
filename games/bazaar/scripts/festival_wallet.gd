@@ -6,6 +6,7 @@ signal recorded(game: String, value: Dictionary)
 var game := ""
 var offer := {}
 var message := ""
+var connection_message := false
 var needs_refresh := false
 
 func _init() -> void:
@@ -17,6 +18,7 @@ func _ready() -> void:
 	unavailable.connect(func(reason):
 		offer={}
 		message=reason
+		connection_message=true
 		changed.emit())
 	snapshot.connect(_received)
 	read_failed.connect(_failed)
@@ -44,11 +46,15 @@ func _received(method: String, value: Dictionary) -> void:
 		needs_refresh=false
 		refresh()
 		return
+	if connection_message:
+		message=""
+		connection_message=false
 	offer=value
 	if method=="bazaar.festival.attempt":recorded.emit(game,value)
 	changed.emit()
 
 func _failed(method: String, reason: String) -> void:
+	connection_message=false
 	message={"insufficient_sparks":"Not enough Sparks for this ticket.","review_cancelled":"Purchase cancelled.","market_closed":"Ticket sales are closed.","sign_in_required":"Sign in to use your Sparks."}.get(reason,reason.replace("_"," ").capitalize())
 	offer={}
 	if method!="bazaar.festival" or needs_refresh:

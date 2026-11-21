@@ -1,5 +1,9 @@
 # История Crates
 
+## 21 November 2026 — Bazaar 0.0.25
+
+The Toy Gallery now has moving rows on a longer lane. Wanage throws start on input and the ring passes the top of the peg on its way down. Both booths have new festival fabrics and show the result of each attempt. The beach office, price cards and collectible shelf have new finishes.
+
 ## 21 November 2026 — Bazaar 0.0.19
 
 Festival Park has patterned stall canopies, hanging paper lanterns, flowering

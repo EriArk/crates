@@ -1,11 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
 
-const SITE := Vector3(-9,0,19)
+const SITE := Vector3(-9,0,21.6)
 const MARKS := [Vector2(-1.42,.94),Vector2(0,.94),Vector2(1.42,.94),Vector2(-.78,1.82),Vector2(.78,1.82)]
+const RACK_Z := -2.4
+const TRAVEL := .28
+const Trim = preload("festival_trim.gd")
 const Plush = preload("festival_plush.gd")
+var rail_time := 0.0
+var in_flight := false
+var pending_result := []
+var hit_sound := false
 var ribbons: Array[Label3D]=[]
 var toys: Array[Node3D] = []
+var runners: Array[MeshInstance3D] = []
 var eye: Camera3D
 var aim := Vector2(0,1.32)
 var sight: Node3D
@@ -39,24 +47,40 @@ func build(s) -> void:
 	position=SITE
 	sphere.radial_segments=14
 	sphere.rings=8
-	s.block(SITE+Vector3(0,1.38,-.43),Vector3(4.45,2.76,.2),"244e59")
-	for x in [-2.22,2.22]:
-		s.block(SITE+Vector3(x,1.41,.03),Vector3(.15,2.82,.72),"99573d")
-		s.lantern(SITE+Vector3(x,2.48,.44),"ffc978")
-	for i in 11:
-		s.block(SITE+Vector3((i-5)*.42,2.67,0),Vector3(.42,.21,1.05),"cb5c4e" if i%2 else "f5dc9d",false)
+	var rack:=SITE+Vector3.BACK*RACK_Z
+	s.block(rack+Vector3(0,1.42,-.5),Vector3(5.12,2.84,.20),"33434b")
+	Trim.landscape(s,rack+Vector3(0,1.42,-.394),Vector2(4.96,2.7))
+	for x in [-2.52,2.52]:
+		s.block(rack+Vector3(x,1.49,.02),Vector3(.14,2.98,.64),"884e3e")
+		s.lantern(rack+Vector3(x,2.52,.48),"ffc978")
+	Trim.valance(s,rack+Vector3(0,2.97,0),5.36,["85434d","ad5652","85434d","dbac72"],12)
 	for h in [.62,1.50]:
-		s.block(SITE+Vector3(0,h-.045,-.02),Vector3(4.4,.09,.61),"d4a36c")
-	s.block(SITE+Vector3(0,.28,-.04),Vector3(4.4,.57,.7),"9f5540")
-	s.text3d("TOY GALLERY",SITE+Vector3(0,2.37,-.31),.006)
+		s.block(rack+Vector3(0,h-.055,-.02),Vector3(4.86,.11,.61),"975f49")
+		s.block(rack+Vector3(0,h-.018,.30),Vector3(4.82,.034,.038),"f2ba76",false)
+	s.block(rack+Vector3(0,.28,-.04),Vector3(5.02,.57,.70),"496966")
+	s.block(rack+Vector3(0,2.55,-.32),Vector3(2.34,.33,.08),"283942",false)
+	s.text3d("TOY GALLERY",rack+Vector3(0,2.55,-.27),.0055)
+	# The visitor aims across the lane from the counter on the promenade.
+	s.block(SITE+Vector3(0,.48,.08),Vector3(4.3,.96,.52),"995849")
+	s.block(SITE+Vector3(0,.98,.08),Vector3(4.42,.075,.62),"eec18c")
+	for side in [-1,1]:
+		s.block(SITE+Vector3(side*2.09,.57,.355),Vector3(.08,.66,.035),"e5ae70",false)
+	var shoe:=CylinderMesh.new()
+	shoe.top_radius=.24;shoe.bottom_radius=.215;shoe.height=.042;shoe.radial_segments=16
+	var enamel:=StandardMaterial3D.new()
+	enamel.albedo_color=Color("dca96f");enamel.roughness=.67;shoe.material=enamel
 	for i in MARKS.size():
 		var toy:=Plush.create(i)
 		add_child(toy)
 		var mark:Vector2=MARKS[i]
-		toy.position=Vector3(mark.x,mark.y-.32,0)
+		toy.position=Vector3(mark.x,mark.y-.32,RACK_Z)
 		toys.append(toy)
+		var runner:=MeshInstance3D.new()
+		runner.mesh=shoe;runner.position=toy.position+Vector3.UP*.008
+		add_child(runner);runners.append(runner)
 	var shelf:=SITE+Vector3(-3.92,.76,.18)
 	s.block(shelf+Vector3(0,-.37,0),Vector3(2.87,.74,.89),"927055")
+	Trim.landscape(s,shelf+Vector3(0,.43,-.42),Vector2(2.84,.92))
 	s.block(shelf,Vector3(2.96,.085,.95),"eabc83")
 	s.text3d("PRIZE SHELF",shelf+Vector3(0,-.26,.46),.0045)
 	for i in Plush.NAMES.size():
@@ -64,6 +88,10 @@ func build(s) -> void:
 		add_child(plush)
 		plush.position=to_local(shelf)+Vector3((i-2)*.53,.045,0)
 		plush.scale=Vector3.ONE*.79
+		var nameplate:=shelf+Vector3((i-2)*.53,-.068,.465)
+		s.block(nameplate,Vector3(.50,.122,.028),"395751",false)
+		var caption:Label3D=s.text3d(Plush.NAMES[i],nameplate+Vector3.BACK*.019,.0018)
+		caption.visibility_range_end=5.0
 		var ribbon:Label3D=s.text3d("★",shelf+Vector3((i-2)*.53,.155,.23),.004)
 		ribbon.modulate=Color("ffd160")
 		for side in [-1,1]:
@@ -101,33 +129,56 @@ func build(s) -> void:
 func begin(camera: Camera3D) -> void:
 	eye=camera
 	aim=Vector2(0,1.32)
-	camera.global_position=SITE+Vector3(0,1.55,3.8)
-	camera.look_at(SITE+Vector3(0,1.25,0))
-	camera.fov=50
-	launcher.position=Vector3(.32,1.33,2.94)
+	camera.global_position=SITE+Vector3(0,1.74,4.15)
+	camera.look_at(SITE+Vector3(0,1.08,RACK_Z))
+	camera.fov=38
+	launcher.position=Vector3(.28,1.49,3.34)
 	launcher.show()
 	sight.show()
 	point(aim)
 
 func point(p: Vector2) -> void:
-	aim=p.clamp(Vector2(-1.96,.65),Vector2(1.96,2.18))
-	sight.position=Vector3(aim.x,aim.y,0).lerp(to_local(eye.global_position),.075)
-	launcher.look_at(to_global(Vector3(aim.x,aim.y,0)))
+	aim=p.clamp(Vector2(-2.34,.49),Vector2(2.34,2.34))
+	sight.position=Vector3(aim.x,aim.y,RACK_Z).lerp(to_local(eye.global_position),.075)
+	launcher.look_at(to_global(Vector3(aim.x,aim.y,RACK_Z)))
 
 func pointer(camera: Camera3D, pixel: Vector2) -> void:
 	var at=camera.project_ray_origin(pixel)
 	var ray=camera.project_ray_normal(pixel)
 	if ray.z>=-.01:return
-	var hit:Vector3=to_local(at+ray*((global_position.z-at.z)/ray.z))
+	var hit:Vector3=to_local(at+ray*((global_position.z+RACK_Z-at.z)/ray.z))
 	point(Vector2(hit.x,hit.y))
 
+func rail_offset(row: int, time: float) -> float:
+	return .52*sin(time*2.70) if row==0 else .60*sin(time*2.20+1.25)
+
+func _process(delta: float) -> void:
+	if not sight or not sight.visible:return
+	rail_time=fmod(rail_time+delta,TAU*20)
+	for i in toys.size():
+		toys[i].position.x=MARKS[i].x+rail_offset(0 if i<3 else 1,rail_time)
+		runners[i].position.x=toys[i].position.x
+
+func ticket_impact() -> Vector2:
+	# SDK coordinates are measured on the moving rack at the instant of impact.
+	var row:=0 if aim.y<1.38 else 1
+	return Vector2(aim.x-rail_offset(row,rail_time+TRAVEL),aim.y)
+
 func volley(p: Vector2, audible: bool) -> void:
-	if flight:flight.kill()
-	cork.position=launcher.position-launcher.transform.basis.z*.35
+	if in_flight:return
+	in_flight=true
+	pending_result.clear()
+	var start:=launcher.position-launcher.transform.basis.z*.35
+	var finish:=Vector3(p.x,p.y,RACK_Z+.11)
+	cork.position=start
 	cork.show()
 	flight=create_tween()
-	flight.tween_property(cork,"position",Vector3(p.x,p.y,.1),.11)
-	flight.tween_callback(cork.hide)
+	flight.tween_method(func(t:float):
+		cork.position=start.lerp(finish,t)+Vector3.UP*(4.9*TRAVEL*TRAVEL*t*(1.0-t)),0.0,1.0,TRAVEL)
+	flight.tween_callback(func():
+		cork.hide()
+		in_flight=false
+		if not pending_result.is_empty():settle(pending_result,hit_sound))
 	if audible:
 		sound.stream=preload("res://assets/audio/metal0.wav")
 		sound.pitch_scale=1.8
@@ -135,13 +186,16 @@ func volley(p: Vector2, audible: bool) -> void:
 		sound.play()
 
 func settle(shots: Array, audible: bool) -> void:
+	if in_flight:
+		pending_result=shots.duplicate();hit_sound=audible;return
 	restore(shots.slice(0,shots.size()-1))
 	var hit:=int(shots.back().target)
 	if hit<0:return
 	var toy:=toys[hit]
 	topple=create_tween()
-	topple.tween_property(toy,"rotation:x",-.5,.12).set_trans(Tween.TRANS_SINE)
-	topple.tween_property(toy,"scale",Vector3.ONE*.05,.14)
+	topple.tween_property(toy,"rotation:x",-1.35,.14).set_trans(Tween.TRANS_SINE)
+	topple.parallel().tween_property(toy,"position:z",RACK_Z-.26,.14)
+	topple.tween_property(toy,"position:y",toy.position.y-.30,.12)
 	topple.tween_callback(toy.hide)
 	if audible:
 		sound.stream=preload("res://assets/audio/voice3.wav")
@@ -151,7 +205,10 @@ func settle(shots: Array, audible: bool) -> void:
 
 func restore(attempts: Array) -> void:
 	if topple:topple.kill()
-	for toy in toys:
+	for i in toys.size():
+		var toy:=toys[i]
+		toy.position=Vector3(MARKS[i].x+rail_offset(0 if i<3 else 1,rail_time),MARKS[i].y-.32,RACK_Z)
+		runners[i].position.x=toy.position.x
 		toy.show()
 		toy.scale=Vector3.ONE
 		toy.rotation=Vector3.ZERO
@@ -163,6 +220,7 @@ func end() -> void:
 	launcher.hide()
 	cork.hide()
 	if flight:flight.kill()
+	in_flight=false;pending_result.clear()
 	restore([])
 
 func show_collection(won: Array) -> void:

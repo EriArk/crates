@@ -11,6 +11,9 @@ var local_starting:=false
 var cup=preload("festival_client.gd").new()
 var headline:=Label.new()
 var info:=Label.new()
+var tally:=HBoxContainer.new()
+var compact_row:=HBoxContainer.new()
+var column:=VBoxContainer.new()
 var actions:=HBoxContainer.new()
 var play:=Button.new()
 var join:=Button.new()
@@ -33,14 +36,34 @@ func _ready() -> void:
 	style.border_color=Color("e7bc78")
 	style.border_width_top=3
 	add_theme_stylebox_override("panel",style)
-	var column:=VBoxContainer.new()
 	add_child(column)
 	headline.add_theme_font_size_override("font_size",22)
 	headline.modulate=Color("ffdc9b")
-	column.add_child(headline);column.add_child(info);column.add_child(actions)
+	var heading:=HBoxContainer.new()
+	column.add_child(heading)
+	headline.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	heading.add_child(headline);heading.add_child(tally)
+	tally.alignment=BoxContainer.ALIGNMENT_END
+	tally.add_theme_constant_override("separation",6)
+	for i in 5:
+		var marker:=ColorRect.new()
+		marker.custom_minimum_size=Vector2(22,8)
+		marker.size_flags_vertical=Control.SIZE_SHRINK_CENTER
+		marker.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		tally.add_child(marker)
+	column.add_child(compact_row)
+	compact_row.add_theme_constant_override("separation",12)
+	column.add_child(info);column.add_child(actions)
+	info.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	info.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	actions.alignment=BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation",8)
 	for item in [play,join,lobby,bag,back]:
 		world.dress_button(item);actions.add_child(item)
-		item.custom_minimum_size=Vector2(0,38)
+		item.custom_minimum_size=Vector2(78,38)
+		for state in ["normal","hover","pressed","focus"]:
+			var box=item.get_theme_stylebox(state)
+			box.content_margin_left=9;box.content_margin_right=9
 	play.pressed.connect(_play)
 	join.pressed.connect(_online)
 	lobby.text="Open Lobby"
@@ -62,6 +85,12 @@ func _ready() -> void:
 func open(kind: String) -> void:
 	world.visitor.anchor.hide()
 	mode=kind
+	var compact:=kind in ["gallery","rings"]
+	var controls:Container=compact_row if compact else column
+	if info.get_parent()!=controls:
+		info.reparent(controls,false);actions.reparent(controls,false)
+	compact_row.visible=compact
+	offset_top=-111 if compact else -147
 	show()
 	displayed=""
 	focus_ticket=true
@@ -69,8 +98,8 @@ func open(kind: String) -> void:
 	if mode=="gallery":
 		ground.gallery.begin(world.service_camera)
 	elif mode=="rings":
-		world.service_camera.global_position=ground.STALL+Vector3(0,2.75,3.45)
-		world.service_camera.look_at(ground.STALL+Vector3(0,.98,0))
+		world.service_camera.global_position=ground.STALL+Vector3(.12,2.95,4.32)
+		world.service_camera.look_at(ground.STALL+ground.BOARD+Vector3(0,.82,.0))
 	else:
 		world.service_camera.global_position=ground.ARENA+Vector3(0,2.0,5.1)
 		world.service_camera.look_at(ground.ARENA+Vector3(0,1.5,-2.6))
@@ -110,6 +139,7 @@ func _result(result: Dictionary) -> String:
 
 func _refresh() -> void:
 	bag.visible=false
+	tally.visible=false
 	join.visible=mode=="arena"
 	lobby.visible=mode=="arena" and cup.available
 	play.disabled=false
@@ -170,9 +200,12 @@ func _recorded(kind: String, value: Dictionary) -> void:
 	if kind=="gallery":
 		displayed="%s/%d"%[r.id,shots.size()]
 		ground.gallery.settle(shots,world.effects_toggle.button_pressed)
-	if kind=="rings" and ground.active and ground.thrown==shots.size()-1:
-		displayed="%s/%d"%[r.id,shots.size()]
-		ground.animate_throw(shots.back())
+	if kind=="rings" and ground.active:
+		if ground.thrown==shots.size()-1:
+			ground.start_throw(Vector2(shots.back().x,shots.back().y)/100)
+		if ground.thrown==shots.size() and ground.awaiting_throw:
+			displayed="%s/%d"%[r.id,shots.size()]
+			ground.confirm_throw(shots.back())
 	if kind=="golf_local" and local_starting and _local_reserved():
 		local_starting=false
 		_launch_local()
@@ -191,6 +224,12 @@ func _ticket_view() -> void:
 	info.text=rules[mode]
 	var r:Dictionary=wallet.ticket()
 	var shots:Array=r.get("attempts",[])
+	if mode in ["gallery","rings"] and not r.is_empty():
+		tally.show()
+		for i in 5:
+			var marker:ColorRect=tally.get_child(i)
+			marker.visible=i<int(wallet.offer.limit)
+			marker.color=Color("668783") if i>=shots.size() else (Color("f8bd64") if int(shots[i].points)>0 else Color("b66e68"))
 	var price:int=int(wallet.offer.get("price",10))
 	var busy:bool=not wallet.pending.is_empty() or (mode=="rings" and ground.flying)
 	var paid:bool=not r.is_empty() and (not r.complete or _local_reserved())
@@ -199,7 +238,7 @@ func _ticket_view() -> void:
 		var points:=0
 		for shot in shots:points+=int(shot.points)
 		headline.text+="   /   %d %s"%[points,"HITS" if mode=="gallery" else "POINTS"]
-		if paid:info.text=("Aim with right stick · R2 to shoot" if mode=="gallery" else "Aim with left stick · A to throw")+"    ·    %d / %d left"%[int(wallet.offer.limit)-shots.size(),int(wallet.offer.limit)]
+		if paid:info.text=("Lead the moving toys · Right stick / R2" if mode=="gallery" else "Move with left stick · A when the ring aligns")+"    ·    %d / %d left"%[int(wallet.offer.limit)-shots.size(),int(wallet.offer.limit)]
 		else:info.text="Round complete"
 		if r.get("prize"):
 			info.text+="    ·    Won %s!"%r.prize
@@ -235,9 +274,9 @@ func _play() -> void:
 		wallet.buy()
 		return
 	if mode=="gallery":
-		if wallet.submit(ground.gallery.aim):ground.gallery.volley(ground.gallery.aim,world.effects_toggle.button_pressed)
+		if not ground.gallery.in_flight and wallet.submit(ground.gallery.ticket_impact()):ground.gallery.volley(ground.gallery.aim,world.effects_toggle.button_pressed)
 	elif mode=="rings":
-		wallet.submit(ground.endpoint)
+		if wallet.submit(ground.endpoint):ground.start_throw(ground.endpoint)
 	elif mode=="golf_local":
 		if _golf_path().is_empty():return
 		var reservation:=FileAccess.open(_reservation_path(),FileAccess.WRITE)

@@ -14,6 +14,9 @@ var poses := {}
 var poll := 0.0
 var frame := 0.0
 var leaving := false
+var releasing := false
+var endpoint_generation := 0
+signal released
 var last_contact := 0
 var venue := ""
 
@@ -29,6 +32,13 @@ func _ready() -> void:
 	client.read_failed.connect(func(_method,_why):reset_peers())
 
 func use_endpoint(path: String) -> void:
+	endpoint_generation+=1
+	var generation:=endpoint_generation
+	if not host.is_empty() or releasing:
+		leaving=true
+		await release_presence()
+		if generation!=endpoint_generation or not is_inside_tree():return
+	leaving=false
 	reset_peers()
 	client.use_endpoint(path)
 	poll=0
@@ -181,7 +191,15 @@ func _process(delta: float) -> void:
 		actor.rotation.y=lerp_angle(actor.rotation.y,float(pos[3]),minf(1,delta*12))
 
 func leave() -> void:
+	endpoint_generation+=1
 	leaving=true
+	await release_presence()
+
+func release_presence() -> void:
+	if releasing:
+		await released
+		return
+	releasing=true
 	if client.has_counter:
 		var until:=Time.get_ticks_msec()+900
 		while not client.pending.is_empty() and Time.get_ticks_msec()<until:await get_tree().process_frame
@@ -189,6 +207,8 @@ func leave() -> void:
 			heartbeat()
 			while not client.pending.is_empty() and Time.get_ticks_msec()<until:await get_tree().process_frame
 	reset_peers()
+	releasing=false
+	released.emit()
 
 func _exit_tree() -> void:
 	for peer in links.keys():drop(peer)

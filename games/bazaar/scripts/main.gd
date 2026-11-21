@@ -453,11 +453,20 @@ func _unhandled_input(event: InputEvent) -> void:
 func leave_bazaar(code := 0) -> void:
 	if leaving:return
 	leaving=true;visitor.set_controls(false)
+	var voices: Array=[audio.music,audio.steps,audio.voice,audio.call]
+	if not personal:voices.append_array([square.life.fountain_audio,square.festival.gallery.sound])
+	var retiring: Array[WeakRef]=[]
+	for voice in voices:
+		if voice.has_stream_playback():retiring.append(weakref(voice.get_stream_playback()))
 	audio.stop_all()
+	if not personal:square.festival.gallery.sound.stop()
 	if island_visit:await island_visit.leave()
 	if not personal:square.life.stop_sound()
-	# Let the audio mixer retire playback before engine shutdown.
-	await get_tree().create_timer(0.15).timeout
+	# The mixer releases stopped voices on its own clock. A fast scene exit can precede that callback.
+	var deadline:=Time.get_ticks_msec()+900
+	for playback in retiring:
+		while playback.get_ref()!=null and Time.get_ticks_msec()<deadline:
+			await get_tree().process_frame
 	get_tree().quit(code)
 
 func _notification(what: int) -> void:

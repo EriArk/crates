@@ -41,12 +41,29 @@ func run() -> void:
 	# Recorded SDK replies drive the same throw, resume and result UI as the live host.
 	var shots:Array=[]
 	desk.wallet._received("bazaar.festival",snapshot_for("rings",shots.duplicate(),3))
+	ground.aim=ground.TARGETS[1];ground.clock=PI/5.6;ground._update_cursor()
+	check(ground.endpoint.distance_to(ground.TARGETS[1])>.09,"Timing a ring changes whether it clears the peg")
+	await capture("wanage")
 	for i in 3:
 		var peg:Vector2=ground.TARGETS[i]
 		shots.append({"x":roundi(peg.x*100),"y":roundi(peg.y*100),"target":i,"points":ground.AWARDS[i]})
 		desk.wallet._received("bazaar.festival.attempt",snapshot_for("rings",shots.duplicate(),3))
-		ground._process(.74)
+		check(ground.flight_point(peg,ground.catch_time,ground.catch_time,true,ground.HAND).distance_to(ground.board_point(peg)+Vector3.UP*ground.PEG_HEIGHT)<.001,"Ring crosses the top of the peg")
+		var fps:int=[30,60,120][i]
+		for frame in fps*2:ground._process(1.0/fps)
+		check(ground.rings.back().position.distance_to(ground.board_point(peg))<.10,"Caught ring rests around its peg")
 	check(ground.thrown==3 and ground.score==6 and desk.play.text.contains("10 Sparks"),"Three rings score and replay needs a ticket")
+	var center:Vector2=ground.TARGETS[1]
+	check(ground.catches(center+Vector2(.09,0)) and not ground.catches(center+Vector2(.10,0)),"One centimetre outside the ring misses")
+	ground.begin()
+	ground.start_throw(center+Vector2(.18,.0))
+	ground._process(2.0)
+	check(ground.awaiting_throw and ground.score==0 and not ground.flying,"Finishing the flight cannot award points before the receipt")
+	var missed_at:Vector3=ground.rings.back().position
+	var miss:={"x":roundi((center.x+.18)*100),"y":roundi(center.y*100),"target":-1,"points":0}
+	ground.confirm_throw(miss)
+	ground.restore([miss])
+	check(ground.rings.back().position.distance_to(missed_at)<.001 and ground.score==0,"Reopening reproduces a missed throw and its resting place")
 	desk.close()
 	check(not world.modal and world.visitor.input_enabled and ground.rings.is_empty(),"Walking and camera restored")
 	await visit(ground.gallery.SITE+Vector3(0,0,1.28),"gallery")
@@ -54,9 +71,23 @@ func run() -> void:
 	desk.wallet._received("bazaar.festival",snapshot_for("gallery",[],5))
 	check(ground.gallery.sight.visible and world.service_camera.current,"First-person sights")
 	var relative:Vector2=ground.gallery.MARKS[0]
-	var screen:Vector2=world.service_camera.unproject_position(ground.gallery.to_global(Vector3(relative.x,relative.y,0)))
+	var screen:Vector2=world.service_camera.unproject_position(ground.gallery.to_global(Vector3(relative.x,relative.y,ground.gallery.RACK_Z)))
 	ground.gallery.pointer(world.service_camera,screen)
 	check(ground.gallery.aim.distance_to(relative)<.01,"Pointer hits target plane")
+	check(world.service_camera.global_position.z-ground.gallery.to_global(Vector3.BACK*ground.gallery.RACK_Z).z>6,"Gallery has a real shooting lane")
+	ground.gallery.rail_time=0
+	ground.gallery.point(relative)
+	check(absf(ground.gallery.ticket_impact().x-relative.x)>.25,"A moving toy leaves the original aim")
+	var misses:=0
+	for row in 2:
+		misses=0
+		for n in 120:
+			var t:float=n*TAU/(120.0*(2.7 if row==0 else 2.2))
+			if absf(ground.gallery.rail_offset(row,t+ground.gallery.TRAVEL)-ground.gallery.rail_offset(row,t))>.25:misses+=1
+		check(misses>=50 and misses<=90,"Tracking the current centre sometimes misses and near the turn still works")
+	var lead:float=ground.gallery.rail_offset(0,ground.gallery.TRAVEL)
+	ground.gallery.point(relative+Vector2(lead,0))
+	check(ground.gallery.ticket_impact().distance_to(relative)<.001,"Leading the moving toy hits its centre")
 	await capture("gallery")
 	shots.clear()
 	for i in 3:

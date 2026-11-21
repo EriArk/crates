@@ -71,8 +71,10 @@ static func bake(i: int) -> ArrayMesh:
 		var tint:Color=child.material_override.albedo_color
 		var basis:=child.transform.basis.inverse().transposed()
 		for idx in indices:
-			surface.set_color(tint)
-			surface.set_normal((basis*normals[idx]).normalized())
+			var normal:Vector3=(basis*normals[idx]).normalized()
+			var shade:=.78+.22*maxf(0.0,normal.dot(Vector3(-.35,.70,.62)))
+			surface.set_color(Color(tint.r*shade,tint.g*shade,tint.b*shade))
+			surface.set_normal(normal)
 			surface.add_vertex(child.transform*vertices[idx])
 	toy.free()
 	var cloth:=StandardMaterial3D.new()

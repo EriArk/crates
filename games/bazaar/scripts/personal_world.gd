@@ -19,12 +19,22 @@ func stall_layout(_slot: int) -> Dictionary:
 
 func build_office() -> void:
 	var at:=COUNTER+Vector3(3,0,2)
-	var post:=BoxMesh.new()
-	post.size=Vector3(.16,1.16,.14)
-	geometry(post,material("865d41"),at+Vector3.UP*.58,true)
+	for side in [-1,1]:
+		var post:=BoxMesh.new()
+		post.size=Vector3(.085,1.59,.13)
+		geometry(post,material("825838"),at+Vector3(side*.87,.795,0),true)
 	var plaque:=BoxMesh.new()
-	plaque.size=Vector3(1.55,.56,.1)
-	geometry(plaque,material("336163"),at+Vector3.UP*1.09)
+	plaque.size=Vector3(1.82,.65,.12)
+	geometry(plaque,material("275655"),at+Vector3.UP*1.12)
+	for y in [.805,1.435]:
+		var border:=BoxMesh.new()
+		border.size=Vector3(1.86,.043,.15)
+		geometry(border,material("d8aa6e"),at+Vector3.UP*y)
+	for band in 5:
+		var shade:=BoxMesh.new()
+		shade.size=Vector3(.39,.08,.58)
+		var awning:=geometry(shade,material("e5cda3" if band%2==0 else "bd7157"),at+Vector3((band-2)*.39,1.62,.09))
+		awning.rotation.x=.12
 	var label:=Label3D.new()
 	label.text="ISLAND COUNTER";label.pixel_size=.0031
 	label.position=at+Vector3(0,1.09,.065)
