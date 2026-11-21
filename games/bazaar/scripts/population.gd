@@ -137,6 +137,7 @@ func setup(owner_world: Node3D, visitor: Node3D) -> void:
 		bird.visual.position.y=-0.42
 		birds.append(bird)
 		update_bird(bird,0.0)
+	merchant("Kimono_Female",world.festival.ARENA+Vector3(0,0,-2.32),0,"Aki","Aki runs the Pocket Golf cup.",world.festival.ARENA+Vector3(0,0,-.55))
 	merchant("OldClassy_Male",Vector3(270,0.055,-3.45),0,"Vale","Vale handles stall rentals and NPC sellers.",Vector3(270,0,-1.65))
 	update_activity()
 

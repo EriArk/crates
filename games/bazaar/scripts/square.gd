@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
 ## Authored local world. No directory, economy, owners or visitor counts here.
+var festival = preload("festival_ground.gd").new()
 var fitting_booth: Node3D
 var counter_names := {}
 const COUNTER_SIGN_LAYER := 2
@@ -226,7 +227,7 @@ func park_market() -> void:
 			model("lantern",Vector3(side*12,0,z+2),Vector3.ONE*1.8)
 	for z in [-17.0,17.0]:festival_line(z)
 	spot("Festival stalls","Visit Vale in town to rent a stall and choose a keeper.",Vector3(-3.8,0,-4.8))
-	spot("Island paths","East: Stall Office and shops. West: gardens. South: harbor.",Vector3(3.8,0,5.8))
+	spot("Island paths","East: shops. South: ring toss. Beyond the lanterns: Festival Arena.",Vector3(3.8,0,5.8))
 
 func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	var home := house(at,4,3,2,yaw,["468377","ad6152","586887","b38658"][index])
@@ -298,6 +299,7 @@ func district(at: Vector3) -> String:
 	if at.x>180:
 		for item in shop_exits:
 			if absf(at.x-item.room.x)<10:return item.title
+	if at.distance_to(festival.ARENA)<8:return "Festival Arena"
 	if at.distance_to(TOWN)<24:return "Town Square"
 	if at.distance_to(GARDEN)<20:return "Garden Court"
 	if at.z>48:return "Harbor Terrace"
@@ -326,6 +328,7 @@ func _ready() -> void:
 	path(Vector3(-25,0,0),Vector3(30,0,6));path(Vector3(-39,0,-11),Vector3(6,0,25))
 	path(Vector3(0,0,38),Vector3(7,0,37));path(Vector3(-20,0,35),Vector3(34,0,6))
 	town_square();gardens_and_harbor()
+	add_child(festival);festival.build(self)
 	for i in 44:
 		var a := TAU*i/44.0;var r := 67.0+5*sin(i*2.3)
 		tree(Vector3(sin(a)*r,0,cos(a)*r),2.5+(i%3)*0.5)

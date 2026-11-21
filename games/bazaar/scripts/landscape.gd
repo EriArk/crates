@@ -5,7 +5,7 @@ const MEADOW = preload("res://shaders/meadow.gdshader")
 const SEA = preload("res://shaders/sea.gdshader")
 const HILLS := [Vector4(-13,-51,8,18),Vector4(20,-57,6,16),Vector4(56,22,7,17),Vector4(-50,27,6,16),Vector4(28,46,4.5,15),Vector4(-55,-50,5.5,13)]
 # x/z center and half extents. Smooth aprons keep all roads and building pads level.
-const PADS := [Vector4(0,0,18,24),Vector4(46,-20,21,21),Vector4(-39,-25,15,15),Vector4(0,59,13,9),Vector4(-36,35,12,10),Vector4(25,0,16,4),Vector4(38,-9,4,12),Vector4(-25,0,16,4),Vector4(-39,-11,4,14),Vector4(0,38,4.5,20),Vector4(-20,35,18,4)]
+const PADS := [Vector4(0,0,18,24),Vector4(23,22,9,8),Vector4(14,20,8,2),Vector4(46,-20,21,21),Vector4(-39,-25,15,15),Vector4(0,59,13,9),Vector4(-36,35,12,10),Vector4(25,0,16,4),Vector4(38,-9,4,12),Vector4(-25,0,16,4),Vector4(-39,-11,4,14),Vector4(0,38,4.5,20),Vector4(-20,35,18,4)]
 var vertices := PackedVector3Array()
 var cells: Dictionary = {}
 var grass_positions: Array[Vector3] = []

@@ -17,6 +17,7 @@ var world_kind := "official"
 var personal := false
 var visitor = Walker.new()
 var touch_pad = TouchPad.new()
+var festival: Control
 var services: Control
 var population: Node3D
 var identity := Label.new()
@@ -84,7 +85,9 @@ func _ready() -> void:
 	visitor.identity_changed.connect(func(text: String):identity.text=text)
 	add_child(visitor)
 	if personal:visitor.camera.far=1000;visitor.spawn_point=square.spawn;visitor.fall_height=-2.3;visitor.world_radius=54.0 if world_kind=="island" else 36.0
-	visitor.enter_space(visitor.spawn_point,0)
+	if not personal and "--arrival=festival" in OS.get_cmdline_user_args():
+		visitor.enter_space(square.festival.ARENA+Vector3(0,.15,.8),0)
+	else:visitor.enter_space(visitor.spawn_point,0)
 	if not personal:
 		population=load("res://scripts/population.gd").new();add_child(population);population.setup(square,visitor)
 	audio.population = population
@@ -185,6 +188,9 @@ func _ready() -> void:
 	dialogue.syllable.connect(audio.syllable)
 	panel.hide()
 	if not personal:
+		festival=preload("festival_panel.gd").new()
+		festival.world=self;festival.ground=square.festival
+		root.add_child(festival);festival.closed.connect(hide_menu)
 		services=load("res://scripts/service_menu.gd").new()
 		services.square=square
 		services.outfit_selected.connect(square.fitting_booth.select)
@@ -235,6 +241,8 @@ func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market dis
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
 
 func hide_menu() -> void:
+	if is_instance_valid(festival) and festival.visible:
+		festival.close();return
 	if is_instance_valid(services) and services.visible:
 		services.close()
 		return
@@ -296,6 +304,11 @@ func inspect_spot() -> void:
 	if nearest.has("arrival"):
 		visitor.enter_space(nearest.arrival,nearest.yaw)
 		visitor.touch_move=Vector2.ZERO;touch_pad.reset();nearest={};prompt.hide()
+	elif nearest.has("festival"):
+		show_menu()
+		panel.hide()
+		for part in hud_parts:part.hide()
+		festival.open(nearest.festival)
 	elif nearest.has("service"):
 		show_menu()
 		panel.hide()

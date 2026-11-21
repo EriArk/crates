@@ -1,4 +1,4 @@
-# Bazaar 0.0.21 — Festival market
+# Bazaar 0.0.22 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
@@ -8,6 +8,28 @@ can see up to three goods on the counter before opening it. Move up/down to insp
 review the item and the price together. **Profile inventory** shows the delivered item. If a reply is lost,
 choose **Resolve last checkout** at Vale's desk, also after restarting the game
 or host. Ordinary visits and the personal-world previews use the normal profile.
+
+## First festival
+
+Follow the park promenade south to the red **Wanage** counter. Aim with the
+left stick, arrow keys or a touch drag, then press **A** or **Throw ring**. Each
+round gives you three rings. The near peg scores one, the left two and the far
+right three. A second visitor in your two-player Lobby party can see the throws
+on a festival-enabled host.
+
+Follow the paved path east from Wanage to **Aki** at the Festival Cup board.
+**Play on this device** opens Pocket Golf for two people sharing one controller.
+Play three holes, then choose **Return to the arena** to see both totals.
+Leaving midway ends the local cup without a score. Odin uses the installed
+Pocket Golf art preview. Other installations can set `TRAINEROS_FESTIVAL_GOLF`
+to its absolute launcher path. The local cup uses a private runtime directory.
+
+For online play both devices need the festival SDK host and matching Pocket
+Golf installations in Crates. Join the same two-person party in Lobby. The host
+enters at Aki's desk, followed by the guest. Visitors can walk away and play
+Wanage while waiting. Lobby starts the match when both are ready. The board
+labels local, unranked and Backend-confirmed results separately. Each round is
+free. Player-owned arena facilities and additional festival games are planned.
 
 ## Voices of Festival Park
 
@@ -51,7 +73,7 @@ future districts. The park has twelve stalls, flowers, lantern strings and a
 working fountain. Hills, a grassy meadow, clouds and distance haze use the same
 lightweight approach as Pocket Golf. Four signed buildings have enterable rooms and exits, including the Stall Office.
 
-People, rabbits, yetis, dino, frog and bird folk inhabit the island: twelve
+People, rabbits, yetis, dino, frog and bird folk inhabit the island: thirteen
 merchants and seven pedestrians, with humans in the majority. Humans have five
 skin tones and dark facial details. Six animated birds fly around the
 districts and climb away from a nearby visitor. Residents greet, stroll, pause

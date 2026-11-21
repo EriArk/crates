@@ -33,6 +33,6 @@ func run() -> void:
 		var bounds: AABB=scene.population.figure_bounds[actor.species]
 		var height: float=bounds.size.y*actor.visual.scale.y
 		check(height>1.35 and height<1.7,"Resident remains below visitor: "+actor.species)
-	print(JSON.stringify({"success":failures.is_empty(),"failures":failures,"slots":12,"resident_heights":19}))
+	print(JSON.stringify({"success":failures.is_empty(),"failures":failures,"slots":12,"resident_heights":scene.population.residents.size()}))
 	query=null;capsule=null;physics=null
 	await scene.leave_bazaar(0 if failures.is_empty() else 1)
