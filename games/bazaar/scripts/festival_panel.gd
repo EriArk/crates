@@ -163,6 +163,12 @@ func _refresh() -> void:
 func _golf_path() -> String:
 	var path:=OS.get_environment("TRAINEROS_FESTIVAL_GOLF")
 	if path.is_empty():
+		var bin_dir := OS.get_executable_path().get_base_dir()
+		var helper := bin_dir.path_join("festival-golf")
+		if FileAccess.file_exists(helper):
+			var store := bin_dir.get_base_dir().get_base_dir().get_base_dir()
+			return helper if FileAccess.file_exists(store.path_join("active/pocket-golf.json")) and not OS.get_environment("XDG_RUNTIME_DIR").is_empty() else ""
+	if path.is_empty():
 		path=OS.get_environment("HOME").path_join(".local/share/traineros-development/pocket-golf-art-preview/current/launch")
 	return path if path.is_absolute_path() and FileAccess.file_exists(path) and not OS.get_environment("XDG_RUNTIME_DIR").is_empty() else ""
 

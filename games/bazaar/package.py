@@ -29,13 +29,13 @@ for suffix, arch, machine in [('arm64','aarch64',183),('x86_64','x86_64',62)]:
     if digest != manifest['binaries'][binary.name] or header[:6]!=b'\x7fELF\x02\x01' or int.from_bytes(header[18:20],'little') != machine:
         parser.error('Unexpected export '+binary.name)
     archive = args.output/f'bazaar-{version}-{arch}.tar.gz'
-    files = {'bin/bazaar':binary,'LICENSE':root/'LICENSE','park.png':root/'assets/market/park.png',
+    files = {'bin/bazaar':binary,'bin/festival-golf':root/'tools/festival-golf','LICENSE':root/'LICENSE','park.png':root/'assets/market/park.png',
              'README.md':root/'README.md','build-manifest.json':args.build/'build-manifest.json'}
     files.update({p.relative_to(root).as_posix():p for p in (root/'licenses').glob('*') if p.is_file()})
     with tarfile.open(archive,'w:gz') as output:
         for name,path in files.items():
             info=output.gettarinfo(str(path),arcname=name)
-            info.mode=0o755 if name=='bin/bazaar' else 0o644
+            info.mode=0o755 if name.startswith('bin/') else 0o644
             with path.open('rb') as stream:output.addfile(info,stream)
     with archive.open('rb') as stream:checksum=hashlib.file_digest(stream,'sha256').hexdigest()
     record=dict(id='bazaar',version=version,architecture=arch,kind='game',title='Bazaar (Alpha Preview)',
