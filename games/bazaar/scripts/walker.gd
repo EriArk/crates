@@ -53,7 +53,14 @@ func _ready() -> void:
 	client.appearance_changed.connect(appearance)
 	client.unavailable.connect(clear_identity)
 	add_child(client);identity_changed.emit("Guest · connecting to TrainerOS")
-	client.connect_host()
+	_connect_after_draw.call_deferred()
+
+func _connect_after_draw() -> void:
+	# Building Festival Park and compiling its first frame can outlast the SDK hello deadline.
+	if DisplayServer.get_name()!="headless":
+		await RenderingServer.frame_post_draw
+	if is_inside_tree() and not client.active:
+		client.connect_host()
 
 func reconnect() -> void:
 	clear_identity("reconnecting");client.connect_host()
@@ -76,6 +83,7 @@ func appearance(description: Dictionary) -> void:
 	if not locomotion.bind(visual):locomotion.queue_free();locomotion=null
 	camera_scale=1.8*clampf(visual.eye_height/0.8,0.85,1.15);update_camera_size()
 	identity_changed.emit("Your TrainerOS character")
+	print("Bazaar profile character ready")
 
 func clear_identity(_reason: String) -> void:
 	startup_resolved=true
