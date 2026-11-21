@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Start the installed Pocket Golf for a local Festival Cup, holding its Crates lease."""
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import sys
+
+
+def launch():
+    if len(sys.argv) != 3 or sys.argv[1] != "--" or not re.fullmatch(r"--festival-pair=[0-9a-f]{32}", sys.argv[2]):
+        raise ValueError("Invalid Festival Cup ticket")
+    # Crates installs this helper as objects/bazaar-<digest>/bin/festival-golf.
+    store = Path(__file__).resolve().parents[3]
+    with (store / "locks/pocket-golf").open("rb") as lease:
+        fcntl.flock(lease, fcntl.LOCK_SH)
+        receipt = json.loads((store / "active/pocket-golf.json").read_text())
+        name = receipt["object"]
+        if receipt["id"] != "pocket-golf" or not re.fullmatch(r"pocket-golf-[0-9a-f]{64}", name):
+            raise ValueError("Invalid Pocket Golf receipt")
+        base = store / "objects" / name
+        entry = (base / receipt["entry"]).resolve()
+        if base.is_symlink() or not entry.is_relative_to(base) or not entry.is_file():
+            raise ValueError("Invalid Pocket Golf executable")
+        owner_data = os.environ.get("TRAINEROS_PACKAGE_DATA")
+        if owner_data:
+            owner = Path(owner_data).resolve()
+            if owner.parent != store / "data/bazaar/owners" or not re.fullmatch(r"[0-9a-f]{64}", owner.name):
+                raise ValueError("Invalid Bazaar data owner")
+            data = store / "data/pocket-golf/owners" / owner.name
+            data.mkdir(parents=True, exist_ok=True)
+            os.environ.update(TRAINEROS_PACKAGE_DATA=str(data), XDG_DATA_HOME=str(data / "share"),
+                              XDG_CONFIG_HOME=str(data / "config"), XDG_CACHE_HOME=str(data / "cache"))
+        os.set_inheritable(lease.fileno(), True)
+        os.chdir(base)
+        os.execv(entry, [str(entry), *sys.argv[1:]])
+
+
+if __name__ == "__main__":
+    launch()
