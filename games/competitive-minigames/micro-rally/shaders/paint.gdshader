@@ -17,5 +17,8 @@ void fragment(){
  float grime=(sin(local.x*39.0+sin(local.z*23.0))*sin(local.y*28.0+local.z*11.0))*0.5+0.5;
  float mask=smoothstep(0.65-damage*0.25,0.85,grime)*damage;
  ALBEDO=mix(base,vec3(0.085,0.041,0.016),mask);
- ROUGHNESS=mix(0.48,0.95,mask); METALLIC=0.10;
+ float dust=1.0-smoothstep(0.06,0.44,local.y);
+ ALBEDO=mix(ALBEDO,vec3(0.20,0.14,0.09),dust*(0.08+0.09*grime));
+ ROUGHNESS=mix(mix(0.80,0.43,painted),0.95,max(mask,dust*0.56));
+ METALLIC=0.12*painted;
 }

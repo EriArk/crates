@@ -459,6 +459,9 @@ func _process(delta: float) -> void:
 		get_tree().quit()
 
 func _camera(delta: float, snap: bool = false) -> void:
+	var overhead: bool=(arena_overview and is_arena()) or race_camera.mode<=race_camera.Mode.WIDE
+	if camera.get_cull_mask_value(Supplies.OVERHEAD_MARKER_LAYER)!=overhead:
+		camera.set_cull_mask_value(Supplies.OVERHEAD_MARKER_LAYER,overhead)
 	if arena_overview and is_arena():
 		camera.position=Vector3(0,850,650) if is_royale() else Vector3(0,145,108); camera.look_at(Vector3.ZERO); camera.far=1800 if is_royale() else 700
 		tilt_shift.set_shader_parameter("strength",0.0)

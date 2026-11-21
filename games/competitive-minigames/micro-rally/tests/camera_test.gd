@@ -26,6 +26,9 @@ func run() -> void:
 	for mode in 5:
 		rig.select(mode); game._camera(0,true)
 		check(camera.position.is_finite() and camera.basis.determinant()>0.9,"Valid camera transform in every mode")
+		var pickup: Node3D=game.pickups[0].node
+		check((camera.cull_mask & pickup.get_child(0).layers)!=0,"The marked case is visible in every camera")
+		check(((camera.cull_mask & pickup.get_child(1).layers)!=0)==(mode<=CameraRig.Mode.WIDE),"Only overhead views render the floating badge")
 		if mode<3: distances.append(camera.position.distance_to(car.position))
 		else: check(game.tilt_shift.get_shader_parameter("strength")==0.0,"Low views do not blur the road")
 	check(distances[0]<distances[1] and distances[1]<distances[2],"Three overhead distances are distinct")

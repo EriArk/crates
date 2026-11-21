@@ -30,6 +30,8 @@ void fragment(){
  vec3 chalk=mix(mud_dark.rgb*0.65,vec3(0.85,0.77,0.59),checker);
  base=mix(base,chalk,stripe*(0.75+grain*0.15));
  ALBEDO=base*(1.0-water*0.36);
- ROUGHNESS=mix(0.94,0.29,water);
+ // Compacted wet tracks catch the sky. Dry grit scatters the light unevenly.
+ float dry_roughness=clamp(0.94-0.12*packed+0.11*(patch-0.5),0.72,1.0);
+ ROUGHNESS=mix(dry_roughness,0.25+0.16*grain,water);
  SPECULAR=mix(0.21,0.53,water);
 }

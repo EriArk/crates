@@ -25,6 +25,14 @@ func _ready() -> void:
 	environment.sky=sky
 	environment.reflected_light_source=Environment.REFLECTION_SOURCE_DISABLED
 	environment.fog_sky_affect=0.0
+	# A single tone curve grades the 3D image beneath the HUD in every camera.
+	var film:=Gradient.new()
+	film.offsets=PackedFloat32Array([0.0,0.18,0.48,0.78,1.0])
+	film.colors=PackedColorArray([Color("070b10"),Color("282d32"),Color("7b7b76"),Color("d1c9bb"),Color("fff5e7")])
+	var curve:=GradientTexture1D.new()
+	curve.width=256; curve.gradient=film
+	environment.adjustment_color_correction=curve
+	environment.adjustment_enabled=true
 	environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	environment.tonemap_mode=Environment.TONE_MAPPER_LINEAR if _compatibility() else Environment.TONE_MAPPER_ACES
 	environment.fog_enabled=true; environment.fog_mode=Environment.FOG_MODE_DEPTH
@@ -56,17 +64,19 @@ func apply(conditions: RefCounted) -> void:
 func profile(time: String, weather: String) -> Dictionary:
 	var cloud = {"clear":0.0,"overcast":0.72,"rain":0.90}[weather]
 	var values = {
-		"day":["b7c9d1",0.46,0.30,"a8bbb0","83a29c",Vector3(-40,-55,0),"ffebcb",1.0,0.0],
-		"sunset":["c0becb",0.48,0.32,"cbb8a4","b4a89d",Vector3(-22,-82,0),"ffdab0",0.88,0.3],
+		"day":["abc8df",0.45,0.30,"b2c4c7","abc2c7",Vector3(-32,-62,0),"ffe0b3",1.14,0.0],
+		"sunset":["aebfd3",0.49,0.33,"d5b6a4","d2af99",Vector3(-18,-82,0),"ffc591",1.02,0.32],
 		"night":["9cabc9",0.42,0.27,"28394f","465974",Vector3(-52,35,0),"b8caf0",0.26,1.0],
-		"dawn":["b5c2d0",0.46,0.31,"c1b8bd","a5b5be",Vector3(-18,78,0),"ffe3c8",0.78,0.3]
+		"dawn":["b6c6da",0.49,0.33,"c4bac3","b8b9c5",Vector3(-16,78,0),"ffdbb0",0.94,0.32]
 	}[time]
 	var night = time=="night"
 	return {"ambient":Color(values[0]).lerp(Color("9eacc0") if night else Color("c4cdd1"),cloud),
 		"ambient_energy":float(values[2] if _compatibility() else values[1])+cloud*0.09,
 		"background":Color(values[3]).lerp(Color("394c64") if night else Color("9baeb4"),cloud),
 		"fog":Color(values[4]).lerp(Color("50627b") if night else Color("9baeb4"),cloud),
-		"fog_begin":lerpf(95,65,cloud),"fog_end":lerpf(200,150,cloud),"rotation":values[5],
+		"fog_begin":lerpf(39,25,cloud),"fog_end":lerpf(158,103,cloud),
+		"fog_density":lerpf(0.42 if time=="day" else 0.54,0.82,cloud),
+		"saturation":lerpf(0.92,0.82,cloud),"rotation":values[5],
 		"sun_color":Color(values[6]).lerp(Color("a8b9d5") if night else Color("e2e9ed"),cloud),
 		"sun_energy":(0.50 if _compatibility() else 0.90)*lerpf(values[7],0.16 if night else 0.38,cloud),
 		"cover":cloud,"night":float(night),"twilight":float(time in ["dawn","sunset"]),
@@ -82,7 +92,8 @@ func set_sample(sample: Dictionary) -> void:
 	sky_material.set_shader_parameter("horizon_color",a.background.lerp(b.background,t))
 	for prop in ["cover","night","twilight"]:
 		sky_material.set_shader_parameter(prop,lerpf(a[prop],b[prop],t))
-	environment.fog_depth_begin=lerpf(a.fog_begin,b.fog_begin,t); environment.fog_depth_end=lerpf(a.fog_end,b.fog_end,t); environment.fog_density=0.15
+	environment.fog_depth_begin=lerpf(a.fog_begin,b.fog_begin,t); environment.fog_depth_end=lerpf(a.fog_end,b.fog_end,t); environment.fog_density=lerpf(a.fog_density,b.fog_density,t)
+	environment.adjustment_saturation=lerpf(a.saturation,b.saturation,t)
 	sun.rotation=Vector3(lerp_angle(deg_to_rad(a.rotation.x),deg_to_rad(b.rotation.x),t),lerp_angle(deg_to_rad(a.rotation.y),deg_to_rad(b.rotation.y),t),0)
 	sun.light_color=a.sun_color.lerp(b.sun_color,t); sun.light_energy=lerpf(a.sun_energy,b.sun_energy,t)
 	darkness=lerpf(a.darkness,b.darkness,t)

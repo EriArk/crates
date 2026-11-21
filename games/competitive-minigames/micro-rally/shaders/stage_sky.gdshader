@@ -16,5 +16,14 @@ void sky() {
 	vec3 evening=mix(dusk,vec3(0.022,0.045,0.09)+vec3(0.13,0.17,0.23)*value,night);
 	vec3 storm=horizon_color.rgb*(0.57+value*0.65);
 	vec3 painted=mix(evening,storm,cover*0.84);
-	COLOR=mix(horizon_color.rgb,painted,smoothstep(-0.09,0.025,elevation));
+	// Distant features lose contrast through the same air that colours the terrain.
+	float low_air=1.0-smoothstep(0.0,0.20,elevation);
+	vec3 air=horizon_color.rgb;
+	if (LIGHT0_ENABLED) {
+		float facing=max(dot(EYEDIR,LIGHT0_DIRECTION),0.0);
+		float forward_scatter=pow(facing,6.0)*(1.0-cover)*(1.0-night);
+		air+=vec3(0.28,0.14,0.05)*forward_scatter*(0.45+twilight);
+	}
+	float veil=low_air*mix(0.40,0.72,cover);
+	COLOR=mix(air,mix(painted,air,veil),smoothstep(-0.09,0.025,elevation));
 }
