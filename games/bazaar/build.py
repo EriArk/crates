@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -26,9 +27,10 @@ with tempfile.TemporaryDirectory(prefix='bazaar-export-', dir=output.parent) as 
     shutil.copytree(root, project, ignore=shutil.ignore_patterns('.godot', 'build', '__pycache__'))
     preset = project / 'export_presets.cfg'
     preset.write_text(preset.read_text().replace('@TEMPLATES@', args.templates.resolve().as_posix()))
+    build_env=dict(os.environ,XDG_CACHE_HOME=str(Path(temporary)/'cache'),XDG_DATA_HOME=str(Path(temporary)/'data'),XDG_CONFIG_HOME=str(Path(temporary)/'config'))
     def run(*command):
         result = subprocess.run([str(engine), '--headless', '--path', str(project), *command],
-                                capture_output=True, text=True, timeout=240)
+                                capture_output=True, text=True, timeout=240, env=build_env)
         log = result.stdout + result.stderr
         if result.returncode or 'ERROR:' in log:
             raise RuntimeError(log)

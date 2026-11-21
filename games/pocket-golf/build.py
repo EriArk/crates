@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Build in an isolated copy using pinned Godot 4.7.2 official export templates."""
-import argparse, hashlib, json, pathlib, shutil, subprocess, tempfile
+import argparse, hashlib, json, os, pathlib, shutil, subprocess, tempfile
 p=argparse.ArgumentParser()
 p.add_argument('--godot',type=pathlib.Path,required=True)
 p.add_argument('--templates',type=pathlib.Path,required=True,help='Extracted export_templates.tpz templates directory')
@@ -13,7 +13,7 @@ godot=a.godot.resolve();templates=a.templates.resolve();out=a.output.resolve();o
 version=subprocess.check_output([str(godot),'--version'],text=True).strip()
 if not version.startswith('4.7.2.stable.'):p.error('Use pinned Godot 4.7.2 stable')
 def run(args):
-    result=subprocess.run([str(godot),*args],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=180)
+    result=subprocess.run([str(godot),*args],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=180,env=build_env)
     if result.returncode or 'SCRIPT ERROR:' in result.stdout or 'ERROR:' in result.stdout:
         raise RuntimeError(result.stdout)
     return result.stdout
@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix='golf-build-',dir=out.parent) as tmp:
     stage=pathlib.Path(tmp).resolve()
     if stage.parent!=out.parent:raise RuntimeError('Unexpected staging path')
     # TemporaryDirectory cleanup is restricted to this verified disposable staging directory.
+    build_env=dict(os.environ,XDG_CACHE_HOME=str(stage/'cache'),XDG_DATA_HOME=str(stage/'data'),XDG_CONFIG_HOME=str(stage/'config'))
     project=stage/'pocket-golf'
     shutil.copytree(root,project,ignore=shutil.ignore_patterns('.godot','build','dist','__pycache__'))
     preset=project/'export_presets.cfg'
