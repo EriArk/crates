@@ -32,6 +32,9 @@ var contrast_label: Label
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
+var festival_receipt := ""
+var online_cup := false
+var cup_reported := false
 var course_root: Node3D
 var green_grid := PackedInt32Array()
 var green_mesh: MeshInstance3D
@@ -91,6 +94,11 @@ func _ready() -> void:
 	get_window().close_requested.connect(_quit_game)
 	if OS.get_environment("TRAINEROS_CRATES_GAME")=="1": get_window().mode=Window.MODE_FULLSCREEN
 	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--festival-pair="):
+			var ticket:=arg.trim_prefix("--festival-pair=")
+			var runtime:=OS.get_environment("XDG_RUNTIME_DIR")
+			if runtime.is_absolute_path() and ticket.length()==32 and ticket.is_valid_hex_number(false):
+				festival_receipt=runtime.path_join("festival-"+ticket+".json")
 		if arg.begins_with("--sdk-endpoint="): game.bridge.endpoint_override=arg.trim_prefix("--sdk-endpoint=")
 	_setup_scene()
 	anchor.ground=_ground
@@ -119,14 +127,34 @@ func _ready() -> void:
 	get_window().focus_entered.connect(func(): audio_focused=true; audio.set_state(true,paused))
 	_refresh()
 	graphics.apply(self)
+	game.bridge.session_ready.connect(_cup_admission)
+	if not festival_receipt.is_empty():_start_local(2)
 	_connect_sdk.call_deferred()
+
+func _cup_admission(_host: bool) -> void:
+	online_cup=false
+	if game.bridge.capabilities.get("bazaar.cup")!=1 or game.participant_count!=2:return
+	var room=game.bridge.session.duplicate(true)
+	game.bridge.request("activity.cup.status",{},func(result,error):
+		if not error.is_empty() or not result.get("entered",false) or room!=game.bridge.session:return
+		online_cup=true
+		if game.host and game.phase=="setup":game.start_group([[0],[1]]))
+
+func _return_from_cup() -> void:
+	if not festival_receipt.is_empty() and game.phase=="result" and game.world.complete:
+		var out:=FileAccess.open(festival_receipt+".tmp",FileAccess.WRITE)
+		if out:
+			out.store_string(JSON.stringify([game.world.total(0),game.world.total(1)]))
+			out.close()
+			DirAccess.rename_absolute(festival_receipt+".tmp",festival_receipt)
+	_quit_game()
 
 func _connect_sdk() -> void:
 	# The first draw may compile the island shaders. Open bounded IPC only once
 	# rendering is ready, so its hello deadline does not run during shader setup.
 	if DisplayServer.get_name()!="headless":
 		await RenderingServer.frame_post_draw
-	if not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty() or not game.bridge.endpoint_override.is_empty():
+	if festival_receipt.is_empty() and (not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty() or not game.bridge.endpoint_override.is_empty()):
 		game.bridge.connect_host()
 	avatar_binding.client.connect_host()
 
@@ -430,7 +458,11 @@ func _refresh() -> void:
 		popup.offset_left=-340 if state=="boards" else -220; popup.offset_right=340 if state=="boards" else 220
 		popup_text.add_theme_font_size_override("font_size",18 if state=="boards" else 20)
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
-		if state=="menu":
+		if state=="menu" and online_cup:
+			popup_title.text="Festival Cup"
+			popup_text.text="Your opponent has left the match."
+			button(popup_buttons,"Return to the arena",_return_from_cup)
+		elif state=="menu":
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
 			button(popup_buttons,"Solo · island rival",func(): field_index=-1; paused=false; game.local(2,[],true))
 			button(popup_buttons,"Local match",func(): local_setup=true; setup_count=2; setup_teams=false; _default_teams(); _refresh())
@@ -470,9 +502,13 @@ func _refresh() -> void:
 				if total<lowest: lowest=total; winners=[SIDE_NAMES[i]]
 				elif total==lowest: winners.append(SIDE_NAMES[i])
 			result_text="\n".join(lines)+"\n"+(winners[0]+" wins!" if winners.size()==1 else "Draw: "+" / ".join(winners))
-			button(popup_buttons,"Play again",func(): game.rematch())
-			button(popup_buttons,"Shared tables",_open_boards)
-			button(popup_buttons,"Main menu",func(): game.leave())
+			if online_cup or not festival_receipt.is_empty():
+				popup_title.text="Festival Cup"
+				button(popup_buttons,"Return to the arena",_return_from_cup)
+			else:
+				button(popup_buttons,"Play again",func(): game.rematch())
+				button(popup_buttons,"Shared tables",_open_boards)
+				button(popup_buttons,"Main menu",func(): game.leave())
 		elif state=="boards":
 			popup_title.text="Island clubhouse"
 			var filters := HBoxContainer.new(); popup_buttons.add_child(filters)
@@ -491,7 +527,8 @@ func _refresh() -> void:
 		elif state=="paused":
 			popup_title.text="Take a breather"
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
-			button(popup_buttons,"Leave round",func(): paused=false; game.leave())
+			if online_cup or not festival_receipt.is_empty():button(popup_buttons,"Return to the arena",_return_from_cup)
+			else:button(popup_buttons,"Leave round",func(): paused=false; game.leave())
 			button(popup_buttons,"Reset camera",func(): camera.reset_view(); paused=false; _refresh())
 			button(popup_buttons,"Graphics",_open_graphics)
 			button(popup_buttons,"Sound",_open_audio)
@@ -549,9 +586,14 @@ func _refresh() -> void:
 			audio_sliders[i].set_value_no_signal(value)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
 	if state=="result":
+		if online_cup and not cup_reported:
+			cup_reported=true
+			game.bridge.request("activity.cup.finish",{"strokes":[game.world.total(0),game.world.total(1)]},func(_result,_error):pass)
 		popup_text.text=("Rematch requested. Waiting for all players…" if game.voted else result_text)+"\n"+game.scorecards.message
 		popup_buttons.get_child(0).disabled=game.voted or game.scorecards.busy
-		popup_buttons.get_child(1).disabled=game.voted or game.scorecards.busy
+		if online_cup:
+			popup_buttons.get_child(0).disabled=game.scorecards.busy or game.scorecards.poll_at>0
+		elif festival_receipt.is_empty():popup_buttons.get_child(1).disabled=game.voted or game.scorecards.busy
 
 func _open_boards() -> void:
 	boards_open=true; _refresh(); _load_board()
