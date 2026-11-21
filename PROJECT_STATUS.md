@@ -2,7 +2,7 @@
 
 ## 21 November 2026 — Bazaar 0.0.25
 
-Odin 2 exercised both paid mini-games on a separate test wallet. Five shots produced three distinct hits and a Honey Bear. Three throws produced five points. Godot scene checks cover the pin edge, a missed throw restored after leaving, and the cork lead at both rack speeds. The island and park both exited cleanly through the flight loading screen.
+Odin 2 exercised both paid mini-games on a separate test wallet. Five shots produced three distinct hits and a Honey Bear. Three throws produced five points. Godot scene checks cover the pin edge, a missed throw restored after leaving, and the cork lead at both rack speeds. The installed island and park both exited cleanly through the flight loading screen. In a separate two-machine run over the ordinary records transport, Mika hosted on Linux and Ren visited on Odin 2. Both received the other player’s position. Ren took over when Mika left and the island remained Mika’s. [Toy Gallery](docs/evidence/bazaar-festival-0.0.25/gallery.jpg) · [Wanage](docs/evidence/bazaar-festival-0.0.25/wanage.jpg).
 
 ## 21 November 2026 — Bazaar 0.0.19
 
