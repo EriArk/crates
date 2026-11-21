@@ -21,7 +21,7 @@ func check_landscape(environment) -> void:
 	for vertex in vertices:
 		highest=maxf(highest,vertex.y)
 		if absf(vertex.x)<5.35 and absf(vertex.z)<8.35:
-			check(vertex.y< -0.1,"landscaping stays below playable green")
+			check(vertex.y<0,"meadow joins the green from below")
 	check(highest>1.0,"real terrain has raised hills")
 	check(environment.grass_positions.size()>4000,"continuous meadow present")
 	var batches: Array[Node] = environment.find_children("*","MultiMeshInstance3D",true,false)

@@ -53,8 +53,7 @@ func begin(shot: Dictionary, course: Dictionary) -> void:
 		# The impulse normal locates the surface contact on the sphere, not its centre.
 		var normal := (outgoing-incoming).normalized()
 		var contact := p-normal*Size.BALL
-		var wood := absf(contact.x)>4.95 or absf(contact.z)>7.95
-		schedule("wood" if wood else "stone",frame/float(shot.hz),contact,clampf(incoming.length()*shot.hz/8.4,0.15,1),normal)
+		schedule("stone",frame/float(shot.hz),contact,clampf(incoming.length()*shot.hz/8.4,0.15,1),normal)
 	for frame in shot.get("landings",[]):
 		var contact:=point(shot,frame)
 		schedule("land_sand" if sandy(contact,course) else "land",frame/float(shot.hz),floor_at(contact),0.5)
@@ -120,7 +119,7 @@ func emit_event(event: Dictionary) -> void:
 	var count := 5+roundi(event.strength*7)
 	var life := 0.48
 	var shape := "chip"
-	if kind in ["sand","strike_sand","land_sand","wood","stone"]:
+	if kind in ["sand","strike_sand","land_sand","stone"]:
 		color=Color("e9c786") if kind!="stone" else Color("c9d5cb")
 		shape="grain" if kind in ["sand","strike_sand","land_sand"] else "chip"
 	if kind=="sand": count=2; life=0.32
@@ -138,7 +137,7 @@ func emit_event(event: Dictionary) -> void:
 		var outward := Vector3(cos(a),0,sin(a))
 		var velocity: Vector3 = outward*(0.35+0.65*event.strength)+Vector3.UP*(0.65+0.13*(i%4))
 		var size := Vector3(0.008,0.025,0.004) if shape=="chip" else Vector3.ONE*0.012
-		if kind in ["wood","stone"]: velocity=outward*0.35+event.direction*0.8+Vector3.UP*0.7
+		if kind=="stone": velocity=outward*0.35+event.direction*0.8+Vector3.UP*0.7
 		if kind=="sand": velocity=outward*0.25+event.direction*0.4+Vector3.UP*0.35
 		if kind in ["cup","ace"]:
 			velocity=outward*(0.7 if kind=="cup" else 1.2)+Vector3.UP*(1.3+0.16*(i%5))

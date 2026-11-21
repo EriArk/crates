@@ -63,7 +63,9 @@ static func wall_contact(p: Array, v: Array, wall: Array) -> bool:
 # A gentle putt stays on the turf. Above 30% power the club adds loft progressively.
 # Flight uses the same two contact substeps and integer coordinates as rolling.
 const GRAVITY := 6812 # 9.81 m/s² at 120 Hz
-const RAIL_TOP := 330*SCALE
+# The centre crossing the edge of the rendered turf ends the stroke.
+static func outside_green(p: Array) -> bool:
+	return absi(p[0])>5000*SCALE or absi(p[1])>8000*SCALE
 
 static func in_sand(course: Dictionary, p: Array) -> bool:
 	for rect in course.sand:
@@ -83,16 +85,9 @@ static func flight(course: Dictionary, grid: PackedInt32Array, p: Array, v: Arra
 			y+=rounded_div(lift,2)-GRAVITY/8
 			lift-=GRAVITY/2
 			p[0]+=rounded_div(v[0],2); p[1]+=rounded_div(v[1],2)
-			for axis in 2:
-				var edge: int=(5000 if axis==0 else 8000)*SCALE
-				if absi(p[axis])<=edge-RADIUS: continue
-				if y-RADIUS>RAIL_TOP:
-					outside=true
-				else:
-					p[axis]=clampi(p[axis],-edge+RADIUS,edge-RADIUS)
-					v[axis]=-v[axis]*RESTITUTION/100
-					bank=true
-			if outside: break
+			if outside_green(p):
+				outside=true
+				break
 			for i in course.walls.size():
 				var top: int=(tops[i] if i<tops.size() else 600)*SCALE
 				if y-RADIUS>=top: continue
@@ -150,21 +145,19 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 		var bounced := false
 		for substep in 2:
 			p[0]+=rounded_div(v[0],2); p[1]+=rounded_div(v[1],2)
-			for axis in 2:
-				var limit := (5000 if axis==0 else 8000)*SCALE-RADIUS
-				if absi(p[axis])>limit:
-					p[axis]=clampi(p[axis],-limit,limit)
-					v[axis]=-v[axis]*RESTITUTION/100
-					bounced=true
-			# Revisit contacts at intersections (wall/rail, or multiple walls).
+			if outside_green(p):
+				out_of_play=true
+				break
+			# Resolve intersecting internal obstacles.
 			for pass_index in 3:
 				for wall in course.walls:
 					if wall_contact(p,v,wall): bounced=true
-				p[0]=clampi(p[0],-5000*SCALE+RADIUS,5000*SCALE-RADIUS)
-				p[1]=clampi(p[1],-8000*SCALE+RADIUS,8000*SCALE-RADIUS)
 		path.append([p[0]/SCALE,p[1]/SCALE])
 		heights.append(Surface.ball_height(grid,path.back()[0],path.back()[1]))
 		if bounced: bounces.append(path.size()-1)
+		if out_of_play:
+			stopped=true
+			break
 		var dx: int = course.cup[0]*SCALE-p[0]
 		var dz: int = course.cup[1]*SCALE-p[1]
 		var distance := length_int(dx,dz)

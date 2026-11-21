@@ -238,7 +238,6 @@ func _build_course() -> void:
 	green_grid=c.height_grid
 	camera.obstruction_height=0.6
 	island=Island.new(); course_root.add_child(island); island.build(field_index)
-	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"),Surfaces.Kind.WOOD)
 	# The exact same triangle grid supplies physics height/gradients and this mesh.
 	green_mesh=MeshInstance3D.new(); green_mesh.name="PlayableGreen"
 	green_mesh.mesh=GreenSurface.make_mesh(green_grid)
@@ -254,14 +253,6 @@ func _build_course() -> void:
 	turf.set_shader_parameter("obstacle_count",wall_bounds.size()); wall_bounds.resize(8)
 	turf.set_shader_parameter("obstacles",wall_bounds)
 	green_mesh.material_override=turf; course_root.add_child(green_mesh)
-	var rail_material := ShaderMaterial.new()
-	rail_material.shader=preload("res://shaders/club_rail.gdshader")
-	for x in [-5.12,5.12]:
-		box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color.WHITE).material_override=rail_material
-	for z in [-8.12,8.12]:
-		box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color.WHITE).material_override=rail_material
-	for x in [-5.12,5.12]:
-		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("dfb66c"))
 	for i in c.walls.size():
 		var wall: Array=c.walls[i]
 		var top: float=c.wall_tops[i]/1000.0
@@ -684,7 +675,8 @@ func _process(delta: float) -> void:
 				var reaction_time: float = rolling_time-(shot.path.size()-1)/float(shot.hz)
 				anchor.celebrate(reaction_time,(field_index+shot.strokes[shot.player]+game.round_id)%3)
 			if rolling_time>=(shot.path.size()-1)/float(shot.hz):
-				hud.set_status("In the cup!" if shot.sunk else "Out of play · retake" if shot.out_of_play else "8 strokes · moving on" if shot.capped else "Nice and steady.")
+				if shot.out_of_play: ball.visible=false
+				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Out of play · stroke counted" if shot.out_of_play else "Nice and steady.")
 			if rolling_time>(shot.path.size()-1)/float(shot.hz)+(2.8 if shot.sunk else 0.85):
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)

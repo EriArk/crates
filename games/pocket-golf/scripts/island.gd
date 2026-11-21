@@ -232,7 +232,10 @@ func ground_height(point: Vector3) -> float:
 	var previous := 0.0; var height := -0.24
 	for ring in RINGS:
 		var radius: float = shape/sqrt(pow(dir.x/ring.x,2)+pow(dir.y/ring.z,2)) if distance>0 else 1.0
-		if distance<=radius: return lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))+_relief(p)
+		if distance<=radius:
+			var terrain_y:=lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))+_relief(p)
+			var fringe_distance:=maxf(absf(p.x)-5.0,absf(p.y)-8.0)
+			return lerpf(-0.01,terrain_y,smoothstep(0.35,1.2,fringe_distance))
 		previous=radius; height=ring.y
 	return height
 

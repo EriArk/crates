@@ -62,9 +62,14 @@ func run() -> void:
 			for i in mini(reference.size(),positions.size()): check(reference[i].is_equal_approx(positions[i]),"frame rate independent particle positions")
 	check(ui.effects.events.any(func(e): return e.kind=="trail"),"fast shot has short trail")
 	begin(0,[4600,0],90,75)
-	check(not ui.shot.bounces.is_empty(),"real rail bounce fixture")
-	var contact: Dictionary = ui.effects.events.filter(func(e): return e.kind=="wood")[0]
-	check(absf(contact.pos.x-5.0)<0.035,"contact sits on rail surface")
+	check(ui.shot.out_of_play and ui.shot.bounces.is_empty(),"edge emits no bank")
+	check(ui.game.world.balls[0]==[4600,0] and ui.game.world.strokes[0]==1,"out counts one stroke and restores the starting lie")
+	at((ui.shot.path.size()-0.5)/float(ui.shot.hz))
+	check(not ui.balls[0].visible,"ball clears the frame on exit")
+	at((ui.shot.path.size()-1)/float(ui.shot.hz)+1)
+	check(ui.balls[0].visible and is_equal_approx(ui.balls[0].position.x,4.6),"ball returns for the next turn")
+	begin(1,[-1000,1500],0,70)
+	var contact: Dictionary = ui.effects.events.filter(func(e): return e.kind=="stone")[0]
 	# Jump over contact: emit once, at its old position with its true age.
 	at(contact.time+0.12)
 	var cursor: int = ui.effects.cursor; ui._process(0)

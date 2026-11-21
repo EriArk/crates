@@ -26,8 +26,8 @@ func _initialize() -> void:
 	var rollback := Rules.trace(plane(35),[0,0],90,10)
 	var furthest := 0
 	for p in rollback.path: furthest=maxi(furthest,p[0])
-	check(furthest>50 and rollback.position[0]<-500,"weak uphill putt rolls back on steep slope")
-	check(rollback.stopped,"downhill wall contact eventually rests")
+	check(furthest>50 and rollback.path.back()[0]<=-5000,"weak uphill putt rolls back on steep slope")
+	check(rollback.stopped and rollback.out_of_play and rollback.position==[0,0],"ball rolling down a steep slope leaves the green")
 	var accelerating := Rules.trace(plane(35),[0,0],270,25)
 	check(accelerating.path[19][0]-accelerating.path[20][0]>accelerating.path[0][0]-accelerating.path[1][0],"steep downhill accelerates")
 	print("SLOPE range mm flat=",flat.position," uphill=",uphill.position," downhill=",downhill.position," cross=",crosshill.position," rollback=",rollback.position)
@@ -64,9 +64,9 @@ func _initialize() -> void:
 					var s := Surface.sample(grid,point[0]+dx,point[1]+dz)
 					check(s==[level,0,0],"flat tee/cup pad")
 		for i in Surface.WIDTH:
-			check(grid[i]==0 and grid[(Surface.DEPTH-1)*Surface.WIDTH+i]==0,"north/south rails remain at ground level")
+			check(grid[i]==0 and grid[(Surface.DEPTH-1)*Surface.WIDTH+i]==0,"north/south edges remain at ground level")
 		for i in Surface.DEPTH:
-			check(grid[i*Surface.WIDTH]==0 and grid[i*Surface.WIDTH+Surface.WIDTH-1]==0,"east/west rails remain at ground level")
+			check(grid[i*Surface.WIDTH]==0 and grid[i*Surface.WIDTH+Surface.WIDTH-1]==0,"east/west edges remain at ground level")
 		check(max_gradient<0.55,"playable slopes remain bounded")
 		print("GREEN ",hole+1," vertices=",grid.size()," crest mm=",Array(grid).max()," gradient=",max_gradient," cup mm=",Surface.sample(grid,course.cup[0],course.cup[1])[0])
 		signatures.append(grid)

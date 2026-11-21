@@ -1,12 +1,12 @@
 {
-    "ruleset":  "pocket-golf.island.loft6.v1",
+    "ruleset":  "pocket-golf.island.open7.v1",
     "normalization":  "UTF-8, LF",
     "source_sha256":  {
-                          "scripts/rules.gd":  "1fed44720e85f2fb8521081b912f917265e8ed99804b4025262883de1d6fbff4",
+                          "scripts/rules.gd":  "dfb74d04a14718e5afa002513aaab3bc63d09271949f0396f73aa3a00a1ded61",
                           "scripts/courses.gd":  "f7e5813d1d073ecddddea6bf410598a6ca13eacf4b4acf8299640ede53a039d2",
-                          "scripts/ball_physics.gd":  "5aef294df0e0c55b8fa7ae0563d8bb974342b4da76135e2b1cb816a1bdf82f40",
-                          "scripts/green_surface.gd":  "c5a649f8c0160d6c0dd18fe98d133e9c96b96ae9fdaeb2750fff6721c81e50ab",
+                          "scripts/ball_physics.gd":  "f5f82a2169fe02f5247b3b68e3f156e2dbcb24b9cfba32536a35a039e1ee2b3d",
+                          "scripts/green_surface.gd":  "f7203a9d09b6b9955e013387e43e798c1b19585912fbd106e978322898fbb14e",
                           "scripts/dimensions.gd":  "61d5e85786a48e40818bfa17bf7eb61d9582cc353fb1a0cc3062c95b4a255d5f"
                       },
-    "content_id":  "island-1901135ac8f613a5c5b225407281da862aa6e238cfc21922"
+    "content_id":  "island-56b644d60cd73fe376e42f959e641f0b0a6f297b7d1db1c6"
 }

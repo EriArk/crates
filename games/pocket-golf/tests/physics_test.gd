@@ -65,7 +65,13 @@ func _initialize() -> void:
 	check(soft.landings.size()==1 and soft.position[1]>chip.position[1],"sand absorbs chip and shortens roll")
 	check(slow.roll_frame==0 and slow.landings.is_empty(),"precision putt stays on turf")
 	var escaped:=Rules.trace(grass,[0,-7100],0,100)
-	check(escaped.out_of_play and escaped.stopped and escaped.position==[0,-7100],"clearing the outer rail returns ball to stroke origin")
+	check(escaped.out_of_play and escaped.stopped and escaped.position==[0,-7100],"flying past the open edge returns ball to stroke origin")
+	for exit in [[[4950,0],90], [[-4950,0],270], [[0,7950],180], [[0,-7950],0], [[4970,7970],135]]:
+		for power in [10,75]:
+			var shot:=Rules.trace(grass,exit[0],exit[1],power)
+			check(shot.out_of_play and shot.position==exit[0] and shot.bounces.is_empty(),"open edges and corners allow both rolls and chips to escape")
+	var parallel:=Rules.trace(grass,[4990,0],0,20)
+	check(not parallel.out_of_play and parallel.bounces.is_empty() and parallel.position[0]==4990,"putt along the edge stays in play")
 	print("CHIP height_mm=",chip.heights.max()-chip.heights[0]," landing_frames=",chip.landings," hz=",chip.hz)
 	var lip: Dictionary = Rules.trace(cup,[70,900],0,35)
 	var miss: Dictionary = Rules.trace(cup,[100,900],0,35)
@@ -84,7 +90,7 @@ func _initialize() -> void:
 				for frame in shot.path.size():
 					var point: Array = shot.path[frame]
 					if shot.out_of_play and frame==shot.path.size()-1: continue
-					check(absi(point[0])<=4965 and absi(point[1])<=7965,"course bounds")
+					check(absi(point[0])<=5000 and absi(point[1])<=8000,"course bounds")
 					var course:=Courses.get_course(hole)
 					for index in course.walls.size():
 						if shot.heights[frame]-35>=course.wall_tops[index]: continue

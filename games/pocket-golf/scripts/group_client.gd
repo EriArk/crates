@@ -8,7 +8,7 @@ var outstanding: Dictionary = {}
 var records: Array = []
 var consumes: Array = []
 
-func _init() -> void: game_protocol="pocket-golf.9"
+func _init() -> void: game_protocol="pocket-golf.10"
 
 func disconnect_host() -> void:
 	channels.clear(); sequences.clear()

@@ -63,7 +63,7 @@ void fragment() {
         // Short mown fibres, small variations between individual clumps.
         detail=(filtered_noise(world*vec3(110.0,30.0,28.0))-0.5)*0.16+(broad-0.5)*0.065;
         micro=0.035; rough=0.94;
-        float contact=1.0-smoothstep(0.0,0.24,min(5.0-abs(world.x),8.0-abs(world.z)));
+        float contact=0.0;
         for (int i=0;i<8;i++) {
             if (i>=obstacle_count) break;
             vec2 d=max(max(obstacles[i].xy-world.xz,world.xz-obstacles[i].zw),vec2(0.0));
