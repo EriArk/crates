@@ -146,6 +146,10 @@ func _online() -> void:
 func _wallet_changed() -> void:
 	if not visible or mode!=wallet.game:return
 	var ticket:Dictionary=wallet.ticket()
+	if mode=="gallery":
+		if wallet.offer.has("won"):ground.gallery.show_collection(wallet.offer.won)
+		var won_index=ground.gallery.Plush.NAMES.find(ticket.get("prize"))
+		if won_index>=0:ground.gallery.ribbons[won_index].show()
 	var history:Array=ticket.get("attempts",[])
 	var stamp:="%s/%d"%[ticket.get("id",""),history.size()]
 	if displayed!=stamp:

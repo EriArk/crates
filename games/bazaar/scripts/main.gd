@@ -22,6 +22,8 @@ var services: Control
 var population: Node3D
 var identity := Label.new()
 var place_caption: Label
+var counter_tests: HBoxContainer
+var island_visit
 var festival_lab_button: Button
 var lab_button: Button
 var district_label: Label
@@ -103,7 +105,7 @@ func _ready() -> void:
 	var location := VBoxContainer.new();root.add_child(location);location.position=Vector2(22,18)
 	location.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	district_label=label("Festival Park",20);location.add_child(district_label)
-	place_caption=label("EMPTY STARTING SQUARE  /  LOCAL ALPHA" if personal else "BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab"))
+	place_caption=label("MIKA’S ISLAND  /  BEACH MARKET" if world_kind=="island" else "EMPTY STARTING SQUARE  /  LOCAL ALPHA" if personal else "BAZAAR ISLAND  /  ALPHA",10,Color("dfcfab"))
 	location.add_child(place_caption)
 	compass=label("N",13);root.add_child(compass)
 	compass.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP);compass.position.y=18
@@ -192,15 +194,18 @@ func _ready() -> void:
 		festival=preload("festival_panel.gd").new()
 		festival.world=self;festival.ground=square.festival
 		root.add_child(festival);festival.closed.connect(hide_menu)
+	if world_kind!="station":
 		services=load("res://scripts/service_menu.gd").new()
 		services.square=square
-		services.outfit_selected.connect(square.fitting_booth.select)
+		if not personal:services.outfit_selected.connect(square.fitting_booth.select)
+		else:services.client.world_key="mika-island"
 		services.turn_model.connect(func(angle: float):if posing:visitor.anchor.rotate_y(angle))
 		root.add_child(services);services.closed.connect(hide_menu)
 		lab_button=button("Enter test market",func():
 			var use_lab: bool=services.client.endpoint_override.is_empty()
 			services.client.use_lab(use_lab)
-			festival.wallet.use_lab(use_lab)
+			if festival:festival.wallet.use_lab(use_lab)
+			if island_visit:island_visit.use_endpoint(services.client.endpoint_override)
 			place_caption.text="TEST MARKET  /  TEST SPARKS" if use_lab else "BAZAAR ISLAND  /  ALPHA"
 			hide_menu())
 		menu.add_child(lab_button);menu.move_child(lab_button,menu.get_child_count()-2)
@@ -208,15 +213,37 @@ func _ready() -> void:
 		festival_lab_button=button("Enter festival test · Ren",func():
 			var path:=_festival_lab_path()
 			services.client.use_endpoint(path)
-			festival.wallet.use_endpoint(path)
+			if festival:festival.wallet.use_endpoint(path)
+			if island_visit:island_visit.use_endpoint(path)
 			place_caption.text="FESTIVAL TEST   /   REN   /   TEST SPARKS"
 			hide_menu())
 		menu.add_child(festival_lab_button)
 		menu.move_child(festival_lab_button,menu.get_child_count()-2)
 		festival_lab_button.hide()
+		if personal:
+			island_visit=preload("island_visit.gd").new()
+			island_visit.visitor=visitor
+			square.add_child(island_visit)
+			island_visit.use_endpoint(services.client.endpoint_override)
+		counter_tests=HBoxContainer.new()
+		menu.add_child(counter_tests)
+		menu.move_child(counter_tests,menu.get_child_count()-2)
+		for account in ["Mika","Ren"]:
+			var name_:String=account
+			var entry:=button("Test · "+name_,func():
+				var path:=_counter_lab_path(name_)
+				services.client.use_endpoint(path)
+				if festival:festival.wallet.use_endpoint(path)
+				if island_visit:island_visit.use_endpoint(path)
+				place_caption.text="COUNTER TEST   /   "+name_.to_upper()+"   /   TEST SPARKS"
+				hide_menu())
+			counter_tests.add_child(entry)
+		counter_tests.hide()
 		if not services.client.endpoint_override.is_empty():place_caption.text="TEST MARKET  /  TEST SPARKS"
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
-			if method=="bazaar.world":update_counters(value.get("places",[])))
+			if method=="bazaar.world":
+				update_counters(value.get("places",[]))
+				if festival:square.festival.gallery.show_collection(value.get("won",[])))
 		services.client.unavailable.connect(func(_reason: String):update_counters([]))
 		services.client.read_failed.connect(func(method: String, _reason: String):
 			if method=="bazaar.world":update_counters([]))
@@ -224,6 +251,8 @@ func _ready() -> void:
 
 func update_counters(places: Array) -> void:
 	square.update_showcases(places)
+	if personal:return
+	if places.is_empty():square.festival.gallery.show_collection([])
 	var sellers := {}
 	for row in places:
 		if row.get("rental_id")!=null and row.get("species")!=null:
@@ -234,9 +263,10 @@ func update_counters(places: Array) -> void:
 
 func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market district") -> void:
 	if lab_button:
+		counter_tests.visible=FileAccess.file_exists(_counter_lab_path("Mika")) and FileAccess.file_exists(_counter_lab_path("Ren"))
 		var in_lab: bool=not services.client.endpoint_override.is_empty()
 		lab_button.visible=in_lab or FileAccess.file_exists(services.client.lab_endpoint())
-		festival_lab_button.visible=FileAccess.file_exists(_festival_lab_path()) and services.client.endpoint_override!=_festival_lab_path()
+		festival_lab_button.visible=not personal and not counter_tests.visible and FileAccess.file_exists(_festival_lab_path()) and services.client.endpoint_override!=_festival_lab_path()
 		lab_button.text="Return to official market" if in_lab else "Enter test market"
 	if is_instance_valid(services) and services.visible:services.close()
 	visitor.attend(null)
@@ -251,6 +281,9 @@ func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market dis
 		title=square.title() if personal else square.district(visitor.position)
 		detail=square.description() if personal else "Official island"
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
+
+func _counter_lab_path(account: String) -> String:
+	return OS.get_environment("XDG_RUNTIME_DIR").path_join("traineros-counter-lab/"+account+"/sdk/endpoint.json")
 
 func _festival_lab_path() -> String:
 	return OS.get_environment("XDG_RUNTIME_DIR").path_join("traineros-festival-lab/sdk/endpoint.json")
@@ -338,7 +371,7 @@ func inspect_spot() -> void:
 		speech.show()
 
 func frame_service(kind: String, slot: int) -> void:
-	if kind=="office":return
+	if kind in ["office","island_office"]:return
 	visitor.anchor.visible=kind=="tailor"
 	var target: Vector3
 	var toward: Vector3
@@ -421,6 +454,7 @@ func leave_bazaar(code := 0) -> void:
 	if leaving:return
 	leaving=true;visitor.set_controls(false)
 	audio.stop_all()
+	if island_visit:await island_visit.leave()
 	if not personal:square.life.stop_sound()
 	# Let the audio mixer retire playback before engine shutdown.
 	await get_tree().create_timer(0.15).timeout

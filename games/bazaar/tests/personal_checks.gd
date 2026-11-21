@@ -9,8 +9,9 @@ func run(world: Node3D) -> void:
 	await frames(40)
 	check(world.personal,"Personal world selected")
 	check(world.visitor.is_on_floor(),"Arrival has real collision")
-	check(not is_instance_valid(world.services) and not is_instance_valid(world.population),"No official services, merchants or ownership in empty world")
-	check(world.square.destinations.is_empty(),"Empty square has no paid facilities")
+	var island:bool=world.world_kind=="island"
+	check(is_instance_valid(world.services)==island and not is_instance_valid(world.population),"Only the island offers its own counter service")
+	check(world.square.destinations.size()==(1 if island else 0),"Unbuilt island has only its office sign")
 	for x in [-16.0,0.0,16.0]:
 		for z in [-12.0,0.0,12.0]:
 			world.visitor.enter_space(Vector3(x,1.65 if world.world_kind=="island" else 0.2,z),0);await frames(30)
@@ -21,7 +22,7 @@ func run(world: Node3D) -> void:
 	world.show_menu();var before: Vector3=world.visitor.position
 	world.visitor.touch_move=Vector2(0,1);await frames(20)
 	check(world.visitor.position.distance_to(before)<0.1,"Menu stops movement")
-	check(world.menu_body.text.contains("no purchases"),"Menu explains unavailable economy")
+	check(world.menu_body.text.contains("beach market" if island else "no purchases"),"Menu explains unavailable economy")
 	world.hide_menu();world.visitor.enter_space(Vector3(0,-8,0),0);await frames(40)
 	check(world.visitor.is_on_floor() and world.visitor.position.distance_to(world.square.spawn)<0.3,"Fall returns to correct world arrival")
 	if world.world_kind=="island":

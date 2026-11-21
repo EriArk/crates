@@ -7,10 +7,61 @@ var spawn := Vector3(0,1.6,18)
 var materials: Dictionary = {}
 var build_radius := 24.0
 var terrain: MeshInstance3D
+const COUNTER := Vector3(-5,1.46,9)
+var island_counter: Node3D
+var island_keeper: Node3D
+var island_goods: Node3D
+var last_wares := {}
+var island_figures: Node3D
+
+func stall_layout(_slot: int) -> Dictionary:
+	return {"position":COUNTER,"seller":COUNTER+Vector3(-.58,0,0),"approach":COUNTER+Vector3(1.48,0,0),"yaw":PI/2}
+
+func build_office() -> void:
+	var at:=COUNTER+Vector3(3,0,2)
+	var post:=BoxMesh.new()
+	post.size=Vector3(.16,1.16,.14)
+	geometry(post,material("865d41"),at+Vector3.UP*.58,true)
+	var plaque:=BoxMesh.new()
+	plaque.size=Vector3(1.55,.56,.1)
+	geometry(plaque,material("336163"),at+Vector3.UP*1.09)
+	var label:=Label3D.new()
+	label.text="ISLAND COUNTER";label.pixel_size=.0031
+	label.position=at+Vector3(0,1.09,.065)
+	add_child(label)
+	destinations.append({"title":"Island counter office","position":at+Vector3.BACK*.68,"service":"island_office"})
+	island_figures=preload("population.gd").new()
+	add_child(island_figures)
+
+func update_showcases(places: Array) -> void:
+	var row:Dictionary=places.front() if not places.is_empty() else {}
+	if row==last_wares:return
+	last_wares=row.duplicate(true)
+	if island_counter:island_counter.queue_free();island_counter=null
+	if island_keeper:island_keeper.queue_free();island_keeper=null
+	if island_goods:island_goods.queue_free();island_goods=null
+	destinations=destinations.filter(func(d):return d.get("service")!="stall")
+	if row.is_empty():return
+	island_counter=preload("res://assets/town/stall-green.glb").instantiate()
+	add_child(island_counter);island_counter.position=COUNTER;island_counter.scale=Vector3(1.8,1.8,2.8)
+	var body:=StaticBody3D.new();island_counter.add_child(body)
+	var shape:=CollisionShape3D.new();var box:=BoxShape3D.new();box.size=Vector3(.85,.96,1)
+	shape.shape=box;shape.position.y=.48;body.add_child(shape)
+	var layout:=stall_layout(1)
+	destinations.append({"title":"Browse island counter","position":layout.approach,"service":"stall","slot":1})
+	if row.get("species") in island_figures.SPECIES:
+		island_keeper=island_figures.figure(row.species,layout.seller,.45).node
+		island_keeper.rotation.y=PI/2
+	island_goods=Node3D.new();add_child(island_goods)
+	island_goods.position=COUNTER+Vector3(.72,1.02,0)
+	island_goods.rotation.y=PI/2
+	preload("counter_display.gd").fill(island_goods,row.get("showcase",[]))
 
 func title() -> String:return "Mika's Island" if kind=="island" else "Ren's Observatory"
 func district(_at: Vector3) -> String:return title()
-func description() -> String:return "One empty square to make your own. Shops, stalls, training arenas and social spaces will be added later. This local test world has no purchases or multiplayer."
+func description() -> String:
+	if kind=="island":return "Visit the sign by the beach market to open the counter or set its rent."
+	return "One empty square to make your own. Shops, stalls, training arenas and social spaces will be added later. This local test world has no purchases or multiplayer."
 func material(color: String, glow := false) -> StandardMaterial3D:
 	var key := color+str(glow)
 	if not materials.has(key):
@@ -249,6 +300,7 @@ func _ready() -> void:
 		env.ambient_light_color=Color("c5e2e7");env.ambient_light_energy=0.32;sun.light_color=Color("fff1cf");sun.light_energy=0.55
 		env.fog_enabled=true;env.fog_mode=Environment.FOG_MODE_DEPTH;env.fog_depth_begin=100;env.fog_depth_end=450;env.fog_density=0.25;env.fog_light_color=Color("c7e8e6");env.fog_sky_affect=0
 		island()
+		build_office()
 	else:
 		var cosmos:=ShaderMaterial.new();cosmos.shader=load("res://shaders/cosmos.gdshader");cosmos.set_shader_parameter("dust",preload("res://assets/sky/star-cloud.jpg"));sky.sky_material=cosmos
 		env.ambient_light_color=Color("9cb2dd");env.ambient_light_energy=0.65;sun.light_color=Color("e8dbff");sun.light_energy=0.8

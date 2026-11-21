@@ -63,6 +63,7 @@ func run() -> void:
 		shots.append({"x":0,"y":0,"target":i,"points":1})
 		desk.wallet._received("bazaar.festival.attempt",snapshot_for("gallery",shots.duplicate(),5))
 	await create_timer(.4).timeout
+	check(ground.gallery.ribbons.size()==5 and ground.gallery.ribbons[2].visible and not ground.gallery.ribbons[1].visible,"Only the won plush has a ribbon")
 	check(not ground.gallery.toys[2].visible and desk.bag.visible and desk.info.text.contains("Honey Bear"),"Prize announced on third hit")
 	desk.close()
 	check(ground.gallery.toys[2].visible and not ground.gallery.launcher.visible,"Booth resets for passers-by")

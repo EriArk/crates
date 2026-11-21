@@ -3,7 +3,8 @@ extends Node3D
 
 const SITE := Vector3(-9,0,19)
 const MARKS := [Vector2(-1.42,.94),Vector2(0,.94),Vector2(1.42,.94),Vector2(-.78,1.82),Vector2(.78,1.82)]
-const COATS := ["fa9c9c","7ab68c","dfaf61","8fc9df","ac9ad5"]
+const Plush = preload("festival_plush.gd")
+var ribbons: Array[Label3D]=[]
 var toys: Array[Node3D] = []
 var eye: Camera3D
 var aim := Vector2(0,1.32)
@@ -49,36 +50,34 @@ func build(s) -> void:
 	s.block(SITE+Vector3(0,.28,-.04),Vector3(4.4,.57,.7),"9f5540")
 	s.text3d("TOY GALLERY",SITE+Vector3(0,2.37,-.31),.006)
 	for i in MARKS.size():
-		var toy:=Node3D.new()
+		var toy:=Plush.create(i)
 		add_child(toy)
 		var mark:Vector2=MARKS[i]
 		toy.position=Vector3(mark.x,mark.y-.32,0)
 		toys.append(toy)
-		var coat:String=COATS[i]
-		part(toy,Vector3(0,.21,0),Vector3(.41,.37,.34),coat)
-		part(toy,Vector3(0,.40,.015),Vector3(.48,.38,.37),coat)
+	var shelf:=SITE+Vector3(-3.92,.76,.18)
+	s.block(shelf+Vector3(0,-.37,0),Vector3(2.87,.74,.89),"927055")
+	s.block(shelf,Vector3(2.96,.085,.95),"eabc83")
+	s.text3d("PRIZE SHELF",shelf+Vector3(0,-.26,.46),.0045)
+	for i in Plush.NAMES.size():
+		var plush:=Plush.create(i)
+		add_child(plush)
+		plush.position=to_local(shelf)+Vector3((i-2)*.53,.045,0)
+		plush.scale=Vector3.ONE*.79
+		var ribbon:Label3D=s.text3d("★",shelf+Vector3((i-2)*.53,.155,.23),.004)
+		ribbon.modulate=Color("ffd160")
 		for side in [-1,1]:
-			part(toy,Vector3(side*.14,.08,.11),Vector3(.15,.12,.18),coat)
-			part(toy,Vector3(side*.23,.24,.02),Vector3(.13,.20,.15),coat).rotation.z=side*.35
-			if i==0:
-				part(toy,Vector3(side*.12,.64,0),Vector3(.12,.32,.12),coat).rotation.z=-side*.15
-				part(toy,Vector3(side*.12,.65,.056),Vector3(.054,.21,.035),"fbd3bd").rotation.z=-side*.15
-			elif i==4:
-				var ear:=part(toy,Vector3(side*.15,.57,0),Vector3(.17,.19,.14),coat)
-				var tip:=CylinderMesh.new()
-				tip.top_radius=0;tip.bottom_radius=.55;tip.height=1
-				tip.radial_segments=4;ear.mesh=tip
-				part(toy,Vector3(side*.16,.37,.17),Vector3(.10,.014,.02),"69587f").rotation.z=side*.18
-			elif i in [1,2]:
-				part(toy,Vector3(side*.16,.555,0),Vector3(.15,.22 if i==4 else .14,.13),coat)
-			var face:=Vector3(side*.15,.555,.073) if i==1 else Vector3(side*.087,.43,.185)
-			part(toy,face,Vector3(.045,.057,.025),"302f43")
-			part(toy,face+Vector3(-.007,.011,.012),Vector3.ONE*.013,"fff1d2")
-			if i==2:part(toy,Vector3(side*.034,.365,.185),Vector3(.116,.096,.065),"ffdeb6")
-		part(toy,Vector3(0,.365,.195),Vector3(.15 if i==3 else .071,.066,.08),"efaa55" if i==3 else "704a4a")
-		part(toy,Vector3(0,.18,.151),Vector3(.23,.22,.065),"ffdeb6")
-		if i==1:part(toy,Vector3(0,.337,.176),Vector3(.12,.017,.024),"456d54")
-		if i==3:part(toy,Vector3(.035,.595,0),Vector3(.1,.13,.09),coat).rotation.z=-.4
+			var tail:=MeshInstance3D.new()
+			var strip:=BoxMesh.new()
+			strip.size=Vector3(.046,.105,.012)
+			var cloth:=StandardMaterial3D.new()
+			cloth.albedo_color=Color("b84250")
+			tail.mesh=strip;tail.material_override=cloth
+			ribbon.add_child(tail)
+			tail.position=Vector3(side*.023,-.071,-.01)
+			tail.rotation.z=side*.27
+		ribbon.hide()
+		ribbons.append(ribbon)
 	s.destinations.append({"title":"Festival toy gallery","festival":"gallery","position":SITE+Vector3(0,0,1.28)})
 	sight=Node3D.new()
 	add_child(sight)
@@ -165,3 +164,6 @@ func end() -> void:
 	cork.hide()
 	if flight:flight.kill()
 	restore([])
+
+func show_collection(won: Array) -> void:
+	for i in ribbons.size():ribbons[i].visible=Plush.NAMES[i] in won

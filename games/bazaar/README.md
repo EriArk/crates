@@ -1,4 +1,4 @@
-# Bazaar 0.0.23 — Festival market
+# Bazaar 0.0.24 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
@@ -8,6 +8,12 @@ can see up to three goods on the counter before opening it. Move up/down to insp
 review the item and the price together. **Profile inventory** shows the delivered item. If a reply is lost,
 choose **Resolve last checkout** at Vale's desk, also after restarting the game
 or host. Ordinary visits and the personal-world previews use the normal profile.
+
+## Beach counter and prize shelf
+
+On a device provisioned with both disposable profiles, open the field menu and choose **Test · Mika** or **Test · Ren**. On Mika’s island, walk to the **Island Counter** sign. Mika buys the first stall for 500 Sparks and sets the weekly rent. Ren can hire a keeper for the week by covering the rent plus 100 Sparks. Visitors on the island see each other move. When the host leaves the remaining visitor hosts the world. Ownership stays with Mika.
+
+At a rented counter, select a listed item to **Change price** or **Take back**. The tenant sees the most recent sale on return. Festival plush appear as toys with price tags. The five toys stand on a shelf beside the gallery. A ribbon marks every plush this profile has won, including toys later sold.
 
 ## First festival
 

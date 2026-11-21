@@ -376,23 +376,5 @@ func update_showcases(places: Array) -> void:
 		add_child(display);stands[slot]=display
 		display.position=Vector3(layout.side*4.98,1.05,layout.position.z)
 		display.rotation.y=layout.yaw
-		var items: Array=next[slot].items
-		var count := mini(3,items.size())
-		for i in count:
-			var item: Dictionary=items[i]
-			var icon := Sprite3D.new()
-			icon.texture=preload("res://scripts/market_goods.gd").illustration(item)
-			var offsets: Array = [.85] if count==1 else [-.85,.85] if count==2 else [-.95,-.25,.85]
-			var x := float(offsets[i])
-			var board := MeshInstance3D.new()
-			board.mesh=price_board;board.material_override=price_wood;board.position=Vector3(x,.16,0)
-			display.add_child(board)
-			icon.pixel_size=.24/maxf(1,icon.texture.get_width());icon.position=Vector3(x,.28,.028)
-			display.add_child(icon)
-			var title := str(item.get("title","Item")).substr(0,20)
-			var nameplate := text3d(title,Vector3(x,.075,.03),.0022,display)
-			nameplate.pixel_size=minf(.0022,.61/maxf(1,ThemeDB.fallback_font.get_string_size(title,HORIZONTAL_ALIGNMENT_LEFT,-1,nameplate.font_size).x))
-			text3d(str(int(item.price))+" ✦",Vector3(x,-.025,.03),.0019,display)
-		for sign_part in display.get_children():
-			sign_part.layers=1 << (COUNTER_SIGN_LAYER-1)
+		preload("counter_display.gd").fill(display,next[slot].items)
 	display_rows=next

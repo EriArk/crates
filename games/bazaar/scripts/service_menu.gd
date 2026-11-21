@@ -115,6 +115,7 @@ func open(kind: String, slot := 1) -> void:
 	fitting_look={}
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
 	if kind in ["tea","curios"]:page="visitor"
+	if kind=="island_office":page="island"
 	focused_row=0;status="";selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render()
 	if page=="visitor":return
 	if not client.active:client.connect_host()
@@ -191,7 +192,7 @@ func received(method: String, value: Dictionary) -> void:
 		loading=false
 		if value.get("viewed",false):
 			receipt_message="";refresh();return
-		receipt_message={"rent":"Stall and keeper are ready","list":"Item listed","buy":"Item delivered to your profile"}.get(value.get("action",""),"Purchase resolved")
+		receipt_message={"rent":"Stall and keeper are ready","list":"Item listed","buy":"Item delivered to your profile","build":"Island counter built","weekly":"Weekly rent saved","withdraw":"Returned to your bag","reprice":"Asking price updated"}.get(value.get("action",""),"Purchase resolved")
 		request_view=view_serial;request_page=page;request_slot=selected
 		client.read("bazaar.world")
 		return
@@ -206,7 +207,7 @@ func received(method: String, value: Dictionary) -> void:
 		goods_confirmed=method in ["bazaar.listings","bazaar.own_listings"];server_items=value.get("items",[])
 		next_page=str(value.get("next") if value.get("next")!=null else "");status=""
 	if_visible_render()
-	if method=="bazaar.world" and page=="goods" and place().has("id"):refresh()
+	if method=="bazaar.world" and (page=="mine" or page=="goods" and place().has("id")):refresh()
 func place() -> Dictionary:
 	for row in world_data.get("places",[]):
 		if int(row.get("slot",0))==selected:return row
@@ -219,14 +220,15 @@ func render() -> void:
 	var focus_key: String = previous.get_meta("service_key","") if previous and is_ancestor_of(previous) else ""
 	destroy_preview()
 	for section in [tabs,content,detail,stock_actions]:clear(section)
-	var office := service=="office"
+	var office := service in ["office","island_office"]
 	offset_top=38 if service=="stall" else 18
 	offset_bottom=-26 if service=="stall" else -18
 	anchor_left=0.0 if office else .31 if service=="stall" else .46
 	offset_left=18 if office else 0
-	subtitle.text={"office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
-	title.text={"office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
+	subtitle.text={"island_office":"MIKA’S ISLAND   /   BEACH MARKET","office":"FESTIVAL PARK   /   VALE","stall":"FESTIVAL MARKET   /   COUNTER %02d" % selected,"tailor":"THREAD   /   WISP","tea":"MOSS   /   TEA HOUSE","curios":"ROOK   /   CURIOS"}.get(service,"")
+	title.text={"island_office":"Island counter","office":"Rental office","stall":"Market wares","tailor":"Fitting room","tea":"Moss & Tea","curios":"Curio shop"}.get(service,"Bazaar")
 	if service=="stall":
+		if client.world_key=="mika-island":subtitle.text="BEACH MARKET   /   COUNTER 01"
 		var tenant=place().get("tenant_name")
 		title.text=("%s’s wares" % tenant) if tenant else "Market wares"
 	note.text = "" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
@@ -244,11 +246,14 @@ func render() -> void:
 	if office:
 		for entry in [["places","Park map"],["sellers","Sellers"],["mine","My goods"]]:
 			var key: String=entry[0]
-			var tab := button(entry[1],func():switch(key),tabs)
+			if key=="places" and service=="island_office":key="island"
+			var tab := button("Counter" if key=="island" else entry[1],func():switch(key),tabs)
 			tab.set_meta("service_key",key)
 			tab.toggle_mode=true
 			tab.button_pressed=page==key
+	if client.world_key=="mika-island":subtitle.text="MIKA’S ISLAND    /    COUNTER 01"
 	match page:
+		"island":render_island()
 		"places":render_places()
 		"sellers":render_sellers()
 		"clothes":render_clothes()
@@ -260,6 +265,28 @@ func render() -> void:
 			break
 	if focus_after:focus_after.grab_focus()
 	else:close_button.grab_focus()
+
+func render_island() -> void:
+	var row:=place()
+	var owner:bool=world_data.has("owner_id") and world_data.owner_id==world_data.player_id
+	content.add_child(text("Island trading place",22))
+	if row.is_empty():
+		content.add_child(text("The first counter goes here.",17))
+		var offer=world_data.get("stall_offer")
+		if owner and offer is Dictionary:
+			var build:=button("Build counter · %d Sparks"%int(offer.price),func():checkout({"action":"build","slot":1,"revision":offer.revision,"price":offer.price}),content)
+			build.disabled=not can_trade()
+			focus_after=build
+		return
+	var weekly=row.get("weekly_price")
+	content.add_child(text("Rent not set" if weekly==null else "%d Sparks / week"%int(weekly),20))
+	if owner:
+		focus_after=button("Set weekly rent",func():checkout({"action":"weekly","slot":1,"revision":row.revision,"price":int(weekly) if weekly!=null else 100}),content)
+		focus_after.disabled=not can_trade()
+	elif row.get("tenant_id")==null and weekly!=null:
+		focus_after=button("Rent · choose keeper",func():switch("sellers"),content)
+	else:content.add_child(text("Occupied" if row.get("tenant_id")!=null else "Awaiting rental terms",17))
+	if world_data.get("checkout_pending",false):button("Resolve last checkout",func():checkout({"action":"resolve"}),content)
 
 func render_places() -> void:
 	var map = preload("res://scripts/rental_map.gd").new()
@@ -335,6 +362,9 @@ func render_goods() -> void:
 	var counter := place()
 	var tenant: bool = counter.get("tenant_id")!=null and counter.get("tenant_id")==world_data.get("player_id")
 	content.add_child(text("YOUR LISTINGS" if mine else "ON THE COUNTER",14,Color("eac581")))
+	var recent=counter.get("recent_sale")
+	if tenant and recent is Dictionary:
+		content.add_child(text("Last sale · %s · +%d Sparks"%[recent.title,int(recent.price)],16,Color("ffcf83")))
 	var offers := VBoxContainer.new()
 	offers.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	content.add_child(offers)
@@ -343,10 +373,12 @@ func render_goods() -> void:
 			var list_action := button("List profile item",func():checkout({"action":"list","slot":selected,"price":INITIAL_ASK}),stock_actions)
 			list_action.set_meta("service_key","list")
 			if goods_confirmed and server_items.is_empty():focus_after=list_action
+		if tenant and client.has_counter:button("My sales",func():switch("mine"),stock_actions)
 		var bag := button("Profile inventory",func():checkout({"action":"inventory"}),stock_actions)
 		bag.set_meta("service_key","inventory")
 		bag.disabled=loading
 		if goods_confirmed and not focus_after and server_items.is_empty() and not loading:focus_after=bag
+	if mine and service=="stall":button("Back to counter",func():switch("goods"),content)
 	if server_items.is_empty():
 		var empty := text("Checking wares…" if loading else "No items listed." if goods_confirmed else "Stock unavailable",22)
 		empty.name="ShelfStatus"
@@ -410,7 +442,16 @@ func inspect_good(index: int, offers: Control) -> void:
 		if receipt_message.is_empty():note.text="A  ·  Review purchase" + ("     /     Test Sparks" if not client.endpoint_override.is_empty() else "")
 		button("Buy",func():buy_good(offer),detail)
 	elif page=="mine" or offer.get("seller_id")!=null and offer.get("seller_id")==world_data.get("player_id"):
-		detail.add_child(text("Your listing",15))
+		if offer.get("state")=="sold":
+			detail.add_child(text("Sold for %d Sparks"%int(offer.price),18,Color("ffda89")))
+		elif offer.get("state")=="withdrawn":
+			detail.add_child(text("Returned to your bag",15))
+		elif client.has_counter:
+			for action in ["reprice","withdraw"]:
+				var offer_action: String=action
+				var edit:=button("Change price" if action=="reprice" else "Take back",func():checkout({"action":offer_action,"slot":selected,"listing_id":offer.id,"revision":offer.revision,"price":offer.price}),detail)
+				edit.disabled=loading or (action=="reprice" and not can_trade())
+		else:detail.add_child(text("Your listing",15))
 
 func render_clothes() -> void:
 	content.add_child(text("Outfit sets",21,Color("ffcf83")))
