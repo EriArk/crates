@@ -13,6 +13,7 @@ signal footfall(at: Vector3, speed: float, crouched: bool)
 var stride_progress := 0.0
 signal identity_changed(message: String)
 var client = Client.new()
+var startup_resolved := false
 var visual: Node3D
 var appearance_hash := ""
 var worn_items: Array[String]=[]
@@ -77,6 +78,7 @@ func appearance(description: Dictionary) -> void:
 	identity_changed.emit("Your TrainerOS character")
 
 func clear_identity(_reason: String) -> void:
+	startup_resolved=true
 	appearance_hash=""
 	worn_items.clear()
 	if is_instance_valid(locomotion):remove_child(locomotion);locomotion.queue_free()

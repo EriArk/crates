@@ -1,4 +1,4 @@
-# Bazaar 0.0.19 — Festival market
+# Bazaar 0.0.20 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
@@ -132,3 +132,7 @@ The [first square report](docs/FIRST_SQUARE.md) is historical version 0.0.1.
   are not source assets and are not committed.
 
 [0.0.8 shared movement, proportions and festival layout](docs/MOVEMENT_AND_MARKET.md).
+
+The Egregore loading flight uses the OctoFox Ship Studio hull, drive exhaust and
+sky from revision `37b4572e`. Steer with the left stick or arrow keys. The
+arrival artwork is captured in this game.

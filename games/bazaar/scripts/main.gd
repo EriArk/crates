@@ -412,3 +412,12 @@ func _exit_tree() -> void:
 	saved.set_value("audio","music",music_toggle.button_pressed)
 	saved.set_value("audio","effects",effects_toggle.button_pressed)
 	saved.set_value("audio","fountain",sound.button_pressed);saved.save("user://bazaar-preferences.cfg")
+
+func transit_session() -> Node:
+	return null
+
+func transit_avatar_ready() -> bool:
+	return visitor.startup_resolved
+
+func set_transit_controls(locked: bool) -> void:
+	visitor.set_controls(not locked and not modal)
