@@ -14,7 +14,7 @@ func _ready() -> void:
 		available=false
 		snapshot={}
 		queued_action=""
-		message="Offline · play here with one controller." if reason.contains("not available") else reason
+		message="Online cup unavailable." if reason.contains("not available") else reason
 		state_changed.emit())
 	_connect_after_draw.call_deferred()
 
@@ -55,7 +55,7 @@ func _packet(packet: Dictionary) -> void:
 	pending.erase(id)
 	if packet.has("error"):
 		var code:String=packet.error.get("code","")
-		message={"need_two":"Form a two-player party in Lobby first.","host_first":"The party host signs up first.","install_golf":"Install matching Pocket Golf versions on both devices.","room_busy":"Finish the current lobby activity first."}.get(code,"Festival service unavailable.")
+		message={"festival_ticket_required":"A paid online ticket is required.","need_two":"Form a two-player party in Lobby first.","host_first":"The party host signs up first.","install_golf":"Install matching Pocket Golf versions on both devices.","room_busy":"Finish the current lobby activity first."}.get(code,"Festival service unavailable.")
 		state_changed.emit()
 		return
 	var result=packet.get("result",{})

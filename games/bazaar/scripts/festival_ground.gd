@@ -5,6 +5,7 @@ const ARENA := Vector3(23,0,22)
 const TARGETS := [Vector2(-.75,-.24),Vector2(.06,.20),Vector2(.75,-.32)]
 const AWARDS := [2,1,3]
 const DECK := .97
+var gallery := preload("toy_gallery.gd").new()
 var board: Label3D
 var cursor: MeshInstance3D
 var rings: Array[MeshInstance3D] = []
@@ -33,6 +34,8 @@ func piece(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
 	return node
 
 func build(s) -> void:
+	add_child(gallery)
+	gallery.build(s)
 	s.path(ARENA,Vector3(15,0,12))
 	s.path(Vector3(14,0,20),Vector3(15,0,3))
 	for side in [-1,1]:
@@ -96,9 +99,20 @@ func _update_cursor() -> void:
 	endpoint=aim+Vector2(sin(clock*2.1)*.07,cos(clock*1.7)*.05)
 	cursor.position=STALL+Vector3(endpoint.x,DECK+.025,endpoint.y)
 
-func toss() -> void:
+func restore(attempts: Array) -> void:
+	begin()
+	for shot in attempts:
+		endpoint=Vector2(shot.x,shot.y)/100.0
+		thrown+=1
+		last_points=int(shot.points)
+		score+=last_points
+		rings.append(piece(torus,Color("ffb920"),STALL+Vector3(endpoint.x,DECK+.029+(thrown-1)*.012,endpoint.y)))
+	cursor.visible=thrown<3
+
+func animate_throw(shot: Dictionary) -> void:
 	if not active or flying or thrown>=3:return
-	_update_cursor()
+	endpoint=Vector2(shot.x,shot.y)/100.0
+	last_points=int(shot.points)
 	launched.emit(endpoint)
 	thrown+=1
 	rings.append(piece(torus,Color("ffb920"),STALL+Vector3(.25,1.42,2.5)))
@@ -120,11 +134,6 @@ func _process(delta: float) -> void:
 	ring.rotation.x=sin(elapsed*TAU)*.54
 	if elapsed<1:return
 	flying=false
-	last_points=0
-	for i in TARGETS.size():
-		if endpoint.distance_to(TARGETS[i])<=torus.inner_radius-.05:
-			last_points=AWARDS[i]
-			break
 	score+=last_points
 	cursor.visible=thrown<3
 	landed.emit()

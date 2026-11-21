@@ -22,6 +22,7 @@ var services: Control
 var population: Node3D
 var identity := Label.new()
 var place_caption: Label
+var festival_lab_button: Button
 var lab_button: Button
 var district_label: Label
 var prompt := Button.new()
@@ -199,10 +200,20 @@ func _ready() -> void:
 		lab_button=button("Enter test market",func():
 			var use_lab: bool=services.client.endpoint_override.is_empty()
 			services.client.use_lab(use_lab)
+			festival.wallet.use_lab(use_lab)
 			place_caption.text="TEST MARKET  /  TEST SPARKS" if use_lab else "BAZAAR ISLAND  /  ALPHA"
 			hide_menu())
 		menu.add_child(lab_button);menu.move_child(lab_button,menu.get_child_count()-2)
 		lab_button.hide()
+		festival_lab_button=button("Enter festival test · Ren",func():
+			var path:=_festival_lab_path()
+			services.client.use_endpoint(path)
+			festival.wallet.use_endpoint(path)
+			place_caption.text="FESTIVAL TEST   /   REN   /   TEST SPARKS"
+			hide_menu())
+		menu.add_child(festival_lab_button)
+		menu.move_child(festival_lab_button,menu.get_child_count()-2)
+		festival_lab_button.hide()
 		if not services.client.endpoint_override.is_empty():place_caption.text="TEST MARKET  /  TEST SPARKS"
 		services.client.snapshot.connect(func(method: String, value: Dictionary):
 			if method=="bazaar.world":update_counters(value.get("places",[])))
@@ -225,6 +236,7 @@ func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market dis
 	if lab_button:
 		var in_lab: bool=not services.client.endpoint_override.is_empty()
 		lab_button.visible=in_lab or FileAccess.file_exists(services.client.lab_endpoint())
+		festival_lab_button.visible=FileAccess.file_exists(_festival_lab_path()) and services.client.endpoint_override!=_festival_lab_path()
 		lab_button.text="Return to official market" if in_lab else "Enter test market"
 	if is_instance_valid(services) and services.visible:services.close()
 	visitor.attend(null)
@@ -239,6 +251,9 @@ func show_menu(title := "Bazaar Island", detail := "Festival Park  /  Market dis
 		title=square.title() if personal else square.district(visitor.position)
 		detail=square.description() if personal else "Official island"
 	menu_title.text=title;menu_body.text=detail;panel.show();resume.grab_focus()
+
+func _festival_lab_path() -> String:
+	return OS.get_environment("XDG_RUNTIME_DIR").path_join("traineros-festival-lab/sdk/endpoint.json")
 
 func hide_menu() -> void:
 	if is_instance_valid(festival) and festival.visible:

@@ -1,4 +1,4 @@
-# Bazaar 0.0.22 — Festival market
+# Bazaar 0.0.23 — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
@@ -11,6 +11,15 @@ or host. Ordinary visits and the personal-world previews use the normal profile.
 
 ## First festival
 
+Festival tickets cost 10 Sparks. TrainerOS shows the price and asks the active
+player to confirm. Unused attempts stay with the profile if the player leaves.
+In the field menu, **Enter festival test · Ren** switches both the festival and
+inventory to the separate test wallet on a device provisioned with the lab.
+
+At the **Toy Gallery**, west of Wanage, aim with the right stick and shoot with
+R2, or tap a toy. Each ticket has five shots. Knock down three different toys
+and the third plush goes into the profile inventory.
+
 Follow the park promenade south to the red **Wanage** counter. Aim with the
 left stick, arrow keys or a touch drag, then press **A** or **Throw ring**. Each
 round gives you three rings. The near peg scores one, the left two and the far
@@ -18,7 +27,7 @@ right three. A second visitor in your two-player Lobby party can see the throws
 on a festival-enabled host.
 
 Follow the paved path east from Wanage to **Aki** at the Festival Cup board.
-**Play on this device** opens Pocket Golf for two people sharing one controller.
+**Local pair · tickets** opens Pocket Golf for two people sharing one controller.
 Play three holes, then choose **Return to the arena** to see both totals.
 Leaving midway ends the local cup without a score. Odin uses the installed
 Pocket Golf art preview. Other installations can set `TRAINEROS_FESTIVAL_GOLF`
@@ -28,8 +37,8 @@ For online play both devices need the festival SDK host and matching Pocket
 Golf installations in Crates. Join the same two-person party in Lobby. The host
 enters at Aki's desk, followed by the guest. Visitors can walk away and play
 Wanage while waiting. Lobby starts the match when both are ready. The board
-labels local, unranked and Backend-confirmed results separately. Each round is
-free. Player-owned arena facilities and additional festival games are planned.
+labels local, unranked and Backend-confirmed results separately. Local players
+share one ticket. Online players each buy a ticket after forming a pair. Player-owned arena facilities and additional festival games are planned.
 
 ## Voices of Festival Park
 
