@@ -16,6 +16,7 @@ var mood_remaining=0.0
 var timer=0.0
 var generation=0
 var descriptor_key=""
+var startup_resolved := false
 var revoked=false
 
 func _ready() -> void:
@@ -42,12 +43,13 @@ func _subscribe_shared() -> void:
 	shared_sdk.request("avatar.subscribe",{},func(result,error):
 		if generation!=expected or revoked: return
 		if error.is_empty() and result.get("avatar") is Dictionary: _appearance(result.avatar)
-		else: _clear())
+		elif error!="avatar_not_ready": _clear())
 
 func _revoke() -> void:
 	revoked=true; _clear()
 
 func _clear() -> void:
+	startup_resolved=true
 	generation+=1; descriptor_key=""; feedback.reset(); mood="neutral"; mood_remaining=0
 	if is_instance_valid(model): model.clear_identity()
 	model=null

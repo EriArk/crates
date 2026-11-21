@@ -161,3 +161,7 @@ GPL-3.0-or-later и сторонние лицензии. Звук сочетае
 вращение в воздухе и общие для ведущего/реплик следы, звук и вибрация.
 
 Игровой интерфейс — английский: [перевод и проверки](docs/evidence/english-2026-10-28/README.md).
+
+The Egregore loading flight uses the OctoFox Ship Studio hull, drive exhaust and
+sky from revision `37b4572e`. Steer with the left stick or arrow keys. The
+arrival artwork is captured in this game.

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+var transit_locked := false
 const Supplies=preload("race_supplies.gd")
 const RoadsideProp = preload("roadside_prop.gd")
 const Track = preload("track.gd")
@@ -358,6 +359,7 @@ func _notification(what: int) -> void:
 		controls.neutral(player()); state="pause"; get_tree().paused=true; hud.menu("pause")
 
 func _physics_process(delta: float) -> void:
+	if transit_locked and not net.online:return
 	if net.online and not net.host: net.tick_client(delta); return
 	if state=="countdown":
 		countdown-=delta
@@ -507,3 +509,13 @@ func wreck_effect(pos: Vector3) -> void:
 	var distance=minf(pos.distance_to(view_car().position),pos.distance_to(player().position))
 	if distance<80: effects.wreck(pos)
 	sound.play_event("wreck",distance)
+
+func transit_session() -> Node:
+	return net
+
+func transit_avatar_ready() -> bool:
+	return hud.portrait.startup_resolved
+
+func set_transit_controls(locked: bool) -> void:
+	transit_locked=locked
+	controls.neutral_required=true
