@@ -45,7 +45,7 @@ for suffix, arch, machine in [('arm64','aarch64',183),('x86_64','x86_64',62)]:
                 sha256=checksum,url=f'https://github.com/EriArk/crates/releases/download/bazaar-v{version}/{archive.name}')
     (args.output/f'bazaar-{arch}-record.json').write_text(json.dumps(record,indent=2)+'\n')
 source=args.output/f'bazaar-{version}-source.tar.gz'
-subprocess.run(['git','archive','--format=tar.gz','--prefix=bazaar/','--output',str(source.resolve()),'HEAD:games/bazaar'],cwd=root,check=True)
+subprocess.run(['git','archive','--format=tar.gz','--prefix=bazaar/','--output',str(source.resolve()),'HEAD:games/bazaar'],cwd=root.parents[1],check=True)
 with (args.output/'SHA256SUMS').open('w') as out:
     for path in sorted(args.output.glob('*.tar.gz')):
         with path.open('rb') as stream:out.write(hashlib.file_digest(stream,'sha256').hexdigest()+'  '+path.name+'\n')
