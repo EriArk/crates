@@ -1,0 +1,17 @@
+2026-10-25: Linux x86_64 actual package checks
+Order: chain-reaction, falling-blocks, light-cycles, minesweeper-race, mini-racing, pocket-artillery, pong, snake-arena, tanks
+Source: 6d132c95c7b3dce3459e13cc7894e0c0258f0a79
+SDK: 59755fc1e1a72372a7eacbc4d439452781fcab70
+Network disabled; disposable HOME; Qt software/offscreen.
+
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+Actual package: installation, launch, running lease, removal and data-preserving reinstall passed
+
+All 24 Windows/Linux rules digests matched in the packaging verification script.

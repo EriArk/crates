@@ -1,0 +1,161 @@
+{
+  "source": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+  "sdk": "59755fc1e1a72372a7eacbc4d439452781fcab70",
+  "architecture": "x86_64",
+  "published": false,
+  "packages": [
+    {
+      "id": "chain-reaction",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/chain-reaction/chain-reaction-0.1.3-source.tar.gz",
+          "sha256": "ac373fa5fb483f580a1549075d578637ef76e8fb0d9b01bf626bcbfb613bb8b4",
+          "size": 647418
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/chain-reaction/chain-reaction-0.1.3-x86_64.tar.gz",
+          "sha256": "6169980102725280ebe79c15d9bc9e48e5dbec328b5e2aa26e89ef799cbd7b6c",
+          "size": 315667
+        }
+      ]
+    },
+    {
+      "id": "falling-blocks",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/falling-blocks/falling-blocks-0.1.3-source.tar.gz",
+          "sha256": "d9443ba065ca0acbcd8343199ef0db815e9f1b76934ffdcb7acb3040f9336ba7",
+          "size": 647418
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/falling-blocks/falling-blocks-0.1.3-x86_64.tar.gz",
+          "sha256": "294f31d4e880232dbb3d3e9b534fac2127f04d2d7da30bb68f0a00d222008029",
+          "size": 280981
+        }
+      ]
+    },
+    {
+      "id": "light-cycles",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/light-cycles/light-cycles-0.1.3-source.tar.gz",
+          "sha256": "18add533612405248ba96acb0499a8188efe23c98cbf61efa3f0912bd8549a33",
+          "size": 647416
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/light-cycles/light-cycles-0.1.3-x86_64.tar.gz",
+          "sha256": "cff690cacf0402f9a4db0e2e98a29afc0b65d068ec25e5cac8721949ca38e1eb",
+          "size": 276453
+        }
+      ]
+    },
+    {
+      "id": "minesweeper-race",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/minesweeper-race/minesweeper-race-0.1.3-source.tar.gz",
+          "sha256": "1dd4a20ba057ad55d75c2eae35cca3937e758fa9ea0afc024aa7a6ce75536dad",
+          "size": 647420
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/minesweeper-race/minesweeper-race-0.1.3-x86_64.tar.gz",
+          "sha256": "ed9ae85ed7e0d84126470337264206b5b7e1bfa43f3dafcf364957cb488e46ec",
+          "size": 297518
+        }
+      ]
+    },
+    {
+      "id": "mini-racing",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/mini-racing/mini-racing-0.1.3-source.tar.gz",
+          "sha256": "a4d051e93b8c9443c4ac88e5a9c8937f887c5723ddeee60d36caf52844428b85",
+          "size": 647415
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/mini-racing/mini-racing-0.1.3-x86_64.tar.gz",
+          "sha256": "22cbda86adbab8c069d92431385e672eda81234ddb146cbddf489c7033533cc0",
+          "size": 278526
+        }
+      ]
+    },
+    {
+      "id": "pocket-artillery",
+      "version": "0.1.4",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/pocket-artillery/pocket-artillery-0.1.4-source.tar.gz",
+          "sha256": "8b31da6aa74bc015f3a2323c5c57828f8536de53f7dad63eca093383fbdc7a71",
+          "size": 324894
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/pocket-artillery/pocket-artillery-0.1.4-x86_64.tar.gz",
+          "sha256": "cc929491c3390d2953282b654d1e01c70d9a41ce98472da4277e8edb0910b5de",
+          "size": 274403
+        }
+      ]
+    },
+    {
+      "id": "pong",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/pong/pong-0.1.3-source.tar.gz",
+          "sha256": "d80acd34c1b348130cd98af45790b4aa8f24205ff463f58cf0b3c71520d674eb",
+          "size": 647408
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/pong/pong-0.1.3-x86_64.tar.gz",
+          "sha256": "e2aa6fdad63ddf7bdeb6edba6f7324b423cea47b4ba8d186842959dc9f201870",
+          "size": 246561
+        }
+      ]
+    },
+    {
+      "id": "snake-arena",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/snake-arena/snake-arena-0.1.3-source.tar.gz",
+          "sha256": "1ff8656fd847f3519ba5ea0331573921e581e10259dfa27654806c4079e74216",
+          "size": 647415
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/snake-arena/snake-arena-0.1.3-x86_64.tar.gz",
+          "sha256": "33b23018a0475bee248185612448cabafdbbf808d6e9d374489751af0f002d18",
+          "size": 256583
+        }
+      ]
+    },
+    {
+      "id": "tanks",
+      "version": "0.1.3",
+      "revision": "6d132c95c7b3dce3459e13cc7894e0c0258f0a79",
+      "archives": [
+        {
+          "path": "dist/prepared-handheld-20261025/tanks/tanks-0.1.3-source.tar.gz",
+          "sha256": "c76221cc3a36112bcbe5bb9ad5dfc65c3d8ec4d031aa483f66e472026be2355b",
+          "size": 647409
+        },
+        {
+          "path": "dist/prepared-handheld-20261025/tanks/tanks-0.1.3-x86_64.tar.gz",
+          "sha256": "175cb05c0478ac202ce83c1fcab340c5bb34123c09fcdc5f89f86d9c2fa9aebf",
+          "size": 244788
+        }
+      ]
+    }
+  ]
+}

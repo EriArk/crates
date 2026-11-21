@@ -34,8 +34,9 @@ func run() -> void:
 	pad(JOY_BUTTON_A); check(ui.game.can_fire(),"pad accepts handoff")
 	pad(JOY_BUTTON_DPAD_RIGHT); check(ui.game.angle==5,"pad aiming")
 	pad(JOY_BUTTON_DPAD_UP); check(ui.game.power==80,"pad power")
-	pad(JOY_BUTTON_X); check(ui.camera.view==1,"pad shoulder view"); pad(JOY_BUTTON_X)
+	check(ui.camera.view==1,"default shoulder view"); pad(JOY_BUTTON_X)
 	check(ui.camera.view==2,"pad eye view"); pad(JOY_BUTTON_X)
+	check(ui.camera.view==0,"pad overview"); pad(JOY_BUTTON_X)
 	pad(JOY_BUTTON_START); check(ui.paused,"pad menu"); pad(JOY_BUTTON_B); check(not ui.paused,"pad resume")
 	await capture("first-green")
 	var last_hole := -1

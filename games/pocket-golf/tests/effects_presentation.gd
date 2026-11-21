@@ -20,7 +20,8 @@ func begin(hole: int, origin: Array, angle: int, power: int, strokes: int=0) -> 
 	ui.game.angle=angle; ui.game.power=power; ui._refresh(); ui.game.fire()
 
 func at(time: float) -> void:
-	ui.elapsed=time; ui._process(0)
+	# Effects use ball time; the game clock also includes the putting backswing.
+	ui.elapsed=time+ui.Stroke.CONTACT; ui._process(0)
 	peak=maxi(peak,ui.effects.active.size())
 
 func capture(name: String, focus: Vector3) -> void:
@@ -61,9 +62,14 @@ func run() -> void:
 			for i in mini(reference.size(),positions.size()): check(reference[i].is_equal_approx(positions[i]),"frame rate independent particle positions")
 	check(ui.effects.events.any(func(e): return e.kind=="trail"),"fast shot has short trail")
 	begin(0,[4600,0],90,75)
-	check(not ui.shot.bounces.is_empty(),"real rail bounce fixture")
-	var contact: Dictionary = ui.effects.events.filter(func(e): return e.kind=="wood")[0]
-	check(absf(contact.pos.x-5.0)<0.035,"contact sits on rail surface")
+	check(ui.shot.out_of_play and ui.shot.bounces.is_empty(),"edge emits no bank")
+	check(ui.game.world.balls[0]==[4600,0] and ui.game.world.strokes[0]==1,"out counts one stroke and restores the starting lie")
+	at((ui.shot.path.size()-0.5)/float(ui.shot.hz))
+	check(not ui.balls[0].visible,"ball clears the frame on exit")
+	at((ui.shot.path.size()-1)/float(ui.shot.hz)+1)
+	check(ui.balls[0].visible and is_equal_approx(ui.balls[0].position.x,4.6),"ball returns for the next turn")
+	begin(1,[-1000,1500],0,70)
+	var contact: Dictionary = ui.effects.events.filter(func(e): return e.kind=="stone")[0]
 	# Jump over contact: emit once, at its old position with its true age.
 	at(contact.time+0.12)
 	var cursor: int = ui.effects.cursor; ui._process(0)
@@ -98,4 +104,6 @@ func run() -> void:
 	begin(0,[0,6000],0,75); ui._build_course()
 	check(ui.effects.active.is_empty() and ui.effects.events.is_empty(),"course rebuild clears effects")
 	print("EFFECTS PRESENTATION ","FAIL" if failed else "PASS"," contacts, materials, rim, cup/ace, stale frames, 30/60/144 Hz, local/online pause, cleanup, pool<=128; sampled peak=",peak)
+	ui.audio.shutdown(); await create_timer(.25).timeout
+	ui.queue_free(); await process_frame
 	quit(1 if failed else 0)

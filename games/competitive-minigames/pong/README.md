@@ -1,7 +1,8 @@
 # Pong
 
-**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
-[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+**Prepared handheld update 0.1.3:** bounded painting resolution, height-scaled HUD and larger game menus.
+[Changes, checks and delivery limits](../docs/handheld-repair.md).
+
 
 A two-player paddle game. Keep the ball in play, change its angle with the edge
 of your paddle, and reach five points. At the three-minute limit, the higher score wins.

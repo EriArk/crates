@@ -2,6 +2,7 @@
 import QtQuick
 Canvas {
     id:fx
+    property bool brick: false
     property var sparks: []
     property var rings: []
     property double lastTime: 0
@@ -14,7 +15,7 @@ Canvas {
         }
         halo.push({x:x,y:y,age:0,c:colour});sparks=list;rings=halo;lastTime=Date.now();requestPaint()
     }
-    Timer { interval:16;running:fx.sparks.length>0||fx.rings.length>0;repeat:true
+    Timer { interval:33;running:fx.sparks.length>0||fx.rings.length>0;repeat:true
         onTriggered:{
             var now=Date.now(),dt=Math.min(0.05,(now-fx.lastTime)/1000);fx.lastTime=now
             fx.sparks=fx.sparks.filter(function(p){p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=0.12*dt;return p.age<p.life})
@@ -23,7 +24,7 @@ Canvas {
     }
     onPaint:{
         var c=getContext("2d");c.reset()
-        for(var i=0;i<rings.length;i++){var r=rings[i];c.globalAlpha=(1-r.age/0.5)*0.7;c.strokeStyle=r.c;c.lineWidth=3;c.beginPath();c.arc(r.x*width,r.y*height,5+r.age*Math.min(width,height)*0.22,0,Math.PI*2);c.stroke()}
-        for(i=0;i<sparks.length;i++){var p=sparks[i];c.globalAlpha=1-p.age/p.life;c.fillStyle=p.c;c.beginPath();c.arc(p.x*width,p.y*height,Math.max(2,Math.min(width,height)*0.008)*(1-p.age/p.life*0.6),0,Math.PI*2);c.fill()}
+        for(var i=0;i<rings.length;i++){var r=rings[i];c.globalAlpha=(1-r.age/0.5)*0.7;c.strokeStyle=r.c;c.lineWidth=3;c.beginPath();if(brick){var radius=5+r.age*Math.min(width,height)*0.22;c.rect(r.x*width-radius,r.y*height-radius,radius*2,radius*2)}else c.arc(r.x*width,r.y*height,5+r.age*Math.min(width,height)*0.22,0,Math.PI*2);c.stroke()}
+        for(i=0;i<sparks.length;i++){var p=sparks[i];c.globalAlpha=1-p.age/p.life;c.fillStyle=p.c;c.beginPath();var size=Math.max(2,Math.min(width,height)*0.008)*(1-p.age/p.life*0.6);if(brick)c.rect(p.x*width-size,p.y*height-size,size*2,size*2);else c.arc(p.x*width,p.y*height,size,0,Math.PI*2);c.fill()}
     }
 }

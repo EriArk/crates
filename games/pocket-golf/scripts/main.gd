@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+var transit_locked := false
 const Match = preload("res://scripts/match.gd")
 const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
 const AvatarBinding = preload("res://scripts/avatar_binding.gd")
-const AvatarExchange = preload("res://addons/traineros/avatar_exchange.gd")
+const AvatarRoster = preload("res://scripts/avatar_roster.gd")
 const Stroke = preload("res://scripts/golf_stroke.gd")
 const Size = preload("res://scripts/dimensions.gd")
 const GolfCamera = preload("res://scripts/golf_camera.gd")
@@ -14,6 +15,15 @@ const Surfaces = preload("res://scripts/surfaces.gd")
 const GreenSurface = preload("res://scripts/green_surface.gd")
 const Graphics = preload("res://scripts/graphics_settings.gd")
 const AimInput = preload("res://scripts/aim_input.gd")
+const Audio = preload("res://scripts/golf_audio.gd")
+var audio = Audio.new()
+var audio_open := false
+var audio_notice := ""
+var audio_focused := true
+var audio_sliders: Array[HSlider] = []
+var audio_labels: Array[Label] = []
+var presentation_phase := ""
+var quitting := false
 var graphics = Graphics.new()
 var graphics_open := false
 var graphics_notice := ""
@@ -22,6 +32,9 @@ var contrast_label: Label
 const MINT := Color("579e88")
 const CORAL := Color("dd9579")
 var game = Match.new()
+var festival_receipt := ""
+var online_cup := false
+var cup_reported := false
 var course_root: Node3D
 var green_grid := PackedInt32Array()
 var green_mesh: MeshInstance3D
@@ -30,11 +43,22 @@ var camera: GolfCamera
 var balls: Array[Node3D] = []
 var anchor = AvatarAnchor.new()
 var avatar_binding = AvatarBinding.new()
-var avatar_exchange = AvatarExchange.new()
+var avatar_roster = AvatarRoster.new()
+var local_setup := false
+var setup_count := 2
+var setup_teams := false
+var setup_assignment: Array = [0,1]
+var setup_grid: GridContainer
+var setup_count_button: Button
+var setup_mode_button: Button
+var setup_start_button: Button
+const SIDE_COLORS := [Color("579e88"),Color("dd9579"),Color("8d9ed6"),Color("dfbb65")]
+const SIDE_NAMES := ["Mint","Coral","Iris","Honey"]
 var aim_root: Node3D
 var cup: Node3D
 var field_index := -1
 var shot: Dictionary = {}
+var shot_course: Dictionary = {}
 var elapsed := 0.0
 var last_frame := -1
 var effects = preload("res://scripts/golf_effects.gd").new()
@@ -52,16 +76,33 @@ var popup: PanelContainer
 var popup_title: Label
 var popup_text: Label
 var popup_buttons: VBoxContainer
+var board_rows: VBoxContainer
+var board_profiles = preload("res://scripts/board_profiles.gd").new()
+var board_signature := ""
 var last_popup := ""
+var boards_open := false
+var board_mode := "individual"
+var board_kind := "records"
+var result_text := ""
 var ball_materials: Array = []
 var capture_dir := ""
 
 func _ready() -> void:
 	graphics.load_settings()
+	add_child(audio)
+	get_tree().auto_accept_quit=false
+	get_window().close_requested.connect(_quit_game)
 	if OS.get_environment("TRAINEROS_CRATES_GAME")=="1": get_window().mode=Window.MODE_FULLSCREEN
 	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--festival-pair="):
+			var ticket:=arg.trim_prefix("--festival-pair=")
+			var runtime:=OS.get_environment("XDG_RUNTIME_DIR")
+			if runtime.is_absolute_path() and ticket.length()==32 and ticket.is_valid_hex_number(false):
+				festival_receipt=runtime.path_join("festival-"+ticket+".json")
 		if arg.begins_with("--sdk-endpoint="): game.bridge.endpoint_override=arg.trim_prefix("--sdk-endpoint=")
 	_setup_scene()
+	anchor.ground=_ground
+	anchor.foot_landed.connect(func(side): audio.cue("step_l" if side=="L" else "step_r"))
 	_setup_ui()
 	add_child(game)
 	game.changed.connect(_refresh)
@@ -69,27 +110,51 @@ func _ready() -> void:
 	add_child(avatar_binding)
 	avatar_binding.start(anchor,_placeholder,game.bridge.endpoint_override)
 	avatar_binding.portraits_changed.connect(func(): hud.set_portraits(avatar_binding.local_portrait,avatar_binding.peer_portrait))
-	add_child(avatar_exchange)
-	avatar_exchange.start(avatar_binding.client,game.bridge)
-	avatar_exchange.can_resolve=func(): return game.phase!="moving"
-	avatar_exchange.peer_changed.connect(avatar_binding.receive_peer)
-	avatar_exchange.peer_unavailable.connect(avatar_binding.clear_peer)
+	add_child(avatar_roster)
+	add_child(board_profiles); board_profiles.start(game.bridge.endpoint_override)
+	board_profiles.changed.connect(func():
+		if boards_open: _render_board_rows())
+	game.bridge.identity_revoked.connect(board_profiles.clear)
+	avatar_roster.start(avatar_binding,game)
+	avatar_roster.changed.connect(_refresh)
 	game.bridge.identity_revoked.connect(avatar_binding.disconnect_identity)
 	Input.joy_connection_changed.connect(func(_device, connected):
 		neutral_required=true
 		if not connected: _suspend_input()
 		_set_input("pad" if connected else "keyboard"))
 	get_window().focus_exited.connect(_suspend_input)
+	get_window().focus_exited.connect(func(): audio_focused=false; audio.set_state(false,paused))
+	get_window().focus_entered.connect(func(): audio_focused=true; audio.set_state(true,paused))
 	_refresh()
 	graphics.apply(self)
+	game.bridge.session_ready.connect(_cup_admission)
+	if not festival_receipt.is_empty():_start_local(2)
 	_connect_sdk.call_deferred()
+
+func _cup_admission(_host: bool) -> void:
+	online_cup=false
+	if game.bridge.capabilities.get("bazaar.cup")!=1 or game.participant_count!=2:return
+	var room=game.bridge.session.duplicate(true)
+	game.bridge.request("activity.cup.status",{},func(result,error):
+		if not error.is_empty() or not result.get("entered",false) or room!=game.bridge.session:return
+		online_cup=true
+		if game.host and game.phase=="setup":game.start_group([[0],[1]]))
+
+func _return_from_cup() -> void:
+	if not festival_receipt.is_empty() and game.phase=="result" and game.world.complete:
+		var out:=FileAccess.open(festival_receipt+".tmp",FileAccess.WRITE)
+		if out:
+			out.store_string(JSON.stringify([game.world.total(0),game.world.total(1)]))
+			out.close()
+			DirAccess.rename_absolute(festival_receipt+".tmp",festival_receipt)
+	_quit_game()
 
 func _connect_sdk() -> void:
 	# The first draw may compile the island shaders. Open bounded IPC only once
 	# rendering is ready, so its hello deadline does not run during shader setup.
 	if DisplayServer.get_name()!="headless":
 		await RenderingServer.frame_post_draw
-	if not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty() or not game.bridge.endpoint_override.is_empty():
+	if festival_receipt.is_empty() and (not OS.get_environment("TRAINEROS_SDK_ENDPOINT").is_empty() or not game.bridge.endpoint_override.is_empty()):
 		game.bridge.connect_host()
 	avatar_binding.client.connect_host()
 
@@ -139,13 +204,12 @@ func _setup_scene() -> void:
 	environment.name="WorldEnvironment"
 	var env := Environment.new()
 	env.background_mode=Environment.BG_SKY
-	var sky := Sky.new(); var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color=Color("72bed8")
-	sky_material.sky_horizon_color=Color("c5e7e5")
-	sky_material.ground_horizon_color=Color("c5e7e5")
-	sky_material.ground_bottom_color=Color("4b9db1")
-	sky_material.sun_angle_max=3.0
-	sky.sky_material=sky_material; env.sky=sky
+	var sky := Sky.new()
+	var sky_material := ShaderMaterial.new()
+	sky_material.shader=preload("res://shaders/coastal_sky.gdshader")
+	sky_material.set_shader_parameter("coast",preload("res://assets/coast/archipelago.jpg"))
+	sky.sky_material=sky_material
+	env.sky=sky
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color=Color("b7d5e8")
 	env.ambient_light_energy=0.32 if compatibility else 0.48
@@ -194,6 +258,7 @@ func _placeholder() -> void:
 
 func _build_course() -> void:
 	effects.clear()
+	audio.clear_shot(); anchor.reset_motion()
 	if course_root!=null:
 		remove_child(course_root); course_root.queue_free()
 	course_root=Node3D.new(); add_child(course_root)
@@ -202,12 +267,15 @@ func _build_course() -> void:
 	green_grid=c.height_grid
 	camera.obstruction_height=0.6
 	island=Island.new(); course_root.add_child(island); island.build(field_index)
-	box(course_root,Vector3(10.6,0.16,16.6),Vector3(0,-0.14,0),Color("d4b78b"),Surfaces.Kind.WOOD)
+	_course_light(field_index)
+	audio.set_course(field_index)
 	# The exact same triangle grid supplies physics height/gradients and this mesh.
 	green_mesh=MeshInstance3D.new(); green_mesh.name="PlayableGreen"
 	green_mesh.mesh=GreenSurface.make_mesh(green_grid)
-	var turf := Surfaces.make(Color("80bc8c"),Surfaces.Kind.TURF)
+	var turf := Surfaces.make(Color("68ab80"),Surfaces.Kind.TURF)
 	turf.set_shader_parameter("course_surface",true)
+	turf.set_shader_parameter("pin_center",Vector2(c.cup[0],c.cup[1])/1000.0)
+	turf.set_shader_parameter("mow_angle",[0.48,-0.36,0.78][field_index])
 	var sand_bounds := PackedVector4Array(); var wall_bounds := PackedVector4Array()
 	for sand in c.sand: sand_bounds.append(Vector4(sand[0],sand[1],sand[2],sand[3])/1000.0)
 	for wall in c.walls: wall_bounds.append(Vector4(wall[0],wall[1],wall[2],wall[3])/1000.0)
@@ -216,15 +284,9 @@ func _build_course() -> void:
 	turf.set_shader_parameter("obstacle_count",wall_bounds.size()); wall_bounds.resize(8)
 	turf.set_shader_parameter("obstacles",wall_bounds)
 	green_mesh.material_override=turf; course_root.add_child(green_mesh)
-	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"),Surfaces.Kind.WOOD)
-	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"),Surfaces.Kind.WOOD)
-	for x in [-5.12,5.12]:
-		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("f2d7a0"))
-	for wall in c.walls:
-		var top := 0.6
-		for x in range(wall[0],wall[2]+251,250):
-			for z in range(wall[1],wall[3]+251,250):
-				top=maxf(top,_ground(Vector3(x/1000.0,0,z/1000.0))+0.6)
+	for i in c.walls.size():
+		var wall: Array=c.walls[i]
+		var top: float=c.wall_tops[i]/1000.0
 		camera.obstruction_height=maxf(camera.obstruction_height,top)
 		# Extend below all nearby ground so no wall floats above a downhill side.
 		box(course_root,Vector3((wall[2]-wall[0])/1000.0,top,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,top/2,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
@@ -232,6 +294,10 @@ func _build_course() -> void:
 	cylinder(cup,Size.CUP+0.012,0.004,Vector3(0,0.004,0),Color("f1e4c4"))
 	cylinder(cup,Size.CUP,0.004,Vector3(0,0.007,0),Color("284e43"))
 	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.01,0),1.0,0.2)
+	var pennant_material := ShaderMaterial.new()
+	pennant_material.shader=preload("res://shaders/pin_flag.gdshader")
+	for part in island.flag.find_children("*","MeshInstance3D",true,false):
+		part.material_override=pennant_material
 	balls.clear()
 	for i in game.world.players:
 		var ball := Node3D.new(); course_root.add_child(ball)
@@ -241,11 +307,32 @@ func _build_course() -> void:
 		var band := TorusMesh.new(); band.inner_radius=Size.BALL-0.001; band.outer_radius=Size.BALL+0.0004
 		mesh(visual,band,Vector3.ZERO,MINT if i==0 else Color("fff0d5"))
 		# A floor ring distinguishes the two overlapping tee positions without moving rules.
-		cylinder(ball,0.065,0.002,Vector3(0,-Size.BALL,0),MINT if i==0 else CORAL)
+		cylinder(ball,0.065,0.002,Vector3(0,-Size.BALL,0),SIDE_COLORS[i%4])
 		balls.append(ball)
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
 	for i in 8: sphere(aim_root,0.012,Vector3(0,0.02,-0.15-i*0.15),Color("fff4d4"))
 	graphics.apply(self)
+
+func _course_light(hole: int) -> void:
+	var env: Environment=get_node("WorldEnvironment").environment
+	var sun: DirectionalLight3D=get_node("Sun")
+	var haze: Color=[Color("ead6bf"),Color("bbd3d9"),Color("eacbc4")][hole]
+	env.fog_light_color=haze
+	# Depth fog starts beyond the putting line, with extra room in the wide overview.
+	env.fog_depth_begin=[25.0,19.0,28.0][hole]
+	env.fog_depth_end=[155.0,118.0,165.0][hole]
+	env.fog_density=[0.24,0.32,0.25][hole]
+	env.sky.sky_material.set_shader_parameter("bearing",[0.0,0.15,-0.16][hole])
+	env.sky.sky_material.set_shader_parameter("haze",haze)
+	sun.rotation_degrees=[Vector3(-32,-52,0),Vector3(-42,-22,0),Vector3(-24,-74,0)][hole]
+	sun.light_color=[Color("ffdeb0"),Color("f2eee0"),Color("ffcfab")][hole]
+	var gradient:=Gradient.new()
+	gradient.offsets=PackedFloat32Array([0.0,0.25,0.64,1.0])
+	gradient.colors=PackedColorArray([Color(.022,.031,.049),Color(.236,.25,.265),
+		[Color(.67,.65,.62),Color(.63,.65,.66),Color(.69,.64,.62)][hole],Color(1,.985,.957)])
+	var grade:=GradientTexture1D.new()
+	grade.gradient=gradient
+	env.adjustment_color_correction=grade
 
 func _ground(point: Vector3) -> float:
 	return GreenSurface.sample(green_grid,roundi(point.x*1000),roundi(point.z*1000))[0]/1000.0
@@ -285,18 +372,25 @@ func _setup_ui() -> void:
 	var column := VBoxContainer.new(); column.add_theme_constant_override("separation",12); popup.add_child(column)
 	popup_title=Label.new(); popup_title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; popup_title.add_theme_font_size_override("font_size",30); column.add_child(popup_title)
 	popup_text=Label.new(); popup_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; popup_text.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; popup_text.custom_minimum_size=Vector2(375,48); column.add_child(popup_text)
+	board_rows=VBoxContainer.new(); board_rows.add_theme_constant_override("separation",2); column.add_child(board_rows); board_rows.hide()
 	popup_buttons=VBoxContainer.new(); popup_buttons.add_theme_constant_override("separation",8); column.add_child(popup_buttons)
 
 func label(parent: Node, text: String, pos: Vector2, size: int) -> Label:
 	var node := Label.new(); node.text=text; node.position=pos; node.add_theme_font_size_override("font_size",size); parent.add_child(node); return node
 
 func button(parent: Node, text: String, action: Callable) -> Button:
-	var node := Button.new(); node.text=text; node.custom_minimum_size.y=46; parent.add_child(node); node.pressed.connect(action); return node
+	var node := Button.new(); node.text=text; node.custom_minimum_size.y=46; parent.add_child(node)
+	node.pressed.connect(func(): audio.cue("ui")); node.pressed.connect(action); return node
 
 func _refresh() -> void:
-	if not game.online and not avatar_exchange.peer_member.is_empty(): avatar_exchange.clear_peer()
-	var avatar_seat: int = shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn
-	avatar_binding.select(avatar_seat==(game.seat if game.online else 0),game.phase!="moving")
+	if boards_open and game.phase not in ["menu","result"]: boards_open=false
+	if presentation_phase!=game.phase:
+		if game.phase!="moving": anchor.reset_motion(); audio.clear_shot()
+		if game.phase=="menu": audio.reset()
+		if game.phase=="result": audio.cue("round-jingle")
+		presentation_phase=game.phase
+	var avatar_seat: int = shot.get("actor",shot.player) if game.phase=="moving" and not shot.is_empty() else game.world.actor()
+	avatar_roster.select_actor(avatar_seat,game.phase!="moving")
 	if game.phase=="menu":
 		paused=false; effects.clear()
 	if field_index<0 or (game.phase!="moving" and (field_index!=game.world.hole or balls.size()!=game.world.players)): _build_course()
@@ -313,14 +407,20 @@ func _refresh() -> void:
 	var totals: Array = []
 	for i in game.world.players:
 		totals.append(game.world.total(i)+(counts[i] if game.world.scores[i].size()<=field_index else 0))
-	var player := "Mint" if game.world.turn==0 else "Coral"
+	var player: String = _actor_name(game.world.actor())+" \u00b7 "+SIDE_NAMES[game.world.turn]
 	var confirm := "A"; var back := "B"; var view := "X"
 	var pads := Input.get_connected_joypads()
 	if not pads.is_empty():
 		var name := Input.get_joy_name(pads[0]).to_lower()
 		if "playstation" in name or "dual" in name or "ps5" in name: confirm="×"; back="○"; view="□"
 		elif "nintendo" in name or "switch" in name: confirm="B"; back="A"; view="Y"
-	hud.update_state({"hole":field_index+1,"title":c.title,"par":c.par,
+	var side_labels: Array = []; var side_portraits: Array = []
+	for i in game.world.players:
+		var actor: int = avatar_seat if i==(shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn) else game.world.actor(i)
+		side_labels.append(SIDE_NAMES[i]+" \u00b7 "+_actor_name(actor))
+		side_portraits.append(avatar_roster.portrait(actor))
+	hud.side_portraits=side_portraits
+	hud.update_state({"side_labels":side_labels,"thinking":game.solo_bot and game.world.actor()==1,"hole":field_index+1,"title":c.title,"par":c.par,
 		"players":game.world.players,"player":shot.player if game.phase=="moving" and not shot.is_empty() else game.world.turn,
 		"strokes":counts,"totals":totals,
 		"power":game.power,"angle":game.angle,"phase":game.phase,"paused":paused,
@@ -329,7 +429,7 @@ func _refresh() -> void:
 		"view":GolfCamera.TITLES[camera.view]})
 	if game.phase!="moving": hud.set_status("")
 	# Turn ownership gates input, not the opponent's presence on the green.
-	anchor.visible=(game.phase in ["aim","moving"]) and not paused
+	anchor.visible=(game.phase in ["aim","moving","waiting_turn"]) and not paused
 	if camera.view==GolfCamera.View.EYES and game.phase!="moving": anchor.visible=false
 	aim_root.visible=game.phase=="aim" and not paused
 	if game.phase=="aim":
@@ -342,38 +442,112 @@ func _refresh() -> void:
 				var point := ball+Vector3(sin(radians),0,-cos(radians))*(0.15+i*0.15)
 				point.y=_ground(point)+0.012
 				aim_root.get_child(i).position=point
-	var state: String = "graphics" if graphics_open else "paused" if paused else game.phase
-	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics"]
+	audio.set_state(audio_focused,paused)
+	var state: String = "boards" if boards_open else "setup" if local_setup else "audio" if audio_open else "graphics" if graphics_open else "paused" if paused else game.phase
+	popup.visible=state in ["menu","waiting","handoff","result","paused","graphics","audio","setup","boards"]
 	modal_shade.visible=popup.visible
 	if popup.visible: touches.clear(); hud.cancel_pointers()
 	if popup.visible and state!=last_popup:
+		if state=="setup" and game.online:
+			setup_count=game.participant_count; setup_teams=setup_count not in [2,4]; _default_teams()
 		last_popup=state
+		board_rows.visible=state=="boards"
+		if state!="boards": board_profiles.clear(); board_signature=""
+		var half_height := 250 if state in ["setup","boards"] else 230 if state=="result" else 200
+		popup.offset_top=-half_height; popup.offset_bottom=half_height
+		popup.offset_left=-340 if state=="boards" else -220; popup.offset_right=340 if state=="boards" else 220
+		popup_text.add_theme_font_size_override("font_size",18 if state=="boards" else 20)
 		for child in popup_buttons.get_children(): popup_buttons.remove_child(child); child.queue_free()
-		if state=="menu":
+		if state=="menu" and online_cup:
+			popup_title.text="Festival Cup"
+			popup_text.text="Your opponent has left the match."
+			button(popup_buttons,"Return to the arena",_return_from_cup)
+		elif state=="menu":
 			popup_title.text="Pocket Golf"; popup_text.text="Three little greens. Take your time.\nFewest strokes wins."
-			button(popup_buttons,"Solo round",func(): _start_local(1))
-			button(popup_buttons,"Two players · pass the pad",func(): _start_local(2))
-			button(popup_buttons,"Graphics",_open_graphics)
-			button(popup_buttons,"Exit",func(): get_tree().quit())
+			button(popup_buttons,"Solo · island rival",func(): field_index=-1; paused=false; game.local(2,[],true))
+			button(popup_buttons,"Local match",func(): local_setup=true; setup_count=2; setup_teams=false; _default_teams(); _refresh())
+			button(popup_buttons,"Shared tables",_open_boards)
+			var settings_row := HBoxContainer.new(); popup_buttons.add_child(settings_row)
+			button(settings_row,"Graphics",_open_graphics).size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			button(settings_row,"Sound",_open_audio).size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			button(popup_buttons,"Exit",_quit_game)
 		elif state=="handoff":
-			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.world.players==2 else "Aim with left/right. Power with up/down."]
+			popup_title.text=player+" to putt"; popup_text.text="Hole %d / 3 · Par %d\n%s" % [game.world.hole+1,c.par,"Pass the controller, then confirm." if game.participant_count>1 and not game.solo_bot else "Aim with left/right. Power with up/down."]
 			button(popup_buttons,"Ready",func(): game.accept_turn())
 		elif state=="waiting":
 			popup_title.text="Connecting match"; popup_text.text=game.info
 			button(popup_buttons,"Back",func(): game.leave())
+		elif state=="setup":
+			popup_title.text="Players & teams"
+			var options := HBoxContainer.new(); popup_buttons.add_child(options)
+			setup_count_button=button(options,"",_cycle_count)
+			setup_count_button.disabled=game.online
+			setup_mode_button=button(options,"",_toggle_teams)
+			setup_grid=GridContainer.new(); setup_grid.columns=2; popup_buttons.add_child(setup_grid)
+			for i in 8:
+				button(setup_grid,"",func(): _cycle_team(i)).size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			var actions := HBoxContainer.new(); popup_buttons.add_child(actions)
+			setup_start_button=button(actions,"Start round",_start_configured)
+			button(actions,"Back",func(): local_setup=false; game.leave() if game.online else _refresh())
+			for control in _popup_controls():
+				control.custom_minimum_size.y=38
+				control.add_theme_font_size_override("font_size",18)
+				control.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		elif state=="result":
 			popup_title.text="Round complete"
-			popup_text.text="Mint: %s = %d strokes" % [" · ".join(game.world.scores[0].map(func(n): return str(n))),game.world.total(0)]
-			if game.world.players==2:
-				popup_text.text+="\nCoral: %s = %d strokes\n%s" % [" · ".join(game.world.scores[1].map(func(n): return str(n))),game.world.total(1),"A draw!" if game.world.total(0)==game.world.total(1) else "Mint wins!" if game.world.total(0)<game.world.total(1) else "Coral wins!"]
-			button(popup_buttons,"Play again",func(): game.rematch())
-			button(popup_buttons,"Main menu",func(): game.leave())
+			var lines: Array = []; var winners: Array = []; var lowest := 100000
+			for i in game.world.players:
+				var total: int = game.world.total(i)
+				lines.append("%s: %s = %d"%[SIDE_NAMES[i]," \u00b7 ".join(game.world.scores[i].map(func(n): return str(n))),total])
+				if total<lowest: lowest=total; winners=[SIDE_NAMES[i]]
+				elif total==lowest: winners.append(SIDE_NAMES[i])
+			result_text="\n".join(lines)+"\n"+(winners[0]+" wins!" if winners.size()==1 else "Draw: "+" / ".join(winners))
+			if online_cup or not festival_receipt.is_empty():
+				popup_title.text="Festival Cup"
+				button(popup_buttons,"Return to the arena",_return_from_cup)
+			else:
+				button(popup_buttons,"Play again",func(): game.rematch())
+				button(popup_buttons,"Shared tables",_open_boards)
+				button(popup_buttons,"Main menu",func(): game.leave())
+		elif state=="boards":
+			popup_title.text="Island clubhouse"
+			var filters := HBoxContainer.new(); popup_buttons.add_child(filters)
+			button(filters,"",func(): board_mode="teams" if board_mode=="individual" else "individual"; _load_board())
+			button(filters,"",func(): board_kind="wins" if board_kind=="records" else "records"; _load_board())
+			var pages := HBoxContainer.new(); popup_buttons.add_child(pages)
+			button(pages,"Previous",func(): _load_board(maxi(0,int(game.scorecards.board.get("offset",0))-5),game.scorecards.board.get("revision","")))
+			button(pages,"Next",func(): _load_board(int(game.scorecards.board.get("next_offset",0)),game.scorecards.board.get("revision","")))
+			var actions := HBoxContainer.new(); popup_buttons.add_child(actions)
+			button(actions,"Retry result",func(): game.scorecards.retry_result())
+			button(actions,"Back",func(): boards_open=false; _refresh())
+			for control in _popup_controls():
+				control.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+				control.add_theme_font_size_override("font_size",18)
+				control.custom_minimum_size.y=36
 		elif state=="paused":
 			popup_title.text="Take a breather"
 			button(popup_buttons,"Keep playing",func(): paused=false; _refresh())
-			button(popup_buttons,"Leave round",func(): paused=false; game.leave())
+			if online_cup or not festival_receipt.is_empty():button(popup_buttons,"Return to the arena",_return_from_cup)
+			else:button(popup_buttons,"Leave round",func(): paused=false; game.leave())
 			button(popup_buttons,"Reset camera",func(): camera.reset_view(); paused=false; _refresh())
 			button(popup_buttons,"Graphics",_open_graphics)
+			button(popup_buttons,"Sound",_open_audio)
+		elif state=="audio":
+			popup_title.text="Island sounds"
+			audio_sliders.clear(); audio_labels.clear()
+			for setting in ["Music","Effects"]:
+				var row := HBoxContainer.new(); popup_buttons.add_child(row)
+				var caption := Label.new(); caption.custom_minimum_size.x=156; row.add_child(caption); audio_labels.append(caption)
+				var slider := HSlider.new(); slider.min_value=0; slider.max_value=100; slider.step=5
+				slider.custom_minimum_size=Vector2(180,46); slider.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+				row.add_child(slider); audio_sliders.append(slider)
+				slider.value_changed.connect(func(value):
+					if setting=="Music": audio.music_percent=roundi(value)
+					else: audio.effects_percent=roundi(value)
+					audio.apply_levels()
+					audio_notice="Could not save; active until exit." if audio.save_settings()!=OK else ""
+					_refresh())
+			button(popup_buttons,"Back",_close_audio)
 		elif state=="graphics":
 			popup_title.text="Graphics"
 			button(popup_buttons,"",func(): graphics.quality=(graphics.quality+1)%3; _apply_graphics())
@@ -388,11 +562,15 @@ func _refresh() -> void:
 			contrast_slider.value_changed.connect(func(value):
 				graphics.contrast_percent=roundi(value); graphics.apply_contrast(self); _save_graphics(); _refresh())
 			button(popup_buttons,"Back",_close_graphics)
-		if popup_buttons.get_child_count()>0: popup_buttons.get_child(0).grab_focus()
+		var controls := _popup_controls()
+		if not controls.is_empty(): controls[0].grab_focus()
 	elif not popup.visible: last_popup=""
+	if state=="setup":
+		_refresh_setup()
 	if state=="paused":
 		popup_text.text="Left stick: aim / power · Right stick: look\nTriggers: zoom · %s: view · R3: reset"%view if input_kind=="pad" else "Drag the green: look · Pinch: zoom\nDrag aim / power · Tap PUTT to strike" if touch_mode else "Arrows: aim / power · Enter: putt\nWASD: look · Q/E: zoom · Tab: view · R: reset"
-	if game.phase=="waiting" and not paused: popup_text.text=game.info
+	if state=="waiting": popup_text.text=game.info
+	if state=="boards": _refresh_boards()
 	if state=="graphics":
 		popup_text.text="Applies now · saved on this device\nContrast: 100% = original image" if graphics_notice.is_empty() else graphics_notice
 		popup_buttons.get_child(0).text="Quality: "+Graphics.TITLES[graphics.quality]
@@ -400,13 +578,88 @@ func _refresh() -> void:
 		popup_buttons.get_child(2).text="Frame limit: %d FPS"%graphics.fps
 		contrast_label.text="Contrast: %d%%"%graphics.contrast_percent
 		contrast_slider.set_value_no_signal(graphics.contrast_percent)
+	if state=="audio":
+		popup_text.text="Music · a little island melody\nEffects · putts, footsteps and jingles" if audio_notice.is_empty() else audio_notice
+		for i in 2:
+			var value: int = audio.music_percent if i==0 else audio.effects_percent
+			audio_labels[i].text=("Music" if i==0 else "Effects")+(": Off" if value==0 else ": %d%%"%value)
+			audio_sliders[i].set_value_no_signal(value)
 	if state=="menu" and game.info!="A little green. A good time.": popup_text.text=game.info
-	if state=="result" and game.voted:
-		popup_text.text="Rematch requested. Waiting for your friend…"
-		popup_buttons.get_child(0).disabled=true
+	if state=="result":
+		if online_cup and not cup_reported:
+			cup_reported=true
+			game.bridge.request("activity.cup.finish",{"strokes":[game.world.total(0),game.world.total(1)]},func(_result,_error):pass)
+		popup_text.text=("Rematch requested. Waiting for all players…" if game.voted else result_text)+"\n"+game.scorecards.message
+		popup_buttons.get_child(0).disabled=game.voted or game.scorecards.busy
+		if online_cup:
+			popup_buttons.get_child(0).disabled=game.scorecards.busy or game.scorecards.poll_at>0
+		elif festival_receipt.is_empty():popup_buttons.get_child(1).disabled=game.voted or game.scorecards.busy
+
+func _open_boards() -> void:
+	boards_open=true; _refresh(); _load_board()
+
+func _load_board(offset: int = 0, revision: String = "") -> void:
+	game.scorecards.fetch_board(board_mode,board_kind,offset,revision)
+
+func _refresh_boards() -> void:
+	var data: Dictionary = game.scorecards.board
+	var lines: Array = ["Fewest strokes" if board_kind=="records" else "Outright wins · draws stay draws"]
+	var signature := JSON.stringify(data)
+	if signature!=board_signature:
+		board_signature=signature
+		board_profiles.show_profiles(data.get("profiles",{}))
+		_render_board_rows()
+	if data.get("items",[]).is_empty() and not data.is_empty(): lines.append("Be the first to finish a confirmed round.")
+	lines.append(game.scorecards.board_message)
+	if game.scorecards.poll_at>0: lines.append(game.scorecards.message)
+	popup_text.text="\n".join(lines)
+	var filters := popup_buttons.get_child(0)
+	filters.get_child(0).text="Teams" if board_mode=="teams" else "Individual"
+	filters.get_child(1).text="Wins" if board_kind=="wins" else "Records"
+	for child in filters.get_children(): child.disabled=game.scorecards.busy
+	var pages := popup_buttons.get_child(1)
+	pages.get_child(0).disabled=game.scorecards.busy or data.get("offset",0)==0
+	pages.get_child(1).disabled=game.scorecards.busy or data.get("next_offset")==null
+	popup_buttons.get_child(2).get_child(0).disabled=game.scorecards.busy
+
+func _render_board_rows() -> void:
+	if board_rows==null: return
+	for child in board_rows.get_children(): board_rows.remove_child(child); child.queue_free()
+	var profiles: Dictionary = game.scorecards.board.get("profiles",{})
+	for entry in game.scorecards.board.get("items",[]):
+		var row := HBoxContainer.new(); row.custom_minimum_size.y=32; board_rows.add_child(row)
+		var rank_label := Label.new(); rank_label.text=str(entry.place)+"."; rank_label.custom_minimum_size.x=24; row.add_child(rank_label)
+		for id in entry.get("members",[]):
+			var profile: Dictionary = profiles.get(id,{})
+			var member := HBoxContainer.new(); member.size_flags_horizontal=Control.SIZE_EXPAND_FILL; row.add_child(member)
+			var face := TextureRect.new(); face.custom_minimum_size=Vector2(28,28); face.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+			face.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED; face.texture=board_profiles.texture(profile); member.add_child(face)
+			if face.texture==null:
+				var fallback := Label.new(); fallback.text="●"; fallback.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+				fallback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); fallback.add_theme_color_override("font_color",Color("9ac8b0")); face.add_child(fallback)
+			var name_label := Label.new(); name_label.text=str(profile.get("display_name","Player"))
+			if id==game.scorecards.player: name_label.text+=" (you)"
+			name_label.tooltip_text=name_label.text; name_label.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+			name_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL; name_label.add_theme_font_size_override("font_size",17); member.add_child(name_label)
+		var value_label := Label.new(); value_label.text=str(entry.value); value_label.custom_minimum_size.x=28
+		value_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT; row.add_child(value_label)
 
 func _open_graphics() -> void:
 	graphics_open=true; graphics_notice=""; _refresh()
+
+func _open_audio() -> void:
+	audio_open=true; audio_notice=""; _refresh()
+
+func _quit_game() -> void:
+	if quitting: return
+	quitting=true
+	audio.shutdown()
+	# Release decoder references on the mixer thread before engine teardown.
+	await get_tree().create_timer(0.20).timeout
+	get_tree().quit()
+
+func _close_audio() -> void:
+	audio_open=false; _refresh()
 
 func _close_graphics() -> void:
 	graphics_open=false; _refresh()
@@ -422,10 +675,10 @@ func _save_graphics() -> void:
 func _popup_controls() -> Array[Control]:
 	var result: Array[Control] = []
 	for child in popup_buttons.get_children():
-		if child is Button: result.append(child)
+		if child is Button and child.visible and not child.disabled: result.append(child)
 		elif child is Container:
 			for control in child.get_children():
-				if control is Slider: result.append(control)
+				if control.visible and (control is Slider or control is Button and not control.disabled): result.append(control)
 	return result
 
 func _start_local(count: int) -> void:
@@ -442,17 +695,20 @@ func _shot_started(result: Dictionary) -> void:
 	anchor.position=_stance(Vector3(origin[0]/1000.0,0,origin[1]/1000.0),radians)
 	anchor.rotation.y=-radians
 	anchor.play_action("golf_putt")
-	effects.begin(result,Courses.get_course(field_index))
+	shot_course=Courses.get_course(field_index)
+	effects.begin(result,shot_course)
+	audio.begin(effects.events)
 
 func _process(delta: float) -> void:
-	if course_root==null: return
+	if course_root==null or quitting: return
+	audio.set_state(audio_focused,paused)
+	island.gallery.tick(0.0 if paused else delta,audio.effects_percent/100.0,audio_focused and not paused)
 	if game.phase=="moving":
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
 			elapsed+=delta
 			anchor.seek_stroke(elapsed)
 			var rolling_time := maxf(0,elapsed-Stroke.CONTACT)
-			if elapsed>=Stroke.CONTACT: hud.set_status("Rolling…")
 			effects.seek(rolling_time)
 			var sample_time: float = rolling_time*shot.hz
 			var frame := mini(int(sample_time),shot.path.size()-1)
@@ -460,6 +716,11 @@ func _process(delta: float) -> void:
 			var blend := clampf(sample_time-frame,0,1)
 			var p: Array = shot.path[frame]
 			var q: Array = shot.path[next_frame]
+			if elapsed>=Stroke.CONTACT:
+				var speed: float = Vector2(q[0]-p[0],q[1]-p[1]).length()*shot.hz/1000.0
+				var flying: bool=frame<shot.roll_frame
+				hud.set_status("In flight…" if flying else "Rolling…")
+				audio.seek(rolling_time,0.0 if flying else speed,effects.sandy(effects.point(shot,frame),shot_course))
 			var ball: Node3D = balls[shot.player]
 			ball.position=Vector3(lerpf(p[0],q[0],blend)/1000.0,lerpf(shot.heights[frame],shot.heights[next_frame],blend)/1000.0,lerpf(p[1],q[1],blend)/1000.0)
 			_align_marker(ball)
@@ -476,16 +737,21 @@ func _process(delta: float) -> void:
 					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/Size.BALL)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
-				if frame==shot.path.size()-1 and shot.sunk:
-					anchor.play_action("celebrate")
+				if shot.sunk and frame==shot.path.size()-1: island.gallery.cheer()
 				last_frame=frame
+			if shot.sunk and frame==shot.path.size()-1:
+				var reaction_time: float = rolling_time-(shot.path.size()-1)/float(shot.hz)
+				anchor.celebrate(reaction_time,(field_index+shot.strokes[shot.player]+game.round_id)%3)
 			if rolling_time>=(shot.path.size()-1)/float(shot.hz):
-				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
-			if rolling_time>(shot.path.size()-1)/float(shot.hz)+0.85:
+				if shot.out_of_play: ball.visible=false
+				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Out of play · stroke counted" if shot.out_of_play else "Nice and steady.")
+			if rolling_time>(shot.path.size()-1)/float(shot.hz)+(2.8 if shot.sunk else 0.85):
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
+	if not paused and audio_focused: game.tick_bot(delta)
 	_poll_stick(delta)
 	_poll_camera_keys(delta)
+	if game.phase=="aim" and not paused: anchor.step_turn(delta)
 	var rolling: bool = game.phase=="moving" and not shot.is_empty()
 	var player: int = shot.player if rolling else game.world.turn
 	var ball_pos: Vector3 = balls[mini(player,balls.size()-1)].position
@@ -495,9 +761,13 @@ func _process(delta: float) -> void:
 	var golfer := _stance(ball_pos,deg_to_rad(shot_angle))
 	hud.set_distance(Vector2(ball_pos.x-cup.position.x,ball_pos.z-cup.position.z).length(),cup.position.y-_ground(ball_pos))
 	# Pause freezes the local camera too. Online ball presentation may continue.
-	if not paused: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving"],avatar_binding.eye_height())
+	if not paused:
+		if rolling and is_instance_valid(anchor.motion) and anchor.motion.celebration>=0:
+			camera.celebration_frame(delta,anchor.global_position,anchor.global_basis)
+		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling and elapsed>=Stroke.CONTACT,game.phase in ["aim","moving","waiting_turn"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
+	if transit_locked:return
 	var direction := Vector2.ZERO
 	var aim_axis := Vector2.ZERO
 	var look := Vector2.ZERO
@@ -560,7 +830,10 @@ func _primary() -> void:
 	elif not paused: game.fire()
 
 func _pause() -> void:
+	if boards_open: boards_open=false; _refresh(); return
+	if audio_open: _close_audio(); return
 	if graphics_open: _close_graphics(); return
+	if local_setup: local_setup=false; _refresh(); return
 	if game.phase=="menu": return
 	paused=!paused; _refresh()
 
@@ -574,6 +847,7 @@ func _set_input(kind: String) -> void:
 	input_kind=kind; touch_mode=kind=="touch"; _refresh()
 
 func _input(event: InputEvent) -> void:
+	if quitting: return
 	if event is InputEventScreenTouch and event.pressed: _set_input("touch")
 	elif event is InputEventMouseButton and event.pressed and event.device!=InputEvent.DEVICE_ID_EMULATION: _set_input("mouse")
 	if hud.route_pointer(event):
@@ -609,7 +883,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and not event.pressed: touches.erase(event.index)
 
 func _camera_allowed() -> bool:
-	return not paused and game.phase in ["aim","moving"]
+	return not paused and game.phase in ["aim","moving","waiting_turn"]
 
 func _cycle_view() -> void:
 	if not _camera_allowed(): return
@@ -650,3 +924,77 @@ func _unhandled_input(event: InputEvent) -> void:
 			if before>20 and after>20: camera.magnify(log(after/before))
 		touches[event.index]=event.position
 		get_viewport().set_input_as_handled()
+
+func _actor_name(actor: int) -> String:
+	if game.solo_bot and actor==1: return "RIVAL"
+	if actor==(game.seat if game.online else 0): return "YOU"
+	return _seat_label(actor)
+
+func _seat_label(actor: int) -> String:
+	var members: Array = game.bridge.session.get("members",[])
+	return "P%d"%int(members[actor].seat if game.online and actor<members.size() else actor+1)
+
+func _default_teams() -> void:
+	var roster: Array = Match.Rules.default_roster(setup_count)
+	if setup_teams and setup_count==4: roster=[[0,1],[2,3]]
+	setup_assignment.resize(setup_count)
+	for i in roster.size():
+		for member in roster[i]: setup_assignment[member]=i
+
+func _setup_roster() -> Array:
+	if not setup_teams: return Match.Rules.default_roster(setup_count)
+	var roster: Array = []
+	for team in 4:
+		var seats: Array = []
+		for i in setup_count:
+			if setup_assignment[i]==team: seats.append(i)
+		if not seats.is_empty(): roster.append(seats)
+	return roster
+
+func _cycle_count() -> void:
+	var counts := [2,4,5,6,7,8]
+	setup_count=counts[(counts.find(setup_count)+1)%counts.size()]
+	setup_teams=setup_count>4 or setup_teams and setup_count==4
+	_default_teams(); _refresh()
+
+func _toggle_teams() -> void:
+	if setup_count==4: setup_teams=not setup_teams; _default_teams(); _refresh()
+
+func _cycle_team(member: int) -> void:
+	if not setup_teams or member>=setup_count: return
+	setup_assignment[member]=(setup_assignment[member]+1)%mini(4,setup_count/2)
+	_refresh()
+
+func _refresh_setup() -> void:
+	var valid: bool = Match.Rules.valid_roster(_setup_roster(),setup_count)
+	popup_text.text="One ball per team \u00b7 take turns within your team.\nTap a player to change teams." if setup_teams else "Everyone plays their own ball.\nFewest strokes wins."
+	if not valid: popup_text.text="Each team needs 2 or 3 players.\nUnequal teams are welcome: 2 versus 3."
+	setup_count_button.text="Players: %d"%setup_count
+	setup_mode_button.text="Teams" if setup_teams else "Individual"
+	setup_mode_button.disabled=setup_count!=4
+	for i in 8:
+		var control: Button = setup_grid.get_child(i)
+		control.visible=i<setup_count
+		if i<setup_count:
+			control.text="%s · %s"%[_seat_label(i),SIDE_NAMES[setup_assignment[i]]]
+			control.disabled=not setup_teams
+	setup_start_button.disabled=not valid
+	var controls := _popup_controls()
+	if not controls.is_empty() and get_viewport().gui_get_focus_owner() not in controls: controls[0].grab_focus()
+
+func _start_configured() -> void:
+	var roster := _setup_roster()
+	if not Match.Rules.valid_roster(roster,setup_count): return
+	local_setup=false; field_index=-1; paused=false
+	if game.online: game.start_group(roster)
+	else: game.local(setup_count,roster)
+
+func transit_session() -> Node:
+	return game
+
+func transit_avatar_ready() -> bool:
+	return avatar_binding.startup_resolved
+
+func set_transit_controls(locked: bool) -> void:
+	transit_locked=locked
+	neutral_required=true

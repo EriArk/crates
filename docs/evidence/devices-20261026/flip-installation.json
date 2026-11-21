@@ -1,0 +1,30 @@
+{
+  "versions": {
+    "pong": "0.1.3",
+    "snake-arena": "0.1.3",
+    "light-cycles": "0.1.3",
+    "falling-blocks": "0.1.3",
+    "minesweeper-race": "0.1.3",
+    "chain-reaction": "0.1.3",
+    "mini-racing": "0.1.3",
+    "tanks": "0.1.3",
+    "pocket-artillery": "0.1.4",
+    "pocket-golf": "0.1.23"
+  },
+  "data_preserved": true,
+  "history_preserved": true,
+  "other_packages_unchanged": true,
+  "rollback_objects_retained": true,
+  "package_sha256": {
+    "pong": "3eca1c770497180e5bc750b93b52b7bfda50b53b8af18474adebb8076da0f6e5",
+    "snake-arena": "6d0d0175f0bb60a15382df6e4aecf304edf261af669886ce78a6121e45d0afd0",
+    "light-cycles": "e9681ecd3426f807e177d5aaa5776c6b3b37606cc92d902a8d2e174c6592859e",
+    "falling-blocks": "27e12055c4de0f65ce46022be54a974f622df3f4233a597a7ffe0acf6ffe2163",
+    "minesweeper-race": "68a80475a5b96afca49f65d668dbb108dfe6297e7feb8997b843dd9a0695e752",
+    "chain-reaction": "8f644cb383b3b79f2a3e614d2ddf16481f33b7e390e6cf3046b266d792684809",
+    "mini-racing": "7b6d36d86cdc3e55b29be828e662bc0385757e691e3134ed60afb6025287133c",
+    "tanks": "9009cda38b18b9b5172914c346c55128988d1d78ce9c39a1f6da160c7393fb50",
+    "pocket-artillery": "a7c66dd1b47c4332f81a49ee906080659eb8f1ec946eacb0c3c7469c8687b4f4",
+    "pocket-golf": "c68d94a5d4326dc9e4a776d2bc844113e7b3c4803e2c04fa4644af1496ba48aa"
+  }
+}

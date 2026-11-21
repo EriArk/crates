@@ -1,7 +1,8 @@
 # Snake Arena
 
-**Prepared update (not published):** 0.1.1 improves controller input, field size and effects.
-[Repair details and acceptance boundary](../docs/controls-and-presentation.md).
+**Prepared handheld update 0.1.3:** bounded painting resolution, height-scaled HUD and larger game menus.
+[Changes, checks and delivery limits](../docs/handheld-repair.md).
+
 
 Two snakes share a garden. Eat fruit, grow longer and avoid walls and bodies.
 The last survivor wins; simultaneous crashes draw. After two minutes, the longer snake wins.

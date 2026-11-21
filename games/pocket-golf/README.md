@@ -1,8 +1,48 @@
 # Pocket Golf
 
 A small, standalone 3D minigolf game for TrainerOS, built with **Godot 4.7.2**.
-Three greens: First Light, The Bank Shot, and Sand & Stone. Play a solo round,
-pass a controller between two people, or play with a friend through TrainerOS Lobby.
+Three greens: First Light, The Bank Shot, and Sand & Stone. Play against an island
+rival, pass a controller locally, or join a group through TrainerOS Lobby.
+
+**0.1.24 updates the shared avatar SDK for revision 4.** The Compatibility
+renderer now matches the intended face colors. The game still loads the shared
+external model; no character assets are bundled. A real SDK-host test covers
+new eye styles, palette changes after a shot, guests and immediate profile
+revocation. Developer setup: [TrainerOS avatar quickstart](https://github.com/EriArk/TrainerOS/blob/main/sdk/AVATAR_QUICKSTART.md).
+Device delivery is recorded separately in the repository evidence.
+
+**Prepared 0.1.22 connects online rounds to shared records and wins.** Every
+participant joins and confirms the full scorecard through the TrainerOS account;
+teams retain one shared ball and score. Menu / result → Shared tables includes
+individual/team records, wins, pagination and explicit pending-result retry.
+An unavailable service leaves a casual match; local/bot scores are not submitted.
+Requires combined group + Play SDK and `pocket-golf.10`. See
+[shared results, recovery and trust](docs/SHARED_RESULTS.md). Packages are prepared
+on the server; this does not publish or install them on handhelds.
+
+**0.1.21 adds individual matches for 2 or 4, and teams for 4-8 people.** Each
+team has 2 or 3 members sharing one ball and one score. Teammates alternate shots,
+including across holes. Unequal sides (such as 2 versus 3) are valid. The local
+match setup or online host chooses teams inside the game. Solo now includes a
+computer rival with a fresh random standard SDK appearance for each round.
+The rival plans on a worker thread using the same terrain and collision rules.
+See [teams, rival and SDK contract](docs/TEAMS.md). That update introduced
+`pocket-golf.7` and SDK `network.group: 1`; 0.1.22 uses `.8`. Handheld testing and
+publication remain deferred by the owner.
+
+
+**0.1.20 adds island music, sound effects and golfer reactions.** A new original
+87-second instrumental loop accompanies the island; putts, rolling, sand, banks,
+cup rims, cup drops and footsteps have sound. Short cup, hole-in-one and round
+jingles soften the music underneath. Main menu / Pause → Sound offers independent
+Music and Effects sliders, including mute, saved on this device.
+The shared SDK golfer now lifts and plants alternating feet while turning and
+performs one of three short cup celebrations: a fist pump, a little victory hop
+or a happy shuffle. The camera briefly frames the scorer and returns to the
+selected view. Appearance and wardrobe remain in TrainerOS; no avatar model is
+included. In 0.1.20 physics and `pocket-golf.6` were unchanged. This is a prepared update;
+handheld testing is deferred until the owner authorizes it.
+See [audio, motion and checks](docs/AUDIO_MOTION.md).
 
 **0.1.19 adds continuous left-stick aiming and power.** Small deflections give
 fine control; full deflection turns faster. Touch aim/power are continuous too;
@@ -10,7 +50,7 @@ D-pad and keyboard retain discrete taps. Opponents see preparation before the
 putt: orientation and aim guide update smoothly over the existing game channel.
 Preparation is coalesced at up to 15 Hz and never changes the rules state. Shots
 use integer hundredths of a degree / percent, with fixed-point trajectories.
-Both players need protocol `pocket-golf.6` (0.1.19 or compatible).
+That historical version used protocol `pocket-golf.6`; 0.1.21 supersedes it with `.7`.
 
 **0.1.18 adds a Contrast slider** to Graphics (80–150%, original image at 100%).
 Pointer/touch adjusts the slider; on a controller use up/down to select it,
@@ -83,10 +123,11 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 
 ## Play
 
+- Power up to 30% produces a ground putt. Stronger shots carry through the air, land and roll. Grass provides a short rebound and sand absorbs the landing. Rolling or flying off the mown green or landing on a stone wall returns the ball to the shot origin and counts the stroke.
 - Left stick: continuous aim (left/right) and power (up/down), proportional to deflection.
   D-pad / keyboard arrows retain five-degree / five-percent taps. Power stays within 10?100%.
 - Confirm (bottom face button; A on Xbox), Enter or Space: putt / accept handoff.
-- Secondary face button (X on Xbox), Tab, or the camera icon: overview → shoulder → eyes.
+- Secondary face button (X on Xbox), Tab, or the camera icon: shoulder (default) → eyes → overview.
 - Right stick or WASD: rotate/look around; right trigger / E zooms in, left trigger /
   Q zooms out. R3 / R restores the selected view. Camera controls never change aim/power.
 - Mouse: hold the right button to rotate; wheel to zoom. Touch: drag the green to
@@ -115,10 +156,10 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 ## TrainerOS
 
 Select installed Pocket Golf in GameHub Lobby, mark Ready and let the organizer
-Start. TrainerOS launches both games and the SDK supplies their admitted session.
+Start. TrainerOS launches the participating games and the SDK supplies their admitted session.
 No preliminary game launch or "Meet in Lobby" menu is needed. The game uses
-Platform API v1 `lobby.activity` and `network.records`, app ID
-`art.abysstail.pocket-golf`, protocol `pocket-golf.6` (fine aim, live preparation, scaled physics and avatar recipes).
+Platform API v1 `lobby.activity`, `network.records` and `network.group`, app ID
+`art.abysstail.pocket-golf`, protocol `pocket-golf.7` (group roster, team balls, authoritative ordering and avatar recipes).
 The package includes `traineros-activity.json` for discovery while the game is closed.
 
 Retroid Pocket Flip2 uses OpenGL Compatibility because Godot 4.7.2 / Turnip
@@ -126,23 +167,22 @@ Adreno 650 repeatedly lost the Vulkan device in the menu. Other devices retain
 Vulkan Mobile. `POCKET_GOLF_RENDERER=mobile` or `gl_compatibility` overrides the
 package launcher for diagnosis. These are standard
 [Godot renderer arguments](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html).
-Both players need 0.1.19 or a compatible physics revision. Earlier
-`pocket-golf.1` through `pocket-golf.5` routes are deliberately incompatible; the state hash also includes
-the physics revision, so mixed rules cannot silently share a round.
+All participants need 0.1.21 or a compatible `.7` build. The package advertises
+8 seats; 3-player rosters are rejected with an explanation. Individual play is
+2 or 4; teams of 2-3 cover group totals 4, 5, 6, 7 and 8.
 
-The GDScript client in `addons/traineros/client.gd` uses the existing local JSON-lines
-SDK contract. It has no separate login, room service, IP entry, or new relay. Shots
-carry integer angle_units (0?35999), power_units (1000?10000), turn and pre/post-state hashes.
-Cosmetic aim records carry the same units with round/ply, are rate limited and
-interpolated at the receiver; stale turns cannot change the current preparation. Both sides calculate integer
-rules; rendering and engine physics never decide the result. Hash agreement detects
-divergence, not cheating or eligibility for official rewards.
+`scripts/group_client.gd` adapts the existing JSON-lines SDK group contract.
+It adds no transport, account, room server or relay. The host validates the
+current participant, orders shots and broadcasts their integer angle/power and
+before/after hashes. Every peer independently simulates the same fixed-point
+trajectory. A barrier waits for every ball animation before the next turn.
+Cosmetic preparation is coalesced at 15 Hz. Hash agreement detects divergence;
+it is not an anti-cheat or official-reward certification.
 
-An unavailable/revoked host returns to the menu and leaves solo/local play available.
-Exit or connection loss ends the game session while retaining Lobby membership.
-Reconnect requires the normal preparation/Ready/Start flow; unfinished rounds are
-not restored. A friend rematch requires both players' votes. The current SDK route
-is two players and reliable ordered records; live provider/NAT acceptance is separate.
+Leaving, profile revocation or connection loss ends the match and retains the
+Lobby. A fresh match uses the normal Lobby flow; unfinished rounds are not
+restored. Rematch requires every participant's vote. Separate-network/NAT and
+physical-device acceptance remain open. Lobby UI/source is maintained separately.
 
 The avatar seam and remaining integration work are described in
 [AVATAR_INTEGRATION.md](docs/AVATAR_INTEGRATION.md). Clothing, appearance selection,
@@ -178,11 +218,25 @@ Linux x86_64, Linux ARM64 and a Windows preview without modifying the source pro
 and checksums. It never publishes. Records remain Experimental / untested; their
 release URLs are future destinations. Builds require an editor: official 4.7.2
 release templates disable `--script` path overrides, so source tests must use the
-editor binary. `tests/HostIntegration.cpp` launches two actual Godot processes against
-two real PlatformHosts; see [the preparation record](docs/PREPARATION.md).
+editor binary. `tests/HostIntegration.cpp` launches 2, 4, 5 and 8 actual Godot processes against
+real PlatformHosts and secure SDK channels; see [the preparation record](docs/PREPARATION.md).
 
 Original game/client/procedural environment: GPL-3.0-or-later, see [LICENSE](LICENSE).
 Kenney models/textures retain CC0-1.0; their original notices and source hashes
 are included in `assets/kenney/` and under `licenses/` in the binary packages.
 The unmodified Godot engine is MIT; its notices and bundled third-party licenses
 are included under `licenses/`. No model, rig or clothing from the other chat is copied.
+
+### Island gallery
+
+First Light pairs a dawn lighthouse with the original steel-pan tune *Harbour Steps*.
+The Bank Shot looks through a limestone arch and features the Bazaar's *Awning Waltz*.
+Sand & Stone looks onto a regatta at sunset with *A Little Green*. Grade and sea mist
+are applied to the world before the HUD. Each island has a small flock and a gallery
+of Quaternius residents from TrainerOS Bazaar. The gallery waves and claps for a sunk
+putt. Music and effects use their respective Sound sliders. The bird call is positional.
+See `licenses/gallery-provenance.json` for the model and sound credits.
+
+The Egregore loading flight uses the OctoFox Ship Studio hull, drive exhaust and
+sky from revision `37b4572e`. Steer with the left stick or arrow keys. The
+arrival artwork is captured in this game.

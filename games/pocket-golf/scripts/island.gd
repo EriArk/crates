@@ -13,6 +13,10 @@ var planting: Array[Node3D] = []
 var grass_positions: Array[Vector3] = []
 var terrain_vertices := PackedVector3Array()
 var terrain_cells: Dictionary = {}
+var hole_index := 0
+var gallery := preload("res://scripts/gallery.gd").new()
+var mist: Array[MeshInstance3D] = []
+var flotilla: Array[Node3D] = []
 var boat: Node3D
 var flag: Node3D
 var clock := 0.0
@@ -29,13 +33,17 @@ func set_quality(level: int) -> void:
 	for i in detail_props.size(): detail_props[i].visible=level==2 or i%(3 if level==0 else 2)==0
 	var water: MeshInstance3D = get_node("Ocean")
 	water.material_override=simple_water if level==0 else full_water
+	gallery.set_quality(level)
+	for i in mist.size(): mist[i].visible=i<=level
 
 func build(hole: int) -> void:
+	hole_index=hole
 	_terrain()
 	var water := MeshInstance3D.new()
 	var plane := PlaneMesh.new(); plane.size=Vector2(1600,1600)
 	water.mesh=plane; water.position.y=-1.55
 	var sea := ShaderMaterial.new(); sea.shader=SEA
+	sea.set_shader_parameter("shore_profile",hole)
 	full_water=sea
 	var calm := ShaderMaterial.new(); calm.shader=preload("res://shaders/calm_sea.gdshader")
 	simple_water=calm
@@ -66,7 +74,51 @@ func build(hole: int) -> void:
 	for i in 5:
 		prop("nature/rock_largeC",Vector3(26+i*1.3,-1.6,-27+i*0.6),3.3-i*0.25,i*0.8)
 	prop("nature/tree_palmBend",Vector3(28,-0.8,-26),2.7,1.7)
-	_clouds()
+	preload("res://scripts/coastal_vista.gd").prepare(self,hole)
+	add_child(gallery)
+	gallery.build(self,hole)
+
+	_beach_parasols(hole)
+
+func _beach_parasols(hole: int) -> void:
+	var cloth := [Color("cf644b"),Color("337d82"),Color("db9a38")]
+	var triangles := SurfaceTool.new()
+	triangles.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# The two picnic spots sit on the sand, clear of the green and landing.
+	for spot: Vector3 in [Vector3(-6.4,0,9.35), Vector3(7.9,0,6.2)]:
+		spot.y=surface_height(spot)
+		var seat := spot+Vector3(0.27,0,0.32)
+		seat.y=surface_height(seat)+0.03
+		var top := spot+Vector3.UP*1.65
+		for i in 10:
+			var a := TAU*i/10.0
+			var b := TAU*(i+1)/10.0
+			var left := Vector3(cos(a),0,sin(a))
+			var right := Vector3(cos(b),0,sin(b))
+			var hem := spot+Vector3.UP*1.20
+			triangles.set_color(cloth[hole] if i%2==0 else Color("fae7bd"))
+			for v in [top,hem+left,hem+right]:
+				triangles.add_vertex(v)
+			triangles.set_color(Color("926945"))
+			for v in [spot+left*0.045,spot+right*0.045,top+right*0.045,
+					spot+left*0.045,top+right*0.045,top+left*0.045]:
+				triangles.add_vertex(v)
+		# Alternate narrow woven stripes across a towel on the beach slope.
+		for stripe in 8:
+			triangles.set_color(Color("e8cda6") if stripe%3 else cloth[hole].darkened(0.20))
+			for corner in [Vector2(0,0),Vector2(1,0),Vector2(1,1),Vector2(0,0),Vector2(1,1),Vector2(0,1)]:
+				var v: Vector3=seat+Vector3((corner.x-0.5)*0.66,0,(stripe+corner.y)*0.14)
+				v.y=surface_height(v)+0.035
+				triangles.add_vertex(v)
+	triangles.generate_normals()
+	var decor := MeshInstance3D.new()
+	decor.mesh=triangles.commit()
+	var fabric := StandardMaterial3D.new()
+	fabric.vertex_color_use_as_albedo=true
+	fabric.vertex_color_is_srgb=true
+	fabric.cull_mode=BaseMaterial3D.CULL_DISABLED
+	decor.material_override=fabric
+	add_child(decor)
 
 func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3D:
 	if not models.has(id): models[id]=load(ROOT+id+".glb")
@@ -116,11 +168,17 @@ func _plant_gardens(hole: int) -> void:
 			prop("nature/flower_yellowA" if (hole+i)%3 else "nature/flower_purpleA",p,rng.randf_range(1.0,1.7),rng.randf()*TAU)
 	_meadow(hole)
 
+func coastline(a: float) -> float:
+	var shape:=1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	if hole_index==1: return shape+0.064*cos(a*4.0-.4)
+	if hole_index==2: return shape+0.065*sin(a*3.0+.9)-0.055*cos(a*2.0)
+	return shape
+
 func meadow_allowed(p: Vector3) -> bool:
 	if absf(p.x)<5.65 and absf(p.z)<8.65: return false
 	if p.x>5.5 and absf(p.z-3.8)<0.8: return false
 	var a := atan2(p.z/11.7,p.x/8.4)
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	return (Vector2(p.x,p.z)/Vector2(8.55,11.85)).length()<shape
 
 func _meadow(hole: int) -> void:
@@ -185,12 +243,15 @@ func _clear_green(instance: Node3D) -> void:
 func ground_height(point: Vector3) -> float:
 	var p := Vector2(point.x,point.z)
 	var a := atan2(point.z/11.7,point.x/8.4)
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	var dir := p.normalized(); var distance := p.length()
 	var previous := 0.0; var height := -0.24
 	for ring in RINGS:
 		var radius: float = shape/sqrt(pow(dir.x/ring.x,2)+pow(dir.y/ring.z,2)) if distance>0 else 1.0
-		if distance<=radius: return lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))+_relief(p)
+		if distance<=radius:
+			var terrain_y:=lerpf(height,ring.y,clampf((distance-previous)/(radius-previous),0,1))+_relief(p)
+			var fringe_distance:=maxf(absf(p.x)-5.0,absf(p.y)-8.0)
+			return lerpf(-0.01,terrain_y,smoothstep(0.35,1.2,fringe_distance))
 		previous=radius; height=ring.y
 	return height
 
@@ -203,7 +264,7 @@ func _relief(p: Vector2) -> float:
 	for hill in HILLS:
 		var distance: float = (p-Vector2(hill.x,hill.y)).length()/hill.w
 		hills+=hill.z*exp(-distance*distance*1.35)
-	return hills*edge*coast*path
+	return hills*edge*coast*path*[1.0,1.48,0.84][hole_index]
 
 func surface_height(point: Vector3) -> float:
 	# Ground props on the rendered triangles, not the continuous curve between vertices.
@@ -219,7 +280,7 @@ func surface_height(point: Vector3) -> float:
 	return ground_height(point)
 
 func _outline(a: float, radius: Vector2, y: float) -> Vector3:
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	var point := Vector3(cos(a)*radius.x*shape,y,sin(a)*radius.y*shape)
 	point.y=ground_height(point)
 	return point
@@ -263,20 +324,13 @@ func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: 
 	# Godot uses clockwise front faces.
 	surface.set_color(color); surface.add_vertex(a); surface.add_vertex(c); surface.add_vertex(b)
 
-func _clouds() -> void:
-	var white := StandardMaterial3D.new(); white.albedo_color=Color("f7f6e9"); white.roughness=1
-	for i in 8:
-		var cloud := Node3D.new(); cloud.position=Vector3(-65+i*19,14+(i%3)*4,-60-(i%2)*20); add_child(cloud)
-		for j in 4:
-			var puff := MeshInstance3D.new(); var sphere := SphereMesh.new()
-			sphere.radius=2.0+(j%2)*0.7; sphere.height=sphere.radius*1.5; sphere.radial_segments=16; sphere.rings=8
-			puff.mesh=sphere; puff.material_override=white; puff.position=Vector3(j*2.5,0.5*(j%2),0)
-			puff.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; cloud.add_child(puff)
-
 func _process(delta: float) -> void:
 	clock+=delta
 	for i in trees.size(): trees[i].rotation.z=sin(clock*0.65+i)*0.012
 	if boat!=null:
 		boat.position.y=-1.52+sin(clock*1.2)*0.045
 		boat.rotation.z=sin(clock*0.9)*0.025
+	for i in flotilla.size():
+		flotilla[i].position.y=-1.88+.04*sin(clock*.74+i)
+		flotilla[i].rotation.z=.035*cos(clock*.52+i)
 	if flag!=null: flag.rotation.y=0.2+sin(clock*0.8)*0.08

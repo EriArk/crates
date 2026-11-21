@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser()
 parser.add_argument('executable', type=Path)
 parser.add_argument('output', type=Path)
-parser.add_argument('--version', default='0.1.3')
+parser.add_argument('--version', default='0.1.4')
 args = parser.parse_args()
 import re
 if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?', args.version):
@@ -51,7 +51,7 @@ record = dict(id='pocket-artillery', title='Pocket Artillery', kind='game', vers
               license='GPL-3.0-or-later', repository='https://github.com/EriArk/crates.git',
               size=archive.stat().st_size, unpackedSize=sum(map(len, files.values())) + 1048576,
               sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), channel='Experimental',
-              compatibility='untested', compatibilityNote='Linux x86_64/ARM64 UI checks and paired SDK match/rematch checks passed. Physical controls and separate-network acceptance remain open.',
+              compatibility='untested', compatibilityNote='Prepared on Windows/Linux x86_64. ARM64, handheld performance, physical input and live pairing await the main workflow.',
               notes='Two-player artillery, Lobby-first matches and shared avatar portraits. Optional Qt Quick 3D for portraits; Qt Quick, Network and SDL2 for play.',
               url=f'https://github.com/EriArk/crates/releases/download/pocket-artillery-v{args.version}/{name}')
 try:

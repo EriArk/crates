@@ -82,4 +82,5 @@ func run() -> void:
 	check(ui.island.get_node("Ocean").material_override==ui.island.simple_water,"new course inherits settings")
 	DirAccess.remove_absolute(settings.path)
 	print("Graphics settings checks complete")
+	ui.audio.shutdown(); await create_timer(.25).timeout
 	ui.queue_free(); await process_frame; quit(1 if failed else 0)

@@ -31,6 +31,7 @@ func run() -> void:
 	ui=load("res://main.tscn").instantiate(); root.add_child(ui)
 	await process_frame
 	ui._start_local(2); ui.game.accept_turn(); ui.neutral_required=false
+	tap("view"); tap("view") # Exercise the overview orbit first.
 	var digest: String = ui.game.world.digest()
 	var yaw: float = ui.camera.yaw[0]
 	ui._set_input("touch")
@@ -96,4 +97,6 @@ func run() -> void:
 	await picture("hud-rolling")
 	ui._suspend_input(); check(ui.hud.captures.is_empty(),"focus loss clears HUD pointer ownership")
 	print("HUD ","FAIL" if failed else "PASS"," touch aim/power/putt, multi-touch ownership, emulated mouse, mode changes, remote turn, totals, small layout, pause")
+	ui.audio.shutdown(); await create_timer(.25).timeout
+	ui.queue_free(); await process_frame
 	quit(1 if failed else 0)

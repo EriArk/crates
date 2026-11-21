@@ -4,7 +4,7 @@ const Size = preload("res://scripts/dimensions.gd")
 # Local presentation only: never writes aim, shot power, or network state.
 enum View { OVERVIEW, SHOULDER, EYES }
 const TITLES := ["Overview", "Shoulder", "Eyes"]
-var view := View.OVERVIEW
+var view := View.SHOULDER
 var yaw := [0.61, 0.0, 0.0]
 var pitch := [0.77, 0.48, 0.85]
 var zoom := [1.0, 1.0, 1.0]
@@ -65,6 +65,9 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		desired = focus + _offset(heading, elevation) * 2.6 * zoom[active]
 		# Terrain can raise wall tops. Keep the closest shoulder orbit above them.
 		desired.y = maxf(desired.y, obstruction_height+0.55)
+		# Look slightly up the line so the flag and island horizon share the frame.
+		focus -= Vector3(sin(heading),0,cos(heading))*0.95*zoom[active]
+		focus.y += 0.14
 		lens = 60.0
 	else:
 		# SDK model height, or the anonymous marker's height when no identity exists.
@@ -92,6 +95,17 @@ func _update_focus(ball: Vector3) -> void:
 			for y in [0.0,2.0]:
 				protected_depth=maxf(protected_depth,-to_local(Vector3(x,y,z)).z+2.0)
 	optics.dof_blur_far_distance=protected_depth
+
+func celebration_frame(delta: float, golfer: Vector3, facing: Basis) -> void:
+	# Brief portrait of the scorer, including in eyes view; restore the chosen view
+	# through ordinary camera interpolation once presentation finishes.
+	var focus := golfer+Vector3.UP*0.48
+	var desired := golfer+facing*Vector3(1.8,1.30,1.6)
+	var blend := 1-exp(-delta*4.5)
+	position=position.lerp(desired,blend); look_point=look_point.lerp(focus,blend)
+	fov=lerpf(fov,42,blend)
+	if position.distance_squared_to(look_point)>0.001: look_at(look_point)
+	_update_focus(golfer)
 
 func _offset(heading: float, elevation: float) -> Vector3:
 	return Vector3(sin(heading) * cos(elevation), sin(elevation), cos(heading) * cos(elevation))

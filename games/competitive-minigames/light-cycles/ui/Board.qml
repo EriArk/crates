@@ -10,7 +10,8 @@ Item {
         previous=s;canvas.requestPaint()
     }
     Canvas {
-        id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*28/19);height:width*19/28
+        id:canvas;objectName:"boardCanvas";anchors.centerIn:parent;width:700;height:475
+        scale:Math.min(parent.width/width,parent.height/height)
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
         onPaint:{
             if(board.sceneData.tick===undefined)return
@@ -24,9 +25,9 @@ Item {
                 var h=p===0?s.h0:s.h1,hx=(h%28)*25+12.5,hy=Math.floor(h/28)*25+12.5,d=p===0?s.d0:s.d1
                 c.save();c.shadowColor=p===0?"#7affce":"#ffa78e";c.shadowBlur=18;c.translate(hx,hy);c.rotate(d*Math.PI/2);c.fillStyle="#fff4ce";c.beginPath();c.moveTo(0,-10);c.lineTo(8,7);c.lineTo(-8,7);c.closePath();c.fill();c.restore()
             }
-            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillStyle="#91debb";c.textAlign="left";c.fillText("MINT  "+s.s0+" TILES",8,471);c.textAlign="right";c.fillStyle="#f1bca5";c.fillText("CORAL  "+s.s1+" TILES",692,471)
+            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillStyle="#91debb";c.textAlign="left";c.fillText("MINT  "+s.s0+" TILES",34,471);c.textAlign="right";c.fillStyle="#f1bca5";c.fillText("CORAL  "+s.s1+" TILES",666,471)
             c.textAlign="center";c.fillStyle="#c2d5c9";c.fillText("LAST RIDER WINS",350,471)
         }
     }
-    ImpactFx { id:fx;anchors.fill:canvas }
+    ImpactFx { id:fx;anchors.centerIn:parent;width:canvas.width;height:canvas.height;scale:canvas.scale }
 }

@@ -28,6 +28,81 @@ QQuickItem* item(QQuickItem* root,const QString& name){
 class ArcadeTests final:public QObject {
     Q_OBJECT
 private slots:
+    void roundStartPreservesSnapshotSchema(){
+        // Group map bookkeeping must not insert cells:null into legacy duels:
+        // peers compare the seeded initial state exactly before starting.
+        for(int kind=0;kind<8;++kind){ArcadeGame game{Kind(kind)};auto keys=game.scene().keys();game.local();QCOMPARE(game.scene().keys(),keys);game.leave();}
+    }
+    void tanksOwnScrollingViewport(){
+        ArcadeGame game{Kind::Tanks};QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);window->setProperty("touchControls",false);window->resize(1280,720);game.local();
+        QTRY_VERIFY_WITH_TIMEOUT(game.scene()["tick"].toInt()>=65,5000);
+        auto* board=item(window->contentItem(),"tanksBoard");QVERIFY(board);QCOMPARE(board->property("views").toInt(),1);
+        QVariant local,other;QVERIFY(QMetaObject::invokeMethod(board,"camera",Q_RETURN_ARG(QVariant,local),Q_ARG(QVariant,0)));
+        QVERIFY(QMetaObject::invokeMethod(board,"camera",Q_RETURN_ARG(QVariant,other),Q_ARG(QVariant,1)));
+        QCOMPARE(local.toMap()["x"].toDouble(),0.0);QVERIFY(other.toMap()["x"].toDouble()>0);
+        QVERIFY(game.scene()["width"].toInt()>40);QVERIFY(game.scene()["height"].toInt()>22);
+        QVERIFY(window->grabWindow().save("tanks-single-play.png"));game.leave();
+    }
+    void tanksLargeMapSixteenSeatsAndLoad(){
+        for(int count:{2,4,8,16}){
+            TanksRules g;g.reset(42,count);QCOMPARE(g.tanks.size(),count);QVERIFY(g.validView(g.view()));
+            for(int p=0;p<count;++p){QVERIFY(g.clear(g.tanks[p].pos));for(int q=0;q<p;++q)QVERIFY((g.tanks[p].pos-g.tanks[q].pos).manhattanLength()>=3);}
+            QVector<qint64> samples;int peakBytes=0,peakFull=0;QElapsedTimer clock;
+            for(int frame=0;frame<1800;++frame){
+                if(g.winner>=0)g.reset(42+frame,count);
+                clock.start();for(int p=0;p<count;++p){g.input(p,g.bot(p));g.action(p,g.botAction(p));}g.step();
+                auto state=g.view();QVERIFY(g.validView(state));
+                peakFull=std::max(peakFull,int(QJsonDocument(state).toJson(QJsonDocument::Compact).size()));
+                state.remove("cells");state["changes"]=QJsonArray{};
+                auto bytes=QJsonDocument(state).toJson(QJsonDocument::Compact);peakBytes=std::max(peakBytes,int(bytes.size()));
+                samples.append(clock.nsecsElapsed());
+            }
+            std::sort(samples.begin(),samples.end());
+            qInfo()<<"Tanks workload"<<count<<"players; simulation+AI+validation+JSON us p50/p95/p99/max"
+                <<samples[900]/1000<<samples[1710]/1000<<samples[1782]/1000<<samples.last()/1000
+                <<"peak snapshot/full bytes"<<peakBytes<<peakFull;
+            QVERIFY(peakFull<16000);QVERIFY(peakBytes<8000);
+        }
+        TanksRules g;g.reset(7,16);g.tick=61;g.cells.fill(0);
+        g.tanks[0].pos={10,10};g.tanks[0].face=1;g.cells[10*TanksRules::Width+12]=TanksRules::Water;
+        QVERIFY(!g.clear({11,10}));g.action(0,0);g.step();QVERIFY(!g.bullets.isEmpty());
+        g.cells[10*TanksRules::Width+12]=TanksRules::Bush;QVERIFY(g.clear({11,10}));
+        auto invalid=g.view();invalid["width"]=60;QVERIFY(!g.validView(invalid));
+        invalid=g.view();auto players=invalid["players"].toArray();players.append(players[0]);invalid["players"]=players;QVERIFY(!g.validView(invalid));
+        g.reset(1,3);g.tick=63;g.cells.fill(0);g.tanks[0].pos={10,10};g.tanks[1].pos={13,10};g.tanks[2].pos={16,10};
+        g.input(0,1);g.input(1,1);g.input(2,3);g.step();
+        QCOMPARE(g.tanks[0].pos,QPoint(10,10));QCOMPARE(g.tanks[1].pos,QPoint(13,10));QCOMPARE(g.tanks[2].pos,QPoint(16,10));
+    }
+    void portraitCacheAndBrickPixels(){
+        ArcadeGame game{Kind::Racing};QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        window->setProperty("touchControls",false);game.local();QTest::qWait(100);
+        auto* portrait=item(window->contentItem(),"avatarPortrait");QVERIFY(portrait);
+        const int generation=portrait->property("generation").toInt();
+        for(int i=0;i<30;++i)portrait->setProperty("descriptor",QVariantMap{});
+        QCOMPARE(portrait->property("generation").toInt(),generation);
+        QTemporaryDir tmp;QImage source(32,32,QImage::Format_ARGB32);source.fill(Qt::red);
+        for(int y=0;y<32;++y)for(int x=16;x<32;++x)source.setPixelColor(x,y,Qt::white);
+        const QString path=tmp.filePath("portrait.png");QVERIFY(source.save(path));
+        portrait->setProperty("capture",QVariantMap{{"url",QUrl::fromLocalFile(path)}});
+        QTest::qWait(180);QVERIFY(portrait->property("brickStyle").toBool());
+        // Re-evaluating a descriptor must preserve the existing snapshot.
+        portrait->setProperty("descriptor",QVariantMap{});QVERIFY(portrait->property("capture").isValid());
+        auto* loader=item(portrait,"portraitRenderer");QVERIFY(loader);QVERIFY(!loader->property("active").toBool());
+        window->setProperty("touchControls",false);game.local();QTest::qWait(100);
+        auto image=window->grabWindow();QVERIFY(image.save("brick-portrait-cache.png"));
+        double factor=double(image.width())/window->width();
+        QPointF dark=portrait->mapToScene(QPointF(portrait->width()*0.25,portrait->height()*0.5));
+        QPointF light=portrait->mapToScene(QPointF(portrait->width()*0.75,portrait->height()*0.5));
+        QCOMPARE(image.pixelColor(qRound(dark.x()*factor),qRound(dark.y()*factor)),QColor("#34432c"));
+        QCOMPARE(image.pixelColor(qRound(light.x()*factor),qRound(light.y()*factor)),QColor("#adb991"));
+        // A closed menu must not instantiate an invisible 3D renderer.
+        portrait->setVisible(false);
+        portrait->setProperty("descriptor",QVariantMap{{"source",QUrl("file:///unused-hidden-portrait.glb")}});
+        QVERIFY(portrait->property("rendering").toBool());QVERIFY(!loader->property("active").toBool());
+        portrait->setProperty("descriptor",QVariantMap{});portrait->setVisible(true);
+    }
     void controllerBackend_data(){uiAndLocalLifecycle_data();}
     void controllerBackend(){
         QFETCH(int,kind);ArcadeGame game{Kind(kind)};
@@ -39,6 +114,9 @@ private slots:
         QTest::qWait(70);first.axis(0,24000);first.axis(0,0);QCOMPARE(window->property("selected").toInt(),1);
         first.tap(SDL_CONTROLLER_BUTTON_A);QCOMPARE(game.phase(),"play");QVERIFY(game.couch());
         QTRY_VERIFY_WITH_TIMEOUT(game.scene()["tick"].toInt()>=65,6000);first.axis(0,-26000);second.axis(0,26000);QTest::qWait(180);
+        // Cycles must leave the short vertical approach before the pause assertions:
+        // a random starting row can otherwise hit the wall while taps are awaited.
+        if(kind==2){first.axis(26000,0);second.axis(-26000,0);}
         first.axis(0,0);second.axis(0,0);
         if(kind==0){QVERIFY(game.scene()["p0"].toInt()<270);QVERIFY(game.scene()["p1"].toInt()>270);const int y=game.scene()["p0"].toInt();first.axis(8000,8000);QTest::qWait(120);QCOMPARE(game.scene()["p0"].toInt(),y);first.axis(0,0);}
         if(kind!=4){first.tap(SDL_CONTROLLER_BUTTON_A);second.tap(SDL_CONTROLLER_BUTTON_A);}
@@ -63,23 +141,60 @@ private slots:
     }
     void racingSharedCourseDraftContactRecoveryAndFinish(){
         RacingRules g;g.reset(7);g.tick=60;g.cars[0].distance=40;g.cars[1].distance=80;g.cars[0].lane=g.cars[1].lane=1;
-        g.cars[0].cooldown=100;g.cars[1].cooldown=100;QVERIFY(g.drafting(0));QVERIFY(!g.drafting(1));g.step();
-        QCOMPARE(g.cars[0].cooldown,98);QCOMPARE(g.cars[1].cooldown,99);
+        QVERIFY(g.drafting(0));QVERIFY(!g.drafting(1));g.step();
         g.cars[0].distance=6;g.cars[1].distance=30;g.input(0,0);g.input(1,2);g.step();QCOMPARE(g.cars[1].distance-g.cars[0].distance,24);
         g.cars[0].lane=0;g.cars[1].lane=2;g.cars[0].distance=g.cars[1].distance=40;g.input(0,1);g.input(1,3);g.step();
         QCOMPARE(g.cars[0].lane,0);QCOMPARE(g.cars[1].lane,2);
-        g.reset(1);g.tick=60;g.course.fill(1);g.cars[0].distance=101;g.step();QCOMPARE(g.cars[0].crashes,1);QCOMPARE(g.cars[0].crash,30);
-        int before=g.cars[0].distance;for(int i=0;i<30;++i)g.step();QCOMPARE(g.cars[0].distance,before);QCOMPARE(g.cars[0].crashes,1);
+        g.reset(1);g.tick=60;g.course.fill(1);g.cars[0].distance=101;g.step();QCOMPARE(g.cars[0].crashes,1);QCOMPARE(g.cars[0].crash,18);
+        int before=g.cars[0].distance;for(int i=0;i<18;++i)g.step();QCOMPARE(g.cars[0].distance,before);QCOMPARE(g.cars[0].crashes,1);
         g.step();QVERIFY(g.cars[0].distance>before);QCOMPARE(g.cars[0].crashes,1);
         g.reset(1);g.tick=60;g.cars[0].passable=true;g.cars[0].crash=1;g.cars[0].distance=g.cars[1].distance=40;g.cars[1].lane=0;
         g.step();QVERIFY(g.cars[0].passable);g.input(0,1);g.step();QVERIFY(!g.cars[0].passable);QCOMPARE(g.cars[0].lane,1);
         g.reset(1);g.tick=60;g.cars[0].distance=1999;g.cars[1].distance=1998;g.input(0,2);g.input(1,0);g.step();QCOMPARE(g.winner,1);
         g.reset(1);g.tick=60;g.cars[0].distance=g.cars[1].distance=1999;g.step();QCOMPARE(g.winner,2);
     }
+    void racingFiveLanesUnlimitedBoostAndLives(){
+        RacingRules g;g.reset(7);g.tick=60;g.course.fill(1);g.cars[0].lane=2;g.cars[1].lane=4;
+        g.action(0,0);g.step();QCOMPARE(g.cars[0].boost,1);
+        for(int i=0;i<300;++i)g.step();QCOMPARE(g.cars[0].boost,1);QCOMPARE(g.cars[0].lives,3);
+        g.action(0,0);g.step();QCOMPARE(g.cars[0].boost,0);
+        g.reset(1);g.tick=60;g.course.fill(1);g.cars[1].distance=1000;g.input(0,1);
+        for(int i=0;i<40;++i)g.step();QCOMPARE(g.cars[0].lane,4);
+        g.input(0,3);for(int i=0;i<40;++i)g.step();QCOMPARE(g.cars[0].lane,0);
+        g.reset(1);g.tick=60;g.course.fill(1);g.cars[1].lane=4;
+        for(int hit=0;hit<3;++hit){g.cars[0].crash=0;g.cars[0].distance=101+90*hit;g.step();QCOMPARE(g.cars[0].lives,2-hit);QVERIFY(g.validView(g.view()));}
+        QCOMPARE(g.winner,1);
+        g.reset(1);g.tick=60;g.course.fill(17);for(auto& c:g.cars){c.distance=101;c.lives=1;c.crashes=2;}
+        g.step();QCOMPARE(g.winner,2);
+        auto invalid=g.view();auto players=invalid["players"].toArray();auto car=players[0].toObject();car["lives"]=3;players[0]=car;invalid["players"]=players;QVERIFY(!g.validView(invalid));
+    }
+    void boundedRasterAndReadableLayout_data(){uiAndLocalLifecycle_data();}
+    void boundedRasterAndReadableLayout(){
+        QFETCH(int,kind);ArcadeGame game{Kind(kind)};QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("game",&game);engine.load(QUrl("qrc:/ui/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);
+        window->setProperty("touchControls",false);
+        QSizeF raster;double ratio=0;
+        for(QSize size:{QSize(1280,720),QSize(1920,1080),QSize(2560,1440)}){
+            window->resize(size);QTest::qWait(80);
+            auto* canvas=item(window->contentItem(),"boardCanvas");auto* stage=item(window->contentItem(),"gameStage");
+            QVERIFY(canvas&&stage);QVERIFY(canvas->width()<=960&&canvas->height()<=540);
+            auto* field=item(window->contentItem(),"playfield");QVERIFY(field);
+            QCOMPARE(field->position(),QPointF(0,0));QCOMPARE(field->size(),stage->size());
+            window->setProperty("touchControls",true);QTest::qWait(10);QCOMPARE(field->size(),stage->size());window->setProperty("touchControls",false);
+            if(raster.isEmpty())raster=canvas->size();else QCOMPARE(canvas->size(),raster);
+            auto* button=item(window->contentItem(),"practiceButton");QVERIFY(button);
+            double current=button->mapRectToScene(button->boundingRect()).height()/size.height();
+            if(ratio==0)ratio=current;else QVERIFY(qAbs(current-ratio)<0.001);
+            QVERIFY(current>=0.08);
+            QVERIFY(window->grabWindow().save(game.slug()+"-menu-"+QString::number(size.height())+".png"));
+        }
+        game.local();window->resize(1280,720);QTest::qWait(200);QVERIFY(window->grabWindow().save(game.slug()+"-handheld.png"));game.leave();
+    }
     void tanksCoverMuzzleCollisionShieldsAndSimultaneousHits(){
-        TanksRules g;g.reset(1);g.tick=61;g.tanks[0].pos={4,9};g.tanks[0].face=1;g.cells[9*25+6]=1;
-        g.action(0,0);g.action(0,0);g.step();QCOMPARE(g.cells[9*25+6],0);QVERIFY(g.bullets.isEmpty());QCOMPARE(g.tanks[0].cooldown,12);
-        g.cells[9*25+6]=2;g.tanks[0].cooldown=0;g.action(0,0);g.step();g.step();QCOMPARE(g.cells[9*25+6],2);QVERIFY(g.bullets.isEmpty());
+        TanksRules g;g.reset(1);g.tick=61;g.tanks[0].pos={4,9};g.tanks[0].face=1;g.cells[9*TanksRules::Width+6]=1;
+        g.action(0,0);g.action(0,0);g.step();QCOMPARE(g.cells[9*TanksRules::Width+6],0);QVERIFY(g.bullets.isEmpty());QCOMPARE(g.tanks[0].cooldown,12);
+        g.cells[9*TanksRules::Width+6]=2;g.tanks[0].cooldown=0;g.action(0,0);g.step();g.step();QCOMPARE(g.cells[9*TanksRules::Width+6],2);QVERIFY(g.bullets.isEmpty());
         g.reset(1);g.tick=63;g.tanks[0].pos={10,2};g.tanks[1].pos={13,2};g.input(0,1);g.input(1,3);g.step();QCOMPARE(g.tanks[0].pos,QPoint(10,2));QCOMPARE(g.tanks[1].pos,QPoint(13,2));
         g.reset(1);g.tick=61;g.tanks[1].shield=20;g.bullets.append({g.tanks[1].pos-QPoint(1,0),1,0});g.step();QCOMPARE(g.scores[0],0);
         g.tanks[1].shield=0;g.bullets.append({g.tanks[1].pos-QPoint(1,0),1,0});g.step();g.step();QCOMPARE(g.scores[0],1);QCOMPARE(g.tanks[1].shield,45);
@@ -91,10 +206,10 @@ private slots:
     void tanksFlanksStayOpenAndPracticeBotCanEngage(){
         for(quint32 seed:{1u,7u,4242u}){
             TanksRules g;g.reset(seed);
-            for(int x=2;x<=22;++x){QVERIFY(g.clear({x,2}));QVERIFY(g.clear({x,16}));}
-            for(int y=0;y<19;++y)for(int x=0;x<25;++x)QCOMPARE(g.cells[y*25+x],g.cells[y*25+24-x]);
-            for(int t=0;t<2400&&g.winner<0;++t){g.input(1,g.bot(1));g.action(1,g.botAction(1));g.step();}
-            QCOMPARE(g.scores[1],3);QCOMPARE(g.winner,1);
+            for(int x=2;x<=TanksRules::Width-3;++x){QVERIFY(g.clear({x,2}));QVERIFY(g.clear({x,TanksRules::Height-3}));}
+            for(int y=0;y<TanksRules::Height;++y)for(int x=0;x<TanksRules::Width;++x)QCOMPARE(g.cells[y*TanksRules::Width+x],g.cells[y*TanksRules::Width+TanksRules::Width-1-x]);
+            for(int t=0;t<3660&&g.winner<0;++t){g.input(1,g.bot(1));g.action(1,g.botAction(1));g.step();}
+            QVERIFY(g.scores[1]>0);QCOMPARE(g.winner,1);
         }
     }
     void blocksLinesRotationAndQueue(){
@@ -238,7 +353,7 @@ private slots:
             auto ap=a->mapToScene(QPointF(a->width()/2,a->height()/2)).toPoint(),bp=b->mapToScene(QPointF(b->width()/2,b->height()/2)).toPoint();
             auto* device=QTest::createTouchDevice();QTest::touchEvent(window,device).press(0,ap,window).press(1,bp,window).commit();QTest::qWait(30);
             QTest::touchEvent(window,device).release(0,ap,window).release(1,bp,window).commit();QTest::qWait(70);
-            for(auto player:game.scene()["players"].toList())QVERIFY(player.toMap()["cooldown"].toInt()>0);
+            for(auto player:game.scene()["players"].toList())QVERIFY(player.toMap()[kind==6?"boost":"cooldown"].toInt()>0);
         }
         auto* up=item(window->contentItem(),"control0-0");QVERIFY(up);QVERIFY(up->isEnabled());
         auto pos=up->mapToScene(QPointF(up->width()/2,up->height()/2)).toPoint();

@@ -17,5 +17,14 @@ static func get_course(index: int) -> Dictionary:
 		]
 		for hole in 3:
 			prepared[hole]["hills"]=relief[hole]
-			prepared[hole]["height_grid"]=Surface.bake(prepared[hole])
+			var grid:=Surface.bake(prepared[hole])
+			prepared[hole]["height_grid"]=grid
+			var tops:=PackedInt32Array()
+			for wall in prepared[hole].walls:
+				var top:=600
+				for x in range(wall[0],wall[2]+251,250):
+					for z in range(wall[1],wall[3]+251,250):
+						top=maxi(top,Surface.sample(grid,x,z)[0]+600)
+				tops.append(top)
+			prepared[hole]["wall_tops"]=tops
 	return prepared[index].duplicate(true)

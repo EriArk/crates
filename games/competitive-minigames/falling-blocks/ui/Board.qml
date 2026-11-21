@@ -10,7 +10,8 @@ Item {
         previous=s;canvas.requestPaint()
     }
     Canvas {
-        id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*1.8);height:width/1.8
+        id:canvas;objectName:"boardCanvas";anchors.centerIn:parent;width:720;height:400
+        scale:Math.min(parent.width/width,parent.height/height)
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
         onPaint:{
             var s=board.sceneData;if(!s.players)return
@@ -38,5 +39,5 @@ Item {
             }
         }
     }
-    ImpactFx { id:fx;anchors.fill:canvas }
+    ImpactFx { id:fx;anchors.centerIn:parent;width:canvas.width;height:canvas.height;scale:canvas.scale }
 }

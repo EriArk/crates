@@ -6,7 +6,7 @@
 namespace arcade {
 class RacingRules final:public Rules {
 public:
-    struct Car {int lane=0,distance=0,direction=-1,repeat=0,crash=0,crashes=0,hitGate=-1,boost=0,cooldown=0;bool requested=false,passable=false;};
+    struct Car {int lane=0,distance=0,direction=-1,repeat=0,crash=0,crashes=0,hitGate=-1,boost=0,lives=3;bool requested=false,passable=false;};
     int tick=0,winner=-1;
     std::array<Car,2> cars;
     QVector<int> course;

@@ -1,0 +1,4 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SOLVED scores=[[1, 2, 2], [1, 2, 2]] cups=6 bounces=10 digest=e47b0c2b06245014ef89e1d9af0c8d8e9192df5d6ce30f4c30b41617e5470f6d
+RULES PASS failures=0

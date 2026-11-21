@@ -10,7 +10,8 @@ Item {
         previous=s;canvas.requestPaint()
     }
     Canvas {
-        id:canvas;anchors.centerIn:parent;width:Math.min(parent.width,parent.height*24/17);height:width*17/24
+        id:canvas;objectName:"boardCanvas";anchors.centerIn:parent;width:600;height:425
+        scale:Math.min(parent.width/width,parent.height/height)
         onWidthChanged:requestPaint();onHeightChanged:requestPaint()
         onPaint:{
             if(board.sceneData.tick===undefined)return
@@ -25,9 +26,9 @@ Item {
                 c.fillStyle="#fff8dc"
                 for(var e=-1;e<=1;e+=2){c.beginPath();c.arc(hx+(d===1?6:d===3?-6:e*4),hy+(d===0?-6:d===2?6:e*4),2.5,0,Math.PI*2);c.fill()}
             }
-            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillStyle="#3b654f";c.textAlign="left";c.fillText("MINT  "+s.s0+" FRUIT",8,420);c.textAlign="right";c.fillStyle="#9b6652";c.fillText("CORAL  "+s.s1+" FRUIT",592,420)
+            c.font="bold 19px \""+Qt.application.font.family+"\"";c.fillStyle="#3b654f";c.textAlign="left";c.fillText("MINT  "+s.s0+" FRUIT",34,420);c.textAlign="right";c.fillStyle="#9b6652";c.fillText("CORAL  "+s.s1+" FRUIT",566,420)
             c.textAlign="center";c.fillStyle="#6d7f57";c.fillText(Math.max(0,120-Math.floor(s.tick/30))+"s",300,420)
         }
     }
-    ImpactFx { id:fx;anchors.fill:canvas }
+    ImpactFx { id:fx;anchors.centerIn:parent;width:canvas.width;height:canvas.height;scale:canvas.scale }
 }

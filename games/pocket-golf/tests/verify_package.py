@@ -36,6 +36,8 @@ with display(), tempfile.TemporaryDirectory(prefix='golf-package-') as directory
     home=Path(directory)
     with patch.dict(os.environ,{'HOME':str(home)}):
         store=Store(home/'packages');receipt=store.activate(a.archive,record)
+        launcher=(store.root/'objects'/receipt['object']/'bin/pocket-golf').read_bytes()
+        assert launcher.startswith(b'#!/bin/sh\n') and b'\r\n' not in launcher, 'Linux launcher must use LF, including from a Windows checkout'
         assert not (home/'.local/share/applications'/('org.traineros.crates.'+record['id']+'.desktop')).exists()
         data=store.root/('data/'+record['id']+'/owners')/('a'*64);data.mkdir(parents=True)
         (data/'preserved.txt').write_text('personal game data')

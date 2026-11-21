@@ -1,0 +1,8 @@
+[
+  {
+    "game": "pocket-golf",
+    "version": "0.1.23",
+    "menu_process_live": true,
+    "managed_stop": true
+  }
+]

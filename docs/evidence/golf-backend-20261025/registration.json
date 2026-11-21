@@ -1,0 +1,35 @@
+{
+  "ruleset": "pocket-golf.island.analog5.v1",
+  "content_id": "island-ad79aeae2d38dd08c43b123c6a99de5c2136f1ea5fc239fb",
+  "rules_hash": "afae75a13bfe44664739591b6a77e7b6d720469eceef2661e624cb99ff7909d1",
+  "public_boards": [
+    {
+      "mode": "individual",
+      "kind": "records",
+      "rows": 0,
+      "revision": "1"
+    },
+    {
+      "mode": "individual",
+      "kind": "wins",
+      "rows": 0,
+      "revision": "1"
+    },
+    {
+      "mode": "teams",
+      "kind": "records",
+      "rows": 0,
+      "revision": "1"
+    },
+    {
+      "mode": "teams",
+      "kind": "wins",
+      "rows": 0,
+      "revision": "1"
+    }
+  ],
+  "live_results_created": false,
+  "backup_before_registration": true,
+  "api_ready": true,
+  "runtime_image_changed": false
+}

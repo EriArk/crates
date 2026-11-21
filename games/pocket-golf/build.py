@@ -7,6 +7,8 @@ p.add_argument('--godot',type=pathlib.Path,required=True)
 p.add_argument('--templates',type=pathlib.Path,required=True,help='Extracted export_templates.tpz templates directory')
 p.add_argument('--output',type=pathlib.Path,required=True)
 a=p.parse_args();root=pathlib.Path(__file__).resolve().parent
+from tools.verify_scorecard_rules import verify
+verify(root)
 godot=a.godot.resolve();templates=a.templates.resolve();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 version=subprocess.check_output([str(godot),'--version'],text=True).strip()
 if not version.startswith('4.7.2.stable.'):p.error('Use pinned Godot 4.7.2 stable')
@@ -28,5 +30,5 @@ with tempfile.TemporaryDirectory(prefix='golf-build-',dir=out.parent) as tmp:
         (out/(filename+'.build.txt')).write_text(run(['--headless','--path',str(project),'--export-release',target,str(out/filename)]),encoding='utf-8')
         print('Exported',filename,flush=True)
 digest=lambda file:hashlib.sha256(file.read_bytes()).hexdigest()
-runtime=[f for f in root.rglob('*') if f.is_file() and '.godot' not in f.parts and (f.suffix in ['.gd','.tscn','.uid','.gdshader'] or 'assets' in f.relative_to(root).parts or f.name in ['project.godot','icon.svg']) and 'tests' not in f.relative_to(root).parts]
+runtime=[f for f in root.rglob('*') if f.is_file() and '.godot' not in f.parts and (f.suffix in ['.gd','.tscn','.uid','.gdshader'] or 'assets' in f.relative_to(root).parts or 'trainer_transit' in f.relative_to(root).parts or f.name in ['project.godot','icon.svg']) and 'tests' not in f.relative_to(root).parts]
 (out/'build-manifest.json').write_text(json.dumps(dict(engine=version,editor_sha256=digest(godot),source_sha256={f.relative_to(root).as_posix():digest(f) for f in runtime},binary_sha256={f.name:digest(f) for f in [out/'pocket-golf.x86_64',out/'pocket-golf.arm64',out/'pocket-golf.exe']}),indent=2)+'\n')

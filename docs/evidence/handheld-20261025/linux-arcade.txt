@@ -1,0 +1,75 @@
+********* Start testing of ArcadeTests *********
+Config: Using QtTest library 6.4.2, Qt 6.4.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 13.2.0), ubuntu 24.04
+PASS   : ArcadeTests::initTestCase()
+PASS   : ArcadeTests::roundStartPreservesSnapshotSchema()
+PASS   : ArcadeTests::tanksOwnScrollingViewport()
+QINFO  : ArcadeTests::tanksLargeMapSixteenSeatsAndLoad() Tanks workload 2 players; simulation+AI+validation+JSON us p50/p95/p99/max 404 475 791 894 peak snapshot/full bytes 380 5867
+QINFO  : ArcadeTests::tanksLargeMapSixteenSeatsAndLoad() Tanks workload 4 players; simulation+AI+validation+JSON us p50/p95/p99/max 411 468 611 999 peak snapshot/full bytes 463 5950
+QINFO  : ArcadeTests::tanksLargeMapSixteenSeatsAndLoad() Tanks workload 8 players; simulation+AI+validation+JSON us p50/p95/p99/max 437 492 622 1066 peak snapshot/full bytes 774 6261
+QINFO  : ArcadeTests::tanksLargeMapSixteenSeatsAndLoad() Tanks workload 16 players; simulation+AI+validation+JSON us p50/p95/p99/max 474 511 551 882 peak snapshot/full bytes 1240 6727
+PASS   : ArcadeTests::tanksLargeMapSixteenSeatsAndLoad()
+PASS   : ArcadeTests::portraitCacheAndBrickPixels()
+PASS   : ArcadeTests::controllerBackend(pong)
+PASS   : ArcadeTests::controllerBackend(snake)
+PASS   : ArcadeTests::controllerBackend(cycles)
+PASS   : ArcadeTests::controllerBackend(blocks)
+PASS   : ArcadeTests::controllerBackend(mines)
+PASS   : ArcadeTests::controllerBackend(chain)
+PASS   : ArcadeTests::controllerBackend(racing)
+PASS   : ArcadeTests::controllerBackend(tanks)
+PASS   : ArcadeTests::controllerFocusAndHotplug()
+PASS   : ArcadeTests::racingSharedCourseDraftContactRecoveryAndFinish()
+PASS   : ArcadeTests::racingFiveLanesUnlimitedBoostAndLives()
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(pong)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(snake)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(cycles)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(blocks)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(mines)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(chain)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(racing)
+PASS   : ArcadeTests::boundedRasterAndReadableLayout(tanks)
+PASS   : ArcadeTests::tanksCoverMuzzleCollisionShieldsAndSimultaneousHits()
+PASS   : ArcadeTests::tanksFlanksStayOpenAndPracticeBotCanEngage()
+PASS   : ArcadeTests::blocksLinesRotationAndQueue()
+PASS   : ArcadeTests::minesFairOpeningFlagsFloodAndBot()
+PASS   : ArcadeTests::chainCascadeAttackAndGarbage()
+PASS   : ArcadeTests::lateClosedChannelResponseDoesNotRevokeRejoin()
+PASS   : ArcadeTests::pongCollisionAndScoring()
+PASS   : ArcadeTests::snakeGrowthAndSimultaneousCollision()
+PASS   : ArcadeTests::permanentTrailsAndHeadOnDraw()
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() pong 1 d59778369d0261321c2a06cf824c4b251e8d767715a53fbcfa477e209c47b06a
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() pong 7 d59778369d0261321c2a06cf824c4b251e8d767715a53fbcfa477e209c47b06a
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() pong 4242 2ae083de64451a082a68737d19d1cac36d75f1ec79d7ea498bb2f6537a1c5aa4
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() snake-arena 1 f9c1c0f51d2adb2b1b19f5f194cb6f5094ee1429530f938a9c705dbd9b229778
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() snake-arena 7 9fcd9edfafb0beb577af64dc05a6268daf2eedabac20d478d1984bbc1c9cc44e
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() snake-arena 4242 94aa31b36e122fffb749dc3e8d4e55ac2e073b621bb0510a6f2dd4c25d7d8db5
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() light-cycles 1 79bfb23bd40755c9f00555dbd01b2c71a9fca80bcee6ff1801210bc8c87483c6
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() light-cycles 7 d6ed803a47de19e35f79c642008bca5db4b0bdbb98eb82cfc9a0aacc0ee8743c
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() light-cycles 4242 428d12381976dc2d4ea345bf4a3c7ea036cf0809b7da7ae25bfd66f8d497c6be
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() falling-blocks 1 efb1e540863e56b7c798cd05f023519a639ae652883d1c0f839966e942aa9111
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() falling-blocks 7 666a4af3afb9cd0de5dfd61b4237d0e6329b75f098e79de1fa6c979f7aaac770
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() falling-blocks 4242 cde03bc115f235525a147bfff212b51a7701becad46e713c594503f8f3129982
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() minesweeper-race 1 35c89b8d7c9b2dfd5b70e5bd36fda1a676c46af50a9fafa7a5fa942aaab2abe1
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() minesweeper-race 7 c048741a4f67827b55cdb862e93083c13f48d47ab1c0d54ceed9d38fecceaf72
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() minesweeper-race 4242 f3d438db6e4ca505889cc63cbb86d5fefcfbb38e414cf3e30c35f58850b97364
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() chain-reaction 1 5d719202d9befb2bd2b1e97065e84e43234453b7d7e25144bddc42b2c15fab5f
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() chain-reaction 7 4608223ade5623c591ca11060248fd3b9e8892077f5e1e785c0c8910b5efa0db
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() chain-reaction 4242 987e93b1e75695c7199b01b09c43306c4eb1f34af663e2104952d629314e5dc9
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() mini-racing 1 eed92bb315639133388b344d31dd7b70c3dd52713a4f391f85d760e3f3c6789a
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() mini-racing 7 c2d39f1ee0a3e8a5373dcc11fc21f0a6974e72a8f37380218d61d1be4fdbaba1
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() mini-racing 4242 9895df1f03a3d4898441abf482179efd1d64b1ca40cf7a1839600c5499d7549f
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() tanks 1 fc0a8abf5d52af4d4459ddeef17d1e7c5de3f32107bac0ebcf6943dfe84e5e61
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() tanks 7 854246189b29dc11ce5ba4a72376c71c4fceda326e6e3d006295d80a9c990c75
+QINFO  : ArcadeTests::seededMatchesAndSnapshotValidation() tanks 4242 c0a852dd2d84b11d65268f7bf19c13c0f83863e4119e98b7d8e3645db4f23878
+PASS   : ArcadeTests::seededMatchesAndSnapshotValidation()
+PASS   : ArcadeTests::uiAndLocalLifecycle(pong)
+PASS   : ArcadeTests::uiAndLocalLifecycle(snake)
+PASS   : ArcadeTests::uiAndLocalLifecycle(cycles)
+PASS   : ArcadeTests::uiAndLocalLifecycle(blocks)
+PASS   : ArcadeTests::uiAndLocalLifecycle(mines)
+PASS   : ArcadeTests::uiAndLocalLifecycle(chain)
+PASS   : ArcadeTests::uiAndLocalLifecycle(racing)
+PASS   : ArcadeTests::uiAndLocalLifecycle(tanks)
+PASS   : ArcadeTests::cleanupTestCase()
+Totals: 43 passed, 0 failed, 0 skipped, 0 blacklisted, 75515ms
+********* Finished testing of ArcadeTests *********

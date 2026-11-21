@@ -1,0 +1,34 @@
+Start testing: Oct 25 22:49 UTC
+----------------------------------------------------------
+1/1 Testing: artillery
+1/1 Test: artillery
+Command: "/work/artillery/artillery-tests" "-o" "game-results.txt,txt" "-o" "-,txt"
+Directory: /work/artillery
+"artillery" start time: Oct 25 22:49 UTC
+Output:
+----------------------------------------------------------
+********* Start testing of GameTests *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260819 (Red Hat 16.2.1-2)), fedora 44
+PASS   : GameTests::initTestCase()
+PASS   : GameTests::handheldScaleAndRaster()
+PASS   : GameTests::controllerAndReadableFlight()
+QINFO  : GameTests::completeMatchWithController() SDL complete match shots 3
+PASS   : GameTests::completeMatchWithController()
+PASS   : GameTests::unavailableHostReturnsToLocalPlay()
+QINFO  : GameTests::rulesAndDeterminism() integer-rules digest 6534f5f61ae71f39dd8064083f7d0d82a3e758866812ad46bd8be68083c2431d
+PASS   : GameTests::rulesAndDeterminism()
+PASS   : GameTests::destructiveWinningShot()
+PASS   : GameTests::localUiAndInputs()
+PASS   : GameTests::highArcFitsSmallScreen()
+PASS   : GameTests::cleanupTestCase()
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 21882ms
+********* Finished testing of GameTests *********
+<end of output>
+Test time =  21.97 sec
+----------------------------------------------------------
+Test Passed.
+"artillery" end time: Oct 25 22:49 UTC
+"artillery" time elapsed: 00:00:21
+----------------------------------------------------------
+
+End testing: Oct 25 22:49 UTC

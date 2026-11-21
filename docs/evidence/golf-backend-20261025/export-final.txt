@@ -1,0 +1,4 @@
+Immutable Golf simulation/content binding verified
+Exported pocket-golf.x86_64
+Exported pocket-golf.arm64
+Exported pocket-golf.exe

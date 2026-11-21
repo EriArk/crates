@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RANGE mm shortest=2330.13916015625 longest=2331.85302734375 spread=1.7138671875
+CUP slow=true fast=[0, -5503] lip=[34, -2309] miss=[100, -2271]
+REPLAY cases=365 sha256=9bcb0799d80408c5dc66485cb3858ba2a107b137ec4cf551adbe00bc55de96ff
+PHYSICS PASS failures=0

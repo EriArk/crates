@@ -30,10 +30,13 @@ func _initialize() -> void:
 		check(-shot.position[1]>previous_distance,"power increases range")
 		previous_distance=-shot.position[1]
 		var previous_step := 100000
-		for i in range(1,shot.path.size()):
+		for i in range(shot.roll_frame+1,shot.path.size()):
 			var step: int = shot.path[i-1][1]-shot.path[i][1]
 			check(step<=previous_step+1 and step>=0,"smooth monotonic deceleration")
 			previous_step=step
+	var putt_end: int=Rules.trace(grass,[0,0],0,30).position[1]
+	var chip_start: int=Rules.trace(grass,[0,0],0,30.01).position[1]
+	check(absi(chip_start-putt_end)<20,"fine power crosses loft threshold continuously")
 	var sand: Dictionary = grass.duplicate(true); sand.sand=[[-5000,-8000,5000,8000]]
 	check(-Rules.trace(sand,[0,0],0,30).position[1]<shortest/3,"sand brakes substantially harder")
 	var p := [-20*Physics.SCALE,-20*Physics.SCALE]; var v := [40*Physics.SCALE,40*Physics.SCALE]
@@ -44,12 +47,32 @@ func _initialize() -> void:
 	p=[-34*Physics.SCALE,500*Physics.SCALE]; v=[0,70*Physics.SCALE]
 	check(not Physics.wall_contact(p,v,[0,0,1000,1000]) and v==[0,70*Physics.SCALE],"tangential motion is preserved")
 	var narrow: Dictionary = grass.duplicate(true); narrow.walls=[[0,-1000,1,1000]]
+	var clear_wall: Dictionary = Rules.trace(narrow,[-2000,0],90,100)
+	check(clear_wall.path.any(func(point): return point[0]>1000),"lofted ball clears thin wall")
+	narrow.wall_tops=PackedInt32Array([2000])
 	var thin: Dictionary = Rules.trace(narrow,[-2000,0],90,100)
 	check(not thin.bounces.is_empty(),"maximum-power contact with 1 mm wall")
 	for point in thin.path: check(point[0]<=-35,"no tunnelling through thin wall")
 	var cup: Dictionary = grass.duplicate(true); cup.cup=[0,0]
 	var slow: Dictionary = Rules.trace(cup,[0,900],0,20)
-	var fast: Dictionary = Rules.trace(cup,[0,1000],0,50)
+	var fast: Dictionary = Rules.trace(cup,[0,100],0,30)
+	var over_cup:=Rules.trace(cup,[0,1000],0,75)
+	check(over_cup.rims.is_empty() and not over_cup.sunk,"chip flies over cup")
+	var chip:=Rules.trace(grass,[0,7000],0,75)
+	var soft:=Rules.trace(sand,[0,7000],0,75)
+	check(chip.heights.max()-chip.heights[0] in range(365,380),"normal shot rises about 37 cm")
+	check(chip.landings.size()==2 and chip.landings[0] in range(65,68),"first turf contact at 0.55 seconds followed by a smaller bounce")
+	check(soft.landings.size()==1 and soft.position[1]>chip.position[1],"sand absorbs chip and shortens roll")
+	check(slow.roll_frame==0 and slow.landings.is_empty(),"precision putt stays on turf")
+	var escaped:=Rules.trace(grass,[0,-7100],0,100)
+	check(escaped.out_of_play and escaped.stopped and escaped.position==[0,-7100],"flying past the open edge returns ball to stroke origin")
+	for exit in [[[4950,0],90], [[-4950,0],270], [[0,7950],180], [[0,-7950],0], [[4970,7970],135]]:
+		for power in [10,75]:
+			var shot:=Rules.trace(grass,exit[0],exit[1],power)
+			check(shot.out_of_play and shot.position==exit[0] and shot.bounces.is_empty(),"open edges and corners allow both rolls and chips to escape")
+	var parallel:=Rules.trace(grass,[4990,0],0,20)
+	check(not parallel.out_of_play and parallel.bounces.is_empty() and parallel.position[0]==4990,"putt along the edge stays in play")
+	print("CHIP height_mm=",chip.heights.max()-chip.heights[0]," landing_frames=",chip.landings," hz=",chip.hz)
 	var lip: Dictionary = Rules.trace(cup,[70,900],0,35)
 	var miss: Dictionary = Rules.trace(cup,[100,900],0,35)
 	check(slow.sunk and slow.position==[0,0],"slow central putt sinks")
@@ -64,9 +87,14 @@ func _initialize() -> void:
 			for power in [10,35,70,100]:
 				var shot: Dictionary = Rules.trace(Courses.get_course(hole),Courses.get_course(hole).tee,angle,power)
 				check(shot.stopped,"simulation settles before safety limit")
-				for point in shot.path:
-					check(absi(point[0])<=4965 and absi(point[1])<=7965,"course bounds")
-					for wall in Courses.get_course(hole).walls:
+				for frame in shot.path.size():
+					var point: Array = shot.path[frame]
+					if shot.out_of_play and frame==shot.path.size()-1: continue
+					check(absi(point[0])<=5000 and absi(point[1])<=8000,"course bounds")
+					var course:=Courses.get_course(hole)
+					for index in course.walls.size():
+						if shot.heights[frame]-35>=course.wall_tops[index]: continue
+						var wall: Array=course.walls[index]
 						var dx: int = point[0]-clampi(point[0],wall[0],wall[2])
 						var dz: int = point[1]-clampi(point[1],wall[1],wall[3])
 						check(dx*dx+dz*dz>=33*33,"ball remains outside walls, mm rounding tolerance")

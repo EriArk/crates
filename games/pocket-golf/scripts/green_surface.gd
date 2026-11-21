@@ -44,7 +44,7 @@ static func bake(course: Dictionary) -> PackedInt32Array:
 				var blend: int = (t*t/Q)*(3*Q-2*t)/Q
 				var level := bump_height(bumps,point[0],point[1])
 				height=level+(height-level)*blend/Q
-			# Borders meet the existing level rails, including sub-mm pad rounding.
+			# Borders meet the surrounding meadow, including sub-mm pad rounding.
 			grid[iz*WIDTH+ix]=0 if ix==0 or iz==0 or ix==WIDTH-1 or iz==DEPTH-1 else height
 	return grid
 

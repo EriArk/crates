@@ -18,6 +18,7 @@ var elevation := 0.0
 var font: Font
 var local_portrait: Texture2D
 var peer_portrait: Texture2D
+var side_portraits: Array = []
 
 func set_portraits(local_texture: Texture2D, peer_texture: Texture2D) -> void:
 	local_portrait=local_texture
@@ -33,7 +34,7 @@ func _ready() -> void:
 func update_state(next: Dictionary) -> void:
 	if not next.can_shoot or (not state.is_empty() and next.mode!=state.mode): captures.clear()
 	state=next
-	visible=state.phase in ["aim","moving"] and not state.paused
+	visible=state.phase in ["aim","moving","waiting_turn"] and not state.paused
 	if not visible: captures.clear()
 	queue_redraw()
 
@@ -162,7 +163,7 @@ func _draw() -> void:
 		_text(caption,rect.position+Vector2((46-caption_width)/2,49),10)
 	for i in state.players:
 		var active: bool = i==state.player
-		var color := MINT if i==0 else CORAL
+		var color: Color = [MINT,CORAL,Color("aebcec"),Color("f2d28d")][i%4]
 		var rect := Rect2(layout_size().x-176,86+i*50,160,44)
 		_pill(rect,Color(0.08,0.22,0.21,0.80 if active else 0.50),22)
 		var center := rect.position+Vector2(24,22)
@@ -170,11 +171,12 @@ func _draw() -> void:
 		if active: draw_arc(center,19,0,TAU,32,PAPER,1.5,true)
 		var own: bool = i==(state.seat if state.online else 0)
 		var portrait: Texture2D = local_portrait if own else peer_portrait if state.online else null
+		if i<side_portraits.size(): portrait=side_portraits[i]
 		if portrait!=null: draw_texture_rect(portrait,Rect2(center-Vector2(21,21),Vector2(42,42)),false)
 		else:
 			draw_circle(center+Vector2(0,-5),5,INK)
 			draw_arc(center+Vector2(0,9),8,PI,TAU,20,INK,5,true)
-		_text("YOU" if own else "FRIEND" if state.online else "GUEST",rect.position+Vector2(49,17),11)
+		_text(state.side_labels[i] if state.has("side_labels") else "YOU" if own else "FRIEND" if state.online else "GUEST",rect.position+Vector2(49,17),11)
 		_text("%d strokes"%state.strokes[i],rect.position+Vector2(49,33),14)
 		_text("Σ%d"%state.totals[i],rect.position+Vector2(128,28),16,color)
 	if state.can_shoot:
@@ -204,7 +206,7 @@ func _draw() -> void:
 			_text("L  Aim / power" if pad else "← →  Aim     ↑ ↓  Power",Vector2(24,layout_size().y-24),13)
 			_text("R  Look   ·   LT/RT  Zoom" if pad else "WASD  Look   ·   Q/E  Zoom",Vector2(layout_size().x-228,layout_size().y-24),12)
 	else:
-		var message := status if not status.is_empty() else "Rolling…" if state.phase=="moving" else "Your friend is lining up a putt…"
+		var message := status if not status.is_empty() else "Rolling…" if state.phase=="moving" else "Island rival is lining up a putt…" if state.get("thinking",false) else "Waiting for the other players…"
 		var extent := font.get_string_size(message,HORIZONTAL_ALIGNMENT_LEFT,-1,20)
 		_pill(Rect2(Vector2((layout_size().x-extent.x)/2-18,layout_size().y-70),Vector2(extent.x+36,42)),Color(0.08,0.22,0.21,0.72),21)
 		_text(message,Vector2((layout_size().x-extent.x)/2,layout_size().y-42),20)

@@ -4,10 +4,15 @@ import QtQuick.Window
 
 Window {
     id: window
-    width: 960; height: 640; minimumWidth: 640; minimumHeight: 480
-    visible: true; title: game.title; color: "#f4f0e6"
+    width: 960; height: 540; minimumWidth: 640; minimumHeight: 480
+    visible: true; title: game.title; color: brick?"#adb991":"#152b33"
+    onActiveChanged:if(active)inputRouter.forceActiveFocus()
     property bool touchControls: true
-    property real cardScale:Math.max(1,Math.min(1.5,height/720))
+    readonly property bool brick:game.slug==="mini-racing"||game.slug==="tanks"
+    readonly property color ink:brick?"#34432c":"#eff4e7"
+    readonly property color panel:brick?"#bac69d":"#203d46"
+    readonly property string face:brick?(Qt.platform.os==="windows"?"Consolas":"DejaVu Sans Mono"):Qt.application.font.family
+    readonly property real uiScale:height/540
     property int padCount: 0
     property string primaryGlyph: "A"
     property string secondaryGlyph: "X"
@@ -58,7 +63,11 @@ Window {
         else if (game.phase === "result") game.rematch()
     }
     Item {
-        anchors.fill: parent; focus: true
+        id:stage;objectName:"gameStage"
+        width:window.width/window.uiScale;height:540;scale:window.uiScale;transformOrigin:Item.TopLeft
+    Item {
+        id:inputRouter;anchors.fill: parent; focus: true
+        Component.onCompleted:forceActiveFocus()
         Keys.onPressed: function(event) {
             if(event.key===Qt.Key_Escape){if(!event.isAutoRepeat)window.back();event.accepted=true;return}
             if(event.key===Qt.Key_Return||event.key===Qt.Key_Enter||event.key===Qt.Key_Space){
@@ -87,124 +96,121 @@ Window {
     }
     component Button: Rectangle {
         property string label
-        property bool highlighted: false
-        property color tint: "#dce9dd"
+        property bool highlighted:false
+        property color tint:window.panel
         signal activated()
         signal held(bool down)
-        radius: 12; color: touch.pressed?Qt.darker(tint,1.08):tint
-        border.width: highlighted?3:1; border.color: highlighted?"#34594e":"#c5cec0"
-        opacity: enabled?1:0.55
-        Text {anchors.centerIn:parent;text:parent.label;color:"#29473d";font.pixelSize:parent.width<65?12:15;font.bold:true}
-        TapHandler {
-            id:touch
-            onPressedChanged:parent.held(pressed)
-            onTapped:parent.activated()
-        }
+        radius:brick?0:10;color:touch.pressed?Qt.lighter(tint,1.25):tint
+        border.width:highlighted?3:1;border.color:highlighted?(brick?ink:"#a5e3bd"):(brick?ink:"#48717a")
+        opacity:enabled?1:0.45
+        Text {anchors.centerIn:parent;text:parent.label;color:ink;font.family:face;font.pixelSize:parent.width<65?20:18;font.bold:true}
+        TapHandler {id:touch;onPressedChanged:parent.held(pressed);onTapped:parent.activated()}
     }
     Rectangle {
-        width:parent.width;height:58;color:"#fcf9f1"
-        Text {x:16;y:6;text:game.title;font.pixelSize:window.width<800?16:22;font.bold:true;color:"#2e4c40"}
-        Text {x:17;y:34;text:game.online?"FRIEND MATCH · YOU ARE "+(game.seat===0?"MINT":"CORAL"):game.couch?"TWO PLAYERS · TWO CONTROLS":"PRACTICE · YOU AND A BOT";font.pixelSize:11;font.letterSpacing:0.6;color:"#65766a"}
-        Button {anchors.right:parent.right;anchors.rightMargin:12;y:8;width:76;height:40;label:menu?"Exit":"Menu";onActivated:window.back()}
-    }
-    Row {
-        x:12;y:62;spacing:8
-        Repeater {
-            model:2
-            PlayerCard {
-                required property int index
-                width:148*window.cardScale;height:48*window.cardScale
-                property bool own:index===(game.online?game.seat:0)
-                descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
-                label:own?"YOU":game.online?"FRIEND":game.couch?"GUEST":"BOT"
-                detail:index===0?"MINT":"CORAL"
-                accent:index===0?"#8eddb4":"#f4aa89"
-                current:game.slug==="chain-reaction" && !window.modal && window.sceneData.turn===index
-            }
-        }
-    }
-    Rectangle {
-        id:field
-        objectName:"playfield";x:8;y:68+48*window.cardScale;width:parent.width-16;height:parent.height-y-(touchControls?108:36);radius:18;color:game.slug==="light-cycles"?"#172e37":"#e0e9dc"
+        id:field;objectName:"playfield"
+        anchors.fill:parent
+        radius:0;color:brick?"#adb991":game.slug==="light-cycles"?"#172e37":"#e0e9dc"
+        border.width:0
         Loader {
-            id:board;anchors.fill:parent;anchors.margins:4
+            id:board;anchors.fill:parent
             source:"qrc:/boards/"+game.slug+".qml"
             onLoaded:item.sceneData=Qt.binding(function(){return window.sceneData})
         }
         Rectangle {
             visible:game.phase==="play"&&window.sceneData.tick<60
-            anchors.centerIn:parent;width:150;height:70;radius:18;color:"#eef3e6"
-            Text {anchors.centerIn:parent;text:Math.ceil((60-window.sceneData.tick)/30);font.pixelSize:36;font.bold:true;color:"#34564a"}
+            anchors.centerIn:parent;width:96;height:96;radius:brick?0:48;color:panel;border.width:3;border.color:ink
+            Text {anchors.centerIn:parent;text:Math.ceil((60-window.sceneData.tick)/30);font.family:face;font.pixelSize:54;font.bold:true;color:ink}
+        }
+    }
+    // Floating controls do not reserve any part of the playfield.
+    Row {
+        z:5;anchors.right:parent.right;anchors.rightMargin:10;y:8;spacing:6
+        Button {objectName:"touchToggle";width:58;height:40;label:"TOUCH";highlighted:touchControls;visible:window.modal;onActivated:{game.neutral();touchControls=!touchControls}}
+        Button {objectName:"pauseButton";width:44;height:40;radius:brick?0:20;label:menu?"×":"Ⅱ";onActivated:window.back()}
+    }
+    // Portraits occupy each game's existing score area, not a shell header.
+    Repeater {
+        model:2
+        PlayerCard {
+            required property int index
+            readonly property var sizes:({"pong":[960,540],"snake-arena":[600,425],"light-cycles":[700,475],"falling-blocks":[720,400],"minesweeper-race":[760,400],"chain-reaction":[720,400],"mini-racing":[960,480],"tanks":[960,540]})
+            readonly property var raster:sizes[game.slug]
+            readonly property real zoom:Math.min(stage.width/raster[0],stage.height/raster[1])
+            readonly property bool trail:game.slug==="snake-arena"||game.slug==="light-cycles"
+            readonly property var position:game.slug==="pong"?[index?602:320,24]:game.slug==="mini-racing"?[382+index*480,78]:game.slug==="minesweeper-race"?[index?420:12,0]:game.slug==="chain-reaction"?[24+index*360,46]:[10+index*360,128]
+            visible:!window.modal&&game.slug!=="tanks"
+            compact:true;brickStyle:window.brick;width:trail?24:36;height:width
+            scale:zoom;transformOrigin:Item.TopLeft
+            x:(stage.width-raster[0]*zoom)/2+(trail?(index?raster[0]-26:2):position[0])*zoom
+            y:(stage.height-raster[1]*zoom)/2+(trail?raster[1]-25:position[1])*zoom
+            property bool own:index===(game.online?game.seat:0)
+            descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
+            accent:index===0?"#8eddb4":"#f4aa89"
+            current:game.slug==="chain-reaction"&&window.sceneData.turn===index
+        }
+    }
+    Item {
+        visible:touchControls&&!window.modal;x:12;anchors.bottom:parent.bottom;anchors.bottomMargin:12;width:parent.width-24;height:58;opacity:0.78
+        Repeater {
+            model:game.couch?2:1
+            Item {
+                required property int index
+                x:index===0?0:parent.width-width;width:game.couch?(parent.width-16)/2:parent.width;height:58
+                Row {
+                    y:0;spacing:5
+                    Repeater {
+                        model:game.slug==="pong"?[0,2]:[3,0,2,1]
+                        Button {
+                            required property int modelData
+                            objectName:"control"+index+"-"+modelData
+                            width:stage.width<800?40:48;height:50;label:["↑","→","↓","←"][modelData]
+                            enabled:!window.modal
+                            onHeld:function(down){game.control(index,down?modelData:-1)}
+                        }
+                    }
+                    Button {objectName:"action"+index+"-0";visible:puzzle;width:72;height:50;label:game.primaryAction;enabled:!window.modal;onActivated:game.action(index,0)}
+                    Button {objectName:"action"+index+"-1";visible:secondary;width:72;height:50;label:game.secondaryAction;enabled:!window.modal;onActivated:game.action(index,1)}
+                }
+            }
         }
     }
     Rectangle {
-        visible:touchControls;x:8;anchors.bottom:parent.bottom;anchors.bottomMargin:8;width:parent.width-16;height:92;radius:16;color:"#fcf9f1"
-        Text {x:14;y:8;text:game.couch?(puzzle?(secondary?"MINT · WASD + F / G":"MINT · WASD + F"):"MINT · W A S D / PAD 1"):(puzzle?(secondary?"YOU · ARROWS + ENTER / SHIFT":"YOU · ARROWS + ENTER"):"YOU · ARROWS / PAD 1");font.pixelSize:11;color:"#54745e";font.bold:true}
-        Text {anchors.right:parent.right;anchors.rightMargin:14;y:8;text:game.couch?(puzzle?(secondary?"CORAL · ARROWS + ENTER / SHIFT":"CORAL · ARROWS + ENTER"):"CORAL · ARROWS / PAD 2"):game.online?"FRIEND · "+(game.seat===0?"CORAL":"MINT"):"CORAL · BOT";font.pixelSize:11;color:"#9c6958";font.bold:true}
-        Row {
-            x:8;y:30;spacing:puzzle?4:6
-            Repeater {
-                model:game.slug==="pong"?[0,2]:[3,0,2,1]
-                Button {
-                    required property int modelData
-                    objectName:"control0-"+modelData
-                    width:game.slug==="pong"?68:puzzle&&window.width<800?36:48;height:48;label:["↑","→","↓","←"][modelData]
-                    enabled:!window.modal
-                    onHeld:function(down){game.control(0,down?modelData:-1)}
-                }
-            }
-            Button {objectName:"action0-0";visible:puzzle;width:58;height:48;label:game.primaryAction;enabled:!window.modal;onActivated:game.action(0,0)}
-            Button {objectName:"action0-1";visible:secondary;width:58;height:48;label:game.secondaryAction;enabled:!window.modal;onActivated:game.action(0,1)}
-        }
-        Row {
-            visible:game.couch;anchors.right:parent.right;anchors.rightMargin:8;y:30;spacing:puzzle?4:6
-            Repeater {
-                model:game.slug==="pong"?[0,2]:[3,0,2,1]
-                Button {
-                    required property int modelData
-                    objectName:"control1-"+modelData
-                    width:game.slug==="pong"?68:puzzle&&window.width<800?36:48;height:48;label:["↑","→","↓","←"][modelData];tint:"#eed0bd"
-                    enabled:!window.modal
-                    onHeld:function(down){game.control(1,down?modelData:-1)}
-                }
-            }
-            Button {objectName:"action1-0";visible:puzzle;width:58;height:48;label:game.primaryAction;tint:"#eed0bd";enabled:!window.modal;onActivated:game.action(1,0)}
-            Button {objectName:"action1-1";visible:secondary;width:58;height:48;label:game.secondaryAction;tint:"#eed0bd";enabled:!window.modal;onActivated:game.action(1,1)}
-        }
-        Text {visible:!game.couch;anchors.right:parent.right;anchors.rightMargin:18;y:37;text:puzzle?"PAD: A · "+game.primaryAction+(secondary?" / X · "+game.secondaryAction:""):game.slug==="pong"?"FIRST TO 5":game.slug==="snake-arena"?"GROW · TURN · SURVIVE":"TURN · TRAP · SURVIVE";font.pixelSize:12;font.bold:true;color:"#697b6a"}
-    }
-    Button { anchors.right:parent.right;anchors.rightMargin:96;y:8;width:74;height:40;label:touchControls?"Hide pad":"Touch";onActivated:{game.neutral();touchControls=!touchControls} }
-    Text { visible:!touchControls;anchors.bottom:parent.bottom;anchors.bottomMargin:9;anchors.horizontalCenter:parent.horizontalCenter
-        text:padCount>0?"D-pad / stick"+(puzzle?"   "+primaryGlyph+" "+game.primaryAction+(secondary?"   "+secondaryGlyph+" "+game.secondaryAction:""):"")+"   "+backGlyph+" / Start Menu":game.couch?"P1 WASD + F / G     P2 Arrows + Enter / Shift     Esc Menu":"Arrows / WASD"+(puzzle?"   Enter "+game.primaryAction+(secondary?"   Shift "+game.secondaryAction:""):"")+"   Esc Menu"
-        color:"#4a6657";font.pixelSize:window.width<800?13:16;font.bold:true }
-    Rectangle {
-        visible:window.modal;x:field.x;y:field.y;width:field.width;height:field.height;radius:18;color:"#88354a43"
+        visible:window.modal;anchors.fill:parent;color:brick?"#b3adb991":"#c0152b33"
         MouseArea {anchors.fill:parent}
         Rectangle {
-            anchors.centerIn:parent;width:Math.min(parent.width-24,570);height:Math.min(parent.height-12,370);radius:20;color:"#fcf8ed";border.color:"#d4dcc9"
+            anchors.centerIn:parent;width:Math.min(parent.width-48,660);height:458;radius:brick?0:20;color:panel;border.width:brick?4:2;border.color:brick?ink:"#4e7a80"
             Text {
-                x:20;y:14;width:parent.width-40;horizontalAlignment:Text.AlignHCenter;font.pixelSize:25;font.bold:true;color:"#2f5143"
-                text:asking?"Leave this match?":menu?game.subtitle:waiting?"Preparing your match...":game.phase==="paused"?"Take a moment":game.result
-                wrapMode:Text.WordWrap
-            }
-            Text {
-                x:24;y:menu?60:65;width:parent.width-48;height:parent.height-(menu?158:130);horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;wrapMode:Text.WordWrap;font.pixelSize:14;color:"#5d7162"
-                text:asking?(game.online?"This round ends. Your TrainerOS Lobby stays open.":"This round ends. You can start a fresh match."):menu?(game.status.indexOf("Play offline")===0?game.instructions:game.status):waiting?game.status:game.phase==="paused"?"Resume when both players are ready.":game.voted?"Rematch requested. Waiting for your friend…":game.online?"Both players choose Play again for a fresh match.":"Play again for a fresh match."
-            }
-            Column {
-                visible:menu;anchors.bottom:parent.bottom;anchors.bottomMargin:12;anchors.horizontalCenter:parent.horizontalCenter;spacing:6
-                Row {
-                    spacing:8
-                    Button {objectName:"practiceButton";width:210;height:42;highlighted:selected===0;label:"Practice with bot";onActivated:{selected=0;window.primary()}}
-                    Button {objectName:"couchButton";width:210;height:42;highlighted:selected===1;label:"Two on this device";tint:"#eed0bd";onActivated:{selected=1;window.primary()}}
-                }
-                Button {objectName:"exitButton";anchors.horizontalCenter:parent.horizontalCenter;width:260;height:42;highlighted:selected===2;label:"Exit";onActivated:{selected=2;window.primary()}}
+                x:24;y:24;width:parent.width-48;horizontalAlignment:Text.AlignHCenter;font.family:face;font.pixelSize:32;font.bold:true;color:ink;wrapMode:Text.WordWrap
+                text:asking?"LEAVE MATCH?":menu?game.title.toUpperCase():waiting?"CONNECTING":game.phase==="paused"?"PAUSED":game.result.toUpperCase()
             }
             Row {
-                visible:!menu;anchors.bottom:parent.bottom;anchors.bottomMargin:14;anchors.horizontalCenter:parent.horizontalCenter;spacing:10
-                Button {objectName:"primaryButton";width:210;height:44;highlighted:true;label:asking?"Leave match":waiting?"Cancel":game.phase==="paused"?"Resume":game.voted?"Rematch requested":"Play again";enabled:asking||!game.voted||game.phase!=="result";onActivated:window.primary()}
-                Button {visible:asking;width:140;height:44;label:"Keep playing";tint:"#eed0bd";onActivated:window.back()}
+                anchors.horizontalCenter:parent.horizontalCenter;y:70;spacing:12
+                Repeater {model:game.slug==="tanks"&&game.online?1:2;PlayerCard {
+                    required property int index
+                    width:132;height:44;brickStyle:window.brick
+                    property bool own:game.slug==="tanks"&&game.online||index===(game.online?game.seat:0)
+                    descriptor:own?game.avatars.local:game.online?game.avatars.peer:({})
+                    label:own?"YOU":game.online?"FRIEND":game.couch?"GUEST":"BOT"
+                    detail:game.slug==="tanks"&&game.online?"P"+(game.seat+1)+" / "+window.sceneData.players.length:brick?(index===0?"P1 SOLID":"P2 OUTLINE"):(index===0?"MINT":"CORAL")
+                    accent:index===0?"#8eddb4":"#f4aa89"
+                }}
+            }
+            Text {
+                x:30;y:119;width:parent.width-60;height:menu?135:150;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;wrapMode:Text.WordWrap;font.family:face;font.pixelSize:20;color:ink
+                text:asking?"This round ends. Your Lobby stays available.":menu?(game.status.indexOf("Play offline")===0?game.instructions:game.status):waiting?game.status:game.phase==="paused"?"Ready for another round?":game.voted?"Waiting for your friend…":game.online?"Both players choose PLAY AGAIN.":"Ready for a rematch?"
+            }
+            Column {
+                visible:menu;anchors.bottom:parent.bottom;anchors.bottomMargin:24;anchors.horizontalCenter:parent.horizontalCenter;spacing:10
+                Button {objectName:"practiceButton";width:360;height:48;highlighted:selected===0;label:"PRACTICE WITH BOT";onActivated:{selected=0;window.primary()}}
+                Button {objectName:"couchButton";width:360;height:48;highlighted:selected===1;label:"TWO ON THIS DEVICE";onActivated:{selected=1;window.primary()}}
+                Button {objectName:"exitButton";width:360;height:48;highlighted:selected===2;label:"EXIT";onActivated:{selected=2;window.primary()}}
+            }
+            Column {
+                visible:!menu;anchors.bottom:parent.bottom;anchors.bottomMargin:24;anchors.horizontalCenter:parent.horizontalCenter;spacing:10
+                Button {objectName:"primaryButton";width:360;height:52;highlighted:true;label:asking?"LEAVE MATCH":waiting?"CANCEL":game.phase==="paused"?"RESUME":game.voted?"REQUESTED":"PLAY AGAIN";enabled:asking||!game.voted||game.phase!=="result";onActivated:window.primary()}
+                Button {visible:asking;width:360;height:48;label:"KEEP PLAYING";onActivated:window.back()}
             }
         }
+    }
     }
 }

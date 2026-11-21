@@ -1,0 +1,38 @@
+********* Start testing of HostTests *********
+Config: Using QtTest library 6.11.1, Qt 6.11.1 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 16.1.0), windows 10
+PASS   : HostTests::initTestCase()
+QINFO  : HostTests::matchLifecycle(racing) guest menu: Connecting to TrainerOS…
+QINFO  : HostTests::matchLifecycle(racing) host menu: Connecting to TrainerOS…
+QINFO  : HostTests::matchLifecycle(racing) host menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host result: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest result: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest menu: Match disconnected. Your Lobby is still available.
+QINFO  : HostTests::matchLifecycle(racing) host waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest waiting: Match disconnected. Your Lobby is still available.
+QINFO  : HostTests::matchLifecycle(racing) host play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) guest play: Match disconnected. Your Lobby is still available.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Trainer changed or TrainerOS closed. Reconnect to continue.
+QINFO  : HostTests::matchLifecycle(racing) guest menu: Match disconnected. Your Lobby is still available.
+QINFO  : HostTests::matchLifecycle(racing) guest play: Match disconnected. Your Lobby is still available.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Connecting to TrainerOS…
+QINFO  : HostTests::matchLifecycle(racing) host menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host waiting: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host play: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Online matches start in TrainerOS: GameHub > Lobby > Ready > Start.
+QINFO  : HostTests::matchLifecycle(racing) host menu: Incompatible match update. Return to Lobby for a fresh match.
+PASS   : HostTests::matchLifecycle(racing)
+PASS   : HostTests::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 21375ms
+********* Finished testing of HostTests *********

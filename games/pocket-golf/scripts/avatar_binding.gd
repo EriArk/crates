@@ -5,6 +5,7 @@ const Client = preload("res://addons/traineros/avatar_client.gd")
 const Presenter = preload("res://addons/traineros/avatar_presenter.gd")
 const Portrait = preload("res://addons/traineros/avatar_portrait.gd")
 signal portraits_changed
+var startup_resolved := false
 var local_portrait: Texture2D
 var peer_portrait: Texture2D
 var portrait_generation := [0,0]
@@ -42,7 +43,9 @@ func _capture(descriptor: Dictionary, slot: int) -> void:
 	portraits_changed.emit()
 	var texture = await Portrait.capture(self,descriptor)
 	if generation!=portrait_generation[slot]: return
-	if slot==0: local_portrait=texture
+	if slot==0:
+		local_portrait=texture
+		startup_resolved=true
 	else: peer_portrait=texture
 	portraits_changed.emit()
 
@@ -113,6 +116,7 @@ func eye_height() -> float:
 	return 1.05
 
 func revoke() -> void:
+	startup_resolved=true
 	portrait_generation[0]+=1
 	local_portrait=null
 	portraits_changed.emit()

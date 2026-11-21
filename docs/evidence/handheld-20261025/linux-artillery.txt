@@ -1,0 +1,16 @@
+********* Start testing of GameTests *********
+Config: Using QtTest library 6.4.2, Qt 6.4.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 13.2.0), ubuntu 24.04
+PASS   : GameTests::initTestCase()
+PASS   : GameTests::handheldScaleAndRaster()
+PASS   : GameTests::controllerAndReadableFlight()
+QINFO  : GameTests::completeMatchWithController() SDL complete match shots 4
+PASS   : GameTests::completeMatchWithController()
+PASS   : GameTests::unavailableHostReturnsToLocalPlay()
+QINFO  : GameTests::rulesAndDeterminism() integer-rules digest 6534f5f61ae71f39dd8064083f7d0d82a3e758866812ad46bd8be68083c2431d
+PASS   : GameTests::rulesAndDeterminism()
+PASS   : GameTests::destructiveWinningShot()
+PASS   : GameTests::localUiAndInputs()
+PASS   : GameTests::highArcFitsSmallScreen()
+PASS   : GameTests::cleanupTestCase()
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 21158ms
+********* Finished testing of GameTests *********
