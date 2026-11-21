@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+const Furniture = preload("res://scripts/stage_furniture.gd")
 const Art = preload("art.gd")
 const Tires = preload("tire_surface.gd")
 const WIDTH = 12.0
@@ -240,12 +241,11 @@ func _decorate() -> void:
 			var post = Art.box(self,Vector3(0.17,0.9,0.17),pos+Vector3.UP*0.4,Color("8a704c"))
 			var rail = Art.box(self,Vector3(0.12,0.17,5),pos+Vector3.UP*0.75,Color("aa8758")); rail.rotation.y=atan2(-tangents[i].x,-tangents[i].z)
 			post.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	# Start/finish arch is an actual world landmark.
-	var side = Vector3(-tangents[0].z,0,tangents[0].x)
-	for s in [-1,1]: Art.box(self,Vector3(0.45,5,0.45),points[0]+side*7*s+Vector3.UP*2.5,Color("e6c883"))
-	var sign_node = Label3D.new(); sign_node.text="DIRTY VALLEY"; sign_node.font_size=100; sign_node.pixel_size=0.009
-	sign_node.position=points[0]+Vector3.UP*4.9; sign_node.billboard=BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(sign_node)
+	for i in range(8,COUNT,8):
+		var bend: float=tangents[i].signed_angle_to(tangents[(i+6)%COUNT],Vector3.UP)
+		if absf(bend)>0.36 and not _bridge_segment(i):
+			Furniture.turn_sign(self,i,bend,8.4)
+	Furniture.gate(self,"DIRTY VALLEY",Color("15636a"))
 
 func _grass_mesh() -> ArrayMesh:
 	# Original opaque geometry: no alpha cards, texture shimmer or downloaded code.

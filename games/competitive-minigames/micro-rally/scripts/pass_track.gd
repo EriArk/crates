@@ -75,11 +75,8 @@ func _decorate() -> void:
 	_build_rails()
 	_tower(Vector3(-77,0,-95))
 	_cabin(Vector3(-105,0,48))
-	var side=Vector3(-tangents[0].z,0,tangents[0].x)
-	for s in [-1,1]: Art.box(self,Vector3(0.5,5.2,0.5),points[0]+side*7.5*s+Vector3.UP*2.6,Color("584638"))
-	var banner=Art.box(self,Vector3(15.5,0.9,0.4),points[0]+Vector3.UP*5.0,Color("cfad51")); banner.rotation.y=atan2(-tangents[0].x,-tangents[0].z)
-	var title=Label3D.new(); title.text="PINECREST PASS"; title.font_size=100; title.pixel_size=0.009
-	title.position=points[0]+Vector3.UP*5.7; title.billboard=BaseMaterial3D.BILLBOARD_ENABLED; add_child(title)
+	Furniture.gate(self,"PINECREST PASS",Color("285b51"))
+
 func _build_rails() -> void:
 	var rails=PackedVector3Array()
 	for i in COUNT:
@@ -95,9 +92,8 @@ func _build_rails() -> void:
 			beam.look_at(beam.position+b-a,Vector3.UP)
 			if i%2==0: Art.box(self,Vector3(0.2,0.9,0.2),a+Vector3.UP*0.4,Color("5d635c"))
 		if curve>0.24 and i%3==0:
-			var at=points[i]+sa*8.8; at.y=surface_height(at.x,at.z)+1.5
-			var sign_node=Label3D.new(); sign_node.text="‹‹‹" if tangents[i].signed_angle_to(tangents[(i+3)%COUNT],Vector3.UP)>0 else "›››"
-			sign_node.position=at; sign_node.font_size=90; sign_node.pixel_size=0.014; sign_node.modulate=Color("f2c84a"); sign_node.billboard=BaseMaterial3D.BILLBOARD_ENABLED; add_child(sign_node)
+			var bend: float=tangents[i].signed_angle_to(tangents[(i+3)%COUNT],Vector3.UP)
+			Furniture.turn_sign(self,i,bend,8.8)
 	_static_surface(rails,"pass_rail")
 func _tower(point: Vector3) -> void:
 	point.y=surface_height(point.x,point.z)

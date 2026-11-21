@@ -58,7 +58,9 @@ static func instances(parent: Node3D, kind: String, id: String, transforms: Arra
 				if not materials.has(key):
 					var mat = ShaderMaterial.new(); mat.shader=preload("res://shaders/surface.gdshader")
 					var tint = original.albedo_color; var surface_kind = 4
-					if original.resource_name.to_lower().contains("leaf"): tint=Color("4e7143") if id.contains("Tall") else Color("62804a")
+					if original.resource_name.to_lower().contains("leaf"):
+						tint=Color("426e60") if id.contains("Tall") else Color("859457")
+						mat.set_shader_parameter("canopy",true)
 					elif original.resource_name.to_lower().contains("wood"): tint=Color("755037"); surface_kind=2
 					elif id.contains("rock") or id.contains("stone"): tint=Color("7c8478"); surface_kind=3
 					elif original.resource_name.to_lower().contains("grass"): tint=Color("5c812e")

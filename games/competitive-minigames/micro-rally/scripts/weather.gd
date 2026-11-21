@@ -2,6 +2,7 @@
 extends Node3D
 const RAIN_COUNT = 240
 var environment: Environment
+var sky_material := ShaderMaterial.new()
 var sun: DirectionalLight3D
 var rain: MultiMeshInstance3D
 var rain_material: ShaderMaterial
@@ -15,7 +16,15 @@ var last_sample: Dictionary = {}
 
 func _ready() -> void:
 	var world = WorldEnvironment.new(); environment=Environment.new(); world.environment=environment; add_child(world)
-	environment.background_mode=Environment.BG_COLOR
+	environment.background_mode=Environment.BG_SKY
+	var sky := Sky.new()
+	sky_material.shader=preload("res://shaders/stage_sky.gdshader")
+	sky_material.set_shader_parameter("panorama",preload("res://assets/horizon/alpine.jpg"))
+	sky.sky_material=sky_material
+	sky.process_mode=Sky.PROCESS_MODE_INCREMENTAL
+	environment.sky=sky
+	environment.reflected_light_source=Environment.REFLECTION_SOURCE_DISABLED
+	environment.fog_sky_affect=0.0
 	environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	environment.tonemap_mode=Environment.TONE_MAPPER_LINEAR if _compatibility() else Environment.TONE_MAPPER_ACES
 	environment.fog_enabled=true; environment.fog_mode=Environment.FOG_MODE_DEPTH
@@ -60,6 +69,7 @@ func profile(time: String, weather: String) -> Dictionary:
 		"fog_begin":lerpf(95,65,cloud),"fog_end":lerpf(200,150,cloud),"rotation":values[5],
 		"sun_color":Color(values[6]).lerp(Color("a8b9d5") if night else Color("e2e9ed"),cloud),
 		"sun_energy":(0.50 if _compatibility() else 0.90)*lerpf(values[7],0.16 if night else 0.38,cloud),
+		"cover":cloud,"night":float(night),"twilight":float(time in ["dawn","sunset"]),
 		"darkness":values[8],"rain":1.0 if weather=="rain" else 0.0}
 
 func set_sample(sample: Dictionary) -> void:
@@ -68,7 +78,10 @@ func set_sample(sample: Dictionary) -> void:
 	var a = profile(sample.from.time,sample.from.weather); var b = profile(sample.to.time,sample.to.weather)
 	var t: float=sample.blend
 	environment.ambient_light_color=a.ambient.lerp(b.ambient,t); environment.ambient_light_energy=lerpf(a.ambient_energy,b.ambient_energy,t)
-	environment.background_color=a.background.lerp(b.background,t); environment.fog_light_color=a.fog.lerp(b.fog,t)
+	environment.fog_light_color=a.fog.lerp(b.fog,t)
+	sky_material.set_shader_parameter("horizon_color",a.background.lerp(b.background,t))
+	for prop in ["cover","night","twilight"]:
+		sky_material.set_shader_parameter(prop,lerpf(a[prop],b[prop],t))
 	environment.fog_depth_begin=lerpf(a.fog_begin,b.fog_begin,t); environment.fog_depth_end=lerpf(a.fog_end,b.fog_end,t); environment.fog_density=0.15
 	sun.rotation=Vector3(lerp_angle(deg_to_rad(a.rotation.x),deg_to_rad(b.rotation.x),t),lerp_angle(deg_to_rad(a.rotation.y),deg_to_rad(b.rotation.y),t),0)
 	sun.light_color=a.sun_color.lerp(b.sun_color,t); sun.light_energy=lerpf(a.sun_energy,b.sun_energy,t)

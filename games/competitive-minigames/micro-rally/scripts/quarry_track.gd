@@ -60,6 +60,7 @@ func _build_road() -> void:
 	road_material.set_shader_parameter("mud_light",Color("a39272"))
 
 func _decorate() -> void:
+	add_child(preload("res://scripts/quarry_skyline.gd").new())
 	var batches={"rock_largeA":[],"rock_largeC":[],"plant_bushSmall":[],"grass_large":[],"tree_pineTallA":[]}
 	for n in 1900:
 		var x=rng.randf_range(-102,102); var z=rng.randf_range(-102,102)
@@ -91,18 +92,12 @@ func _decorate() -> void:
 	_static_surface(rails,"quarry_rail")
 	# Roadside apex markers, deliberately outside the driveable shoulder.
 	for i in range(8,COUNT,8):
-		if absf(tangents[i].signed_angle_to(tangents[(i+8)%COUNT],Vector3.UP))<0.35: continue
-		var side=Vector3(-tangents[i].z,0,tangents[i].x)
-		var sign_node=Label3D.new(); sign_node.text="‹‹‹"; sign_node.font_size=80; sign_node.pixel_size=0.018
-		var p=points[i]+side*8.2; p.y=surface_height(p.x,p.z)+1.8
-		sign_node.position=p; sign_node.modulate=Color("f2d291"); sign_node.billboard=BaseMaterial3D.BILLBOARD_ENABLED; add_child(sign_node)
+		var bend: float=tangents[i].signed_angle_to(tangents[(i+8)%COUNT],Vector3.UP)
+		if absf(bend)>0.35:
+			Furniture.turn_sign(self,i,bend,8.2)
 	_conveyor(Vector3(-12,0,-13),0.25)
 	_conveyor(Vector3(53,0,-38),-0.7)
-	var side=Vector3(-tangents[0].z,0,tangents[0].x)
-	for s in [-1,1]: Art.box(self,Vector3(0.5,5,0.5),points[0]+side*7*s+Vector3.UP*2.5,Color("bc933e"))
-	var arch=Art.box(self,Vector3(15,0.55,0.55),points[0]+Vector3.UP*5,Color("bc933e")); arch.rotation.y=atan2(-tangents[0].x,-tangents[0].z)
-	var title=Label3D.new(); title.text="REDSTONE QUARRY"; title.font_size=100; title.pixel_size=0.009
-	title.position=points[0]+Vector3.UP*5.6; title.billboard=BaseMaterial3D.BILLBOARD_ENABLED; add_child(title)
+	Furniture.gate(self,"REDSTONE QUARRY",Color("854632"))
 
 func _conveyor(pos: Vector3, heading: float) -> void:
 	pos.y=surface_height(pos.x,pos.z)

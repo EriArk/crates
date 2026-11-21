@@ -9,6 +9,11 @@ void fragment(){
  vec3 base=texture(palette,UV).rgb;
  float painted=step(base.r*1.25,base.g)*step(base.r*1.15,base.b)*step(0.04,base.g);
  base=mix(base,paint.rgb*(0.7+base.g*0.6),painted);
+ // Paired ivory coachlines are confined to painted body panels.
+ float offset=abs(abs(local.x)-0.32);
+ float width=max(0.012,fwidth(local.x));
+ float stripe=1.0-smoothstep(0.035,0.035+width,offset);
+ base=mix(base,vec3(0.94,0.85,0.64),stripe*painted*0.92);
  float grime=(sin(local.x*39.0+sin(local.z*23.0))*sin(local.y*28.0+local.z*11.0))*0.5+0.5;
  float mask=smoothstep(0.65-damage*0.25,0.85,grime)*damage;
  ALBEDO=mix(base,vec3(0.085,0.041,0.016),mask);

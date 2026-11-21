@@ -4,6 +4,7 @@ render_mode diffuse_burley;
 uniform vec4 tint : source_color = vec4(1.0);
 // Turf, sand, timber, stone, foliage. Coordinates are in metres, independent of UVs.
 uniform int kind = 0;
+uniform bool canopy=false;
 uniform vec3 grain_axis = vec3(0.0,0.0,1.0);
 uniform bool use_palette = false;
 uniform sampler2D palette : source_color, filter_linear;
@@ -75,6 +76,11 @@ void fragment() {
         rough=0.88; micro=0.06;
     } else {
         detail=(noise(world*3.5)-0.5)*0.13;
+        if (canopy) {
+            float sunward=smoothstep(0.0,1.1,local.y);
+            float grove=0.5+0.5*sin(world.x*0.13+world.z*0.17);
+            base*=mix(vec3(0.76,0.84,0.91),vec3(1.17,1.09,0.91),sunward*0.72+grove*0.28);
+        }
         rough=0.95;
     }
     ALBEDO=base*(1.0+detail);
