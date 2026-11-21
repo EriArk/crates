@@ -6,6 +6,8 @@ const ROLL = preload("res://assets/audio/roll.ogg")
 const CUES := {
 	"strike":preload("res://assets/audio/kenney/impactWood_light_000.ogg"),
 	"strike_sand":preload("res://assets/audio/sand.ogg"),
+	"land":preload("res://assets/audio/kenney/footstep_grass_000.ogg"),
+	"land_sand":preload("res://assets/audio/sand.ogg"),
 	"wood":preload("res://assets/audio/kenney/impactWood_light_001.ogg"),
 	"stone":preload("res://assets/audio/kenney/impactGeneric_light_000.ogg"),
 	"rim":preload("res://assets/audio/kenney/impactMetal_light_000.ogg"),
@@ -104,7 +106,7 @@ func cue(kind: String, strength: float=1.0) -> void:
 func begin(visual_events: Array) -> void:
 	clear_shot()
 	for e in visual_events:
-		if e.kind in ["strike","strike_sand","wood","stone","rim","cup","ace"]:
+		if e.kind in ["strike","strike_sand","land","land_sand","wood","stone","rim","cup","ace"]:
 			events.append(e.duplicate())
 
 func seek(time: float, speed: float=0.0, in_sand: bool=false) -> void:

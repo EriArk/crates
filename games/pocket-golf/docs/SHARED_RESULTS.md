@@ -2,7 +2,7 @@
 
 Prepared 0.1.22, 25 October 2026. Requires the combined TrainerOS SDK capabilities
 `network.group:1`, `account.identity:1`, `play.scorecards:1`. Gameplay protocol is
-`pocket-golf.8`; older `.7` clients cannot join this session.
+`pocket-golf.9` for the loft preview. Peers must use the same protocol.
 
 ## Player journey
 
@@ -52,7 +52,7 @@ This is result recovery, not restoration of interrupted gameplay.
 
 ## Immutable competition
 
-Ruleset: `pocket-golf.island.analog5.v1`. Three island greens, one to eight strokes
+Preview ruleset: `pocket-golf.island.loft6.v1`. Ranked play requires a matching server registration. Three island greens, one to eight strokes
 per hole, ascending total, `peer_confirmed` trust. The content ID and normalized
 SHA-256 of all five simulation/content files are in [scorecard-sources.json](scorecard-sources.json).
 The build verifies this binding and all transitive preloads; changing the physics,

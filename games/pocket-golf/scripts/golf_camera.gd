@@ -4,7 +4,7 @@ const Size = preload("res://scripts/dimensions.gd")
 # Local presentation only: never writes aim, shot power, or network state.
 enum View { OVERVIEW, SHOULDER, EYES }
 const TITLES := ["Overview", "Shoulder", "Eyes"]
-var view := View.OVERVIEW
+var view := View.SHOULDER
 var yaw := [0.61, 0.0, 0.0]
 var pitch := [0.77, 0.48, 0.85]
 var zoom := [1.0, 1.0, 1.0]

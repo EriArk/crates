@@ -42,6 +42,10 @@ func run() -> void:
 	ui._process(0.54); check(played.is_empty(),"putt audio waits for club contact")
 	ui._process(0.02); check(played.count("strike")==1,"one strike at contact")
 	ui._process(0); check(played.count("strike")==1,"same frame cannot replay strike")
+	check(not ui.audio.rolling.playing,"airborne ball has no rolling loop")
+	ui.elapsed=ui.Stroke.CONTACT+ui.shot.roll_frame/float(ui.shot.hz)
+	ui._process(0)
+	check(ui.audio.rolling.playing and played.has("land"),"ground contact starts rolling and plays landing cue")
 	var clock: float = ui.audio.clock
 	ui.paused=true; ui._process(.4)
 	check(ui.audio.clock==clock and ui.audio.rolling.stream_paused,"local pause freezes cue timeline")

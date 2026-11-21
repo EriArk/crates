@@ -43,6 +43,8 @@ func run() -> void:
 	var state: String = ui.game.world.digest()
 	var angle: int = ui.game.angle
 	var power: int = ui.game.power
+	check(ui.camera.view==ui.GolfCamera.View.SHOULDER,"start behind golfer")
+	pad(JOY_BUTTON_X); pad(JOY_BUTTON_X)
 	await capture("overview")
 	key(KEY_D,true); await create_timer(0.2).timeout; key(KEY_D,false)
 	check(ui.camera.yaw[0]>0.7,"keyboard orbit")
@@ -87,7 +89,9 @@ func run() -> void:
 	touch(0,Vector2(40,35),false)
 	ui.hud.view_requested.emit(); check(ui.camera.view==1,"touch View action")
 	ui.hud.view_requested.emit(); check(ui.camera.view==2,"touch Eyes action")
-	pad(JOY_BUTTON_A); await create_timer(0.45).timeout
+	pad(JOY_BUTTON_A); await create_timer(0.20).timeout
+	check(not ui.camera.following,"keep the golfer framed during backswing")
+	await create_timer(ui.Stroke.CONTACT).timeout
 	check(ui.camera.following and ui.anchor.visible,"putt enters ball follow and restores golfer")
 	await capture("follow")
 	pad(JOY_BUTTON_START); var position: Vector3 = ui.camera.position

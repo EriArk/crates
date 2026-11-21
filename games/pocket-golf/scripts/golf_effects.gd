@@ -55,6 +55,9 @@ func begin(shot: Dictionary, course: Dictionary) -> void:
 		var contact := p-normal*Size.BALL
 		var wood := absf(contact.x)>4.95 or absf(contact.z)>7.95
 		schedule("wood" if wood else "stone",frame/float(shot.hz),contact,clampf(incoming.length()*shot.hz/8.4,0.15,1),normal)
+	for frame in shot.get("landings",[]):
+		var contact:=point(shot,frame)
+		schedule("land_sand" if sandy(contact,course) else "land",frame/float(shot.hz),floor_at(contact),0.5)
 	for frame in shot.rims:
 		schedule("rim",frame/float(shot.hz),floor_at(point(shot,frame)),0.4)
 	var end: int = shot.capture_frame if shot.capture_frame>=0 else shot.path.size()-1
@@ -67,7 +70,7 @@ func begin(shot: Dictionary, course: Dictionary) -> void:
 		for bounce in shot.bounces:
 			if bounce>frame-6 and bounce<=frame: crossed=true; break
 		if crossed: continue
-		if sandy(p,course) and velocity.length()>0.5:
+		if frame>=shot.get("roll_frame",0) and sandy(p,course) and velocity.length()>0.5:
 			schedule("sand",frame/float(shot.hz),floor_at(p),clampf(velocity.length()/4,0.2,1),-velocity.normalized())
 		elif velocity.length()>3.0:
 			schedule("trail",frame/float(shot.hz),(p+previous)/2,velocity.length()/8.4,p-previous)
@@ -117,9 +120,9 @@ func emit_event(event: Dictionary) -> void:
 	var count := 5+roundi(event.strength*7)
 	var life := 0.48
 	var shape := "chip"
-	if kind in ["sand","strike_sand","wood","stone"]:
+	if kind in ["sand","strike_sand","land_sand","wood","stone"]:
 		color=Color("e9c786") if kind!="stone" else Color("c9d5cb")
-		shape="grain" if kind in ["sand","strike_sand"] else "chip"
+		shape="grain" if kind in ["sand","strike_sand","land_sand"] else "chip"
 	if kind=="sand": count=2; life=0.32
 	if kind in ["strike","strike_sand"]: halo(event,Color("ffe9ad"),0.12,0.22)
 	if kind=="rim":

@@ -262,11 +262,9 @@ func _build_course() -> void:
 		box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color.WHITE).material_override=rail_material
 	for x in [-5.12,5.12]:
 		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("dfb66c"))
-	for wall in c.walls:
-		var top := 0.6
-		for x in range(wall[0],wall[2]+251,250):
-			for z in range(wall[1],wall[3]+251,250):
-				top=maxf(top,_ground(Vector3(x/1000.0,0,z/1000.0))+0.6)
+	for i in c.walls.size():
+		var wall: Array=c.walls[i]
+		var top: float=c.wall_tops[i]/1000.0
 		camera.obstruction_height=maxf(camera.obstruction_height,top)
 		# Extend below all nearby ground so no wall floats above a downhill side.
 		box(course_root,Vector3((wall[2]-wall[0])/1000.0,top,(wall[3]-wall[1])/1000.0),Vector3((wall[0]+wall[2])/2000.0,top/2,(wall[1]+wall[3])/2000.0),Color("9baaa2"),Surfaces.Kind.STONE)
@@ -653,7 +651,6 @@ func _process(delta: float) -> void:
 			elapsed+=delta
 			anchor.seek_stroke(elapsed)
 			var rolling_time := maxf(0,elapsed-Stroke.CONTACT)
-			if elapsed>=Stroke.CONTACT: hud.set_status("Rolling…")
 			effects.seek(rolling_time)
 			var sample_time: float = rolling_time*shot.hz
 			var frame := mini(int(sample_time),shot.path.size()-1)
@@ -663,7 +660,9 @@ func _process(delta: float) -> void:
 			var q: Array = shot.path[next_frame]
 			if elapsed>=Stroke.CONTACT:
 				var speed: float = Vector2(q[0]-p[0],q[1]-p[1]).length()*shot.hz/1000.0
-				audio.seek(rolling_time,speed,effects.sandy(effects.point(shot,frame),shot_course))
+				var flying: bool=frame<shot.roll_frame
+				hud.set_status("In flight…" if flying else "Rolling…")
+				audio.seek(rolling_time,0.0 if flying else speed,effects.sandy(effects.point(shot,frame),shot_course))
 			var ball: Node3D = balls[shot.player]
 			ball.position=Vector3(lerpf(p[0],q[0],blend)/1000.0,lerpf(shot.heights[frame],shot.heights[next_frame],blend)/1000.0,lerpf(p[1],q[1],blend)/1000.0)
 			_align_marker(ball)
@@ -685,7 +684,7 @@ func _process(delta: float) -> void:
 				var reaction_time: float = rolling_time-(shot.path.size()-1)/float(shot.hz)
 				anchor.celebrate(reaction_time,(field_index+shot.strokes[shot.player]+game.round_id)%3)
 			if rolling_time>=(shot.path.size()-1)/float(shot.hz):
-				hud.set_status("In the cup!" if shot.sunk else "8 strokes · moving on" if shot.capped else "Nice and steady.")
+				hud.set_status("In the cup!" if shot.sunk else "Out of play · retake" if shot.out_of_play else "8 strokes · moving on" if shot.capped else "Nice and steady.")
 			if rolling_time>(shot.path.size()-1)/float(shot.hz)+(2.8 if shot.sunk else 0.85):
 				ball.get_child(1).visible=true; game.finish_shot()
 	if game.phase!="moving" and (not paused or game.online): effects.seek(effects.clock+delta)
@@ -705,7 +704,7 @@ func _process(delta: float) -> void:
 	if not paused:
 		if rolling and is_instance_valid(anchor.motion) and anchor.motion.celebration>=0:
 			camera.celebration_frame(delta,anchor.global_position,anchor.global_basis)
-		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling,game.phase in ["aim","moving","waiting_turn"],avatar_binding.eye_height())
+		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling and elapsed>=Stroke.CONTACT,game.phase in ["aim","moving","waiting_turn"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
 	var direction := Vector2.ZERO

@@ -31,6 +31,7 @@ func run() -> void:
 	ui=load("res://main.tscn").instantiate(); root.add_child(ui)
 	await process_frame
 	ui._start_local(2); ui.game.accept_turn(); ui.neutral_required=false
+	tap("view"); tap("view") # Exercise the overview orbit first.
 	var digest: String = ui.game.world.digest()
 	var yaw: float = ui.camera.yaw[0]
 	ui._set_input("touch")

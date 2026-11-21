@@ -16,7 +16,7 @@ participant joins and confirms the full scorecard through the TrainerOS account;
 teams retain one shared ball and score. Menu / result → Shared tables includes
 individual/team records, wins, pagination and explicit pending-result retry.
 An unavailable service leaves a casual match; local/bot scores are not submitted.
-Requires combined group + Play SDK and `pocket-golf.8`. See
+Requires combined group + Play SDK and `pocket-golf.9`. See
 [shared results, recovery and trust](docs/SHARED_RESULTS.md). Packages are prepared
 on the server; this does not publish or install them on handhelds.
 
@@ -123,10 +123,11 @@ come from Kenney's free CC0 Nature, Pirate and Minigolf kits; see
 
 ## Play
 
+- Power up to 30% produces a ground putt. Stronger shots carry through the air, land and roll. Grass provides a short rebound and sand absorbs the landing. Clearing the perimeter or landing on a stone wall returns the ball to the shot origin and counts the stroke.
 - Left stick: continuous aim (left/right) and power (up/down), proportional to deflection.
   D-pad / keyboard arrows retain five-degree / five-percent taps. Power stays within 10?100%.
 - Confirm (bottom face button; A on Xbox), Enter or Space: putt / accept handoff.
-- Secondary face button (X on Xbox), Tab, or the camera icon: overview → shoulder → eyes.
+- Secondary face button (X on Xbox), Tab, or the camera icon: shoulder (default) → eyes → overview.
 - Right stick or WASD: rotate/look around; right trigger / E zooms in, left trigger /
   Q zooms out. R3 / R restores the selected view. Camera controls never change aim/power.
 - Mouse: hold the right button to rotate; wheel to zoom. Touch: drag the green to

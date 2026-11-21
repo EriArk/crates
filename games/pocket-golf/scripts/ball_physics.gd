@@ -2,7 +2,7 @@
 extends RefCounted
 const Surface = preload("res://scripts/green_surface.gd")
 const Size = preload("res://scripts/dimensions.gd")
-# Authoritative fixed-point rolling model. 0.1 micrometres, 120 ticks/s; no float math
+# Authoritative fixed-point flight and rolling model. 0.1 micrometres, 120 ticks/s; no float math
 # or engine contacts enter the shared result. Public paths/positions use mm.
 const HZ := 120
 const SCALE := 10000
@@ -60,6 +60,67 @@ static func wall_contact(p: Array, v: Array, wall: Array) -> bool:
 	v[1]-=impulse*nz/distance
 	return true
 
+# A gentle putt stays on the turf. Above 30% power the club adds loft progressively.
+# Flight uses the same two contact substeps and integer coordinates as rolling.
+const GRAVITY := 6812 # 9.81 m/s² at 120 Hz
+const RAIL_TOP := 330*SCALE
+
+static func in_sand(course: Dictionary, p: Array) -> bool:
+	for rect in course.sand:
+		if p[0]>rect[0]*SCALE and p[0]<rect[2]*SCALE and p[1]>rect[1]*SCALE and p[1]<rect[3]*SCALE: return true
+	return false
+
+static func flight(course: Dictionary, grid: PackedInt32Array, p: Array, v: Array, lift: int, path: Array, heights: Array, bounces: Array, landings: Array) -> bool:
+	var y: int=heights[0]*SCALE
+	var tops: PackedInt32Array=course.get("wall_tops",PackedInt32Array())
+	while true:
+		var bank:=false
+		var landed:=false
+		var outside:=false
+		var settled:=false
+		for half in 2:
+			var previous_y:=y
+			y+=rounded_div(lift,2)-GRAVITY/8
+			lift-=GRAVITY/2
+			p[0]+=rounded_div(v[0],2); p[1]+=rounded_div(v[1],2)
+			for axis in 2:
+				var edge: int=(5000 if axis==0 else 8000)*SCALE
+				if absi(p[axis])<=edge-RADIUS: continue
+				if y-RADIUS>RAIL_TOP:
+					outside=true
+				else:
+					p[axis]=clampi(p[axis],-edge+RADIUS,edge-RADIUS)
+					v[axis]=-v[axis]*RESTITUTION/100
+					bank=true
+			if outside: break
+			for i in course.walls.size():
+				var top: int=(tops[i] if i<tops.size() else 600)*SCALE
+				if y-RADIUS>=top: continue
+				var wall: Array=course.walls[i]
+				if previous_y-RADIUS>=top and p[0]>=wall[0]*SCALE and p[0]<=wall[2]*SCALE and p[1]>=wall[1]*SCALE and p[1]<=wall[3]*SCALE:
+					y=top+RADIUS; outside=true; break
+				if wall_contact(p,v,wall): bank=true
+			if outside: break
+			var floor_y:=Surface.ball_height(grid,p[0]/SCALE,p[1]/SCALE)*SCALE
+			if y<=floor_y:
+				y=floor_y; landed=true
+				var sand:=in_sand(course,p)
+				# A shallow landing preserves forward speed near the putt/chip transition.
+				var impact:=maxi(0,-lift)
+				var retained:=10000-mini(impact,30*SCALE)*(4500 if sand else 2100)/(30*SCALE)
+				v[0]=rounded_div(v[0]*retained,10000)
+				v[1]=rounded_div(v[1]*retained,10000)
+				lift=impact*(7 if sand else 27)/100
+				if lift<4*SCALE:
+					settled=true
+					break
+		path.append([p[0]/SCALE,p[1]/SCALE]); heights.append(y/SCALE)
+		if bank: bounces.append(path.size()-1)
+		if landed: landings.append(path.size()-1)
+		if outside: return true
+		if settled: break
+	return false
+
 static func trace(course: Dictionary, origin: Array, direction: Array, power: int, power_scale: int = 1) -> Dictionary:
 	var p := [origin[0]*SCALE,origin[1]*SCALE]
 	var norm := length_int(direction[0],direction[1])
@@ -68,12 +129,19 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 	var path: Array = [origin.duplicate()]
 	var heights: Array = [Surface.ball_height(grid,origin[0],origin[1])]
 	var bounces: Array = []
+	var landings: Array=[]
+	var lift:=maxi(0,power-30*power_scale)*5000/power_scale
+	var out_of_play:=false
+	if lift>0:
+		out_of_play=flight(course,grid,p,v,lift,path,heights,bounces,landings)
+	var roll_frame:=path.size()-1
 	var rims: Array = []
 	var sunk := false
 	var in_cup := false
 	var capture_frame := -1
-	var stopped := false
+	var stopped := out_of_play
 	for tick in MAX_TICKS:
+		if out_of_play: break
 		var ground := Surface.sample(grid,p[0]/SCALE,p[1]/SCALE)
 		var denominator: int = Surface.Q*Surface.Q+ground[1]*ground[1]+ground[2]*ground[2]
 		var gx: int = -ROLL_GRAVITY*ground[1]*Surface.Q/denominator
@@ -101,10 +169,7 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 		var dz: int = course.cup[1]*SCALE-p[1]
 		var distance := length_int(dx,dz)
 		var speed := length_int(v[0],v[1])
-		var drag := GRASS_DRAG
-		for sand in course.sand:
-			if p[0]>sand[0]*SCALE and p[0]<sand[2]*SCALE and p[1]>sand[1]*SCALE and p[1]<sand[3]*SCALE:
-				drag=SAND_DRAG
+		var drag := SAND_DRAG if in_sand(course,p) else GRASS_DRAG
 		if distance<CUP_RADIUS:
 			if not in_cup: rims.append(path.size()-1)
 			in_cup=true
@@ -133,4 +198,4 @@ static func trace(course: Dictionary, origin: Array, direction: Array, power: in
 			stopped=true; break
 		v[0]=rounded_div(v[0]*(speed-drag),speed)
 		v[1]=rounded_div(v[1]*(speed-drag),speed)
-	return {"path":path,"heights":heights,"hz":HZ,"sunk":sunk,"bounces":bounces,"rims":rims,"capture_frame":capture_frame,"stopped":stopped,"position":path.back().duplicate()}
+	return {"path":path,"heights":heights,"hz":HZ,"sunk":sunk,"bounces":bounces,"rims":rims,"capture_frame":capture_frame,"stopped":stopped,"roll_frame":roll_frame,"landings":landings,"out_of_play":out_of_play,"position":origin.duplicate() if out_of_play else path.back().duplicate()}

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node
 ## Game orchestration only. Host owns credentials; Backend owns decisions/tables.
-const RULESET := "pocket-golf.island.analog5.v1"
+const RULESET := "pocket-golf.island.loft6.v1"
 const JOURNAL := "user://scorecard-journal.json"
 signal changed
 signal prepared(match_key: String)

@@ -74,7 +74,12 @@ func _initialize() -> void:
 		for frame in raised.path.size():
 			if raised.capture_frame>=0 and frame>raised.capture_frame: break
 			var p: Array = raised.path[frame]
-			check(raised.heights[frame]==Surface.ball_height(grid,p[0],p[1]),"trajectory follows surface including sphere clearance")
+			var floor_y:=Surface.ball_height(grid,p[0],p[1])
+			if frame<raised.roll_frame:
+				check(raised.heights[frame]>=floor_y,"flight clears the rendered terrain")
+			else:
+				check(raised.heights[frame]==floor_y,"rolling ball follows the terrain")
+		check(raised.roll_frame>0 and not raised.landings.is_empty(),"tee shot lands on the course")
 		signatures.append(raised)
 		# Shots beginning on hills, near sand and walls, including weak uphill shots.
 		for x in [-3500,0,3500]:

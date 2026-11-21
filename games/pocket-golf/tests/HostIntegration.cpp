@@ -29,7 +29,7 @@ private slots:
         std::vector<std::unique_ptr<Node>> nodes;QStringList ids;
         for(int i=0;i<count;++i){ids<<QString::number(100+i);auto n=std::make_unique<Node>();n->lobby.configure(ids[i],"P"+QString::number(i),true);n->runtime.configure(ids[i],true);
             n->network=std::make_unique<SdkNetwork>(n->lobby,n->runtime,python,QString::fromUtf8(SDK_SOURCE)+"/packaging/emulators/melonds/secure-channel.py","127.0.0.1");
-            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.pocket-golf"},{"title","Pocket Golf"},{"protocol","pocket-golf.8"},{"seats",8},{"local","crates:pocket-golf"}}});
+            n->network->setInstalledActivities({QVariantMap{{"app","art.abysstail.pocket-golf"},{"title","Pocket Golf"},{"protocol","pocket-golf.9"},{"seats",8},{"local","crates:pocket-golf"}}});
             n->controls.setOwner(ids[i]);n->host.setContext({{"profile",ids[i]}});n->host.setNetwork(n->network.get());
             if(!fixtures.isEmpty()&&!(casual&&i==count-1)){
                 QFile input(fixtures+"/player-"+QString::number(i)+".json");QVERIFY(input.open(QIODevice::ReadOnly));
