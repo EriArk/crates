@@ -12,7 +12,7 @@ func admit(game,seat: int) -> void:
 	if seat==0:
 		for i in range(1,16): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links=[{"peer":"p0","channel":"host"}]
-	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.11","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
+	bridge._packet({"event":"network.ready","session":{"protocol":"micro-rally.12","delivery":"reliable-ordered","host":seat==0,"self":"p"+str(seat),"hostMember":"p0","members":members,"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	game.set_physics_process(false); game.net.set_process(false)
@@ -34,7 +34,7 @@ func run() -> void:
 	for i in 15: packet.arena.scores[i][3]=3; packet.arena.scores[i][4]=2; packet.cars[i][56]=0; packet.cars[i][57]=3; packet.royale[1][i]=i+2; packet.cars[i][8]=0
 	packet.cars[0][15]=3000
 	check(game.arena.valid_state(packet.arena) and Wire.valid_snapshot(packet,game.pickups.size()),"Sixteen-car arena packet validates")
-	var edge=packet.duplicate(true); edge.cars[0][0]=45000; edge.cars[0][2]=35000; edge.beams=[[0,-45000,1200,-35000,45000,1200,35000]]
+	var edge=packet.duplicate(true); edge.cars[0][0]=45000; edge.cars[0][2]=35000; edge.beams=[[0,-45000,1200,-35000,45000,1200,35000,1]]
 	check(Wire.valid_snapshot(edge,game.pickups.size()),"County edge cars and beams survive wire validation")
 	edge.cars[0][0]=60001; check(not Wire.valid_snapshot(edge,game.pickups.size()),"Out-of-contract coordinates remain rejected")
 	var edge_combat=packet.arena.duplicate(true); edge_combat.rockets=[[1,0,45000,1200,35000]]

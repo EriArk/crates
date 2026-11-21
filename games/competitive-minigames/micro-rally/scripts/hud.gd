@@ -27,6 +27,8 @@ var portrait: TextureRect
 var font: Font
 var panel: PanelContainer
 var message = ""
+var pickup_until:=0
+var pickup_kind: String=""
 var buttons: Array[Button] = []
 var fps_label = ""
 var menu_mode = ""
@@ -275,6 +277,10 @@ func _process(_delta: float) -> void:
 	portrait.visible=game.state in ["race","countdown","pause","results"] and not panel.visible
 	queue_redraw()
 
+func announce_pickup(kind: int) -> void:
+	pickup_kind=game.Supplies.KINDS[kind]
+	pickup_until=Time.get_ticks_msec()+1600
+
 func _draw() -> void:
 	if game==null or game.cars.is_empty(): return
 	var car: Node3D=game.player()
@@ -318,11 +324,20 @@ func _draw() -> void:
 	var weapon = Vector2(size.x-432,size.y-111)
 	draw_style_box(_plate(),Rect2(weapon,Vector2(181,88)))
 	var heat_color = Color("ff694b") if car.overheated else GOLD if car.weapon_heat>65 else Color("58d7ec")
-	write("OVERHEATED" if car.overheated else (car.weapon.to_upper()+" · "+str(car.ammo) if game.is_arena() and car.weapon_selected and car.ammo>0 else "MACHINE GUN"),weapon+Vector2(14,26),17,heat_color)
-	if not (game.is_arena() and car.weapon_selected and car.ammo>0): write("∞",weapon+Vector2(142,28),26,PAPER)
-	draw_style_box(_plate(),Rect2(weapon+Vector2(14,38),Vector2(153,13)))
-	draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
-	if car.weapon_heat>0: draw_line(weapon+Vector2(15,44),weapon+Vector2(15+151*car.weapon_heat/100,44),heat_color,9,true)
+	var loaded: bool=car.weapon_selected and car.ammo>0
+	if loaded:
+		write(game.Supplies.title(car.weapon),weapon+Vector2(12,26),18,game.Supplies.tint(car.weapon))
+		for i in car.ammo:
+			draw_rect(Rect2(weapon+Vector2(15+i*19,37),Vector2(12,15)),game.Supplies.tint(car.weapon))
+	else:
+		write("OVERHEATED" if car.overheated else "MACHINE GUN",weapon+Vector2(14,26),17,heat_color)
+		write("∞",weapon+Vector2(142,28),26,PAPER)
+		draw_line(weapon+Vector2(15,44),weapon+Vector2(166,44),Color("32444a"),9,true)
+		if car.weapon_heat>0: draw_line(weapon+Vector2(15,44),weapon+Vector2(15+151*car.weapon_heat/100,44),heat_color,9,true)
+	if pickup_until>Time.get_ticks_msec():
+		write("+ "+game.Supplies.title(pickup_kind),weapon+Vector2(0,-15),23,game.Supplies.tint(pickup_kind))
+	elif car.ammo>0 and not loaded:
+		write(game.Supplies.title(car.weapon)+"  ×"+str(car.ammo),weapon+Vector2(0,-15),19,game.Supplies.tint(car.weapon))
 	write("SHIELD: "+("READY" if car.shield_item else "—"),weapon+Vector2(14,76),15,Color("7edbff"))
 	if game.state in ["race","countdown"]:
 		var target: Vector3=car.position+car.aim*8+Vector3.UP*0.4

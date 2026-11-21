@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+const Supplies=preload("race_supplies.gd")
 const RoadsideProp = preload("roadside_prop.gd")
 const Track = preload("track.gd")
 const Tracks = preload("track_registry.gd")
@@ -219,13 +220,20 @@ func _spawn_pickups() -> void:
 	for item in pickups: item.node.queue_free()
 	pickups.clear()
 	for i in track.pickup_spots.size():
-		var node = MeshInstance3D.new(); var mesh = BoxMesh.new(); mesh.size=Vector3(0.85,0.85,0.85); node.mesh=mesh
-		node.material_override=Art.material(Color("50c9ff") if i%2 else Color("ffc44b"),0.6)
-		node.position=track.pickup_spots[i]; add_child(node)
-		var icon = Label3D.new(); icon.text="+" if i%2 else "COOL"; icon.font_size=48; icon.pixel_size=0.012; icon.billboard=BaseMaterial3D.BILLBOARD_ENABLED
-		if is_arena(): icon.text=track.pickup_kind(i).to_upper() if is_royale() else track.PICKUP_TYPES[i].to_upper()
-		icon.position.y=0.75; node.add_child(icon)
-		pickups.append({"node":node,"cooldown":0.0,"shield":i%2==1,"kind":track.pickup_kind(i) if is_royale() else track.PICKUP_TYPES[i] if is_arena() else "shield" if i%2 else "cool"})
+		var spot: Vector3=track.pickup_spots[i]
+		if is_arena():
+			_add_pickup(track.pickup_kind(i) if is_royale() else track.PICKUP_TYPES[i],spot)
+		else:
+			var at: int=track.nearest(spot)
+			var lane: float=maxf(2.35,track.half_width(at)*0.53)*(1 if i%2==0 else -1)
+			_add_pickup(Supplies.ROUTE[i%Supplies.ROUTE.size()],track.road_pose(at,lane,1.25).origin)
+			_add_pickup("mystery",track.road_pose(at,-lane,1.25).origin)
+
+func _add_pickup(kind: String, pos: Vector3) -> void:
+	var node:=Supplies.badge(kind)
+	node.position=pos
+	add_child(node)
+	pickups.append({"node":node,"kind":kind,"cooldown":0.0})
 
 func load_track(id: String) -> bool:
 	if not Tracks.has_track(id): return false
@@ -255,7 +263,7 @@ func start_race() -> void:
 	if not is_arena(): track.reset_props(not net.online or net.host)
 	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	controls.neutral_required=true
-	_spawn_cars(); _spawn_pickups(); arena.reset(); hud.panel.hide(); hud.message=""; _camera(1,true)
+	_spawn_cars(); _spawn_pickups(); arena.reset(); hud.panel.hide(); hud.message=""; hud.pickup_until=0; _camera(1,true)
 	weather.apply(conditions); _update_conditions(0)
 
 func car_title() -> String: return cup.Rules.title(cup.store.data.selected)
@@ -376,7 +384,7 @@ func _physics_process(delta: float) -> void:
 			car.bot_drive(cars,delta); car.bot.combat(car,cars,delta)
 		car.tick(delta)
 		if car.overturned_time>2.0 or car.stuck_time>3 or car.position.y< -8 or car.position.distance_to(track.points[car.checkpoint])>35 or (car.health<=0 and car.disabled_time<=0): _recover(car)
-		if car.firing and state=="race": _shoot(car)
+		if car.firing and state=="race": arena.shoot(car)
 		if car.laps>=laps and car.finish_time<0 and state=="race":
 			car.finish_time=elapsed; controls.neutral(car); car.freeze=true; car.collision_layer=0; car.collision_mask=1
 			if net.online and car.human and is_inf(finish_deadline): finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
@@ -386,21 +394,21 @@ func _physics_process(delta: float) -> void:
 					finish_deadline=elapsed+Tracks.TRACKS[current_track].finish_grace
 					if not cup.running: _save_best()
 	if state=="race":
+		arena.update_rockets(delta)
 		if cars.all(func(c): return c.finish_time>=0 or c.lives<=0) or elapsed>=finish_deadline or elapsed>=race_limit_seconds:
 			finish_race(); return
 		if player().finish_time>=0: hud.message="Finished! Other drivers have %d s left" % ceili(minf(finish_deadline,race_limit_seconds)-elapsed)
+	if state!="race": return
 	for pickup in pickups:
 		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
-		pickup.node.rotation.y+=delta
 		if pickup.cooldown>0: continue
 		for car in cars:
 			if car.finish_time>=0 or car.health<=0: continue
-			if car.position.distance_to(pickup.node.position)<2:
+			if car.position.distance_squared_to(pickup.node.position)<4.84 and Supplies.collect(car,pickup.kind):
 				car.bot.pickups_collected+=1
-				if pickup.shield: car.shield_item=true; car.health=minf(100,car.health+20); car.repair_wheels()
-				else: car.cool_weapon()
-				pickup.cooldown=8; effects.burst(pickup.node.position,Color("8defff"))
-				if car.local_player: sound.play_event("pickup")
+				pickup.cooldown=8; pickup.node.hide()
+				effects.ring(pickup.node.position,Supplies.tint(pickup.kind))
+				if car.local_player: hud.announce_pickup(car.last_award); sound.play_event("pickup")
 				break
 	if effect_clock>0.09: effect_clock=0
 
@@ -427,8 +435,8 @@ func _shoot(car: Node3D) -> void:
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
 			hit.collider.take_damage(Car.BULLET_DAMAGE,direction*35,hit.position,car.index)
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")
-		effects.burst(to,Color("ffbb51"))
-	effects.beam(from,to); net.shot(car,from,to)
+	var event: int=effects.Shot.HIT if not hit.is_empty() else effects.Shot.TRACER
+	effects.combat_event(event,from,to); net.shot(car,from,to,event)
 	sound.play_event("shot",car.position.distance_to(player().position))
 
 func _process(delta: float) -> void:

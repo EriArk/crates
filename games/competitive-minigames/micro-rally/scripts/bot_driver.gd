@@ -57,9 +57,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 			var hit: Dictionary=car.get_world_3d().direct_space_state.intersect_ray(ray)
 			if not hit.is_empty() and absf(hit.normal.y)<0.5: score+=12.0
 			for item in car.get_parent().pickups:
-				if item.cooldown>0: continue
-				var useful: bool=(item.shield and (not car.shield_item or car.health<80)) or (not item.shield and car.weapon_heat>50)
-				if useful and point.distance_to(item.node.position)<3.5: score-=1.2
+				if item.cooldown<=0 and point.distance_squared_to(item.node.position)<12.25 and preload("race_supplies.gd").useful(car,item.kind): score-=1.2
 			if score<best_score: best_score=score; selected=candidate
 		if selected!=desired_lane: lane_changes+=1; lane_hold=0.75
 		desired_lane=selected
@@ -132,4 +130,9 @@ func combat(car: Node3D, others: Array, delta: float) -> void:
 	car.aim=car.aim.rotated(Vector3.UP,clampf(turn,-aim_speed*delta,aim_speed*delta)).normalized()
 	if car.weapon_heat>=[65.0,90.0,55.0,100.0][style_index(car.index)] or car.overheated: cooling_weapon=true
 	if car.weapon_heat<=25: cooling_weapon=false
+	if car.ammo>0:
+		car.weapon_selected=car.weapon!="pulse" or car.position.distance_to(opponent.position)<=10.0
+		if car.weapon_selected:
+			car.firing=clear_shot and (car.weapon=="pulse" or absf(turn)<0.12)
+			return
 	car.firing=clear_shot and absf(turn)<0.12 and not cooling_weapon and (settings.aggression>0 or fmod(combat_time+car.index*0.37,3.0)<1.0)

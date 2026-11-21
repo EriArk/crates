@@ -36,6 +36,8 @@ func _ready() -> void:
 		effects_volume=clampf(float(settings.get_value("mix","effects",0.75)),0,1)
 	for name in FILES: streams[name]=load("res://assets/audio/"+FILES[name]+".ogg")
 	streams.shot=_tone(0.11,110,false,0.85)
+	streams.launch=_tone(0.32,82,false,0.73)
+	streams.pulse=_tone(0.40,185,false,0.12)
 	streams.pickup=_tone(0.25,880,false,0.0)
 	streams.tick=_tone(0.12,520,false,0.0)
 	streams.go=_tone(0.45,1040,false,0.0)

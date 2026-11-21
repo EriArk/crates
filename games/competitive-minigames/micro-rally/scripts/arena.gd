@@ -2,7 +2,7 @@
 extends RefCounted
 const Rules=preload("arena_rules.gd")
 const Aim=preload("aim_assist.gd")
-const Art=preload("art.gd")
+const RoadsideProp=preload("roadside_prop.gd")
 var rules=Rules.new()
 var game: Node3D
 var rockets: Array=[]
@@ -114,7 +114,7 @@ func tick(delta: float) -> void:
 		elif game.elapsed>=Rules.DURATION or game.cars.filter(func(c): return c.lives>0).size()<=1: game.finish_race(); return
 		game.hud.message=rules.feed if game.elapsed<rules.feed_time else ""
 	for pickup in game.pickups:
-		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0; pickup.node.rotation.y+=delta
+		pickup.cooldown=maxf(0,pickup.cooldown-delta); pickup.node.visible=pickup.cooldown<=0
 		if pickup.cooldown>0: continue
 		for car in game.cars:
 			if car.health<=0 or car.ghost_time>0 or car.immune>0 or car.position.distance_to(pickup.node.position)>2.6: continue
@@ -135,47 +135,62 @@ func tick(delta: float) -> void:
 			game.effects.ring(pickup.node.position,Color("f6cc54")); game.sound.play_event("pickup",car.position.distance_to(game.player().position)); break
 func shoot(car: Node3D) -> void:
 	if not car.weapon_selected or car.ammo<=0: game._shoot(car); return
-	if car.replica or car.health<=0 or car.disabled_time>0 or car.fire_cooldown>0 or car.ghost_time>0 or car.immune>0: return
+	if car.replica or car.finish_time>=0 or car.health<=0 or car.disabled_time>0 or car.fire_cooldown>0 or car.ghost_time>0 or car.immune>0: return
 	if car.weapon=="rocket" and rockets.size()>=32: return
 	car.fire_cooldown=0.8; car.ammo-=1
 	if car.ammo==0: car.weapon_selected=false
 	var direction=Aim.resolve(car,game.cars,car.assist_level if car.human or car.local_player and not game.demo_auto else 0)
 	if car.weapon=="pulse":
-		game.effects.ring(car.position,Color("5ce9ff"))
+		game.effects.combat_event(game.effects.Shot.PULSE,car.position,car.position)
 		for other in game.cars:
 			if other==car: continue
 			var diff: Vector3=other.position-car.position
 			if diff.length()>11: continue
 			var hit=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(car.position,other.position,1))
 			if hit.is_empty(): hurt(other,32,diff.normalized()*150,other.position,car.index)
-		game.net.shot(car,car.position,car.position+Vector3(0.01,3,0))
+		game.net.shot(car,car.position,car.position,game.effects.Shot.PULSE)
 	else:
-		var node=Art.box(game,Vector3(0.24,0.24,0.8),car.position+Vector3.UP*0.6,Color("ffcc56"))
+		var node=game.effects.rocket_body(car.position+Vector3.UP*0.6)
 		node.look_at(node.position+direction,Vector3.UP); next_rocket+=1
-		rockets.append({"id":next_rocket,"owner":car.index,"node":node,"velocity":direction*42,"life":1.6})
-	game.sound.play_event("shot",car.position.distance_to(game.player().position))
+		rockets.append({"id":next_rocket,"owner":car.index,"node":node,"velocity":direction*42,"life":1.6,"trail":0.0})
+	game.sound.play_event("pulse" if car.weapon=="pulse" else "launch",car.position.distance_to(game.player().position))
 func update_rockets(delta: float) -> void:
 	for i in range(rockets.size()-1,-1,-1):
 		var rocket: Dictionary=rockets[i]; var from: Vector3=rocket.node.position; var to: Vector3=from+rocket.velocity*delta
 		rocket.life-=delta
-		var hit=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,to,3,[game.cars[rocket.owner].get_rid()]))
+		var ray:=PhysicsRayQueryParameters3D.create(from,to,3|RoadsideProp.LAYER,[game.cars[rocket.owner].get_rid()])
+		ray.collide_with_areas=true
+		var hit=game.get_world_3d().direct_space_state.intersect_ray(ray)
+		if not hit.is_empty() and hit.collider is RoadsideProp: hit.collider.strike()
+		trail(rocket,delta)
 		if not hit.is_empty() or rocket.life<=0:
 			var pos: Vector3=hit.position if not hit.is_empty() else to
-			game.effects.wreck(pos); game.sound.play_event("wreck",pos.distance_to(game.player().position))
+			game.effects.combat_event(game.effects.Shot.BLAST,pos,pos); game.sound.play_event("wreck",pos.distance_to(game.player().position))
 			for car in game.cars:
 				var diff: Vector3=car.position-pos; var distance=diff.length()
 				if distance>6: continue
 				var wall=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(pos-rocket.velocity.normalized()*0.15,car.position,1))
 				if wall.is_empty(): hurt(car,48*(1-distance/7),diff.normalized()*130,car.position,rocket.owner)
-			game.net.shot(game.cars[rocket.owner],pos,pos+Vector3(0.01,2,0))
+			game.net.shot(game.cars[rocket.owner],pos,pos,game.effects.Shot.BLAST)
 			rocket.node.queue_free(); rockets.remove_at(i)
 		else: rocket.node.position=to
+func trail(rocket: Dictionary, delta: float) -> void:
+	rocket.trail-=delta
+	if rocket.trail<=0:
+		game.effects.smoke_trail(rocket.node.position+rocket.node.basis.z*0.8)
+		rocket.trail=0.055
+
+func combat_snapshot() -> Dictionary:
+	return {"weapons":game.cars.map(func(c): return [1 if c.weapon=="rocket" else 2,c.ammo,1 if c.weapon_selected else 0]),"rockets":rockets.map(func(r): return [r.id,r.owner,roundi(r.node.position.x*100),roundi(r.node.position.y*100),roundi(r.node.position.z*100)])}
+
 func snapshot() -> Dictionary:
-	return {"scores":rules.rows.map(func(r): return [r.score,r.kills,r.assists,r.deaths,r.life]),"weapons":game.cars.map(func(c): return [1 if c.weapon=="rocket" else 2,c.ammo,1 if c.weapon_selected else 0]),"rockets":rockets.map(func(r): return [r.id,r.owner,roundi(r.node.position.x*100),roundi(r.node.position.y*100),roundi(r.node.position.z*100)])}
-static func valid_state(data) -> bool:
-	if not data is Dictionary or not data.get("scores") is Array or data.scores.size()!=16 or not data.get("weapons") is Array or data.weapons.size()!=16 or not data.get("rockets") is Array or data.rockets.size()>32: return false
+	var state:=combat_snapshot()
+	state.scores=rules.rows.map(func(r): return [r.score,r.kills,r.assists,r.deaths,r.life])
+	return state
+static func valid_state(data, scores: bool=true) -> bool:
+	if not data is Dictionary or (scores and (not data.get("scores") is Array or data.scores.size()!=16)) or not data.get("weapons") is Array or data.weapons.size()!=16 or not data.get("rockets") is Array or data.rockets.size()>32: return false
 	var ids=[]
-	for key in ["scores","weapons","rockets"]:
+	for key in (["scores","weapons","rockets"] if scores else ["weapons","rockets"]):
 		for row in data[key]:
 			var bounds=[[ -1000,10000],[0,2000],[0,2000],[0,2000],[0,2000]] if key=="scores" else [[1,2],[0,3],[0,1]] if key=="weapons" else [[0,2147483647],[0,15],[-60000,60000],[-10000,10000],[-60000,60000]]
 			if not row is Array or row.size()!=bounds.size(): return false
@@ -192,8 +207,16 @@ func apply_snapshot(data: Dictionary) -> void:
 			rules.feed=game.cars[i].driver_title()+" SCORED A KO"; rules.feed_time=game.elapsed+3
 			if i==game.player_index: game.hud.portrait.set_mood("victory")
 		rules.rows[i]={"slot":i,"score":s[0],"kills":s[1],"assists":s[2],"deaths":s[3],"life":s[4]}
-		var car: Node3D=game.cars[i]; car.weapon="rocket" if data.weapons[i][0]==1 else "pulse"; car.ammo=data.weapons[i][1]
-		if not car.local_player: car.weapon_selected=data.weapons[i][2]==1
+	apply_combat(data)
+
+func apply_combat(data: Dictionary) -> void:
+	for i in data.weapons.size():
+		var car: Node3D=game.cars[i]
+		var was_empty: bool=car.ammo==0
+		car.weapon="rocket" if data.weapons[i][0]==1 else "pulse"; car.ammo=data.weapons[i][1]
+		if car.ammo==0: car.weapon_selected=false
+		elif was_empty: car.weapon_selected=true
+		elif not car.local_player: car.weapon_selected=data.weapons[i][2]==1
 	var live=[]
 	for r in data.rockets:
 		live.append(r[0]); var target=Vector3(r[2],r[3],r[4])/100
@@ -202,15 +225,16 @@ func apply_snapshot(data: Dictionary) -> void:
 			var rocket: Dictionary=existing[0]
 			rocket.target=target
 		else:
-			var node=Art.box(game,Vector3(0.3,0.3,0.8),target,Color("ffcc56"))
-			rockets.append({"id":r[0],"owner":r[1],"node":node,"target":target})
+			var node=game.effects.rocket_body(target)
+			game.sound.play_event("launch",target.distance_to(game.player().position))
+			rockets.append({"id":r[0],"owner":r[1],"node":node,"target":target,"trail":0.0})
 	for i in range(rockets.size()-1,-1,-1):
 		if not live.has(rockets[i].id):
-			game.effects.burst(rockets[i].node.position,Color("ffc655"))
 			rockets[i].node.queue_free(); rockets.remove_at(i)
 func display_client(delta: float) -> void:
 	for rocket in rockets:
 		var diff: Vector3=rocket.target-rocket.node.position
 		if diff.length_squared()>0.01: rocket.node.look_at(rocket.target,Vector3.UP)
 		rocket.node.position=rocket.node.position.lerp(rocket.target,1-exp(-delta*30))
-	game.hud.message=rules.feed if game.elapsed<rules.feed_time else ""
+		trail(rocket,delta)
+	if game.is_arena(): game.hud.message=rules.feed if game.elapsed<rules.feed_time else ""

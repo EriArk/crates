@@ -2,7 +2,10 @@
 extends Node3D
 const Tires = preload("tire_surface.gd")
 const Art = preload("art.gd")
+enum Shot { TRACER, HIT, PULSE, BLAST }
 const LIMIT = 220
+const COMBAT_RESERVE=34
+var dart_mesh:=BoxMesh.new()
 const MARK_LIMIT = 96
 var particles: Array = []
 var loose_wheels: Array = []
@@ -97,7 +100,7 @@ func dust(car: Node3D, wetness: float = 0.0) -> void:
 	# At most two emissions per car per trail tick, sharing the global VFX budget.
 	var emitted=0
 	for contact in car.physics.wheels:
-		if particles.size()>=LIMIT or emitted>=2: return
+		if particles.size()>=LIMIT-COMBAT_RESERVE or emitted>=2: return
 		if not contact.contact or contact.missing: continue
 		var slip=Tires.intensity(contact)
 		var loose: bool=contact.surface>=Tires.Kind.GRAVEL
@@ -115,15 +118,97 @@ func dust(car: Node3D, wetness: float = 0.0) -> void:
 		particles.append({"node":node,"life":life,"total":life,"velocity":Vector3(randf_range(-1,1),0.8,randf_range(-1,1))-kick,"grow":not splat,"fade":not splat})
 		emitted+=1
 
-func beam(from: Vector3, to: Vector3, color: Color = Color("ffd07a")) -> void:
-	flash(from,color,1.8)
+func combat_event(event: int, from: Vector3, to: Vector3) -> void:
+	match event:
+		Shot.TRACER,Shot.HIT:
+			beam(from,to)
+			if event==Shot.HIT:
+				flash(to,Color("fff4b4"),3.4)
+				sparks(to,5)
+		Shot.PULSE:
+			wave(from,Color("50eaff"),11,0.39)
+			flash(from+Vector3.UP*0.4,Color("bafaff"),4)
+		Shot.BLAST:
+			flash(to,Color("fff1ab"),8)
+			wave(to,Color("ff873e"),6,0.32)
+			fireball(to)
+			sparks(to,9)
+			wreck(to)
+
+func fireball(center: Vector3) -> void:
+	# Stagger the orange lobes around a short, bright core. Smoke remains after the fire.
+	for i in 6:
+		if particles.size()>=LIMIT: return
+		var radial:=Vector3(cos(i*TAU/5),0,sin(i*TAU/5)) if i<5 else Vector3.ZERO
+		var flame:=MeshInstance3D.new()
+		flame.mesh=sphere
+		flame.material_override=Art.material(Color("ec541b") if i%2==0 else Color("ffad39"),0.7)
+		flame.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		flame.position=center+radial*0.48+Vector3.UP*0.55
+		add_child(flame)
+		var life:=0.32+0.025*(i%3)
+		flame.scale=Vector3.ONE*4
+		particles.append({"node":flame,"life":life,"total":life,"velocity":radial*3.1+Vector3.UP*(2.7 if i<5 else 5.0),"fire":true})
+
+func wave(pos: Vector3, color: Color, radius: float, duration: float) -> void:
 	if particles.size()>=LIMIT: return
-	var distance = from.distance_to(to)
-	if distance<0.01: return
-	var node = Art.box(self,Vector3(0.045,0.045,distance),from.lerp(to,0.5),color)
-	node.material_override=Art.material(color,2.0); node.look_at(to,Vector3.UP)
+	var node:=MeshInstance3D.new()
+	node.mesh=ring_mesh; node.material_override=Art.material(color,1.8)
 	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	particles.append({"node":node,"life":0.085,"total":0.085,"velocity":Vector3.ZERO,"grow":false})
+	node.position=pos+Vector3.UP*0.18; add_child(node)
+	particles.append({"node":node,"life":duration,"total":duration,"velocity":Vector3.ZERO,"wave":radius})
+
+func sparks(pos: Vector3, count: int) -> void:
+	for i in count:
+		if particles.size()>=LIMIT: return
+		var direction:=Vector3(randf_range(-1,1),randf_range(0.3,1.2),randf_range(-1,1)).normalized()
+		var spark:=MeshInstance3D.new()
+		spark.mesh=dart_mesh; spark.material_override=Art.material(Color("ffbb50"),2.0)
+		spark.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(spark); spark.position=pos
+		spark.basis=Basis.looking_at(direction)
+		var life:=randf_range(0.12,0.26)
+		var size:=Vector3(0.09,0.09,0.65)
+		spark.scale=size
+		particles.append({"node":spark,"life":life,"total":life,"velocity":direction*9,"shape":size,"grow":false})
+
+func beam(from: Vector3, to: Vector3, color: Color = Color("fff099")) -> void:
+	var offset:=minf((to-from).length()*0.4,0.95)
+	flash(from+from.direction_to(to)*offset,Color("ff9a31"),4.2)
+	var distance:=from.distance_to(to)
+	if particles.size()>=LIMIT or distance<0.02: return
+	var direction:=(to-from)/distance
+	var length:=minf(4.5,distance)
+	var life:=clampf(distance/160.0,0.055,0.15)
+	var node:=MeshInstance3D.new()
+	node.mesh=dart_mesh; node.material_override=Art.material(color,2.3)
+	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(node)
+	node.position=from+direction*length*0.5
+	node.basis=Basis.looking_at(direction,Vector3.RIGHT if absf(direction.y)>0.98 else Vector3.UP)
+	var size:=Vector3(0.16,0.16,length)
+	node.scale=size
+	particles.append({"node":node,"life":life,"total":life,"velocity":direction*(distance-length)/life,"shape":size,"grow":false})
+
+func rocket_body(pos: Vector3) -> Node3D:
+	var body:=Node3D.new()
+	add_child(body); body.position=pos
+	Art.box(body,Vector3(0.34,0.34,1.12),Vector3.ZERO,Color("4c515a"))
+	var nose:=Art.box(body,Vector3(0.26,0.26,0.38),Vector3.FORWARD*0.58,Color("ef6940"))
+	nose.rotation.z=PI/4
+	Art.box(body,Vector3(0.74,0.12,0.40),Vector3.BACK*0.43,Color("d89b53"))
+	Art.box(body,Vector3(0.12,0.7,0.40),Vector3.BACK*0.43,Color("d89b53"))
+	var flame:=Art.box(body,Vector3(0.25,0.25,0.95),Vector3.BACK*0.94,Color("ffb347"))
+	flame.material_override=Art.material(Color("ffb347"),2.4)
+	for part in body.get_children(): part.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return body
+
+func smoke_trail(pos: Vector3) -> void:
+	if particles.size()>=LIMIT-COMBAT_RESERVE: return
+	var node:=MeshInstance3D.new()
+	node.mesh=dust_quad; node.material_override=tire_smoke; node.position=pos
+	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; add_child(node)
+	particles.append({"node":node,"life":0.48,"total":0.48,"velocity":Vector3.UP*0.8,"grow":true,"size":1.05,"fade":true})
 
 func burst(pos: Vector3, color: Color) -> void:
 	for i in 12:
@@ -158,5 +243,14 @@ func _process(delta: float) -> void:
 		var p: Dictionary=particles[i]; p.life-=delta
 		if p.life<=0: p.node.queue_free(); particles.remove_at(i); continue
 		p.node.position+=p.velocity*delta
-		p.node.scale=Vector3.ONE*float(p.get("size",1.0))*(0.6+(1.0-p.life/p.total)*2.0 if p.grow else p.life/p.total)
+		if p.has("fire"):
+			var age: float=1-p.life/p.total
+			p.node.scale=Vector3.ONE*(4+sin(age*PI)*3.5)
+			p.node.transparency=smoothstep(0.42,1,age)
+		elif p.has("wave"):
+			var radius: float=lerpf(0.5,p.wave,1-p.life/p.total)
+			p.node.scale=Vector3(radius,0.7,radius)
+			p.node.transparency=1-p.life/p.total
+		elif p.has("shape"): p.node.scale=p.shape
+		else: p.node.scale=Vector3.ONE*float(p.get("size",1.0))*(0.6+(1.0-p.life/p.total)*2.0 if p.grow else p.life/p.total)
 		if p.get("fade",false): p.node.transparency=1-p.life/p.total

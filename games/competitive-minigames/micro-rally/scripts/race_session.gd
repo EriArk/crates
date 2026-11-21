@@ -106,20 +106,24 @@ func _receive(member: String, data: Dictionary) -> void:
 			abort("Could not sync the race."); return
 		if game.is_royale() and not game.royale.valid_state(data.get("royale"),data.arena): abort("Invalid survival state."); return
 		if not game.is_arena():
-			if not Wire.integer(data.get("broken"),0,(1<<game.track.props.size())-1):
+			if not game.arena.valid_state(data.get("combat"),false) or not Wire.integer(data.get("broken"),0,(1<<game.track.props.size())-1):
 				abort("Invalid roadside state."); return
 			game.track.apply_broken_mask(int(data.broken))
+			game.arena.apply_combat(data.combat)
 		if game.is_arena(): game.arena.apply_snapshot(data.arena)
 		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
 		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
 		if game.is_royale(): game.royale.apply_snapshot(data.royale)
 		for i in game.pickups.size():
 			var pickup: Dictionary=game.pickups[i]
-			if pickup.cooldown<=0 and data.pickups[i]>0: game.effects.burst(pickup.node.position,Color("8defff"))
+			if pickup.cooldown<=0 and data.pickups[i]>0: game.effects.ring(pickup.node.position,game.Supplies.tint(pickup.kind))
 			pickup.cooldown=data.pickups[i]/1000.0; pickup.node.visible=pickup.cooldown<=0
 		for beam in data.get("beams",[]):
-			game.effects.beam(Vector3(beam[1],beam[2],beam[3])/100,Vector3(beam[4],beam[5],beam[6])/100)
-			game.sound.play_event("shot",(Vector3(beam[1],beam[2],beam[3])/100).distance_to(game.player().position))
+			var origin:=Vector3(beam[1],beam[2],beam[3])/100
+			var end:=Vector3(beam[4],beam[5],beam[6])/100
+			game.effects.combat_event(int(beam[7]),origin,end)
+			var cue: String=["shot","shot","pulse","wreck"][int(beam[7])]
+			game.sound.play_event(cue,origin.distance_to(game.player().position))
 		if data.phase=="results" and phase!="results":
 			apply_targets(1.0,true); phase="results"; game.finish_race()
 		elif phase!="results": game.state=data.phase
@@ -137,7 +141,7 @@ func apply_remote(car: Node3D) -> void:
 
 func tick_client(delta: float) -> void:
 	apply_targets(delta)
-	if game.is_arena(): game.arena.display_client(delta)
+	game.arena.display_client(delta)
 	if phase=="playing":
 		if game.state=="race" and not overlay and game.player().health>0:
 			if game.demo_auto:
@@ -186,7 +190,10 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		if car.local_player:
 			if s[8]<car.health: game.hud.portrait.set_mood("hurt")
 			elif s[14]>=0 and car.finish_time<0: game.hud.portrait.set_mood("victory")
-			if car.weapon_heat-s[11]>35 or ((int(s[12])&2)!=0 and not car.shield_item): game.sound.play_event("pickup")
+			if not game.is_arena() and int(s[60])>car.pickup_serial:
+				game.hud.announce_pickup(int(s[61])); game.sound.play_event("pickup")
+			elif game.is_arena() and (car.weapon_heat-s[11]>35 or ((int(s[12])&2)!=0 and not car.shield_item)): game.sound.play_event("pickup")
+		car.pickup_serial=int(s[60]); car.last_award=int(s[61])
 		car.health=s[8]; car.shield=s[9]; car.boost=s[10]; car.weapon_heat=s[11]; car.overheated=(int(s[12])&32)!=0
 		car.immune=1 if (int(s[12])&1)!=0 else 0; car.shield_item=(int(s[12])&2)!=0
 		car.ghost_time=1 if (int(s[12])&8)!=0 else 0
@@ -208,7 +215,9 @@ func _process(delta: float) -> void:
 	if host:
 		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
 		if game.is_arena(): packet.arena=game.arena.snapshot()
-		else: packet.broken=game.track.broken_mask
+		else:
+			packet.broken=game.track.broken_mask
+			packet.combat=game.arena.combat_snapshot()
 		if game.is_royale(): packet.royale=game.royale.snapshot()
 		for member in bridge.channels:
 			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
@@ -217,8 +226,14 @@ func _process(delta: float) -> void:
 		var packet = {"type":"input","round":round_id,"seq":sequence,"values":Wire.input(game.player())} if phase=="playing" else {"type":"ping","round":round_id}
 		if not bridge.send_latest(bridge.session.hostMember,"input",packet): abort("Could not send controls.")
 
-func shot(car: Node3D, from: Vector3, to: Vector3) -> void:
-	if online and host and beams.size()<12: beams.append([car.index,roundi(from.x*100),roundi(from.y*100),roundi(from.z*100),roundi(to.x*100),roundi(to.y*100),roundi(to.z*100)])
+func shot(car: Node3D, from: Vector3, to: Vector3, event: int) -> void:
+	if not online or not host: return
+	if beams.size()>=12:
+		if event<game.effects.Shot.PULSE: return
+		var replaceable:=beams.find_custom(func(row): return row[7]<game.effects.Shot.PULSE)
+		if replaceable<0: return
+		beams.remove_at(replaceable)
+	beams.append([car.index,roundi(from.x*100),roundi(from.y*100),roundi(from.z*100),roundi(to.x*100),roundi(to.y*100),roundi(to.z*100),event])
 
 func rematch() -> void:
 	if not online or game.state!="results" or voted: return
