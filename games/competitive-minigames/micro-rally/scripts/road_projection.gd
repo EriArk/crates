@@ -2,7 +2,7 @@
 extends RefCounted
 # Clip road triangles against the actual terrain triangles. Matching only the
 # ribbon vertices leaves its interior dipping through a differently triangulated hill.
-static func append(track: Node3D, surface: SurfaceTool, vertices: Array, uvs: Array) -> void:
+static func append(track: Node3D, surface: SurfaceTool, vertices: Array, uvs: Array, mark_mud: bool=false) -> void:
 	var road=PackedVector2Array()
 	for v in vertices: road.append(Vector2(v.x,v.z))
 	var n: int=track.terrain_cells()
@@ -32,5 +32,8 @@ static func append(track: Node3D, surface: SurfaceTool, vertices: Array, uvs: Ar
 						for p in [polygon[0],polygon[i],polygon[i+1]]:
 							var offset: Vector2=p-road[0]
 							var wb=offset.cross(ac)/area; var wc=ab.cross(offset)/area
+							if mark_mud:
+								var relief: float=track.mud.height(p)
+								surface.set_color(Color(1,1-clampf(-2.5*relief,0,1),1-clampf(relief,0,1)))
 							surface.set_uv(uvs[0]*(1-wb-wc)+uvs[1]*wb+uvs[2]*wc)
 							surface.add_vertex(Vector3(p.x,track.surface_height(p.x,p.y)+0.035,p.y))

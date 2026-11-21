@@ -1,4 +1,5 @@
 shader_type spatial;
+uniform bool mud_relief = false;
 uniform float wetness : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 mud_dark : source_color = vec4(0.39,0.28,0.18,1.0);
 uniform vec4 mud_light : source_color = vec4(0.59,0.45,0.30,1.0);
@@ -17,6 +18,13 @@ void fragment(){
  base=mix(base,mud_light.rgb*(0.76+grain*0.25),verge*0.72);
  // Churned water collects in the wheel paths before the compacted shoulder.
  float water=wetness*smoothstep(0.24,0.82,patch+rut*0.25);
+ if(mud_relief){
+  float hollow=1.0-COLOR.g;
+  float crest=1.0-COLOR.b;
+  base*=1.0-0.40*hollow;
+  base=mix(base,mud_light.rgb*(0.98+grain*0.26),crest*0.65);
+  water=max(water,hollow*(0.25+0.68*wetness));
+ }
  float checker=mod(floor(UV.x*16.0)+floor(UV.y*1.6),2.0);
  float stripe=(1.0-smoothstep(1.19,1.25,UV.y))*step(0.02,UV.x)*step(UV.x,0.98);
  vec3 chalk=mix(mud_dark.rgb*0.65,vec3(0.85,0.77,0.59),checker);

@@ -16,6 +16,8 @@ var length = 0.0
 var rng = RandomNumberGenerator.new()
 var pickup_spots: Array[Vector3] = []
 var terrain_vertices = PackedVector3Array()
+const MudRelief=preload("mud_relief.gd")
+var mud: MudRelief
 var road_material: ShaderMaterial
 var spatial_candidates: Dictionary = {}
 var map_bounds = Rect2()
@@ -31,7 +33,9 @@ func grid_origin() -> Vector2: return Vector2(-terrain_cells(),-terrain_cells())
 func grid_bounded() -> bool: return true
 
 func _init(authored: bool = true) -> void:
-	if authored: _sample_route(_anchors())
+	if authored:
+		_sample_route(_anchors())
+		if roadside_theme()=="valley": mud=MudRelief.new(self)
 
 func _anchors() -> Array:
 	# Closed authored valley route: broad sweep, bridge, climb, hairpin, return.
@@ -168,7 +172,8 @@ func ground_height(x: float, z: float, index: int, driving_surface: bool = false
 	# One continuous driving surface: no raised ribbon edge to catch the chassis.
 	# The visible creek remains below bridges; cars never drive under these spans.
 	if driving_surface: stream*=smoothstep(half_width(index)+0.3,half_width(index)+4.0,distance)
-	return lerpf(road_y-0.035,base_height(x,z)+hill,smoothstep(half_width(index),half_width(index)+6,distance))-stream*6.0
+	var height: float=lerpf(road_y-0.035,base_height(x,z)+hill,smoothstep(half_width(index),half_width(index)+6,distance))-stream*6.0
+	return height+mud.height(Vector2(x,z)) if mud else height
 
 func build() -> void:
 	rng.seed=38021
@@ -244,6 +249,7 @@ func road_vertex(point: Vector3) -> Vector3: return point
 func _build_road() -> void:
 	var surface = SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var distance = 0.0
+	if mud: surface.set_color(Color.WHITE)
 	for i in COUNT:
 		var j = (i+1)%COUNT; var a = points[i]; var b = points[j]
 		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)*half_width(i)
@@ -255,15 +261,18 @@ func _build_road() -> void:
 			var bl=road_vertex(b+side_b*(u*2-1)); var br=road_vertex(b+side_b*(v*2-1))
 			var vertices = [al,bl,ar,ar,bl,br]
 			var uvs = [Vector2(u,distance),Vector2(u,next),Vector2(v,distance),Vector2(v,distance),Vector2(u,next),Vector2(v,next)]
-			if road_follows_terrain():
-				for offset in [0,3]: preload("road_projection.gd").append(self,surface,vertices.slice(offset,offset+3),uvs.slice(offset,offset+3))
+			var uneven: bool=mud!=null and mud.segments.has(i)
+			if uneven or road_follows_terrain():
+				for offset in [0,3]: preload("road_projection.gd").append(self,surface,vertices.slice(offset,offset+3),uvs.slice(offset,offset+3),uneven)
 			else:
+				if mud: surface.set_color(Color.WHITE)
 				for n in 6: surface.set_uv(uvs[n]); surface.add_vertex(vertices[n])
 		distance=next
 	surface.generate_normals(); surface.index()
 	var node = MeshInstance3D.new(); node.mesh=surface.commit()
 	node.name="RoadSurface"
 	road_material=ShaderMaterial.new(); road_material.shader=preload("res://shaders/road.gdshader"); node.material_override=road_material
+	if mud: road_material.set_shader_parameter("mud_relief",true)
 	add_child(node) # Visible road only; ground and bridge decks share one collider.
 	var rail_faces = PackedVector3Array()
 	# Planked bridges wherever the authored route crosses the creek.
