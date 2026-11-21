@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+const RoadsideProp = preload("roadside_prop.gd")
 const Track = preload("track.gd")
 const Tracks = preload("track_registry.gd")
 const Arena=preload("arena.gd")
@@ -251,6 +252,7 @@ func start_race() -> void:
 	race_bots=net.bot_settings.duplicate(true) if net.online else cup.store.active_bots() if cup.running else cup.store.bot_settings("quick")
 	get_tree().paused=false; state="countdown"; elapsed=0; countdown=3; capture_time=0
 	finish_deadline=INF
+	if not is_arena(): track.reset_props(not net.online or net.host)
 	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
 	controls.neutral_required=true
 	_spawn_cars(); _spawn_pickups(); arena.reset(); hud.panel.hide(); hud.message=""; _camera(1,true)
@@ -269,6 +271,7 @@ func return_menu() -> void:
 	cup.running=false; laps=4; bot_count=cup.store.quick_bot_count()
 	player_index=0
 	load_track(quick_track)
+	if not is_arena(): track.reset_props(false)
 	arena.reset()
 	get_tree().paused=false; state="menu"; elapsed=0; _spawn_cars(); _spawn_pickups(); hud.menu("main")
 	sound.reset_round(); feedback.reset(); haptics.stop(); effects.clear(); hud.portrait.reset_race()
@@ -415,10 +418,12 @@ func _shoot(car: Node3D) -> void:
 	var direction=arena.Aim.resolve(car,cars,car.assist_level if car.human or car.local_player and not demo_auto else 0) if is_arena() or car.aim_3d else car.aim
 	var from: Vector3=car.muzzle_origin()
 	var to: Vector3=from+direction*34
-	var query = PhysicsRayQueryParameters3D.create(from,to,3,[car.get_rid()])
+	var query = PhysicsRayQueryParameters3D.create(from,to,3|RoadsideProp.LAYER,[car.get_rid()])
+	query.collide_with_areas=true
 	var hit = get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		to=hit.position
+		if hit.collider is RoadsideProp: hit.collider.strike()
 		if hit.collider is RigidBody3D and hit.collider.has_method("take_damage"):
 			hit.collider.take_damage(Car.BULLET_DAMAGE,direction*35,hit.position,car.index)
 			if hit.collider.local_player: hud.portrait.set_mood("hurt")

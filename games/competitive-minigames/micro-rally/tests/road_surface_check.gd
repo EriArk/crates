@@ -12,8 +12,8 @@ static func inspect(track: Node3D) -> Dictionary:
 			error=maxf(error,absf(p.y-track.surface_height(p.x,p.z)-0.035))
 	for i in track.COUNT:
 		var j=(i+1)%track.COUNT; var a: Vector3=track.points[i]; var b: Vector3=track.points[j]
-		var sa=Vector3(-track.tangents[i].z,0,track.tangents[i].x)*track.WIDTH*0.5
-		var sb=Vector3(-track.tangents[j].z,0,track.tangents[j].x)*track.WIDTH*0.5
+		var sa=Vector3(-track.tangents[i].z,0,track.tangents[i].x)*track.half_width(i)
+		var sb=Vector3(-track.tangents[j].z,0,track.tangents[j].x)*track.half_width(j)
 		var corners=[a-sa,b-sb,a+sa,b+sb]
 		for ids in [[0,1,2],[2,1,3]]:
 			var ab: Vector3=corners[ids[1]]-corners[ids[0]]; var ac: Vector3=corners[ids[2]]-corners[ids[0]]

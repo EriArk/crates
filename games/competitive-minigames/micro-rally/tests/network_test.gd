@@ -16,7 +16,7 @@ func admitted(client, self_id: String, count: int) -> void:
 	if self_id=="p0":
 		for i in range(1,count): links.append({"peer":"p"+str(i),"channel":"g"+str(i)})
 	else: links.append({"peer":"p0","channel":"host"})
-	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.9","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
+	client._packet({"event":"network.ready","session":{"protocol":"micro-rally.10","delivery":"reliable-ordered","host":self_id=="p0","self":self_id,"hostMember":"p0","members":roster(count),"channels":links,"maxBytes":16384,"window":64}})
 func run() -> void:
 	var game=load("res://main.tscn").instantiate(); root.add_child(game); await process_frame; await process_frame
 	var bridge=game.net.bridge; bridge.set_process(false)
@@ -48,9 +48,12 @@ func run() -> void:
 	check(game.race_bots==game.BotSettings.preset(),"Legacy host without bot descriptor retains ordinary difficulty")
 	game.net._receive("p0",{"type":"begin","round":1})
 	check(game.cars.all(func(c): return c.replica and c.freeze),"Only host simulates authoritative physics")
-	var snapshot={"type":"state","round":1,"seq":1,"phase":"race","ms":5000,"countdown":0,"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(_p): return 0),"beams":[]}
+	game.track.props[0].strike()
+	check(game.track.broken_mask==0,"Replica cannot break roadside objects locally")
+	var snapshot={"broken":3,"type":"state","round":1,"seq":1,"phase":"race","ms":5000,"countdown":0,"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(_p): return 0),"beams":[]}
 	check(Wire.valid_snapshot(snapshot,game.pickups.size()),"Bounded full state validates")
 	game.net._receive("p0",snapshot)
+	check(game.track.broken_mask==3,"Host snapshot restores broken roadside objects")
 	check(game.elapsed==5 and game.state=="race","Client accepts host time and phase")
 	snapshot.cars[15][44]=-250; snapshot.cars[15][45]=320; snapshot.cars[15][46]=4
 	snapshot.cars[15][39]=4; snapshot.cars[15][40]=5760; snapshot.cars[15][41]=80; snapshot.cars[15][42]=0

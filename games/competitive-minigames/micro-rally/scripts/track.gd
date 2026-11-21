@@ -3,7 +3,12 @@ extends Node3D
 const Furniture = preload("res://scripts/stage_furniture.gd")
 const Art = preload("art.gd")
 const Tires = preload("tire_surface.gd")
-const WIDTH = 12.0
+var half_widths := PackedFloat32Array()
+var road_quads: Array[PackedVector2Array]=[]
+var road_bounds: Array[Rect2]=[]
+var props: Array[Area3D] = []
+var broken_mask := 0
+var local_breaks := false
 var COUNT = 320
 var points = PackedVector3Array()
 var tangents = PackedVector3Array()
@@ -43,6 +48,69 @@ func _sample_route(anchors: Array) -> void:
 		var v = points[(i+1)%COUNT]-points[i]; length+=v.length(); v.y=0; tangents.append(v.normalized())
 	map_bounds=Rect2(Vector2(points[0].x,points[0].z),Vector2.ZERO)
 	for point in points: map_bounds=map_bounds.expand(Vector2(point.x,point.z))
+	bake_widths()
+
+# Stations are fractions of a lap and give the half-width in metres.
+func width_stations() -> Array:
+	return [Vector2(0,6.5),Vector2(0.21,7.4),Vector2(0.42,5.1),
+			Vector2(0.56,7.9),Vector2(0.73,4.7),Vector2(0.87,6.9),Vector2(1,6.5)]
+
+func bridge_clearance(index: int, planned: float) -> float:
+	# Both wooden crossings and their approach tapers follow the creek.
+	return lerpf(4.45,planned,smoothstep(10,24,absf(points[index].x+30)))
+
+func bake_widths() -> void:
+	var stations:=width_stations()
+	half_widths.resize(COUNT)
+	var section:=0
+	for i in COUNT:
+		var fraction: float=float(i)/COUNT
+		while fraction>stations[section+1].x: section+=1
+		var a: Vector2=stations[section]
+		var b: Vector2=stations[section+1]
+		var planned:=bridge_clearance(i,lerpf(a.y,b.y,smoothstep(a.x,b.x,fraction)))
+		# A ribbon wider than the bend radius folds over its own inner edge.
+		var before: Vector3=points[i]-points[posmod(i-1,COUNT)]
+		var after: Vector3=points[(i+1)%COUNT]-points[i]
+		before.y=0; after.y=0
+		var radius: float=(before.length()+after.length())/(2*maxf(0.0001,before.angle_to(after)))
+		half_widths[i]=minf(planned,0.86*radius)
+	# Approach each pinch gradually from both directions, including at the lap seam.
+	for direction in [1,-1]:
+		for step in 2*COUNT:
+			var i:=posmod(step*int(direction),COUNT)
+			var prev:=posmod(i-int(direction),COUNT)
+			var span: float=points[i].distance_to(points[prev])
+			half_widths[i]=minf(half_widths[i],half_widths[prev]+0.18*span)
+
+	road_quads.resize(COUNT)
+	road_bounds.resize(COUNT)
+	for i in COUNT:
+		var j: int=(i+1)%COUNT
+		var a:=Vector2(points[i].x,points[i].z)
+		var b:=Vector2(points[j].x,points[j].z)
+		var sa:=Vector2(-tangents[i].z,tangents[i].x)*half_width(i)
+		var sb:=Vector2(-tangents[j].z,tangents[j].x)*half_width(j)
+		road_quads[i]=PackedVector2Array([a+sa,b+sb,b-sb,a-sa])
+		road_bounds[i]=Rect2(a+sa,Vector2.ZERO).expand(b+sb).expand(b-sb).expand(a-sa).grow(0.001)
+
+func half_width(index: int) -> float:
+	return half_widths[posmod(index,COUNT)]
+
+const EDGE_NEIGHBOURS=[0,-1,1,-2,2,-3,3,-4,4,-5,5,-6,6]
+
+func on_road(point: Vector3, at: int, clearance: float=0.0) -> bool:
+	var p:=Vector2(point.x,point.z)
+	# On a tight hairpin the closest centre sample can lie several segments
+	# away from the mesh triangle supporting the inside wheel.
+	for offset in EDGE_NEIGHBOURS:
+		var i:=posmod(at+int(offset),COUNT)
+		if not road_bounds[i].grow(clearance).has_point(p): continue
+		var quad:=road_quads[i]
+		if Geometry2D.is_point_in_polygon(p,quad): return true
+		if clearance>0 and (Geometry2D.get_closest_point_to_segment(p,quad[0],quad[1]).distance_squared_to(p)<=clearance*clearance or Geometry2D.get_closest_point_to_segment(p,quad[2],quad[3]).distance_squared_to(p)<=clearance*clearance):
+			return true
+	return false
 
 func base_height(x: float, z: float) -> float:
 	return 2.8+sin(x*0.032)*1.7+cos(z*0.035)*2.0+sin((x+z)*0.055)*0.55
@@ -99,15 +167,34 @@ func ground_height(x: float, z: float, index: int, driving_surface: bool = false
 	var distance = sqrt(best_distance)
 	# One continuous driving surface: no raised ribbon edge to catch the chassis.
 	# The visible creek remains below bridges; cars never drive under these spans.
-	if driving_surface: stream*=smoothstep(6.3,10.0,distance)
-	return lerpf(road_y-0.035,base_height(x,z)+hill,smoothstep(6.0,12.0,distance))-stream*6.0
+	if driving_surface: stream*=smoothstep(half_width(index)+0.3,half_width(index)+4.0,distance)
+	return lerpf(road_y-0.035,base_height(x,z)+hill,smoothstep(half_width(index),half_width(index)+6,distance))-stream*6.0
 
 func build() -> void:
 	rng.seed=38021
 	_build_terrain(); _build_road(); _build_stream(); _decorate(); _grass()
+	preload("roadside_sites.gd").populate(self,roadside_theme())
 	for i in range(15,COUNT,35):
 		var side = Vector3(-tangents[i].z,0,tangents[i].x)
-		pickup_spots.append(points[i]+side*3.6+Vector3.UP*0.8)
+		pickup_spots.append(points[i]+side*(half_width(i)*0.60)+Vector3.UP*0.8)
+
+func roadside_theme() -> String: return "valley"
+
+func reset_props(authority: bool) -> void:
+	local_breaks=authority
+	for item in props: item.restore()
+	broken_mask=0
+
+func break_prop(slot: int) -> void:
+	var bit:=1<<slot
+	if broken_mask&bit: return
+	broken_mask|=bit
+	props[slot].scatter()
+
+func apply_broken_mask(mask: int) -> void:
+	var missing:=mask & ~broken_mask
+	for i in props.size():
+		if missing & (1<<i): break_prop(i)
 
 func terrain_cells() -> int: return 108
 
@@ -159,8 +246,8 @@ func _build_road() -> void:
 	var distance = 0.0
 	for i in COUNT:
 		var j = (i+1)%COUNT; var a = points[i]; var b = points[j]
-		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)*WIDTH*0.5
-		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)*WIDTH*0.5
+		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)*half_width(i)
+		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)*half_width(j)
 		var next = distance+a.distance_to(b)
 		for cross_section in road_divisions():
 			var u=float(cross_section)/road_divisions(); var v=float(cross_section+1)/road_divisions()
@@ -186,10 +273,10 @@ func _build_road() -> void:
 		var span = points[j]-points[i]
 		var side_a = Vector3(-tangents[i].z,0,tangents[i].x)
 		var side_b = Vector3(-tangents[j].z,0,tangents[j].x)
-		var plank = Art.box(self,Vector3(WIDTH+0.3,0.15,span.length()+0.12),center+Vector3.UP*0.11,Color("8e6843"))
+		var plank = Art.box(self,Vector3(half_width(i)+half_width(j)+0.3,0.15,span.length()+0.12),center+Vector3.UP*0.11,Color("8e6843"))
 		plank.look_at(plank.position+span,Vector3.UP)
 		for s in [-1,1]:
-			var a = points[i]+side_a*(WIDTH*0.5+0.15)*s; var b = points[j]+side_b*(WIDTH*0.5+0.15)*s
+			var a = points[i]+side_a*(half_width(i)+0.15)*s; var b = points[j]+side_b*(half_width(j)+0.15)*s
 			var pos = a.lerp(b,0.5); var edge = b-a
 			Art.box(self,Vector3(0.22,1.5,0.22),a+Vector3.UP*0.65,Color("634a35"))
 			for height in [0.45,1.1]:
@@ -219,7 +306,7 @@ func _decorate() -> void:
 	for n in 8500:
 		var x = rng.randf_range(-100,100); var z = rng.randf_range(-100,100)
 		var p = Vector3(x,0,z); var i = nearest(p); var distance = p.distance_to(Vector3(points[i].x,0,points[i].z))
-		if distance<8.3 or absf(x+30)<6.3: continue
+		if distance<half_width(i)+2.3 or absf(x+30)<6.3: continue
 		p.y=surface_height(x,z)
 		var id: String
 		var scale_factor = 1.0
@@ -237,14 +324,15 @@ func _decorate() -> void:
 		if absf(points[i].x+30)<9: continue
 		var side = Vector3(-tangents[i].z,0,tangents[i].x)
 		for sign_value in [-1,1]:
-			var pos = points[i]+side*7.8*sign_value
+			var pos = points[i]+side*(half_width(i)+1.8)*sign_value
+			pos.y=surface_height(pos.x,pos.z)
 			var post = Art.box(self,Vector3(0.17,0.9,0.17),pos+Vector3.UP*0.4,Color("8a704c"))
 			var rail = Art.box(self,Vector3(0.12,0.17,5),pos+Vector3.UP*0.75,Color("aa8758")); rail.rotation.y=atan2(-tangents[i].x,-tangents[i].z)
 			post.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for i in range(8,COUNT,8):
 		var bend: float=tangents[i].signed_angle_to(tangents[(i+6)%COUNT],Vector3.UP)
 		if absf(bend)>0.36 and not _bridge_segment(i):
-			Furniture.turn_sign(self,i,bend,8.4)
+			Furniture.turn_sign(self,i,bend,half_width(i)+2.4)
 	Furniture.gate(self,"DIRTY VALLEY",Color("15636a"))
 
 func _grass_mesh() -> ArrayMesh:
@@ -287,7 +375,7 @@ func _grass() -> void:
 			var x = x_step*0.5+rng.randf_range(-0.16,0.16); var z = z_step*0.5+rng.randf_range(-0.16,0.16)
 			var p = Vector3(x,0,z); var at = nearest(p)
 			var distance = Vector2(x-points[at].x,z-points[at].z).length()
-			if distance<6.7 or distance>30 or absf(x+30)<5.8: continue
+			if distance<half_width(at)+0.7 or distance>30 or absf(x+30)<5.8: continue
 			p.y=surface_height(x,z)-0.018
 			var key = Vector2i(floori(x/16),floori(z/16))
 			if not cells.has(key): cells[key]=[]
@@ -304,7 +392,7 @@ func _grass() -> void:
 func road_surface(_point: Vector3, _at: int) -> int: return Tires.Kind.MUD
 func tire_surface_at(point: Vector3) -> int:
 	var at=nearest(point)
-	return Tires.Kind.GRASS if road_distance(point,at)>WIDTH*0.5 else road_surface(point,at)
+	return Tires.Kind.GRASS if not on_road(point,at) else road_surface(point,at)
 func surface_at(point: Vector3) -> Vector3:
 	return Tires.profile(tire_surface_at(point))
 

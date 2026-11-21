@@ -16,7 +16,7 @@ func run() -> void:
 		for side in [-1,1]:
 			for speed in [4.0,14.0]:
 				var lateral=Vector3(-game.track.tangents[at].z,0,game.track.tangents[at].x)*side
-				var start: Vector3=game.track.points[at]+lateral*8.5
+				var start: Vector3=game.track.points[at]+lateral*(game.track.half_width(at)+2.5)
 				var hit=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(start+Vector3.UP*15,start-Vector3.UP*15,1))
 				check(not hit.is_empty(),"Shoulder has physical ground")
 				start.y=hit.position.y+0.72
@@ -35,7 +35,7 @@ func run() -> void:
 		for side in [-1,1]:
 			var tangent: Vector3=game.track.tangents[start_at]
 			var lateral=Vector3(-tangent.z,0,tangent.x)*side
-			var start: Vector3=game.track.points[start_at]+lateral*5.05+Vector3.UP*0.72
+			var start: Vector3=game.track.points[start_at]+lateral*(game.track.half_width(start_at)-0.95)+Vector3.UP*0.72
 			car.reset_at(Transform3D(Basis(Vector3.UP,atan2(-tangent.x,-tangent.z)),start))
 			car.steer_input=0; car.throttle=1; car.desired=tangent; car.immune=100; car.disabled_time=0
 			await physics_frame; await physics_frame

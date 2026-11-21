@@ -36,13 +36,14 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 	var target_at: int=(at+ahead)%track.COUNT
 	var tangent: Vector3=track.tangents[target_at]
 	var side = Vector3(-tangent.z,0,tangent.x)
+	var lane_scale: float=track.half_width(target_at)/6.0
 	if decision_clock<=0:
 		decision_clock=[0.5,0.25,0.14][int(settings.reaction)]; decision_count+=1
 		var best_score = INF; var selected = desired_lane
 		for candidate in [-2.8,0.0,2.8]:
 			var score: float=absf(candidate-desired_lane)*0.25+absf(candidate-(float(car.index%3)-1)*2.8)*0.08
 			if lane_hold>0 and absf(candidate-desired_lane)>1: score+=1.5
-			var point: Vector3=track.points[target_at]+side*candidate
+			var point: Vector3=track.points[target_at]+side*candidate*lane_scale
 			for other in others:
 				if other==car or other.finish_time>=0 or other.ghost_time>0: continue
 				# Score the approach, not only the endpoint: an occupied passing gap stays unsafe.
@@ -63,7 +64,7 @@ func drive(car: Node3D, others: Array, delta: float) -> void:
 		if selected!=desired_lane: lane_changes+=1; lane_hold=0.75
 		desired_lane=selected
 	lane=move_toward(lane,desired_lane,delta*3.6)
-	var target: Vector3=track.points[target_at]+side*lane
+	var target: Vector3=track.points[target_at]+side*lane*lane_scale
 	car.desired=target-car.position; car.desired.y=0; car.desired=car.desired.normalized()
 	var angle: float=absf(car.last_forward.signed_angle_to(car.desired,Vector3.UP))
 	var bend = 0.0

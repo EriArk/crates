@@ -215,10 +215,10 @@ func tick(delta: float) -> void:
 		var nearest_index: int=track.nearest(position,checkpoint)
 		var advance = posmod(nearest_index-checkpoint,track.COUNT)
 		var road_delta: Vector3=position-track.points[nearest_index]
-		var on_course = Vector2(road_delta.x,road_delta.z).length()<track.WIDTH*0.5+1.5 and absf(road_delta.y)<2.5
+		var on_course = Vector2(road_delta.x,road_delta.z).length()<track.half_width(nearest_index)+1.5 and absf(road_delta.y)<2.5
 		if advance<12 and on_course and not reset_pending:
 			passed+=advance; checkpoint=nearest_index; laps=passed/track.COUNT
-		offroad=track.road_distance(position,nearest_index)>track.WIDTH*0.5+0.5
+		offroad=not track.on_road(position,nearest_index,0.5)
 	if grounded and linear_velocity.length()<1.5 and (throttle>0.2 or brake>0.5): stuck_time+=delta
 	else: stuck_time=0
 	if basis.y.dot(Vector3.UP)<0.2 and linear_velocity.length()<3: overturned_time+=delta
@@ -262,6 +262,9 @@ func tick_weapon(delta: float) -> void:
 	cooling_delay=maxf(0,cooling_delay-delta)
 	weapon_heat=maxf(0,weapon_heat-COOLING_PER_SECOND*cooling_time)
 	if overheated and weapon_heat<=RESUME_HEAT: overheated=false
+
+func roadside_driver() -> bool:
+	return lives>0 and health>0 and ghost_time<=0 and not freeze
 
 func begin_shot() -> bool:
 	if health<=0 or replica or overheated or fire_cooldown>0 or disabled_time>0 or finish_time>=0 or ghost_time>0 or (arena_mode and immune>0): return false

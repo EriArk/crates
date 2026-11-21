@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends "track.gd"
 # Authored mountain loop, using the shared continuous ground/road collision.
+func roadside_theme() -> String: return "timber"
+
+func width_stations() -> Array:
+	return [Vector2(0,6.5),Vector2(0.14,7.4),Vector2(0.28,4.8),Vector2(0.42,4.6),Vector2(0.51,6.5),Vector2(0.68,5.0),Vector2(0.84,7.6),Vector2(1,6.5)]
+
+func bridge_clearance(_index: int, planned: float) -> float:
+	return planned
+
 func terrain_cells() -> int: return 168
 func _anchors() -> Array:
 	return [Vector3(-60,0,118),Vector3(-118,0,108),Vector3(-142,0,70),Vector3(-140,0,14),
@@ -24,7 +32,7 @@ func ground_height(x: float, z: float, index: int, _driving_surface: bool = fals
 		var distance=Vector2(x,z).distance_squared_to(av.lerp(bv,t))
 		if distance<best: best=distance; road_y=lerpf(a.y,b.y,t)
 	var hill=base_height(x,z)+smoothstep(8.0,22.0,sqrt(best))*(3.0+sin(x*0.07)*cos(z*0.06)*2.0)
-	return lerpf(road_y-0.035,hill,smoothstep(6.5,14.0,sqrt(best)))
+	return lerpf(road_y-0.035,hill,smoothstep(half_width(index)+0.5,half_width(index)+8,sqrt(best)))
 func _bridge_segment(_i: int) -> bool: return false
 func _build_stream() -> void: pass
 func road_follows_terrain() -> bool: return true
@@ -60,7 +68,7 @@ func _decorate() -> void:
 		var x=rng.randf_range(-163,163); var z=rng.randf_range(-163,163)
 		var p=Vector3(x,0,z); var at=nearest(p)
 		var distance=Vector2(x-points[at].x,z-points[at].z).length()
-		if distance<10.5: continue
+		if distance<half_width(at)+4.5: continue
 		p.y=surface_height(x,z)
 		var id: String; var factor: float
 		if n<4100:
@@ -85,7 +93,7 @@ func _build_rails() -> void:
 		if points[i].y<18 and curve<0.24: continue
 		var sa=Vector3(-tangents[i].z,0,tangents[i].x); var sb=Vector3(-tangents[j].z,0,tangents[j].x)
 		for s in [-1,1]:
-			var a=points[i]+sa*7.5*s; var b=points[j]+sb*7.5*s
+			var a=points[i]+sa*(half_width(i)+1.5)*s; var b=points[j]+sb*(half_width(j)+1.5)*s
 			a.y=surface_height(a.x,a.z); b.y=surface_height(b.x,b.z)
 			_quad(rails,a-Vector3.UP*0.2,b-Vector3.UP*0.2,b+Vector3.UP*0.9,a+Vector3.UP*0.9)
 			var beam=Art.box(self,Vector3(0.18,0.22,a.distance_to(b)+0.1),a.lerp(b,0.5)+Vector3.UP*0.7,Color("b3b9ac"))
@@ -93,7 +101,7 @@ func _build_rails() -> void:
 			if i%2==0: Art.box(self,Vector3(0.2,0.9,0.2),a+Vector3.UP*0.4,Color("5d635c"))
 		if curve>0.24 and i%3==0:
 			var bend: float=tangents[i].signed_angle_to(tangents[(i+3)%COUNT],Vector3.UP)
-			Furniture.turn_sign(self,i,bend,8.8)
+			Furniture.turn_sign(self,i,bend,half_width(i)+2.8)
 	_static_surface(rails,"pass_rail")
 func _tower(point: Vector3) -> void:
 	point.y=surface_height(point.x,point.z)
@@ -126,7 +134,7 @@ func _grass() -> void:
 				for sign_value in [-1,1]:
 					var p=center+side*(cross_step*0.7+rng.randf_range(-0.2,0.2))*sign_value
 					p.y=surface_height(p.x,p.z)-0.018
-					if road_distance(p,nearest(p))<6.7: continue
+					if on_road(p,nearest(p),0.7): continue
 					var key=Vector2i(floori(p.x/16),floori(p.z/16))
 					if not cells.has(key): cells[key]=[]
 					cells[key].append(Transform3D(Basis(Vector3.UP,rng.randf()*TAU).scaled(Vector3.ONE*rng.randf_range(1.5,2.2)),p))

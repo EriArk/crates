@@ -20,6 +20,14 @@ var grass_material: ShaderMaterial
 var stream_usec=0
 var stream_steps=0
 
+func _bridge_segment(_i: int) -> bool: return false
+
+func width_stations() -> Array:
+	return [Vector2(0,6),Vector2(0.12,5.2),Vector2(0.25,5.9),Vector2(0.43,4.9),Vector2(0.59,5.4),Vector2(0.73,5.0),Vector2(0.87,6.8),Vector2(0.95,7.2),Vector2(1,6)]
+
+func bridge_clearance(_index: int, planned: float) -> float:
+	return planned
+
 func _init() -> void:
 	super(false)
 	data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/nordschleife/circuit.json"))
@@ -48,6 +56,7 @@ func _init() -> void:
 				lookup[key].append(i)
 	map_bounds=Rect2(Vector2(points[0].x,points[0].z),Vector2.ZERO)
 	for p in points: map_bounds=map_bounds.expand(Vector2(p.x,p.z))
+	bake_widths()
 	for i in COUNT:
 		var distance=float(i)/COUNT*20832; var amount=0.0
 		var curve=tangents[posmod(i-3,COUNT)].signed_angle_to(tangents[(i+3)%COUNT],Vector3.UP)/30.5
@@ -99,7 +108,7 @@ func ground_height(x: float, z: float, index: int, _driving_surface: bool = fals
 		var delta=Vector2(x,z)-a.lerp(b,t); var d=delta.length_squared()
 		if d<best:
 			best=d; var side=Vector2(-tangents[i].z,tangents[i].x)
-			y=lerpf(points[i].y,points[j].y,t)+clampf(delta.dot(side),-6,6)*lerpf(banks[i],banks[j],t)
+			y=lerpf(points[i].y,points[j].y,t)+clampf(delta.dot(side),-half_width(i),half_width(i))*lerpf(banks[i],banks[j],t)
 	return lerpf(y-0.035,base_height(x,z),smoothstep(7.0,24.0,sqrt(best)))
 func grid_height(key: Vector2i) -> float:
 	if not heights.has(key):
@@ -125,6 +134,7 @@ func build() -> void:
 	ground.set_shader_parameter("meadow_dark",Color("365936")); ground.set_shader_parameter("meadow_light",Color("678846"))
 	for key in tiles: _terrain_tile(key,ground)
 	_build_nord_road(); _rails(); _landmarks()
+	preload("roadside_sites.gd").populate(self,"circuit")
 	for i in range(18,COUNT,22):
 		pickup_spots.append(road_pose(i,3.5,0).origin+Vector3.UP*0.9)
 	update_view(points[0])
@@ -151,7 +161,7 @@ func _build_nord_road() -> void:
 	for start in range(0,COUNT,24):
 		var surface=SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		for i in range(start,mini(start+24,COUNT)):
-			var j=(i+1)%COUNT; var sa=Vector3(-tangents[i].z,0,tangents[i].x)*6; var sb=Vector3(-tangents[j].z,0,tangents[j].x)*6
+			var j=(i+1)%COUNT; var sa=Vector3(-tangents[i].z,0,tangents[i].x)*half_width(i); var sb=Vector3(-tangents[j].z,0,tangents[j].x)*half_width(j)
 			var vertices=[points[i]-sa,points[j]-sb,points[i]+sa,points[i]+sa,points[j]-sb,points[j]+sb]
 			var a=float(i)/COUNT*20832; var b=float(i+1)/COUNT*20832
 			var uv=[Vector2(0,a),Vector2(0,b),Vector2(1,a),Vector2(1,a),Vector2(0,b),Vector2(1,b)]
@@ -173,7 +183,7 @@ func _rails() -> void:
 		for i in range(start,mini(start+32,COUNT)):
 			var j=(i+1)%COUNT
 			for sign_value in [-1,1]:
-				var a=road_pose(i,7.4*sign_value,0).origin; var b=road_pose(j,7.4*sign_value,0).origin
+				var a=road_pose(i,(half_width(i)+1.4)*sign_value,0).origin; var b=road_pose(j,(half_width(j)+1.4)*sign_value,0).origin
 				_quad(faces,a-Vector3.UP*0.2,b-Vector3.UP*0.2,b+Vector3.UP*0.9,a+Vector3.UP*0.9)
 				for h in [0.45,0.75]:
 					for p in [a+Vector3.UP*(h-0.1),b+Vector3.UP*(h-0.1),b+Vector3.UP*(h+0.1),a+Vector3.UP*(h-0.1),b+Vector3.UP*(h+0.1),a+Vector3.UP*(h+0.1)]: surface.add_vertex(p-origin)
@@ -231,7 +241,7 @@ func _scenery_step() -> void:
 	if job.stage==0:
 		if i>=190: job.stage=1; job.index=0; return
 		var p=Vector3((key.x+random.randf())*CELL,0,(key.y+random.randf())*CELL); var at=nearest(p); var edge=road_distance(p,at)
-		if edge<10: return
+		if edge<half_width(at)+4: return
 		p.y=surface_height(p.x,p.z); var id="tree_pineTallA" if i%3 else "tree_pineRoundA"; var factor=random.randf_range(4.5,7)
 		if i>100: id="plant_bushDetailed" if i%2 else "flower_yellowA"; factor=random.randf_range(0.8,1.6)
 		elif i>85: id="rock_largeA"; factor=random.randf_range(0.8,2.2)
@@ -245,8 +255,8 @@ func _scenery_step() -> void:
 		if i>=6400: job.stage=3; job.index=0; return
 		var x=i%80; var z=i/80
 		var p=Vector3(key.x*CELL+x*0.8+random.randf()*0.25,0,key.y*CELL+z*0.8+random.randf()*0.25)
-		var edge=road_distance(p,nearest(p))
-		if edge<6.7 or edge>25: return
+		var at=nearest(p); var edge=road_distance(p,at)
+		if edge<half_width(at)+0.7 or edge>25: return
 		p.y=surface_height(p.x,p.z)-0.02
 		var cell=Vector2i(floori(p.x/16),floori(p.z/16))
 		if not job.grass.has(cell): job.grass[cell]=[]
@@ -262,7 +272,7 @@ func _scenery_step() -> void:
 func road_surface(point: Vector3, at: int) -> int:
 	# Same bank spans and inside 66% of the ribbon as nord_road.gdshader.
 	var side=Vector3(-tangents[at].z,0,tangents[at].x)
-	var u=0.5+(point-points[at]).dot(side)/WIDTH
+	var u=0.5+(point-points[at]).dot(side)/(2*half_width(at))
 	var distance=float(at)/COUNT*20832
 	for span in data.banks:
 		if distance>span[0]+10 and distance<span[1]-10 and u<0.66: return Tires.Kind.CONCRETE

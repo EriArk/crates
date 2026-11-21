@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends "track.gd"
 # Independent authored route; common mesher keeps the shoulder collision continuous.
+func roadside_theme() -> String: return "quarry"
+
+func width_stations() -> Array:
+	return [Vector2(0,6.5),Vector2(0.15,5.2),Vector2(0.30,4.8),Vector2(0.45,8.3),Vector2(0.58,8.3),Vector2(0.67,5.2),Vector2(0.82,4.9),Vector2(0.92,7.4),Vector2(1,6.5)]
+
+func bridge_clearance(_index: int, planned: float) -> float:
+	return planned
+
 func _anchors() -> Array:
 	return [Vector3(-20,0,84),Vector3(-70,0,82),Vector3(-91,0,45),Vector3(-86,0,-30),
 		Vector3(-62,0,-82),Vector3(10,0,-91),Vector3(72,0,-73),Vector3(88,0,-27),
@@ -21,7 +29,7 @@ func ground_height(x: float, z: float, index: int, _driving_surface: bool = fals
 		var t=clampf((Vector2(x,z)-av).dot(bv-av)/(bv-av).length_squared(),0,1)
 		var distance=Vector2(x,z).distance_squared_to(av.lerp(bv,t))
 		if distance<best: best=distance; road_y=lerpf(a.y,b.y,t)
-	return lerpf(road_y-0.035,base_height(x,z),smoothstep(6.0,11.0,sqrt(best)))
+	return lerpf(road_y-0.035,base_height(x,z),smoothstep(half_width(index),half_width(index)+5.0,sqrt(best)))
 
 func _build_terrain() -> void:
 	super._build_terrain()
@@ -65,7 +73,7 @@ func _decorate() -> void:
 	for n in 1900:
 		var x=rng.randf_range(-102,102); var z=rng.randf_range(-102,102)
 		var p=Vector3(x,0,z); var at=nearest(p)
-		if Vector2(x-points[at].x,z-points[at].z).length()<9.5: continue
+		if Vector2(x-points[at].x,z-points[at].z).length()<half_width(at)+3.5: continue
 		p.y=surface_height(x,z)
 		var id: String; var scale_value: float
 		if n<1050:
@@ -84,7 +92,7 @@ func _decorate() -> void:
 		var side_a=Vector3(-tangents[i].z,0,tangents[i].x)
 		var side_b=Vector3(-tangents[j].z,0,tangents[j].x)
 		for sign_value in [-1,1]:
-			var a=points[i]+side_a*7.3*sign_value; var b=points[j]+side_b*7.3*sign_value
+			var a=points[i]+side_a*(half_width(i)+1.3)*sign_value; var b=points[j]+side_b*(half_width(j)+1.3)*sign_value
 			_quad(rails,a-Vector3.UP*0.15,b-Vector3.UP*0.15,b+Vector3.UP*0.75,a+Vector3.UP*0.75)
 			if i%2==0:
 				var rail=Art.box(self,Vector3(0.35,0.8,a.distance_to(b)*1.9),a.lerp(b,0.5)+Vector3.UP*0.35,Color("c3b592") if i%4 else Color("776b55"))
@@ -94,7 +102,7 @@ func _decorate() -> void:
 	for i in range(8,COUNT,8):
 		var bend: float=tangents[i].signed_angle_to(tangents[(i+8)%COUNT],Vector3.UP)
 		if absf(bend)>0.35:
-			Furniture.turn_sign(self,i,bend,8.2)
+			Furniture.turn_sign(self,i,bend,half_width(i)+2.2)
 	_conveyor(Vector3(-12,0,-13),0.25)
 	_conveyor(Vector3(53,0,-38),-0.7)
 	Furniture.gate(self,"REDSTONE QUARRY",Color("854632"))

@@ -109,7 +109,7 @@ func run() -> void:
 	check(game.effects.particles.size()==2 and game.effects.particles[0].node.material_override==game.effects.spray_material,"Wet asphalt emits water spray")
 	for w in car.physics.wheels: w.surface=Tires.Kind.MUD; w.long_slip=8
 	var packed=Wire.car_state(car)
-	check(packed.size()==56 and packed[44]==800 and packed[46]==Tires.Kind.MUD,"Wire retains signed per-wheel slip and material")
+	check(packed.size()==Wire.CAR_LIMITS.size() and packed[44]==800 and packed[46]==Tires.Kind.MUD,"Wire retains signed per-wheel slip and material")
 	var nord=preload("res://scripts/nordschleife_track.gd").new()
 	var at=roundi((nord.data.banks[0][0]+nord.data.banks[0][1])*0.5/20832*nord.COUNT)
 	check(nord.tire_surface_at(nord.points[at])==Tires.Kind.CONCRETE,"Karussell concrete matches authored inside lane")

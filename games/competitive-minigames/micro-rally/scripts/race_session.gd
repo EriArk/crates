@@ -105,6 +105,10 @@ func _receive(member: String, data: Dictionary) -> void:
 		if (game.is_arena() and not game.arena.valid_state(data.get("arena"))) or not Wire.valid_snapshot(data,game.pickups.size()) or data.seq<=last_snapshot or (phase=="results" and data.phase!="results"):
 			abort("Could not sync the race."); return
 		if game.is_royale() and not game.royale.valid_state(data.get("royale"),data.arena): abort("Invalid survival state."); return
+		if not game.is_arena():
+			if not Wire.integer(data.get("broken"),0,(1<<game.track.props.size())-1):
+				abort("Invalid roadside state."); return
+			game.track.apply_broken_mask(int(data.broken))
 		if game.is_arena(): game.arena.apply_snapshot(data.arena)
 		last_snapshot=data.seq; targets=data.cars; received_at=Time.get_ticks_msec()
 		game.elapsed=data.ms/1000.0; game.countdown=data.countdown/1000.0
@@ -172,7 +176,7 @@ func apply_targets(delta: float, snap: bool = false) -> void:
 		car.last_forward=-car.basis.z
 		if not game.is_arena():
 			car.checkpoint=posmod(int(s[13]),game.track.COUNT)
-			car.offroad=game.track.road_distance(car.position,game.track.nearest(car.position,car.checkpoint))>game.track.WIDTH*0.5+0.5
+			car.offroad=not game.track.on_road(car.position,game.track.nearest(car.position,car.checkpoint),0.5)
 		car.linear_velocity=velocity
 		# Local aim reacts immediately; everyone else displays the authoritative turret.
 		if i!=game.player_index:
@@ -204,6 +208,7 @@ func _process(delta: float) -> void:
 	if host:
 		var packet = {"type":"state","round":round_id,"seq":sequence,"phase":game.state,"ms":roundi(game.elapsed*1000),"countdown":maxi(0,roundi(game.countdown*1000)),"cars":game.cars.map(Wire.car_state),"pickups":game.pickups.map(func(p): return roundi(p.cooldown*1000)),"beams":beams.duplicate()}
 		if game.is_arena(): packet.arena=game.arena.snapshot()
+		else: packet.broken=game.track.broken_mask
 		if game.is_royale(): packet.royale=game.royale.snapshot()
 		for member in bridge.channels:
 			if not bridge.send_latest(member,"state",packet): abort("The sync queue is full."); return
