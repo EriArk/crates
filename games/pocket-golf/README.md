@@ -236,3 +236,7 @@ are applied to the world before the HUD. Each island has a small flock and a gal
 of Quaternius residents from TrainerOS Bazaar. The gallery waves and claps for a sunk
 putt. Music and effects use their respective Sound sliders. The bird call is positional.
 See `licenses/gallery-provenance.json` for the model and sound credits.
+
+The Egregore loading flight uses the OctoFox Ship Studio hull, drive exhaust and
+sky from revision `37b4572e`. Steer with the left stick or arrow keys. The
+arrival artwork is captured in this game.

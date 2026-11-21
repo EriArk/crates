@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends Node3D
+var transit_locked := false
 const Match = preload("res://scripts/match.gd")
 const Courses = preload("res://scripts/courses.gd")
 const AvatarAnchor = preload("res://scripts/avatar_anchor.gd")
@@ -724,6 +725,7 @@ func _process(delta: float) -> void:
 		else: camera.frame(delta,ball_pos,golfer,deg_to_rad(shot_angle),rolling and elapsed>=Stroke.CONTACT,game.phase in ["aim","moving","waiting_turn"],avatar_binding.eye_height())
 
 func _poll_stick(delta: float) -> void:
+	if transit_locked:return
 	var direction := Vector2.ZERO
 	var aim_axis := Vector2.ZERO
 	var look := Vector2.ZERO
@@ -944,3 +946,13 @@ func _start_configured() -> void:
 	local_setup=false; field_index=-1; paused=false
 	if game.online: game.start_group(roster)
 	else: game.local(setup_count,roster)
+
+func transit_session() -> Node:
+	return game
+
+func transit_avatar_ready() -> bool:
+	return avatar_binding.startup_resolved
+
+func set_transit_controls(locked: bool) -> void:
+	transit_locked=locked
+	neutral_required=true

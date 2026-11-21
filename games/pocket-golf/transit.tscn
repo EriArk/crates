@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/trainer_transit/transit.gd" id="1"]
+
+[node name="Transit" type="CanvasLayer"]
+script = ExtResource("1")
+destination = "Pocket Golf"
+location = "The Club Isles"
+accent = Color(0.7059,0.8941,0.6941,1)
