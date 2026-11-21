@@ -175,13 +175,12 @@ func _setup_scene() -> void:
 	environment.name="WorldEnvironment"
 	var env := Environment.new()
 	env.background_mode=Environment.BG_SKY
-	var sky := Sky.new(); var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color=Color("72bed8")
-	sky_material.sky_horizon_color=Color("c5e7e5")
-	sky_material.ground_horizon_color=Color("c5e7e5")
-	sky_material.ground_bottom_color=Color("4b9db1")
-	sky_material.sun_angle_max=3.0
-	sky.sky_material=sky_material; env.sky=sky
+	var sky := Sky.new()
+	var sky_material := ShaderMaterial.new()
+	sky_material.shader=preload("res://shaders/coastal_sky.gdshader")
+	sky_material.set_shader_parameter("coast",preload("res://assets/coast/archipelago.jpg"))
+	sky.sky_material=sky_material
+	env.sky=sky
 	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color=Color("b7d5e8")
 	env.ambient_light_energy=0.32 if compatibility else 0.48
@@ -243,8 +242,10 @@ func _build_course() -> void:
 	# The exact same triangle grid supplies physics height/gradients and this mesh.
 	green_mesh=MeshInstance3D.new(); green_mesh.name="PlayableGreen"
 	green_mesh.mesh=GreenSurface.make_mesh(green_grid)
-	var turf := Surfaces.make(Color("80bc8c"),Surfaces.Kind.TURF)
+	var turf := Surfaces.make(Color("68ab80"),Surfaces.Kind.TURF)
 	turf.set_shader_parameter("course_surface",true)
+	turf.set_shader_parameter("pin_center",Vector2(c.cup[0],c.cup[1])/1000.0)
+	turf.set_shader_parameter("mow_angle",[0.48,-0.36,0.78][field_index])
 	var sand_bounds := PackedVector4Array(); var wall_bounds := PackedVector4Array()
 	for sand in c.sand: sand_bounds.append(Vector4(sand[0],sand[1],sand[2],sand[3])/1000.0)
 	for wall in c.walls: wall_bounds.append(Vector4(wall[0],wall[1],wall[2],wall[3])/1000.0)
@@ -253,10 +254,14 @@ func _build_course() -> void:
 	turf.set_shader_parameter("obstacle_count",wall_bounds.size()); wall_bounds.resize(8)
 	turf.set_shader_parameter("obstacles",wall_bounds)
 	green_mesh.material_override=turf; course_root.add_child(green_mesh)
-	for x in [-5.12,5.12]: box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color("d7b27e"),Surfaces.Kind.WOOD)
-	for z in [-8.12,8.12]: box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color("d7b27e"),Surfaces.Kind.WOOD)
+	var rail_material := ShaderMaterial.new()
+	rail_material.shader=preload("res://shaders/club_rail.gdshader")
 	for x in [-5.12,5.12]:
-		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("f2d7a0"))
+		box(course_root,Vector3(0.24,0.4,16.5),Vector3(x,0.13,0),Color.WHITE).material_override=rail_material
+	for z in [-8.12,8.12]:
+		box(course_root,Vector3(10.5,0.4,0.24),Vector3(0,0.13,z),Color.WHITE).material_override=rail_material
+	for x in [-5.12,5.12]:
+		for z in [-8.12,8.12]: cylinder(course_root,0.18,0.44,Vector3(x,0.15,z),Color("dfb66c"))
 	for wall in c.walls:
 		var top := 0.6
 		for x in range(wall[0],wall[2]+251,250):
@@ -269,6 +274,10 @@ func _build_course() -> void:
 	cylinder(cup,Size.CUP+0.012,0.004,Vector3(0,0.004,0),Color("f1e4c4"))
 	cylinder(cup,Size.CUP,0.004,Vector3(0,0.007,0),Color("284e43"))
 	island.flag=island.prop("golf/flag-red",cup.position+Vector3(0,0.01,0),1.0,0.2)
+	var pennant_material := ShaderMaterial.new()
+	pennant_material.shader=preload("res://shaders/pin_flag.gdshader")
+	for part in island.flag.find_children("*","MeshInstance3D",true,false):
+		part.material_override=pennant_material
 	balls.clear()
 	for i in game.world.players:
 		var ball := Node3D.new(); course_root.add_child(ball)

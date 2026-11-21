@@ -66,7 +66,49 @@ func build(hole: int) -> void:
 	for i in 5:
 		prop("nature/rock_largeC",Vector3(26+i*1.3,-1.6,-27+i*0.6),3.3-i*0.25,i*0.8)
 	prop("nature/tree_palmBend",Vector3(28,-0.8,-26),2.7,1.7)
-	_clouds()
+	add_child(preload("res://scripts/harbour_light.gd").new())
+
+	_beach_parasols(hole)
+
+func _beach_parasols(hole: int) -> void:
+	var cloth := [Color("cf644b"),Color("337d82"),Color("db9a38")]
+	var triangles := SurfaceTool.new()
+	triangles.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# The two picnic spots sit on the sand, clear of the green and landing.
+	for spot: Vector3 in [Vector3(-6.4,0,9.35), Vector3(7.9,0,6.2)]:
+		spot.y=surface_height(spot)
+		var seat := spot+Vector3(0.27,0,0.32)
+		seat.y=surface_height(seat)+0.03
+		var top := spot+Vector3.UP*1.65
+		for i in 10:
+			var a := TAU*i/10.0
+			var b := TAU*(i+1)/10.0
+			var left := Vector3(cos(a),0,sin(a))
+			var right := Vector3(cos(b),0,sin(b))
+			var hem := spot+Vector3.UP*1.20
+			triangles.set_color(cloth[hole] if i%2==0 else Color("fae7bd"))
+			for v in [top,hem+left,hem+right]:
+				triangles.add_vertex(v)
+			triangles.set_color(Color("926945"))
+			for v in [spot+left*0.045,spot+right*0.045,top+right*0.045,
+					spot+left*0.045,top+right*0.045,top+left*0.045]:
+				triangles.add_vertex(v)
+		# Alternate narrow woven stripes across a towel on the beach slope.
+		for stripe in 8:
+			triangles.set_color(Color("e8cda6") if stripe%3 else cloth[hole].darkened(0.20))
+			for corner in [Vector2(0,0),Vector2(1,0),Vector2(1,1),Vector2(0,0),Vector2(1,1),Vector2(0,1)]:
+				var v: Vector3=seat+Vector3((corner.x-0.5)*0.66,0,(stripe+corner.y)*0.14)
+				v.y=surface_height(v)+0.035
+				triangles.add_vertex(v)
+	triangles.generate_normals()
+	var decor := MeshInstance3D.new()
+	decor.mesh=triangles.commit()
+	var fabric := StandardMaterial3D.new()
+	fabric.vertex_color_use_as_albedo=true
+	fabric.vertex_color_is_srgb=true
+	fabric.cull_mode=BaseMaterial3D.CULL_DISABLED
+	decor.material_override=fabric
+	add_child(decor)
 
 func prop(id: String, at: Vector3, size: float=1.0, heading: float=0.0) -> Node3D:
 	if not models.has(id): models[id]=load(ROOT+id+".glb")
@@ -262,16 +304,6 @@ func _terrain() -> void:
 func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
 	# Godot uses clockwise front faces.
 	surface.set_color(color); surface.add_vertex(a); surface.add_vertex(c); surface.add_vertex(b)
-
-func _clouds() -> void:
-	var white := StandardMaterial3D.new(); white.albedo_color=Color("f7f6e9"); white.roughness=1
-	for i in 8:
-		var cloud := Node3D.new(); cloud.position=Vector3(-65+i*19,14+(i%3)*4,-60-(i%2)*20); add_child(cloud)
-		for j in 4:
-			var puff := MeshInstance3D.new(); var sphere := SphereMesh.new()
-			sphere.radius=2.0+(j%2)*0.7; sphere.height=sphere.radius*1.5; sphere.radial_segments=16; sphere.rings=8
-			puff.mesh=sphere; puff.material_override=white; puff.position=Vector3(j*2.5,0.5*(j%2),0)
-			puff.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; cloud.add_child(puff)
 
 func _process(delta: float) -> void:
 	clock+=delta

@@ -10,6 +10,8 @@ uniform sampler2D palette : source_color, filter_linear;
 uniform int obstacle_count = 0;
 uniform vec4 obstacles[8];
 uniform bool course_surface = false;
+uniform vec2 pin_center;
+uniform float mow_angle;
 uniform int sand_count = 0;
 uniform vec4 sand_bounds[8];
 uniform vec4 sand_tint : source_color = vec4(0.89804,0.80392,0.58824,1.0);
@@ -34,7 +36,15 @@ void fragment() {
     vec3 base=tint.rgb;
     int surface_kind=kind;
     if (course_surface) {
-        base*=mix(1.0,1.065,mod(floor(world.z+8.0),2.0));
+        // Change mowing direction at the fringe and around the pin.
+        vec2 axis = vec2(sin(mow_angle), cos(mow_angle));
+        float sweep = dot(world.xz,axis) + world.x*world.x*0.026;
+        float rows = smoothstep(-0.24,0.24,cos(sweep*3.1));
+        float edge = min(5.0-abs(world.x),8.0-abs(world.z));
+        float fairway = smoothstep(0.26,0.31,edge);
+        float collar = 1.0-smoothstep(1.25,1.35,distance(world.xz,pin_center));
+        base *= mix(0.77,mix(0.96,1.09,rows),fairway);
+        base = mix(base,tint.rgb*vec3(1.10,1.13,0.99),collar*0.79);
         for (int i=0;i<8;i++) {
             if (i>=sand_count) break;
             if (world.x>sand_bounds[i].x && world.z>sand_bounds[i].y && world.x<sand_bounds[i].z && world.z<sand_bounds[i].w) {
