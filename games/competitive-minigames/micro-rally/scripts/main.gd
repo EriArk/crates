@@ -36,6 +36,7 @@ var race_camera=preload("race_camera.gd").new()
 var tilt_shift: ShaderMaterial
 var optics: ColorRect
 var hud: Control
+var quitting := false
 var sound: Node
 var controls = Controls.new()
 var haptics = preload("haptics.gd").new()
@@ -272,7 +273,23 @@ func cycle_car() -> void:
 	var available=cup.Rules.CARS.filter(cup.store.owned)
 	cup.store.select_car(available[(available.find(cup.store.data.selected)+1)%available.size()]); _spawn_cars(); hud.menu("quick")
 func cycle_bots() -> void: bot_count={15:7,7:3,3:0,0:15}.get(bot_count,15); _spawn_cars(); hud.menu("quick")
-func quit_game() -> void: haptics.stop(); get_tree().paused=false; get_tree().quit()
+func quit_game() -> void:
+	if quitting:return
+	quitting=true
+	set_process(false)
+	haptics.stop()
+	get_tree().paused=false
+	var playbacks: Array[WeakRef]=[]
+	for player in sound.get_children():
+		if player is AudioStreamPlayer and player.has_stream_playback():
+			playbacks.append(weakref(player.get_stream_playback()))
+			player.stop()
+			player.stream=null
+	var deadline:=Time.get_ticks_msec()+900
+	for playback in playbacks:
+		while playback.get_ref()!=null and Time.get_ticks_msec()<deadline:
+			await get_tree().process_frame
+	get_tree().quit()
 
 func return_menu() -> void:
 	if not cup.pending_result.is_empty(): hud.menu("results"); return

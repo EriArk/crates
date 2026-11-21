@@ -21,6 +21,7 @@ var attached_at := 0
 var party := Party.new()
 var awaiting_guest := false
 var attach_pending := false
+var loader := Thread.new()
 
 func _ready() -> void:
 	layer=120
@@ -31,7 +32,7 @@ func _ready() -> void:
 			location="Mika’s Island" if island else "Ren’s Observatory"
 			picture="res://assets/transit/arrival-island.jpg" if island else "res://assets/transit/arrival-station.jpg"
 	_begin_flight()
-	if ResourceLoader.load_threaded_request(GAME)!=OK:_load_error()
+	if loader.start(ResourceLoader.load.bind(GAME))!=OK:_load_error()
 
 func _begin_flight() -> void:
 	if screen==null:
@@ -101,10 +102,7 @@ func _process(delta: float) -> void:
 	if phase=="error" or phase=="idle":return
 	if not game:
 		if attach_pending:return
-		var state:=ResourceLoader.load_threaded_get_status(GAME)
-		if state==ResourceLoader.THREAD_LOAD_FAILED or state==ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-			_load_error()
-		elif state==ResourceLoader.THREAD_LOAD_LOADED and now-since>=500:
+		if not loader.is_alive() and now-since>=500:
 			attach_pending=true
 			_attach_game.call_deferred()
 		return
@@ -118,7 +116,7 @@ func _process(delta: float) -> void:
 			hint.text="Waiting for character   ·   A / Enter to continue as guest"
 
 func _attach_game() -> void:
-	var scene:PackedScene=ResourceLoader.load_threaded_get(GAME)
+	var scene:PackedScene=loader.wait_to_finish()
 	if not scene:
 		_load_error()
 		return
@@ -177,3 +175,6 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept") or (event is InputEventJoypadButton and event.pressed and event.button_index==JOY_BUTTON_A):
 		if phase=="error":get_tree().reload_current_scene()
 		elif phase=="arrival" and awaiting_guest:_reveal()
+
+func _exit_tree() -> void:
+	if loader.is_started():loader.wait_to_finish()
