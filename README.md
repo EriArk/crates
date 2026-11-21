@@ -1,23 +1,13 @@
-# Crates — Games and Apps for TrainerOS
+# Crates — Games and Apps for OctoFox OS
 
-Games, apps, widgets and extensions for TrainerOS. Most entries are currently
+Games, apps, widgets and extensions for OctoFox OS. Most entries are currently
 concepts; implementation and verification are recorded per project.
 
 **Implemented projects:**
 
-- [Micro Rally (альфа)](games/competitive-minigames/micro-rally/) — physical combat
-  racing with up to 16 cars, drifting, weapons and shields. Version 0.1.2 is available
-  in Crates: four solo cup stages, arena battles and Deadwater Battle Royale.
-  Version 0.1.2 is installed on Odin/Flip; gameplay acceptance remains with the owner.
-  [Publication and remaining acceptance](games/competitive-minigames/micro-rally/docs/evidence/release-0.1.2-2026-10-29/README.md).
-- [Bazaar](games/bazaar/) — an early walkable fantasy island with a park market, town shops and the shared
-  TrainerOS character. Prepared in a separate branch; multiplayer, trading and
-  catalogue launch are pending. [Island and evidence](games/bazaar/docs/ISLAND.md).
-
-- [Pocket Golf](games/pocket-golf/) — three 3D greens, solo/local two-player play,
-  Lobby-first multiplayer and the shared TrainerOS avatar, including the opponent.
-  Version 0.1.18 is published and installed on Odin/Flip, with static player
-  portraits, local graphics settings and contrast. See [current evidence](PROJECT_STATUS.md).
+- [Micro Rally](games/competitive-minigames/micro-rally/) — coastal races, an arena and the Deadwater battle royale.
+- [Bazaar](games/bazaar/) — Festival Park, the island counter, the Toy Gallery and Wanage.
+- [Pocket Golf](games/pocket-golf/) — play the Open 7 greens solo, in a local pair or with a Lobby party. Festival visitors can enter the three-hole cup.
 
 - [Session Timer](widgets/session-timer/) — a session stopwatch, Start widget and
   optional break reminders.
