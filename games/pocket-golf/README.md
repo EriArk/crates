@@ -226,3 +226,13 @@ Kenney models/textures retain CC0-1.0; their original notices and source hashes
 are included in `assets/kenney/` and under `licenses/` in the binary packages.
 The unmodified Godot engine is MIT; its notices and bundled third-party licenses
 are included under `licenses/`. No model, rig or clothing from the other chat is copied.
+
+### Island gallery
+
+First Light pairs a dawn lighthouse with the original steel-pan tune *Harbour Steps*.
+The Bank Shot looks through a limestone arch and features the Bazaar's *Awning Waltz*.
+Sand & Stone looks onto a regatta at sunset with *A Little Green*. Grade and sea mist
+are applied to the world before the HUD. Each island has a small flock and a gallery
+of Quaternius residents from TrainerOS Bazaar. The gallery waves and claps for a sunk
+putt. Music and effects use their respective Sound sliders. The bird call is positional.
+See `licenses/gallery-provenance.json` for the model and sound credits.

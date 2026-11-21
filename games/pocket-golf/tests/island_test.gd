@@ -23,6 +23,17 @@ func check_landscape(environment) -> void:
 		if absf(vertex.x)<5.35 and absf(vertex.z)<8.35:
 			check(vertex.y<0,"meadow joins the green from below")
 	check(highest>1.0,"real terrain has raised hills")
+	var gallery=environment.gallery
+	check(gallery.birds.size()==4 and gallery.fans.size()==6,"bounded Bazaar cast")
+	for fan in gallery.fans:
+		var extent: AABB=environment.visual_bounds(fan)
+		check(extent.position.x>5 or extent.end.x< -5 or extent.position.z>8 or extent.end.z< -8,"gallery clear of the shot")
+	var bird: Node3D=gallery.birds[0]
+	var before:=bird.position
+	gallery.tick(0.25,0,false)
+	check(bird.position.distance_to(before)>0.03 and not gallery.bird_call.playing,"moving flock remains quiet when muted")
+	gallery.cheer()
+	check(gallery.players[0].current_animation in ["Wave","Victory"],"spectators react with a native rig clip")
 	check(environment.grass_positions.size()>4000,"continuous meadow present")
 	var batches: Array[Node] = environment.find_children("*","MultiMeshInstance3D",true,false)
 	check(batches.size()>4 and batches.size()<64,"grass split into bounded spatial batches")
@@ -44,7 +55,8 @@ func check_landscape(environment) -> void:
 	for x in range(-16,17):
 		for z in range(-22,23):
 			var p := Vector3(x*0.5+0.25,0,z*0.5+0.25)
-			if (Vector2(p.x,p.z)/Vector2(8.0,11.1)).length()>0.97: continue
+			var bearing:=atan2(p.z/11.7,p.x/8.4)
+			if (Vector2(p.x,p.z)/Vector2(8.0,11.1)).length()>environment.coastline(bearing)*0.97: continue
 			if absf(p.x)<6.0 and absf(p.z)<9.0: continue
 			if p.x>5.0 and absf(p.z-3.8)<1.2: continue
 			check(occupied.has(Vector2i(x,z)),"continuous hillside coverage")

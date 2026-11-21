@@ -48,5 +48,5 @@ func apply(scene: Node3D) -> void:
 
 func apply_contrast(scene: Node3D) -> void:
 	var environment: Environment = scene.get_node("WorldEnvironment").environment
-	environment.adjustment_enabled=contrast_percent!=100
+	environment.adjustment_enabled=true
 	environment.adjustment_contrast=contrast_percent/100.0

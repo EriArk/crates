@@ -2,8 +2,11 @@
 extends Node
 ## Local presentation. Absolute shot time consumes each cue once, even muted.
 const MUSIC = preload("res://assets/audio/little-green.ogg")
+const TRACKS = [preload("res://assets/audio/harbour-steps.ogg"),
+	preload("res://assets/audio/awning_waltz.ogg"), MUSIC]
 const ROLL = preload("res://assets/audio/roll.ogg")
 const CUES := {
+	"claps":preload("res://assets/audio/gallery-claps.ogg"),
 	"strike":preload("res://assets/audio/kenney/impactWood_light_000.ogg"),
 	"strike_sand":preload("res://assets/audio/sand.ogg"),
 	"land":preload("res://assets/audio/kenney/footstep_grass_000.ogg"),
@@ -21,6 +24,8 @@ const CUES := {
 const LIMIT := 8
 signal cue_played(kind: String)
 var music: AudioStreamPlayer
+var shore: AudioStreamPlayer
+var music_hole := -1
 var rolling: AudioStreamPlayer
 var jingle: AudioStreamPlayer
 var voices: Array[AudioStreamPlayer] = []
@@ -38,12 +43,24 @@ var stopped := false
 
 func _ready() -> void:
 	load_settings()
-	music=_player(); music.stream=MUSIC.duplicate(); music.stream.loop=true
+	music=_player()
+	shore=_player(); shore.stream=preload("res://assets/audio/shore-break.ogg").duplicate()
+	shore.stream.loop=true
 	rolling=_player(); rolling.stream=ROLL.duplicate(); rolling.stream.loop=true
 	jingle=_player()
 	for i in LIMIT: voices.append(_player())
-	music.volume_db=-80; music.play()
+	shore.volume_linear=0.0; shore.play()
+	set_course(0)
 	apply_levels()
+
+func set_course(hole: int) -> void:
+	if music_hole==hole: return
+	music_hole=hole
+	music.stream=TRACKS[hole].duplicate()
+	music.stream.loop=true
+	music.volume_linear=0
+	music.play()
+	music.stream_paused=not focused
 
 func _player() -> AudioStreamPlayer:
 	var node := AudioStreamPlayer.new(); add_child(node); return node
@@ -67,6 +84,7 @@ func apply_levels() -> void:
 	if music==null: return
 	# True mute, including sounds already playing, without touching system volume.
 	for voice in voices: voice.volume_linear=effects_percent/100.0*gains.get(voice,0.5)
+	shore.volume_linear=effects_percent/100.0*0.40
 	jingle.volume_linear=effects_percent/100.0*0.75
 	if effects_percent==0: rolling.volume_linear=0
 	if music_percent==0: music.volume_linear=0
@@ -79,6 +97,7 @@ func set_state(is_focused: bool, is_paused: bool) -> void:
 	focused=is_focused; paused=is_paused
 	if music==null: return
 	music.stream_paused=not focused
+	shore.stream_paused=not focused or paused
 	for voice in voices: voice.stream_paused=not focused or (paused and voice.stream!=CUES.ui)
 	rolling.stream_paused=not focused or paused
 	jingle.stream_paused=not focused or paused
@@ -122,7 +141,7 @@ func seek(time: float, speed: float=0.0, in_sand: bool=false) -> void:
 		# Discard old impacts after a hitch or background interval.
 		if time-event.time>0.22: continue
 		if event.kind in ["cup","ace"]:
-			cue("cup"); cue("ace-jingle" if event.kind=="ace" else "cup-jingle")
+			cue("cup"); cue("claps",0.8); cue("ace-jingle" if event.kind=="ace" else "cup-jingle")
 		else: cue(event.kind,event.strength)
 	var volume := clampf(speed/8.0,0,1)*effects_percent/100.0*(0.40 if in_sand else 0.22)
 	rolling.volume_linear=volume if focused and not paused else 0.0
@@ -144,7 +163,7 @@ func reset() -> void:
 func shutdown() -> void:
 	stopped=true
 	set_process(false)
-	for voice in voices+[music,rolling,jingle]:
+	for voice in voices+[music,shore,rolling,jingle]:
 		if is_instance_valid(voice): voice.stop(); voice.stream=null
 	gains.clear()
 

@@ -1,0 +1,30 @@
+{
+  "from": "Crates Bazaar",
+  "packs": [
+    {
+      "author": "Quaternius",
+      "pack": "Ultimate Monsters (October 2022)",
+      "license": "CC0-1.0",
+      "source": "https://quaternius.com/packs/ultimatemonsters.html",
+      "files": {
+        "Bunny.glb": "3108b1b080894ced53dd269b4970faafa34821b70646c9033ba1b79d0778d746",
+        "Pigeon.glb": "fd9ba4011647da3d123c472931ae002d0160da8a1d1ff7b64becbf6ed8991a01",
+        "Frog.glb": "4b8848449ce565207380c1a99e11949b9c649ce3fa67f4b9d4ba282fdce08301"
+      }
+    },
+    {
+      "author": "Quaternius",
+      "pack": "Ultimate Animated Character Pack (November 2019)",
+      "license": "CC0-1.0",
+      "source": "https://quaternius.com/packs/ultimatedanimatedcharacter.html",
+      "files": {
+        "Casual_Female.glb": "1a909850aee6c0ac91a0efa0e2d6bda749d2ad6c00f33b9c842413a29623f9b6",
+        "OldClassy_Male.glb": "da22b0aa834495b6f20608fafa0fb83a7bc0f25a08e95417b4c53882dfa35721"
+      }
+    }
+  ],
+  "audio": {
+    "awning_waltz.ogg": "Original Bazaar score, TrainerOS, GPL-3.0-or-later",
+    "pigeon.wav": "Original synthesized Bazaar bird call, TrainerOS, GPL-3.0-or-later"
+  }
+}

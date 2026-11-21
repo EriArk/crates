@@ -238,6 +238,8 @@ func _build_course() -> void:
 	green_grid=c.height_grid
 	camera.obstruction_height=0.6
 	island=Island.new(); course_root.add_child(island); island.build(field_index)
+	_course_light(field_index)
+	audio.set_course(field_index)
 	# The exact same triangle grid supplies physics height/gradients and this mesh.
 	green_mesh=MeshInstance3D.new(); green_mesh.name="PlayableGreen"
 	green_mesh.mesh=GreenSurface.make_mesh(green_grid)
@@ -281,6 +283,27 @@ func _build_course() -> void:
 	aim_root=Node3D.new(); course_root.add_child(aim_root)
 	for i in 8: sphere(aim_root,0.012,Vector3(0,0.02,-0.15-i*0.15),Color("fff4d4"))
 	graphics.apply(self)
+
+func _course_light(hole: int) -> void:
+	var env: Environment=get_node("WorldEnvironment").environment
+	var sun: DirectionalLight3D=get_node("Sun")
+	var haze: Color=[Color("ead6bf"),Color("bbd3d9"),Color("eacbc4")][hole]
+	env.fog_light_color=haze
+	# Depth fog starts beyond the putting line, with extra room in the wide overview.
+	env.fog_depth_begin=[25.0,19.0,28.0][hole]
+	env.fog_depth_end=[155.0,118.0,165.0][hole]
+	env.fog_density=[0.24,0.32,0.25][hole]
+	env.sky.sky_material.set_shader_parameter("bearing",[0.0,0.15,-0.16][hole])
+	env.sky.sky_material.set_shader_parameter("haze",haze)
+	sun.rotation_degrees=[Vector3(-32,-52,0),Vector3(-42,-22,0),Vector3(-24,-74,0)][hole]
+	sun.light_color=[Color("ffdeb0"),Color("f2eee0"),Color("ffcfab")][hole]
+	var gradient:=Gradient.new()
+	gradient.offsets=PackedFloat32Array([0.0,0.25,0.64,1.0])
+	gradient.colors=PackedColorArray([Color(.022,.031,.049),Color(.236,.25,.265),
+		[Color(.67,.65,.62),Color(.63,.65,.66),Color(.69,.64,.62)][hole],Color(1,.985,.957)])
+	var grade:=GradientTexture1D.new()
+	grade.gradient=gradient
+	env.adjustment_color_correction=grade
 
 func _ground(point: Vector3) -> float:
 	return GreenSurface.sample(green_grid,roundi(point.x*1000),roundi(point.z*1000))[0]/1000.0
@@ -636,6 +659,7 @@ func _shot_started(result: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if course_root==null or quitting: return
 	audio.set_state(audio_focused,paused)
+	island.gallery.tick(0.0 if paused else delta,audio.effects_percent/100.0,audio_focused and not paused)
 	if game.phase=="moving":
 		# Online simulation must keep progressing when a window loses focus.
 		if not paused or game.online:
@@ -670,6 +694,7 @@ func _process(delta: float) -> void:
 					if axis.length_squared()>0.000001: visual.rotate(axis.normalized(),movement.length()/Size.BALL)
 			ball.get_child(1).visible=shot.capture_frame<0 or frame<shot.capture_frame
 			if frame!=last_frame:
+				if shot.sunk and frame==shot.path.size()-1: island.gallery.cheer()
 				last_frame=frame
 			if shot.sunk and frame==shot.path.size()-1:
 				var reaction_time: float = rolling_time-(shot.path.size()-1)/float(shot.hz)

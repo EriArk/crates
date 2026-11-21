@@ -4,12 +4,16 @@ render_mode unshaded, cull_disabled;
 uniform vec4 deep_color : source_color = vec4(0.12, 0.53, 0.65, 1.0);
 uniform vec4 shallow_color : source_color = vec4(0.37, 0.79, 0.77, 1.0);
 uniform vec4 foam_color : source_color = vec4(0.87, 0.97, 0.88, 1.0);
+uniform int shore_profile = 0;
 varying vec3 world;
 void vertex() { world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 void fragment() {
     vec2 p = world.xz;
     float a = atan(p.y / 14.2, p.x / 10.7);
-    float coast = length(p / vec2(10.7,14.2)) / (1.0 + 0.045*sin(a*3.0+0.4) + 0.025*cos(a*7.0));
+    float profile = 1.0 + 0.045*sin(a*3.0+0.4) + 0.025*cos(a*7.0);
+    if (shore_profile==1) profile += 0.064*cos(a*4.0-0.4);
+    if (shore_profile==2) profile += 0.065*sin(a*3.0+0.9)-0.055*cos(a*2.0);
+    float coast = length(p / vec2(10.7,14.2)) / profile;
     float shallow = 1.0 - smoothstep(1.05,1.85,coast);
     vec2 swell_phase = vec2(p.x*0.65 + p.y*0.35 + TIME*0.6,p.y*0.8 - TIME*0.45);
     float swell = sin(swell_phase.x)*sin(swell_phase.y);

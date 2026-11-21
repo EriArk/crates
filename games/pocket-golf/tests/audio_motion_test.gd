@@ -35,7 +35,7 @@ func run() -> void:
 	ui._open_audio(); ui.audio_sliders[0].grab_focus(); ui._direction(-1,0)
 	check(ui.audio.music_percent==40,"controller/keyboard adjusts music slider")
 	ui.audio_sliders[1].value=0
-	check(ui.audio.effects_percent==0,"effect slider supports true mute")
+	check(ui.audio.effects_percent==0 and ui.audio.shore.volume_linear<0.0001,"effect slider mutes the shore and gameplay")
 	ui.audio.cue("cup"); check(played.is_empty(),"muted cue is not queued")
 	ui.audio.effects_percent=75; ui.audio.apply_levels(); ui._close_audio()
 	fresh_shot([0,6000],50)
@@ -63,7 +63,7 @@ func run() -> void:
 	check(ui.shot.sunk,"real cup fixture")
 	var end: float = (ui.shot.path.size()-1)/float(ui.shot.hz)+ui.Stroke.CONTACT
 	ui.elapsed=end; ui._process(0)
-	check(played.count("cup")==1 and played.count("ace-jingle")==1,"cup and ace cadence fire exactly once")
+	check(played.count("cup")==1 and played.count("claps")==1 and played.count("ace-jingle")==1,"cup and ace cadence fire exactly once")
 	ui._process(0); check(played.count("ace-jingle")==1,"celebration cadence not repeated")
 	ui.audio._process(.2)
 	check(ui.audio.duck>0 and ui.audio.jingle.playing,"jingle ducks the music")

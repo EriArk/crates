@@ -13,6 +13,10 @@ var planting: Array[Node3D] = []
 var grass_positions: Array[Vector3] = []
 var terrain_vertices := PackedVector3Array()
 var terrain_cells: Dictionary = {}
+var hole_index := 0
+var gallery := preload("res://scripts/gallery.gd").new()
+var mist: Array[MeshInstance3D] = []
+var flotilla: Array[Node3D] = []
 var boat: Node3D
 var flag: Node3D
 var clock := 0.0
@@ -29,13 +33,17 @@ func set_quality(level: int) -> void:
 	for i in detail_props.size(): detail_props[i].visible=level==2 or i%(3 if level==0 else 2)==0
 	var water: MeshInstance3D = get_node("Ocean")
 	water.material_override=simple_water if level==0 else full_water
+	gallery.set_quality(level)
+	for i in mist.size(): mist[i].visible=i<=level
 
 func build(hole: int) -> void:
+	hole_index=hole
 	_terrain()
 	var water := MeshInstance3D.new()
 	var plane := PlaneMesh.new(); plane.size=Vector2(1600,1600)
 	water.mesh=plane; water.position.y=-1.55
 	var sea := ShaderMaterial.new(); sea.shader=SEA
+	sea.set_shader_parameter("shore_profile",hole)
 	full_water=sea
 	var calm := ShaderMaterial.new(); calm.shader=preload("res://shaders/calm_sea.gdshader")
 	simple_water=calm
@@ -66,7 +74,9 @@ func build(hole: int) -> void:
 	for i in 5:
 		prop("nature/rock_largeC",Vector3(26+i*1.3,-1.6,-27+i*0.6),3.3-i*0.25,i*0.8)
 	prop("nature/tree_palmBend",Vector3(28,-0.8,-26),2.7,1.7)
-	add_child(preload("res://scripts/harbour_light.gd").new())
+	preload("res://scripts/coastal_vista.gd").prepare(self,hole)
+	add_child(gallery)
+	gallery.build(self,hole)
 
 	_beach_parasols(hole)
 
@@ -158,11 +168,17 @@ func _plant_gardens(hole: int) -> void:
 			prop("nature/flower_yellowA" if (hole+i)%3 else "nature/flower_purpleA",p,rng.randf_range(1.0,1.7),rng.randf()*TAU)
 	_meadow(hole)
 
+func coastline(a: float) -> float:
+	var shape:=1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	if hole_index==1: return shape+0.064*cos(a*4.0-.4)
+	if hole_index==2: return shape+0.065*sin(a*3.0+.9)-0.055*cos(a*2.0)
+	return shape
+
 func meadow_allowed(p: Vector3) -> bool:
 	if absf(p.x)<5.65 and absf(p.z)<8.65: return false
 	if p.x>5.5 and absf(p.z-3.8)<0.8: return false
 	var a := atan2(p.z/11.7,p.x/8.4)
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	return (Vector2(p.x,p.z)/Vector2(8.55,11.85)).length()<shape
 
 func _meadow(hole: int) -> void:
@@ -227,7 +243,7 @@ func _clear_green(instance: Node3D) -> void:
 func ground_height(point: Vector3) -> float:
 	var p := Vector2(point.x,point.z)
 	var a := atan2(point.z/11.7,point.x/8.4)
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	var dir := p.normalized(); var distance := p.length()
 	var previous := 0.0; var height := -0.24
 	for ring in RINGS:
@@ -248,7 +264,7 @@ func _relief(p: Vector2) -> float:
 	for hill in HILLS:
 		var distance: float = (p-Vector2(hill.x,hill.y)).length()/hill.w
 		hills+=hill.z*exp(-distance*distance*1.35)
-	return hills*edge*coast*path
+	return hills*edge*coast*path*[1.0,1.48,0.84][hole_index]
 
 func surface_height(point: Vector3) -> float:
 	# Ground props on the rendered triangles, not the continuous curve between vertices.
@@ -264,7 +280,7 @@ func surface_height(point: Vector3) -> float:
 	return ground_height(point)
 
 func _outline(a: float, radius: Vector2, y: float) -> Vector3:
-	var shape := 1.0+0.045*sin(a*3.0+0.4)+0.025*cos(a*7.0)
+	var shape := coastline(a)
 	var point := Vector3(cos(a)*radius.x*shape,y,sin(a)*radius.y*shape)
 	point.y=ground_height(point)
 	return point
@@ -314,4 +330,7 @@ func _process(delta: float) -> void:
 	if boat!=null:
 		boat.position.y=-1.52+sin(clock*1.2)*0.045
 		boat.rotation.z=sin(clock*0.9)*0.025
+	for i in flotilla.size():
+		flotilla[i].position.y=-1.88+.04*sin(clock*.74+i)
+		flotilla[i].rotation.z=.035*cos(clock*.52+i)
 	if flag!=null: flag.rotation.y=0.2+sin(clock*0.8)*0.08

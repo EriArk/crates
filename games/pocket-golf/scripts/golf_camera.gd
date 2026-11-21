@@ -65,6 +65,9 @@ func frame(delta: float, ball: Vector3, golfer: Vector3, aim: float, rolling: bo
 		desired = focus + _offset(heading, elevation) * 2.6 * zoom[active]
 		# Terrain can raise wall tops. Keep the closest shoulder orbit above them.
 		desired.y = maxf(desired.y, obstruction_height+0.55)
+		# Look slightly up the line so the flag and island horizon share the frame.
+		focus -= Vector3(sin(heading),0,cos(heading))*0.95*zoom[active]
+		focus.y += 0.14
 		lens = 60.0
 	else:
 		# SDK model height, or the anonymous marker's height when no identity exists.
