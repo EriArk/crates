@@ -22,9 +22,16 @@ func _init() -> void:
 
 func detect() -> void:
 	var devices = Input.get_connected_joypads()
+	if device in devices:return
 	var next = -1 if devices.is_empty() else devices[0]
 	if next!=device: neutral_required=true
 	device=next
+
+func observe(event: InputEvent) -> void:
+	if event.device==device:return
+	if event is InputEventJoypadButton and event.pressed or event is InputEventJoypadMotion and absf(event.axis_value)>0.35:
+		device=event.device
+		neutral_required=true
 
 func read(car: Node3D, camera: Camera3D) -> void:
 	detect()

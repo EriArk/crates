@@ -22,6 +22,15 @@ func run() -> void:
 	for car in game.cars: car.freeze=true; car.set_physics_process(false); car.set_process(false)
 	var car=game.player(); car.position=Vector3(0,100,0); car.rotation=Vector3.ZERO; car.linear_velocity=Vector3.ZERO
 	var rig=game.race_camera; var camera=game.camera
+	var pads=Controls.new()
+	pads.device=0
+	var motion:=InputEventJoypadMotion.new()
+	motion.device=2; motion.axis_value=0.08
+	pads.observe(motion)
+	check(pads.device==0,"Idle stick drift keeps the active driver")
+	motion.axis_value=0.8
+	pads.observe(motion)
+	check(pads.device==2 and pads.neutral_required,"A deliberate second controller takes over safely")
 	var distances=[]
 	for mode in 5:
 		rig.select(mode); game._camera(0,true)

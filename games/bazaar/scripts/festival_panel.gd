@@ -95,6 +95,7 @@ func open(kind: String) -> void:
 	displayed=""
 	focus_ticket=true
 	local_starting=false
+	trigger_held=false
 	if mode=="gallery":
 		ground.gallery.begin(world.service_camera)
 	elif mode=="rings":
@@ -312,19 +313,20 @@ func _return_to_desk() -> void:
 func _process(delta: float) -> void:
 	if visible and mode=="gallery":
 		var axis:=Input.get_vector("ui_left","ui_right","ui_up","ui_down")
-		var pads:=Input.get_connected_joypads()
-		if not pads.is_empty():
-			var stick:=Vector2(Input.get_joy_axis(pads[0],JOY_AXIS_RIGHT_X),Input.get_joy_axis(pads[0],JOY_AXIS_RIGHT_Y))
+		var pad:int=world.visitor.control_pad()
+		if pad>=0:
+			var stick:=Vector2(Input.get_joy_axis(pad,JOY_AXIS_RIGHT_X),Input.get_joy_axis(pad,JOY_AXIS_RIGHT_Y))
 			if stick.length()>.14:axis=stick
-			var pressed:=Input.get_joy_axis(pads[0],JOY_AXIS_TRIGGER_RIGHT)>.55
+			var pressed:=Input.get_joy_axis(pad,JOY_AXIS_TRIGGER_RIGHT)>.55
 			if pressed and not trigger_held and wallet.playable():_play()
 			trigger_held=pressed
+		else:trigger_held=false
 		ground.gallery.point(ground.gallery.aim+Vector2(axis.x,-axis.y)*delta*1.85)
 	if visible and mode=="rings":
 		var axis:=Input.get_vector("ui_left","ui_right","ui_up","ui_down")
-		var pads:=Input.get_connected_joypads()
-		if not pads.is_empty():
-			var stick:=Vector2(Input.get_joy_axis(pads[0],JOY_AXIS_LEFT_X),Input.get_joy_axis(pads[0],JOY_AXIS_LEFT_Y))
+		var pad:int=world.visitor.control_pad()
+		if pad>=0:
+			var stick:=Vector2(Input.get_joy_axis(pad,JOY_AXIS_LEFT_X),Input.get_joy_axis(pad,JOY_AXIS_LEFT_Y))
 			if stick.length()>.15:axis=stick
 		ground.move_aim(axis,delta)
 	if local_pid<=0:return
@@ -350,6 +352,22 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not visible or mode not in ["gallery","rings"] or not wallet.playable():return
+	# During a paid round the directional controls aim; Back always leaves.
+	# Capture these before Godot moves keyboard focus to a neighbouring button.
+	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		if event is InputEventJoypadButton and event.pressed:world.visitor.active_pad=event.device
+		if event.is_action_pressed("ui_cancel"):
+			close()
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_accept"):
+			_play()
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventJoypadMotion or event.button_index in [JOY_BUTTON_DPAD_LEFT,JOY_BUTTON_DPAD_RIGHT,JOY_BUTTON_DPAD_UP,JOY_BUTTON_DPAD_DOWN]:
+			if event is InputEventJoypadMotion and absf(event.axis_value)>.35:world.visitor.active_pad=event.device
+			get_viewport().set_input_as_handled()
+			return
 	if mode=="gallery":
 		if event is InputEventMouseMotion or event is InputEventScreenDrag:
 			if event.position.y<global_position.y:ground.gallery.pointer(world.service_camera,event.position)

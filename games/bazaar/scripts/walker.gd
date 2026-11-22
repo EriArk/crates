@@ -132,6 +132,17 @@ func look(delta: Vector2) -> void:
 	if not input_enabled:return
 	yaw-=delta.x;pitch=clampf(pitch-delta.y,-1.05,0.35)
 
+var active_pad := -1
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton and event.pressed or event is InputEventJoypadMotion and absf(event.axis_value)>.35:
+		active_pad=event.device
+
+func control_pad() -> int:
+	var pads:=Input.get_connected_joypads()
+	if active_pad not in pads:active_pad=pads[0] if not pads.is_empty() else -1
+	return active_pad
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not input_enabled:return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -148,9 +159,8 @@ func _physics_process(delta: float) -> void:
 	var walking := false
 	if input_enabled:
 		axis=Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
-		var devices := Input.get_connected_joypads()
-		if not devices.is_empty():
-			var device: int=devices[0]
+		var device:=control_pad()
+		if device>=0:
 			var stick := Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
 			axis+=Motor.stick_direction(stick)
 			var right := Vector2(Input.get_joy_axis(device,JOY_AXIS_RIGHT_X),Input.get_joy_axis(device,JOY_AXIS_RIGHT_Y))

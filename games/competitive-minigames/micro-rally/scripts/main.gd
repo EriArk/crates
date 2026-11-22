@@ -346,6 +346,7 @@ func _recover(car: Node3D) -> bool:
 	return false
 
 func _input(event: InputEvent) -> void:
+	controls.observe(event)
 	if state in ["race","countdown"] and not net.overlay and race_camera.pressed(event,cup.store.camera_button()):
 		cycle_camera(); get_viewport().set_input_as_handled(); return
 	if (is_royale() or player().lives<=0) and state=="race" and player().health<=0 and not net.overlay:

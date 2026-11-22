@@ -111,7 +111,8 @@ func _ready() -> void:
 	compass.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP);compass.position.y=18
 	compass.name="Compass";compass.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var pause_button := button("☰",func():show_menu());root.add_child(pause_button)
-	pause_button.tooltip_text="Menu · Esc / B"
+	pause_button.focus_mode=Control.FOCUS_NONE
+	pause_button.tooltip_text="Menu · Esc / Start"
 	pause_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT);pause_button.offset_left=-62;pause_button.offset_right=-18;pause_button.offset_top=18;pause_button.offset_bottom=58
 	var hint := label("Shift / LB  Sprint     C / R3  Crouch     Space / X  Jump",11,Color("eee4ce"))
 	root.add_child(hint);hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT);hint.offset_left=22;hint.offset_top=-30;hint.offset_bottom=-12
@@ -443,7 +444,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.physical_keycode==KEY_E and not modal:inspect_spot()
 		elif event.physical_keycode==KEY_T and talk.visible:start_conversation()
 	if event is InputEventJoypadButton and event.pressed:
-		if event.button_index in [JOY_BUTTON_B,JOY_BUTTON_START]:
+		if event.button_index==JOY_BUTTON_START or (modal and event.button_index==JOY_BUTTON_B):
 			if modal:hide_menu()
 			else:show_menu()
 			get_viewport().set_input_as_handled()

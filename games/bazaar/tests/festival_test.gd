@@ -20,6 +20,14 @@ func visit(at: Vector3, kind: String) -> void:
 	world.inspect_spot()
 	check(world.modal and desk.mode==kind,"Open "+kind)
 
+func tap_pad(button: JoyButton) -> void:
+	var event:=InputEventJoypadButton.new()
+	event.button_index=button
+	event.pressed=true
+	root.push_input(event,true)
+	event.pressed=false
+	root.push_input(event,true)
+
 func snapshot_for(game: String, shots: Array, maximum: int) -> Dictionary:
 	return {"game":game,"player_id":"qa","price":10,"limit":maximum,"payments_available":true,"round":{
 		"id":"qa-ticket","complete":shots.size()==maximum,"attempts":shots,"prize":"Honey Bear" if game=="gallery" and shots.size()>=3 else null}}
@@ -36,11 +44,20 @@ func run() -> void:
 	desk=world.festival
 	ground=world.square.festival
 	for i in 3:await physics_frame
+	tap_pad(JOY_BUTTON_B)
+	check(not world.modal,"Back while walking leaves the field menu closed")
+	tap_pad(JOY_BUTTON_START)
+	check(world.modal and world.panel.visible,"Start opens the field menu")
+	tap_pad(JOY_BUTTON_B)
+	check(not world.modal,"Back closes the field menu")
 	await visit(ground.STALL+Vector3(0,0,1.45),"rings")
 	check(not ground.active and not desk.wallet.playable(),"No free ring round")
 	# Recorded SDK replies drive the same throw, resume and result UI as the live host.
 	var shots:Array=[]
 	desk.wallet._received("bazaar.festival",snapshot_for("rings",shots.duplicate(),3))
+	desk.play.grab_focus()
+	tap_pad(JOY_BUTTON_DPAD_DOWN)
+	check(desk.play.has_focus() and world.modal,"Ring aim does not move focus to Back")
 	ground.aim=ground.TARGETS[1];ground.clock=PI/5.6;ground._update_cursor()
 	check(ground.endpoint.distance_to(ground.TARGETS[1])>.09,"Timing a ring changes whether it clears the peg")
 	await capture("wanage")
