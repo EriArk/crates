@@ -73,6 +73,13 @@ func button(text: String, action: Callable) -> Button:
 	node.add_theme_font_size_override("font_size",17);dress_button(node);node.pressed.connect(action);return node
 
 func _ready() -> void:
+	# Godot only supplies keyboard defaults for Accept and Cancel.
+	for binding in [["ui_accept",JOY_BUTTON_A],["ui_cancel",JOY_BUTTON_B]]:
+		var press:=InputEventJoypadButton.new()
+		press.device=-1
+		press.button_index=binding[1]
+		if not InputMap.action_has_event(binding[0],press):
+			InputMap.action_add_event(binding[0],press)
 	smoke_mode="--smoke" in OS.get_cmdline_user_args()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--world="):world_kind=arg.trim_prefix("--world=")

@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends SceneTree
 
+class TicketFixture extends "res://scripts/festival_wallet.gd":
+	var attempts:=0
+	func read(method: String, _args: Dictionary={}) -> bool:
+		if method=="bazaar.festival.attempt":attempts+=1
+		return true
+
 var failures:=0
 var world
 var desk
@@ -39,6 +45,10 @@ func capture(name_: String) -> void:
 	root.get_texture().get_image().save_jpg(path.path_join(name_+".jpg"))
 
 func run() -> void:
+	node_added.connect(func(node):
+		if node.get_script()==preload("res://scripts/festival_panel.gd"):
+			node.wallet.free()
+			node.wallet=TicketFixture.new())
 	world=load("res://main.tscn").instantiate()
 	root.add_child(world)
 	desk=world.festival
@@ -48,6 +58,9 @@ func run() -> void:
 	check(not world.modal,"Back while walking leaves the field menu closed")
 	tap_pad(JOY_BUTTON_START)
 	check(world.modal and world.panel.visible,"Start opens the field menu")
+	tap_pad(JOY_BUTTON_A)
+	check(not world.modal,"Primary activates Resume on the focused field menu")
+	tap_pad(JOY_BUTTON_START)
 	tap_pad(JOY_BUTTON_B)
 	check(not world.modal,"Back closes the field menu")
 	await visit(ground.STALL+Vector3(0,0,1.45),"rings")
@@ -55,9 +68,14 @@ func run() -> void:
 	# Recorded SDK replies drive the same throw, resume and result UI as the live host.
 	var shots:Array=[]
 	desk.wallet._received("bazaar.festival",snapshot_for("rings",shots.duplicate(),3))
+	desk.wallet.ready_for_reads=true
+	desk._refresh()
 	desk.play.grab_focus()
 	tap_pad(JOY_BUTTON_DPAD_DOWN)
 	check(desk.play.has_focus() and world.modal,"Ring aim does not move focus to Back")
+	tap_pad(JOY_BUTTON_A)
+	check(desk.wallet.attempts==1 and ground.flying,"One primary press throws one ring")
+	ground.begin()
 	ground.aim=ground.TARGETS[1];ground.clock=PI/5.6;ground._update_cursor()
 	check(ground.endpoint.distance_to(ground.TARGETS[1])>.09,"Timing a ring changes whether it clears the peg")
 	await capture("wanage")
@@ -105,6 +123,15 @@ func run() -> void:
 	var lead:float=ground.gallery.rail_offset(0,ground.gallery.TRAVEL)
 	ground.gallery.point(relative+Vector2(lead,0))
 	check(ground.gallery.ticket_impact().distance_to(relative)<.001,"Leading the moving toy hits its centre")
+	desk.wallet.ready_for_reads=true
+	desk._refresh()
+	var initial:int=desk.wallet.attempts
+	tap_pad(JOY_BUTTON_A)
+	check(desk.wallet.attempts==initial+1 and ground.gallery.in_flight,"One primary press fires one gallery shot")
+	tap_pad(JOY_BUTTON_B)
+	check(not world.modal,"Back leaves an active gallery round")
+	await visit(ground.gallery.SITE+Vector3(0,0,1.28),"gallery")
+	desk.wallet._received("bazaar.festival",snapshot_for("gallery",[],5))
 	await capture("gallery")
 	shots.clear()
 	for i in 3:
