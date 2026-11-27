@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 extends SceneTree
+const Size = preload("res://scripts/dimensions.gd")
 const Surface = preload("res://scripts/green_surface.gd")
 var ui
 var failed := false
@@ -32,7 +33,7 @@ func run() -> void:
 		check(ball.y>0.25,"resting ball raised with green")
 		check(absf(ui.anchor.position.y-ui._ground(ui.anchor.position))<0.001,"golfer feet meet their own ground height")
 		for dot in ui.aim_root.get_children():
-			check(absf(dot.position.y-ui._ground(dot.position)-0.055)<0.001,"aim dots follow the surface")
+			check(absf(dot.position.y-ui._ground(dot.position)-0.012)<0.001,"aim dots follow the surface")
 		var p: Array = ui.Courses.get_course(hole).cup
 		check(absf(ui.cup.position.y-Surface.sample(ui.green_grid,p[0],p[1])[0]/1000.0)<0.001,"cup seated on level pad")
 		check(ui.green_mesh.material_override.get_shader_parameter("sand_count")==ui.Courses.get_course(hole).sand.size(),"sand shares height mesh")
@@ -72,7 +73,7 @@ func run() -> void:
 		if ui.shot.capture_frame<0 or ui.elapsed*ui.shot.hz<ui.shot.capture_frame:
 			var ball: Vector3 = ui.balls[0].position
 			var n := Surface.normal(ui.green_grid,roundi(ball.x*1000),roundi(ball.z*1000))
-			check((ball.y-ui._ground(ball))*n.y>0.178,"rolling ball clears hill within sampling tolerance")
+			check((ball.y-ui._ground(ball))*n.y>Size.BALL-0.002,"rolling ball clears hill within sampling tolerance")
 	check(ui.game.world.digest()==settled_state,"animation never changes slope result")
 	await capture("slopes-rolling")
 	root.size=Vector2i(640,440); ui._process(0); await capture("slopes-small")
