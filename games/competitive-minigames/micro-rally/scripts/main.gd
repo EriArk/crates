@@ -243,6 +243,7 @@ func load_track(id: String) -> bool:
 	if current_track==id: return true
 	# Stage changes are synchronous between races. Detach old physics immediately;
 	# start_race replaces cars/pickups before the next simulation step.
+	if track!=null:preload("res://addons/trainer_transit/venue_loading.gd").cover_rebuild(self,Tracks.TRACKS[id].title)
 	var previous=track
 	track=Tracks.create(id); add_child(track); track.build(); current_track=id
 	remove_child(previous); previous.queue_free()

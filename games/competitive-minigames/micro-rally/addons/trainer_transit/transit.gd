@@ -21,6 +21,8 @@ var attached_at := 0
 var party := Party.new()
 var awaiting_guest := false
 var attach_pending := false
+var arrival_generation := 0
+var revealing := false
 var loader := Thread.new()
 
 func _ready() -> void:
@@ -35,6 +37,9 @@ func _ready() -> void:
 	if loader.start(ResourceLoader.load.bind(GAME))!=OK:_load_error()
 
 func _begin_flight() -> void:
+	arrival_generation+=1
+	revealing=false
+	awaiting_guest=false
 	if screen==null:
 		screen=ColorRect.new()
 		screen.color=Color("101626")
@@ -102,8 +107,11 @@ func _process(delta: float) -> void:
 	if phase=="error" or phase=="idle":return
 	if not game:
 		if attach_pending:return
-		if not loader.is_alive() and now-since>=500:
+		if not loader.is_alive() and flight_frames>=12 and now-since>=2100:
 			attach_pending=true
+			_arrive()
+			# Present the destination artwork before synchronous venue construction.
+			if DisplayServer.get_name()!="headless":await RenderingServer.frame_post_draw
 			_attach_game.call_deferred()
 		return
 	if flying and flight_frames>=12 and now-since>=(4500 if not party.own.is_empty() else 2100):
@@ -149,9 +157,18 @@ func _arrive() -> void:
 	kicker.text=destination.to_upper()
 	kicker.modulate=accent
 	title.text=location
-	hint.text="Arriving…" if game.transit_avatar_ready() else "Preparing your character…"
+	hint.text="Arriving…" if game and game.transit_avatar_ready() else "Preparing your character…"
 
 func _reveal() -> void:
+	if revealing:return
+	revealing=true
+	var generation:=arrival_generation
+	# The scene and its camera draw behind the canvas while game input stays locked.
+	if DisplayServer.get_name()=="headless":
+		await get_tree().process_frame
+	else:
+		await RenderingServer.frame_post_draw
+	if generation!=arrival_generation or phase!="arrival" or not is_instance_valid(game):return
 	game.set_transit_controls(false)
 	screen.queue_free()
 	screen=null

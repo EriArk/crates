@@ -257,6 +257,7 @@ func _placeholder() -> void:
 	anchor.install_visual(marker,"")
 
 func _build_course() -> void:
+	if course_root!=null:preload("res://addons/trainer_transit/venue_loading.gd").cover_rebuild(self,"Hole %d"%[game.world.hole+1])
 	effects.clear()
 	audio.clear_shot(); anchor.reset_motion()
 	if course_root!=null:
