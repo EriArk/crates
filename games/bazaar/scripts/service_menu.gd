@@ -11,6 +11,7 @@ const NAMES := ["Traveller","Wayfarer","Chef","Tailor","Gentleman","Wizard","Wit
 var client = preload("res://scripts/services_client.gd").new()
 var world_data: Dictionary = {}
 var server_items: Array = []
+var store_open := false
 var goods_confirmed := false
 var service := "office"
 var page := "places"
@@ -114,7 +115,8 @@ func open(kind: String, slot := 1) -> void:
 	own_outfit=false
 	fitting_look={}
 	service=kind;page="places" if kind=="office" else "goods" if kind=="stall" else "clothes"
-	if kind in ["tea","curios"]:page="visitor"
+	if kind=="tea":page="visitor"
+	if kind=="curios":page="store"
 	if kind=="island_office":page="island"
 	focused_row=0;status="";selected=clampi(slot,1,12);server_items=[];goods_confirmed=false;next_page="";show();render()
 	if page=="visitor":return
@@ -157,6 +159,7 @@ func refresh(after := "") -> void:
 		else:method="bazaar.listings";args={"place_id":row.id}
 	elif page=="sellers":method="bazaar.sellers"
 	elif page=="mine":method="bazaar.own_listings"
+	elif page in ["store","decorator"]:method="bazaar.store"
 	elif page=="clothes":method="bazaar.costumes"
 	if not after.is_empty() and method in ["bazaar.listings","bazaar.own_listings"]:args["after"]=after
 	if client.read(method,args):
@@ -204,10 +207,11 @@ func received(method: String, value: Dictionary) -> void:
 	if method=="bazaar.world":status=""
 	elif method=="bazaar.sellers":status=""
 	elif request_page==page and request_slot==selected:
-		goods_confirmed=method in ["bazaar.listings","bazaar.own_listings"];server_items=value.get("items",[])
+		store_open=method=="bazaar.store" and value.get("payments_available",false)
+		goods_confirmed=method in ["bazaar.listings","bazaar.own_listings","bazaar.store"];server_items=value.get("items",[])
 		next_page=str(value.get("next") if value.get("next")!=null else "");status=""
 	if_visible_render()
-	if method=="bazaar.world" and (page=="mine" or page=="goods" and place().has("id")):refresh()
+	if method=="bazaar.world" and (page=="mine" or page in ["store","decorator"] or page=="goods" and place().has("id")):refresh()
 func place() -> Dictionary:
 	for row in world_data.get("places",[]):
 		if int(row.get("slot",0))==selected:return row
@@ -232,6 +236,7 @@ func render() -> void:
 		var tenant=place().get("tenant_name")
 		title.text=("%s’s wares" % tenant) if tenant else "Market wares"
 	note.text = "" if can_trade() or world_data.get("payments_available",false) and client.has_checkout else "ALPHA   /   Purchases closed"
+	if page in ["store","decorator"] and goods_confirmed:note.text="" if store_open and client.has_checkout else "Purchases closed"
 	if not client.endpoint_override.is_empty():note.text=("Test Sparks" if note.text.is_empty() else "Test Sparks · "+note.text)
 	if not receipt_message.is_empty() and not loading:note.text=receipt_message
 	hint.text=status
@@ -241,8 +246,14 @@ func render() -> void:
 	inspector.visible=office or page=="goods" and not server_items.is_empty()
 	inspector.custom_minimum_size.x=207 if page=="goods" else 250
 	stock_actions.visible=page=="goods" and client.has_checkout
-	tabs.visible=office
+	tabs.visible=office or service in ["tailor","curios"]
 	focus_after=null
+	if service in ["tailor","curios"]:
+		var sections := [["clothes","Try on"],["store","Buy clothing"]] if service=="tailor" else [["store","Supplies"],["decorator","Scene decorator"]]
+		for entry in sections:
+			var key:String=entry[0]
+			var tab:=button(entry[1],switch.bind(key),tabs)
+			tab.set_meta("service_key",key);tab.toggle_mode=true;tab.button_pressed=page==key
 	if office:
 		for entry in [["places","Park map"],["sellers","Sellers"],["mine","My goods"]]:
 			var key: String=entry[0]
@@ -257,6 +268,7 @@ func render() -> void:
 		"places":render_places()
 		"sellers":render_sellers()
 		"clothes":render_clothes()
+		"store","decorator":render_store()
 		"visitor":content.add_child(text("The tea house is opening soon." if service=="tea" else "The curios collection is coming soon.",20))
 		_:render_goods()
 	for node in find_children("*","Button",true,false):
@@ -265,6 +277,19 @@ func render() -> void:
 			break
 	if focus_after:focus_after.grab_focus()
 	else:close_button.grab_focus()
+
+func render_store() -> void:
+	if not goods_confirmed:return
+	for offer in server_items:
+		if (offer.kind=="scene") != (page=="decorator"):continue
+		if (offer.kind=="garment") != (service=="tailor"):continue
+		var order={"action":"store","offer":offer.id,"price":int(offer.price)}
+		var tile:=button("%s   ·   %d Sparks"%[offer.title,order.price],checkout.bind(order),content)
+		if offer.get("owned",false):tile.text=str(offer.title)+"   ·   Owned"
+		tile.disabled=loading or offer.get("owned",false) or not client.has_checkout or not store_open
+		tile.set_meta("service_key","store-"+str(offer.id))
+		if not tile.disabled and not focus_after:focus_after=tile
+	if content.get_child_count()==0:content.add_child(text("No stock today.",17))
 
 func render_island() -> void:
 	var row:=place()

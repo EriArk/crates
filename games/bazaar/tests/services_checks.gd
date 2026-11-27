@@ -155,6 +155,21 @@ func run() -> void:
 	# The fourth interior retains an unblocked exit trigger.
 	scene.visitor.position=Vector3(270,0,4);scene._process(0);scene.inspect_spot()
 	check(scene.visitor.position.x<100,"Office exit returns to town")
+	menu.show();menu.queued_refresh=false
+	var offered=[{"id":"cap","kind":"garment","title":"Market beret","price":35},
+		{"id":"case","kind":"material","title":"Empty cartridge","price":12},
+		{"id":"profile.aurora","kind":"scene","title":"Aurora","owned":true,"price":250}]
+	menu.client.has_checkout=true
+	for key in ["tailor","curios","decorator"]:
+		menu.service="tailor" if key=="tailor" else "curios"
+		menu.page="decorator" if key=="decorator" else "store"
+		menu.request_view=menu.view_serial;menu.request_page=menu.page;menu.request_slot=menu.selected
+		menu.received("bazaar.store",{"items":offered,"payments_available":true})
+		check(menu.content.get_child_count()==1,"Only appropriate inventory at "+key)
+		var tile=menu.content.get_child(0)
+		check(tile.disabled==(key=="decorator"),"Owned scene cannot be bought twice")
+		menu.received("bazaar.store",{"items":offered,"payments_available":false})
+		check(menu.content.get_child(0).disabled,"Closed market blocks checkout at "+key)
 	var result := {"pass":failures.is_empty(),"failures":failures,"seller_previews":12,"stalls":12,"rooms":4}
 	var file := FileAccess.open(output+"/services.json",FileAccess.WRITE);file.store_string(JSON.stringify(result,"  "))
 	print(JSON.stringify(result));scene.audio.stop_all();await create_timer(.2).timeout;scene.queue_free();await process_frame;await process_frame;quit(0 if failures.is_empty() else 1)

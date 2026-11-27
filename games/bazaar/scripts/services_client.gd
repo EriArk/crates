@@ -43,7 +43,7 @@ func checkout(args: Dictionary) -> bool:
 
 func read(method: String, args: Dictionary={}) -> bool:
 	if not ready_for_reads or not pending.is_empty():return false
-	if method not in ["bazaar.world","bazaar.sellers","bazaar.costumes","bazaar.listings","bazaar.own_listings","bazaar.festival","bazaar.festival.attempt","bazaar.visit"]:return false
+	if method not in ["bazaar.store","bazaar.world","bazaar.sellers","bazaar.costumes","bazaar.listings","bazaar.own_listings","bazaar.festival","bazaar.festival.attempt","bazaar.visit"]:return false
 	if method=="bazaar.world" and world_key!="festival":args={"world":world_key}
 	_request(method,args);pending[str(serial)].deadline=Time.get_ticks_msec()+20000;return true
 func _packet(packet: Dictionary) -> void:
