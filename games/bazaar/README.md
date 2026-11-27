@@ -1,4 +1,4 @@
-# Bazaar 0.0.25 — Festival market
+# Bazaar — Festival market
 
 On a device with a running lab host, open the field menu and choose **Enter test
 market**. Vale's park map shows the weekly rent. Choose a keeper and review the
@@ -8,6 +8,10 @@ can see up to three goods on the counter before opening it. Move up/down to insp
 review the item and the price together. **Profile inventory** shows the delivered item. If a reply is lost,
 choose **Resolve last checkout** at Vale's desk, also after restarting the game
 or host. Ordinary visits and the personal-world previews use the normal profile.
+
+## Merchant shelves
+
+Visit Wisp at THREAD for clothing or Rook at Curios for supplies and the scene decorator. Inspect a row to see the server quote and review the purchase in OctoFox. The merchant shelf shows checkout availability. The ship computer sells reusable blueprints for printing at home. Personal stalls accept eligible finished goods, including their applied colours.
 
 ## Beach counter and prize shelf
 
