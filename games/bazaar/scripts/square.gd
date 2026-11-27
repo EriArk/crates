@@ -241,7 +241,10 @@ func shop(title: String, at: Vector3, yaw: float, index: int) -> void:
 	var center := Vector3(210+index*20,0,0)
 	path(center,Vector3(10,0,10));block(center+Vector3(0,-0.25,0),Vector3(10,0.5,10),"77604a")
 	block(center+Vector3(0,4.15,0),Vector3(10,0.3,10),"bdab8b")
-	if index!=1:
+	# On the handheld Compatibility renderer, overlapping the sun/shadow pass
+	# with an indoor point light produces black tiles on walls and visitors.
+	# Use the same ambient lighting as the fitting room on that renderer.
+	if index!=1 and RenderingServer.get_current_rendering_method()!="gl_compatibility":
 		var light := OmniLight3D.new();light.position=center+Vector3(0,3.3,0);light.omni_range=10;light.light_color=Color("ffe3b7");light.light_energy=1.1;add_child(light)
 	for x in [-5,5]:block(center+Vector3(x,2,0),Vector3(0.25,4,10),"e6d4ae")
 	for z in [-5,5]:block(center+Vector3(0,2,z),Vector3(10,4,0.25),"c7b18d")
